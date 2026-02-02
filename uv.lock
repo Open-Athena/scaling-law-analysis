@@ -465,7 +465,7 @@ wheels = [
 ]
 
 [[package]]
-name = "scaling-law-simulation"
+name = "scaling-law-analysis"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

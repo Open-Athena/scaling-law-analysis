@@ -11,7 +11,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from scaling_law_simulation.chinchilla import (
+from scaling_law_analysis import config
+from scaling_law_analysis.chinchilla import (
     chinchilla_loss,
     isoflop_sample,
     optimal_allocation,
@@ -289,8 +290,7 @@ def main():
     print(f"{'True':>10} {true_a:>10.4f} {true_b:>10.4f}")
 
     # Create output directory
-    output_dir = Path(__file__).parent / "outputs"
-    output_dir.mkdir(exist_ok=True)
+    output_dir = config.RESULTS_DIR
 
     # Generate figure
     print("\nGenerating figure...")
@@ -298,7 +298,7 @@ def main():
     fig = create_figure(results, display_log_ranges, compute_budgets)
 
     # Save figure
-    output_path = output_dir / "experiment_1.png"
+    output_path = output_dir / "exp1_empirical_error.png"
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     print(f"\nFigure saved to: {output_path}")
 

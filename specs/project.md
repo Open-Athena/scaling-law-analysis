@@ -1,4 +1,4 @@
-# Project Intent: Scaling Law Simulation
+# Project Intent: Scaling Law Analysis
 
 ## Purpose
 

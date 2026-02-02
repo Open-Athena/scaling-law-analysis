@@ -1,4 +1,4 @@
-# Scaling Law Simulation
+# Scaling Law Analysis
 
 Simulation and analysis of Chinchilla scaling laws for neural network training.
 
@@ -19,5 +19,5 @@ uv sync
 Demonstrates how Approach 2 accuracy depends on grid step size.
 
 ```bash
-uv run python experiments/experiment_1.py
+uv run python -m scaling_law_analysis.experiments.exp1_empirical_error
 ```
