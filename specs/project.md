@@ -7,7 +7,6 @@ The purpose of this project is to:
 - Demonstrate whether or not flaws in Chinchilla Approach 2 for scaling law exponent inference exist
 - Evaluate alternative methods for scaling law exponent inference
 - Produce balanced, concise, empirical and theoretical considerations for best practices in scaling law inference
-- Create a single document at results.md very concisely explaining all experimental questions, findings, and conclusions
 
 ## Experiments
 
@@ -18,7 +17,7 @@ Hypothesis: The accuracy of Chinchilla Approach 2 is dependent on the accuracy o
 Steps:
 - Sample data from a Chinchilla loss surface with no statistical noise
 - Use Chinchilla Approach 2 to infer exponents from the sampled data
-- Show how error in this inferences changes with grid resolution and alpha/beta assymetry
+- Show how error in this inferences changes with grid step size and alpha/beta assymetry
 
 ### Experiment 2: Analytical Error
 
