@@ -22,7 +22,8 @@ The purpose of this project is to:
 
 2. For each sampling range (narrow to wide):
    - Sample IsoFLOP contours at 5 compute budgets: 10^17 to 10^21 FLOPs
-   - Fit parabolas to log(L) vs log(N) for each budget → extract N*
+   - Fit parabolas to L vs log(N) for each budget → extract N*
+   - Fit parabolas to L vs log(D) for each budget → extract D*
    - Fit power laws: N* ∝ C^a and D* ∝ C^b
 
 3. Compare recovered exponents to true values:
