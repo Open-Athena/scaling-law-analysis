@@ -22,6 +22,8 @@ The purpose of this project is to:
 
 2. For each sampling range (narrow to wide):
    - Sample IsoFLOP contours at 5 compute budgets: 10^17 to 10^21 FLOPs
+   - Optionally apply drift_rate to shift sampling centers away from the true optimum
+     (left at low compute, right at high compute) to simulate systematic sampling bias
    - Fit parabolas to L vs log(N) for each budget → extract N*
    - Fit parabolas to L vs log(D) for each budget → extract D*
    - Fit power laws: N* ∝ C^a and D* ∝ C^b

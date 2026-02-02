@@ -80,10 +80,44 @@ def optimal_allocation(
     return N_opt, D_opt
 
 
+def compute_drift_offset(
+    C: float,
+    compute_budgets: np.ndarray,
+    drift_rate: float,
+) -> float:
+    """Compute the center offset for a given compute budget based on drift rate.
+
+    The offset is linear in log-compute space:
+    - At min compute: offset = -drift_rate
+    - At max compute: offset = +drift_rate
+
+    Args:
+        C: Compute budget for which to compute offset
+        compute_budgets: Array of all compute budgets (for normalization)
+        drift_rate: Rate at which sampling center drifts from optimal
+
+    Returns:
+        Center offset in log10 units
+    """
+    if drift_rate == 0.0:
+        return 0.0
+
+    log_C_all = np.log10(compute_budgets)
+    log_C_mid = (log_C_all.min() + log_C_all.max()) / 2
+    log_C_half_range = (log_C_all.max() - log_C_all.min()) / 2
+
+    if log_C_half_range <= 0:
+        return 0.0
+
+    normalized_log_C = (np.log10(C) - log_C_mid) / log_C_half_range
+    return drift_rate * normalized_log_C
+
+
 def isoflop_sample(
     C: float,
     n_points: int,
     log_range: float = 1.0,
+    center_offset: float = 0.0,
     A: float = CHINCHILLA_PARAMS["A"],
     B: float = CHINCHILLA_PARAMS["B"],
     alpha: float = CHINCHILLA_PARAMS["alpha"],
@@ -98,6 +132,8 @@ def isoflop_sample(
         C: Compute budget in FLOPs
         n_points: Number of points to sample
         log_range: Range in log10 space around optimal N (±log_range)
+        center_offset: Offset in log10 space to shift sampling center from optimal N*
+                       Positive values shift center to larger N, negative to smaller N
         A, B, alpha, beta: Chinchilla parameters
 
     Returns:
@@ -105,9 +141,10 @@ def isoflop_sample(
     """
     N_opt, _ = optimal_allocation(C, A, B, alpha, beta)
 
-    # Sample N logarithmically around optimal
-    log_N_min = np.log10(N_opt) - log_range
-    log_N_max = np.log10(N_opt) + log_range
+    # Sample N logarithmically around (possibly offset) center
+    log_N_center = np.log10(N_opt) + center_offset
+    log_N_min = log_N_center - log_range
+    log_N_max = log_N_center + log_range
     N = np.logspace(log_N_min, log_N_max, n_points)
 
     # Derive D from constraint C = 6ND
@@ -203,6 +240,7 @@ def approach2_recover(
     compute_budgets: np.ndarray,
     n_points: int = 10,
     log_range: float = 1.0,
+    drift_rate: float = 0.0,
     A: float = CHINCHILLA_PARAMS["A"],
     B: float = CHINCHILLA_PARAMS["B"],
     alpha: float = CHINCHILLA_PARAMS["alpha"],
@@ -218,6 +256,11 @@ def approach2_recover(
         compute_budgets: Array of compute budgets (FLOPs)
         n_points: Number of points per IsoFLOP curve
         log_range: Sampling range in log10 space around optimal N (and D)
+        drift_rate: Rate at which sampling center drifts from optimal as a
+                    function of compute budget. When non-zero, centers are shifted
+                    left (smaller N) at low compute and right (larger N) at high
+                    compute. The drift is linear in log-compute space and measured
+                    in log10 units of N. The effect is constant regardless of log_range.
         A, B, alpha, beta: Chinchilla parameters for data generation
         use_log_loss: If True, fit parabola to log(L) vs log(x).
                       If False (default), fit parabola to L vs log(x).
@@ -232,7 +275,8 @@ def approach2_recover(
     D_opts = []
 
     for C in compute_budgets:
-        N, D, L = isoflop_sample(C, n_points, log_range, A, B, alpha, beta)
+        center_offset = compute_drift_offset(C, compute_budgets, drift_rate)
+        N, D, L = isoflop_sample(C, n_points, log_range, center_offset, A, B, alpha, beta)
         
         # Fit parabola to L vs log(N) to find N*
         fit_N = fit_parabola(np.log10(N), L, use_log_loss=use_log_loss)
