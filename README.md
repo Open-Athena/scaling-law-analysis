@@ -1,3 +1,23 @@
-# Scaling Law Simulation
+# Scaling Law Analysis
 
-A project for simulating and analyzing scaling laws.
+Simulation and analysis of Chinchilla scaling laws for neural network training.
+
+## Overview
+
+This project demonstrates flaws in Chinchilla Approach 2 for scaling law exponent inference and evaluates alternative methods.
+
+## Installation
+
+```bash
+uv sync
+```
+
+## Experiments
+
+### Experiment 1: Empirical Error Analysis
+
+Demonstrates how Approach 2 accuracy depends on grid step size.
+
+```bash
+uv run python -m scaling_law_analysis.experiments.exp1_empirical_error
+```
