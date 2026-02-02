@@ -14,7 +14,7 @@ from pathlib import Path
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
     chinchilla_loss,
-    compute_drift_offset,
+    compute_center_offset,
     isoflop_sample,
     optimal_allocation,
     approach2_recover,
@@ -36,19 +36,18 @@ def log_range_to_label(log_range: float) -> str:
 def run_experiment(
     compute_budgets: np.ndarray,
     log_ranges: np.ndarray,
+    drift_rate: float,
+    center_scale: float,
     n_points: int = 10,
-    use_log_loss: bool = False,
-    drift_rate: float = 0.0,
 ) -> dict:
     """Run Approach 2 recovery across multiple grid step sizes.
 
     Args:
         compute_budgets: Compute budgets to use for fitting
         log_ranges: Array of log_range values (grid step sizes) to test
-        n_points: Number of points per IsoFLOP curve
-        use_log_loss: If True, fit parabola to log(L) vs log(N).
-                      If False (default), fit parabola to L vs log(N).
         drift_rate: Rate at which sampling center drifts from optimal.
+        center_scale: Constant multiplier applied to all sampling centers.
+        n_points: Number of points per IsoFLOP curve
 
     Returns:
         Dictionary with results for a and b exponents
@@ -66,10 +65,10 @@ def run_experiment(
     for log_range in log_ranges:
         result = approach2_recover(
             compute_budgets=compute_budgets,
+            drift_rate=drift_rate,
+            center_scale=center_scale,
             n_points=n_points,
             log_range=log_range,
-            drift_rate=drift_rate,
-            use_log_loss=use_log_loss,
         )
         a_recovered.append(result.a)
         b_recovered.append(result.b)
@@ -87,8 +86,8 @@ def run_experiment(
         "a_error": (a_recovered - true_a) / true_a,
         "b_error": (b_recovered - true_b) / true_b,
         "results": results,
-        "use_log_loss": use_log_loss,
         "drift_rate": drift_rate,
+        "center_scale": center_scale,
     }
 
 
@@ -97,9 +96,9 @@ def plot_isoflop_fits(
     result,
     compute_budgets: np.ndarray,
     log_range: float,
+    drift_rate: float,
+    center_scale: float,
     title: str,
-    use_log_loss: bool = False,
-    drift_rate: float = 0.0,
 ):
     """Plot IsoFLOP curves with parabola fits for a single grid step size.
 
@@ -108,43 +107,33 @@ def plot_isoflop_fits(
         result: Approach2Result from recovery
         compute_budgets: Compute budgets used
         log_range: Grid step size used
-        title: Plot title
-        use_log_loss: Whether log loss was used for fitting
         drift_rate: Rate at which sampling center drifts from optimal
+        center_scale: Constant multiplier applied to all sampling centers
+        title: Plot title
     """
     colors = plt.cm.viridis(np.linspace(0, 1, len(compute_budgets)))
 
     for i, (C, fit) in enumerate(zip(compute_budgets, result.parabola_fits_N)):
-        center_offset = compute_drift_offset(C, compute_budgets, drift_rate)
+        center_offset = compute_center_offset(C, compute_budgets, drift_rate, center_scale)
 
         # Get sampled data
         N, D, L = isoflop_sample(C, 20, log_range, center_offset)
         log_N = np.log10(N)
 
-        # Transform y-axis based on fitting mode
-        if use_log_loss:
-            y = np.log10(L)
-            y_true_opt = lambda L_val: np.log10(L_val)
-            y_fit_opt = fit.log_L_min
-        else:
-            y = L
-            y_true_opt = lambda L_val: L_val
-            y_fit_opt = fit.L_min
-
         # Plot data points
-        ax.scatter(log_N, y, c=[colors[i]], s=20, alpha=0.7, zorder=3)
+        ax.scatter(log_N, L, c=[colors[i]], s=20, alpha=0.7, zorder=3)
 
         # Plot parabola fit
         log_N_fine = np.linspace(log_N.min(), log_N.max(), 100)
-        y_fit = np.polyval(fit.coeffs, log_N_fine)
-        ax.plot(log_N_fine, y_fit, c=colors[i], lw=1.5, alpha=0.8)
+        L_fit = np.polyval(fit.coeffs, log_N_fine)
+        ax.plot(log_N_fine, L_fit, c=colors[i], lw=1.5, alpha=0.8)
 
         # Mark true optimum
         N_true, _ = optimal_allocation(C)
         L_true = chinchilla_loss(N_true, C / (6 * N_true))
         ax.scatter(
             [np.log10(N_true)],
-            [y_true_opt(L_true)],
+            [L_true],
             c="red",
             marker="x",
             s=60,
@@ -155,7 +144,7 @@ def plot_isoflop_fits(
         # Mark inferred optimum
         ax.scatter(
             [fit.log_x_opt],
-            [y_fit_opt],
+            [fit.L_min],
             c="blue",
             marker="+",
             s=60,
@@ -164,7 +153,7 @@ def plot_isoflop_fits(
         )
 
     ax.set_xlabel("log₁₀(N)")
-    ax.set_ylabel("log₁₀(L)" if use_log_loss else "L")
+    ax.set_ylabel("L")
     ax.set_title(title)
 
     # Custom legend
@@ -225,9 +214,8 @@ def create_figure(
     Returns:
         Matplotlib figure
     """
-    use_log_loss = experiment_results.get("use_log_loss", False)
     drift_rate = experiment_results.get("drift_rate", 0.0)
-    fit_mode = "log(L)" if use_log_loss else "L"
+    center_scale = experiment_results.get("center_scale", 1.0)
     
     fig = plt.figure(figsize=(14, 8))
 
@@ -248,9 +236,9 @@ def create_figure(
             result,
             compute_budgets,
             actual_log_range,
+            drift_rate,
+            center_scale,
             f"{size_labels[i]} grid ({log_range_to_label(actual_log_range)})",
-            use_log_loss=use_log_loss,
-            drift_rate=drift_rate,
         )
 
     # Bottom row: Error plot (spans all columns)
@@ -262,9 +250,14 @@ def create_figure(
     true_beta = CHINCHILLA_PARAMS["beta"]
     true_a = experiment_results["true_a"]
     true_b = experiment_results["true_b"]
-    drift_str = f", drift_rate={drift_rate}" if drift_rate != 0.0 else ""
+    bias_parts = []
+    if drift_rate != 0.0:
+        bias_parts.append(f"drift_rate={drift_rate}")
+    if center_scale != 1.0:
+        bias_parts.append(f"center_scale={center_scale}")
+    bias_str = f", {', '.join(bias_parts)}" if bias_parts else ""
     fig.suptitle(
-        f"Experiment 1: Approach 2 Accuracy vs Grid Resolution (fit on {fit_mode}{drift_str})\n"
+        f"Experiment 1: Approach 2 Accuracy vs Grid Resolution{bias_str}\n"
         f"True: α={true_alpha}, β={true_beta} → a=β/(α+β)={true_a:.4f}, b=α/(α+β)={true_b:.4f}",
         fontsize=11,
         y=0.98,
@@ -283,19 +276,24 @@ def main():
     compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
     log_ranges = np.linspace(0.05, 2.0, 20)  # Grid step sizes to test
     n_points = 15  # Points per IsoFLOP curve
-    use_log_loss = False  # If True, fit log(L) vs log(N); if False, fit L vs log(N)
-    drift_rate = 0.1  # Drift rate for sampling center offset
+    drift_rate = 0.0  # Linear drift rate (varies with compute budget)
+    center_scale = 1.5  # Constant multiplier for all sampling centers
 
-    fit_mode = "log(L) vs log(N)" if use_log_loss else "L vs log(N)"
-    print(f"\nFitting mode: {fit_mode}")
-    print(f"Compute budgets: {compute_budgets}")
+    print(f"\nCompute budgets: {compute_budgets}")
     print(f"Grid step sizes (log_range): {log_ranges[0]:.2f} to {log_ranges[-1]:.2f}")
     print(f"Points per IsoFLOP curve: {n_points}")
     print(f"Drift rate: {drift_rate}")
+    print(f"Center scale: {center_scale}")
 
     # Run experiment
     print("\nRunning parameter recovery...")
-    results = run_experiment(compute_budgets, log_ranges, n_points, use_log_loss=use_log_loss, drift_rate=drift_rate)
+    results = run_experiment(
+        compute_budgets,
+        log_ranges,
+        drift_rate,
+        center_scale,
+        n_points=n_points,
+    )
 
     true_alpha = CHINCHILLA_PARAMS["alpha"]
     true_beta = CHINCHILLA_PARAMS["beta"]

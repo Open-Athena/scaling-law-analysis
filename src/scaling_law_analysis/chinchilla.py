@@ -80,37 +80,50 @@ def optimal_allocation(
     return N_opt, D_opt
 
 
-def compute_drift_offset(
+def compute_center_offset(
     C: float,
     compute_budgets: np.ndarray,
     drift_rate: float,
+    center_scale: float,
 ) -> float:
-    """Compute the center offset for a given compute budget based on drift rate.
+    """Compute the sampling center offset for a given compute budget.
 
-    The offset is linear in log-compute space:
-    - At min compute: offset = -drift_rate
-    - At max compute: offset = +drift_rate
+    Combines two independent effects:
+    1. drift_rate: Linear drift in log-compute space
+       - At min compute: offset = -drift_rate (smaller N)
+       - At max compute: offset = +drift_rate (larger N)
+    2. center_scale: Constant multiplicative factor applied to all centers
+       - scale > 1: all centers shifted right (larger N)
+       - scale < 1: all centers shifted left (smaller N)
+
+    Both effects are additive in log10 space.
 
     Args:
         C: Compute budget for which to compute offset
-        compute_budgets: Array of all compute budgets (for normalization)
+        compute_budgets: Array of all compute budgets (for drift normalization)
         drift_rate: Rate at which sampling center drifts from optimal
+        center_scale: Constant multiplier applied to all sampling centers
 
     Returns:
-        Center offset in log10 units
+        Total center offset in log10 units
     """
-    if drift_rate == 0.0:
-        return 0.0
+    offset = 0.0
 
-    log_C_all = np.log10(compute_budgets)
-    log_C_mid = (log_C_all.min() + log_C_all.max()) / 2
-    log_C_half_range = (log_C_all.max() - log_C_all.min()) / 2
+    # Add constant scale offset
+    if center_scale != 1.0:
+        offset += np.log10(center_scale)
 
-    if log_C_half_range <= 0:
-        return 0.0
+    # Add linear drift offset
+    if drift_rate != 0.0:
+        log_C_all = np.log10(compute_budgets)
+        log_C_mid = (log_C_all.min() + log_C_all.max()) / 2
+        log_C_half_range = (log_C_all.max() - log_C_all.min()) / 2
 
-    normalized_log_C = (np.log10(C) - log_C_mid) / log_C_half_range
-    return drift_rate * normalized_log_C
+        if log_C_half_range > 0:
+            normalized_log_C = (np.log10(C) - log_C_mid) / log_C_half_range
+            offset += drift_rate * normalized_log_C
+
+    return offset
 
 
 def isoflop_sample(
@@ -162,9 +175,7 @@ class ParabolaFit(NamedTuple):
     coeffs: np.ndarray  # Polynomial coefficients [a, b, c] for ax² + bx + c
     log_x_opt: float  # Log10 of optimal x from parabola minimum
     x_opt: float  # Optimal x from parabola minimum
-    log_L_min: float  # Log10 of minimum loss
     L_min: float  # Minimum loss from parabola
-    use_log_loss: bool  # Whether log loss was used for fitting
 
 
 @dataclass
@@ -192,25 +203,20 @@ class Approach2Result:
 def fit_parabola(
     log_x: np.ndarray,
     L: np.ndarray,
-    use_log_loss: bool = False,
 ) -> ParabolaFit:
     """Fit a parabola to loss vs log-x data.
 
+    Fits L = a*log(x)² + b*log(x) + c and finds the minimum.
+
     Args:
         log_x: Log10 of x values (e.g., parameter counts N or token counts D)
-        L: Loss values (raw, not log-transformed)
-        use_log_loss: If True, fit parabola to log(L) vs log(x).
-                      If False, fit parabola to L vs log(x).
+        L: Loss values
 
     Returns:
         ParabolaFit with coefficients and minimum location
     """
-    # Transform loss if using log loss fitting
-    y = np.log10(L) if use_log_loss else L
-
-    # Fit quadratic: y = a*log(x)² + b*log(x) + c
-    # where y is either log(L) or L depending on use_log_loss
-    coeffs = np.polyfit(log_x, y, 2)
+    # Fit quadratic: L = a*log(x)² + b*log(x) + c
+    coeffs = np.polyfit(log_x, L, 2)
     a, b, c = coeffs
 
     # Minimum at log(x*) = -b / (2a)
@@ -218,34 +224,26 @@ def fit_parabola(
     x_opt = 10**log_x_opt
 
     # Minimum loss value
-    y_min = np.polyval(coeffs, log_x_opt)
-    if use_log_loss:
-        log_L_min = y_min
-        L_min = 10**log_L_min
-    else:
-        L_min = y_min
-        log_L_min = np.log10(L_min) if L_min > 0 else float("-inf")
+    L_min = np.polyval(coeffs, log_x_opt)
 
     return ParabolaFit(
         coeffs=coeffs,
         log_x_opt=log_x_opt,
         x_opt=x_opt,
-        log_L_min=log_L_min,
         L_min=L_min,
-        use_log_loss=use_log_loss,
     )
 
 
 def approach2_recover(
     compute_budgets: np.ndarray,
+    drift_rate: float,
+    center_scale: float,
     n_points: int = 10,
     log_range: float = 1.0,
-    drift_rate: float = 0.0,
     A: float = CHINCHILLA_PARAMS["A"],
     B: float = CHINCHILLA_PARAMS["B"],
     alpha: float = CHINCHILLA_PARAMS["alpha"],
     beta: float = CHINCHILLA_PARAMS["beta"],
-    use_log_loss: bool = False,
 ) -> Approach2Result:
     """Recover scaling exponents using Chinchilla Approach 2.
 
@@ -254,16 +252,19 @@ def approach2_recover(
 
     Args:
         compute_budgets: Array of compute budgets (FLOPs)
-        n_points: Number of points per IsoFLOP curve
-        log_range: Sampling range in log10 space around optimal N (and D)
         drift_rate: Rate at which sampling center drifts from optimal as a
                     function of compute budget. When non-zero, centers are shifted
                     left (smaller N) at low compute and right (larger N) at high
                     compute. The drift is linear in log-compute space and measured
                     in log10 units of N. The effect is constant regardless of log_range.
+        center_scale: Constant multiplier applied to all sampling centers.
+                      When 1.0, centers are at true optimal N*.
+                      When >1, all centers are shifted right (larger N).
+                      When <1, all centers are shifted left (smaller N).
+                      This is independent of and additive with drift_rate in log space.
+        n_points: Number of points per IsoFLOP curve
+        log_range: Sampling range in log10 space around optimal N (and D)
         A, B, alpha, beta: Chinchilla parameters for data generation
-        use_log_loss: If True, fit parabola to log(L) vs log(x).
-                      If False (default), fit parabola to L vs log(x).
 
     Returns:
         Approach2Result with recovered exponents a and b
@@ -275,16 +276,16 @@ def approach2_recover(
     D_opts = []
 
     for C in compute_budgets:
-        center_offset = compute_drift_offset(C, compute_budgets, drift_rate)
+        center_offset = compute_center_offset(C, compute_budgets, drift_rate, center_scale)
         N, D, L = isoflop_sample(C, n_points, log_range, center_offset, A, B, alpha, beta)
         
         # Fit parabola to L vs log(N) to find N*
-        fit_N = fit_parabola(np.log10(N), L, use_log_loss=use_log_loss)
+        fit_N = fit_parabola(np.log10(N), L)
         parabola_fits_N.append(fit_N)
         N_opts.append(fit_N.x_opt)
         
         # Fit parabola to L vs log(D) to find D*
-        fit_D = fit_parabola(np.log10(D), L, use_log_loss=use_log_loss)
+        fit_D = fit_parabola(np.log10(D), L)
         parabola_fits_D.append(fit_D)
         D_opts.append(fit_D.x_opt)
 
