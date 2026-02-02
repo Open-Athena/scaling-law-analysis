@@ -453,8 +453,8 @@ def main():
     n_points = 15  # Points per IsoFLOP curve
     drift_rate = 0.05  # Linear drift rate (varies with compute budget)
     center_scale = 1.0  # Constant multiplier for all sampling centers
-    alpha = 0.9  # Parameter scaling exponent
-    beta = 0.1  # Data scaling exponent
+    alpha = CHINCHILLA_PARAMS["alpha"]  # Parameter scaling exponent
+    beta = CHINCHILLA_PARAMS["beta"]  # Data scaling exponent
     A = CHINCHILLA_PARAMS["A"]  # Parameter scaling coefficient
     B = CHINCHILLA_PARAMS["B"]  # Data scaling coefficient
     E = CHINCHILLA_PARAMS["E"]  # Irreducible loss

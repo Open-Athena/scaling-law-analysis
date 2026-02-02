@@ -206,6 +206,7 @@ class Approach2Result:
 def fit_parabola(
     log_x: np.ndarray,
     L: np.ndarray,
+    min_curvature: float = 1e-10,
 ) -> ParabolaFit:
     """Fit a parabola to loss vs log-x data.
 
@@ -214,13 +215,26 @@ def fit_parabola(
     Args:
         log_x: Log10 of x values (e.g., parameter counts N or token counts D)
         L: Loss values
+        min_curvature: Minimum absolute value for quadratic coefficient.
+                       Raises ValueError if |a| < min_curvature.
 
     Returns:
         ParabolaFit with coefficients and minimum location
+
+    Raises:
+        ValueError: If quadratic coefficient is too small (degenerate/flat parabola)
     """
     # Fit quadratic: L = a*log(x)² + b*log(x) + c
     coeffs = np.polyfit(log_x, L, 2)
     a, b, c = coeffs
+
+    # Check for degenerate parabola (flat loss surface)
+    if abs(a) < min_curvature:
+        raise ValueError(
+            f"Parabola fit has near-zero curvature (a={a:.2e}). "
+            f"This indicates a flat loss surface or insufficient data. "
+            f"Consider using more points or a narrower sampling range."
+        )
 
     # Minimum at log(x*) = -b / (2a)
     log_x_opt = -b / (2 * a)

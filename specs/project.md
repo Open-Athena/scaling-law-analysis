@@ -28,7 +28,7 @@ The purpose of this project is to:
    - Fit parabolas to L vs log(N) for each budget → extract N*
    - Fit parabolas to L vs log(D) for each budget → extract D*
    - Fit power laws: N* ∝ C^a and D* ∝ C^b
-   - Note: The C=6ND approximation is used only for IsoFLOP sampling, never in fitting or visualization
+   - Note: The C=6ND approximation should ONLY be used for IsoFLOP sampling and inferring true optimal values, never for exponent inference/fitting
 
 3. Compare recovered exponents to true values:
    - True a = β/(α+β) (N* exponent)
