@@ -1,5 +1,5 @@
 ---
-name: technical-reviewer
+name: reviewer
 model: gpt-5.2-codex
 description: Reviews code changes for mathematical, scientific, and technical correctness. Use proactively after modifying code involving equations, algorithms, statistical methods, or scientific computations.
 readonly: true

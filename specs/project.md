@@ -52,7 +52,7 @@ Produce a single figure with three rows:
 3. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
 
 
-### Experiment 2: Analytical Error
+### Experiment 2: Empirical Sensitivity
 
 Hypothesis: It is possible to analytically model the error in the inferred exponents via Approach 2 as a function of compute budget and grid resolution
 
