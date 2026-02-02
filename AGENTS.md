@@ -1,6 +1,7 @@
 ## Workflow
 - This project follows Spec-Driven Development (SDD) practices. Adherence to these instructions is mandatory for all agentic work.
 - `specs/project.md` is the **sole source of truth** for project intent, requirements, and specifications.
+- **Never add experimental results or findings to specs.** The spec defines what to build and test, not what was observed. Results belong in code comments, notebooks, or separate analysis documents.
 - Process:
     1.  **Consult Specs**: Always read `specs/project.md` before starting any work.
     2.  **Align Planning**: Ensure your implementation plans directly address the requirements in the specs.

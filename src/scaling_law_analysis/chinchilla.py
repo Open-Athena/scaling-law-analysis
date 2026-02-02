@@ -24,22 +24,22 @@ CHINCHILLA_PARAMS = {
 def chinchilla_loss(
     N: np.ndarray,
     D: np.ndarray,
-    A: float = CHINCHILLA_PARAMS["A"],
-    B: float = CHINCHILLA_PARAMS["B"],
-    E: float = CHINCHILLA_PARAMS["E"],
-    alpha: float = CHINCHILLA_PARAMS["alpha"],
-    beta: float = CHINCHILLA_PARAMS["beta"],
+    alpha: float,
+    beta: float,
+    A: float,
+    B: float,
+    E: float,
 ) -> np.ndarray:
     """Compute Chinchilla loss L(N, D) = E + A/N^α + B/D^β.
 
     Args:
         N: Number of parameters (can be array)
         D: Number of training tokens (can be array)
+        alpha: Parameter scaling exponent
+        beta: Data scaling exponent
         A: Parameter scaling coefficient
         B: Data scaling coefficient
         E: Irreducible loss (entropy of natural text)
-        alpha: Parameter scaling exponent
-        beta: Data scaling exponent
 
     Returns:
         Loss values corresponding to each (N, D) pair
@@ -49,10 +49,10 @@ def chinchilla_loss(
 
 def optimal_allocation(
     C: float,
-    A: float = CHINCHILLA_PARAMS["A"],
-    B: float = CHINCHILLA_PARAMS["B"],
-    alpha: float = CHINCHILLA_PARAMS["alpha"],
-    beta: float = CHINCHILLA_PARAMS["beta"],
+    alpha: float,
+    beta: float,
+    A: float,
+    B: float,
 ) -> tuple[float, float]:
     """Compute optimal N* and D* for a given compute budget.
 
@@ -65,8 +65,8 @@ def optimal_allocation(
 
     Args:
         C: Compute budget in FLOPs
-        A, B: Scaling coefficients
         alpha, beta: Scaling exponents
+        A, B: Scaling coefficients
 
     Returns:
         Tuple of (N*, D*) optimal parameter and token counts
@@ -129,12 +129,13 @@ def compute_center_offset(
 def isoflop_sample(
     C: float,
     n_points: int,
-    log_range: float = 1.0,
-    center_offset: float = 0.0,
-    A: float = CHINCHILLA_PARAMS["A"],
-    B: float = CHINCHILLA_PARAMS["B"],
-    alpha: float = CHINCHILLA_PARAMS["alpha"],
-    beta: float = CHINCHILLA_PARAMS["beta"],
+    log_range: float,
+    center_offset: float,
+    alpha: float,
+    beta: float,
+    A: float,
+    B: float,
+    E: float,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Sample points along an IsoFLOP contour (constant compute budget).
 
@@ -147,12 +148,14 @@ def isoflop_sample(
         log_range: Range in log10 space around optimal N (±log_range)
         center_offset: Offset in log10 space to shift sampling center from optimal N*
                        Positive values shift center to larger N, negative to smaller N
-        A, B, alpha, beta: Chinchilla parameters
+        alpha, beta: Scaling exponents
+        A, B: Scaling coefficients
+        E: Irreducible loss
 
     Returns:
         Tuple of (N, D, L) arrays - parameter counts, token counts, and losses
     """
-    N_opt, _ = optimal_allocation(C, A, B, alpha, beta)
+    N_opt, _ = optimal_allocation(C=C, alpha=alpha, beta=beta, A=A, B=B)
 
     # Sample N logarithmically around (possibly offset) center
     log_N_center = np.log10(N_opt) + center_offset
@@ -164,7 +167,7 @@ def isoflop_sample(
     D = C / (6 * N)
 
     # Compute loss at each point
-    L = chinchilla_loss(N, D, A, B, alpha=alpha, beta=beta)
+    L = chinchilla_loss(N=N, D=D, alpha=alpha, beta=beta, A=A, B=B, E=E)
 
     return N, D, L
 
@@ -238,12 +241,13 @@ def approach2_recover(
     compute_budgets: np.ndarray,
     drift_rate: float,
     center_scale: float,
-    n_points: int = 10,
-    log_range: float = 1.0,
-    A: float = CHINCHILLA_PARAMS["A"],
-    B: float = CHINCHILLA_PARAMS["B"],
-    alpha: float = CHINCHILLA_PARAMS["alpha"],
-    beta: float = CHINCHILLA_PARAMS["beta"],
+    n_points: int,
+    log_range: float,
+    alpha: float,
+    beta: float,
+    A: float,
+    B: float,
+    E: float,
 ) -> Approach2Result:
     """Recover scaling exponents using Chinchilla Approach 2.
 
@@ -264,7 +268,9 @@ def approach2_recover(
                       This is independent of and additive with drift_rate in log space.
         n_points: Number of points per IsoFLOP curve
         log_range: Sampling range in log10 space around optimal N (and D)
-        A, B, alpha, beta: Chinchilla parameters for data generation
+        alpha, beta: Scaling exponents
+        A, B: Scaling coefficients
+        E: Irreducible loss
 
     Returns:
         Approach2Result with recovered exponents a and b
@@ -276,8 +282,23 @@ def approach2_recover(
     D_opts = []
 
     for C in compute_budgets:
-        center_offset = compute_center_offset(C, compute_budgets, drift_rate, center_scale)
-        N, D, L = isoflop_sample(C, n_points, log_range, center_offset, A, B, alpha, beta)
+        center_offset = compute_center_offset(
+            C=C,
+            compute_budgets=compute_budgets,
+            drift_rate=drift_rate,
+            center_scale=center_scale,
+        )
+        N, D, L = isoflop_sample(
+            C=C,
+            n_points=n_points,
+            log_range=log_range,
+            center_offset=center_offset,
+            alpha=alpha,
+            beta=beta,
+            A=A,
+            B=B,
+            E=E,
+        )
         
         # Fit parabola to L vs log(N) to find N*
         fit_N = fit_parabola(np.log10(N), L)

@@ -28,6 +28,7 @@ The purpose of this project is to:
    - Fit parabolas to L vs log(N) for each budget → extract N*
    - Fit parabolas to L vs log(D) for each budget → extract D*
    - Fit power laws: N* ∝ C^a and D* ∝ C^b
+   - Note: The C=6ND approximation is used only for IsoFLOP sampling, never in fitting or visualization
 
 3. Compare recovered exponents to true values:
    - True a = β/(α+β) (N* exponent)
@@ -35,15 +36,20 @@ The purpose of this project is to:
 
 **Visualization**:
 
-Produce a single figure with two components:
+Produce a single figure with three rows:
 
 1. **IsoFLOP curves panel**: For 3 representative sampling ranges (narrow, medium, wide), show:
    - Sampled loss values along each IsoFLOP contour
    - Fitted parabolas overlaid on the data
    - True optimal N* marked distinctly from inferred N*
-   - This should reveal whether inferred minima diverge from true minima as sampling range increases
 
-2. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
+2. **Power-law fits panel**: For the same 3 sampling ranges, show:
+   - Inferred N* and D* vs compute budget (dual y-axes)
+   - Power-law fit lines for inferred values (solid)
+   - True N* and D* with connecting lines (dashed)
+   - This reveals slope divergence between true and inferred optima
+
+3. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
 
 
 ### Experiment 2: Analytical Error
@@ -71,7 +77,6 @@ Steps:
 - What is Chinchilla Approach 3?
   - This approach fits the non-linear loss function directly given empirical data that is not necessarily sampled along IsoFLOP contours
   - It is known to be very sensitive to initialization and often unstable
-
 
 ## Core Objectives
 - Simulate loss curves based on parameters (alpha, beta, etc.).
