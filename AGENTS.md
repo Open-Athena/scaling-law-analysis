@@ -17,3 +17,5 @@ This project follows SDD practices. Adherence to these instructions is mandatory
 ## Implementation
 - Use uv to manage dependencies
 - Use uv to run all python commands
+- Always use absolute imports (e.g., `from scaling_law_simulation.chinchilla import func`)
+- Do not create `__init__.py` files with re-exports; keep them empty or omit them

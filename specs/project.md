@@ -12,12 +12,35 @@ The purpose of this project is to:
 
 ### Experiment 1: Empirical Error
 
-Hypothesis: The accuracy of Chinchilla Approach 2 is dependent on the accuracy of the second-order Taylor expansion underlying the validity of parabolic fits.
+**Hypothesis**: The accuracy of Chinchilla Approach 2 is dependent on the validity of the parabolic approximation. Sampling farther from the optimum introduces systematic bias.
 
-Steps:
-- Sample data from a Chinchilla loss surface with no statistical noise
-- Use Chinchilla Approach 2 to infer exponents from the sampled data
-- Show how error in this inferences changes with grid step size and alpha/beta assymetry
+**Method**:
+
+1. Generate synthetic loss data from: L(N, D) = E + A/N^α + B/D^β
+   - Ground truth: α=0.34, β=0.28, A=406.4, B=410.7, E=1.69
+   - No statistical noise (pure deterministic loss surface)
+
+2. For each sampling range (narrow to wide):
+   - Sample IsoFLOP contours at 5 compute budgets: 10^17 to 10^21 FLOPs
+   - Fit parabolas to log(L) vs log(N) for each budget → extract N*
+   - Fit power laws: N* ∝ C^a and D* ∝ C^b
+
+3. Compare recovered exponents to true values:
+   - True a = β/(α+β) (N* exponent)
+   - True b = α/(α+β) (D* exponent)
+
+**Visualization**:
+
+Produce a single figure with two components:
+
+1. **IsoFLOP curves panel**: For 3 representative sampling ranges (narrow, medium, wide), show:
+   - Sampled loss values along each IsoFLOP contour
+   - Fitted parabolas overlaid on the data
+   - True optimal N* marked distinctly from inferred N*
+   - This should reveal whether inferred minima diverge from true minima as sampling range increases
+
+2. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
+
 
 ### Experiment 2: Analytical Error
 
