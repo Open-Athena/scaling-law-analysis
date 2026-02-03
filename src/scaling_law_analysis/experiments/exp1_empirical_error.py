@@ -13,6 +13,7 @@ from pathlib import Path
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
+    Approach2Result,
     compute_center_offset,
     isoflop_sample,
     fit_approach2,
@@ -31,6 +32,23 @@ def log_range_to_label(log_range: float) -> str:
     else:
         return f"±{factor:.1f}x"
 
+def compute_true_intercepts(loss) -> tuple[float, float]:
+    """Compute true power-law intercepts for N* and D* vs C.
+    
+    The true power laws are:
+        N* = G · (C/6)^a  →  log10(N*) = a·log10(C) + (log10(G) - a·log10(6))
+        D* = (1/G) · (C/6)^b  →  log10(D*) = b·log10(C) + (-log10(G) - b·log10(6))
+    
+    Returns:
+        Tuple of (true_a_intercept, true_b_intercept) in log10 space
+    """
+    log_G = np.log10(loss.G)
+    log_6 = np.log10(6)
+    true_a_intercept = log_G - loss.a * log_6
+    true_b_intercept = -log_G - loss.b * log_6
+    return true_a_intercept, true_b_intercept
+
+
 def run_experiment(
     sim_config: SimulationConfig,
     compute_budgets: np.ndarray,
@@ -46,12 +64,23 @@ def run_experiment(
         n_points: Number of points per IsoFLOP curve
 
     Returns:
-        Dictionary with results for a and b exponents
+        Dictionary with results for a and b exponents, intercepts, and per-budget optima
     """
     loss = sim_config.loss
     a_recovered = []
     b_recovered = []
+    a_intercept_recovered = []
+    b_intercept_recovered = []
     results = []
+    
+    # Per-budget optimum errors: shape (n_log_ranges, n_budgets)
+    N_opt_errors = []
+    D_opt_errors = []
+
+    # Compute true values
+    true_N_opts = np.array([loss.N_opt(C) for C in compute_budgets])
+    true_D_opts = np.array([loss.D_opt(C) for C in compute_budgets])
+    true_a_intercept, true_b_intercept = compute_true_intercepts(loss)
 
     for log_range in log_ranges:
         result = fit_approach2(
@@ -64,27 +93,49 @@ def run_experiment(
         )
         a_recovered.append(result.a)
         b_recovered.append(result.b)
+        a_intercept_recovered.append(result.a_intercept)
+        b_intercept_recovered.append(result.b_intercept)
         results.append(result)
+        
+        # Per-budget relative errors in N* and D*
+        N_opt_errors.append((result.N_opts - true_N_opts) / true_N_opts)
+        D_opt_errors.append((result.D_opts - true_D_opts) / true_D_opts)
 
     a_recovered = np.array(a_recovered)
     b_recovered = np.array(b_recovered)
+    a_intercept_recovered = np.array(a_intercept_recovered)
+    b_intercept_recovered = np.array(b_intercept_recovered)
+    N_opt_errors = np.array(N_opt_errors)  # shape: (n_log_ranges, n_budgets)
+    D_opt_errors = np.array(D_opt_errors)
 
     return {
         "config": sim_config,
+        "compute_budgets": compute_budgets,
         "log_ranges": log_ranges,
+        # Exponents
         "true_a": loss.a,
         "true_b": loss.b,
         "a_recovered": a_recovered,
         "b_recovered": b_recovered,
         "a_error": (a_recovered - loss.a) / loss.a,
         "b_error": (b_recovered - loss.b) / loss.b,
+        # Intercepts
+        "true_a_intercept": true_a_intercept,
+        "true_b_intercept": true_b_intercept,
+        "a_intercept_recovered": a_intercept_recovered,
+        "b_intercept_recovered": b_intercept_recovered,
+        "a_intercept_error": (a_intercept_recovered - true_a_intercept) / abs(true_a_intercept),
+        "b_intercept_error": (b_intercept_recovered - true_b_intercept) / abs(true_b_intercept),
+        # Per-budget optimum errors
+        "N_opt_errors": N_opt_errors,
+        "D_opt_errors": D_opt_errors,
         "results": results,
     }
 
 
 def plot_isoflop_fits(
     ax: plt.Axes,
-    result,
+    result: Approach2Result,
     compute_budgets: np.ndarray,
     log_range: float,
     sim_config: SimulationConfig,
@@ -168,7 +219,7 @@ def plot_isoflop_fits(
 
 def plot_power_law_fits(
     ax: plt.Axes,
-    result,
+    result: Approach2Result,
     compute_budgets: np.ndarray,
     sim_config: SimulationConfig,
     title: str = "",
@@ -262,11 +313,11 @@ def plot_power_law_fits(
     ax.legend(lines1 + lines2, labels1 + labels2, loc="lower right", fontsize=7)
 
 
-def plot_error_vs_grid_size(
+def plot_exponent_error(
     ax: plt.Axes,
     experiment_results: dict,
 ):
-    """Plot exponent recovery error vs grid step size.
+    """Plot exponent recovery error vs sampling range.
 
     Args:
         ax: Matplotlib axes to plot on
@@ -276,15 +327,14 @@ def plot_error_vs_grid_size(
     a_error = experiment_results["a_error"] * 100  # Convert to %
     b_error = experiment_results["b_error"] * 100
 
-    ax.plot(log_ranges, a_error, "o-", label="a error (N* exponent)", color="C0", markersize=4)
-    ax.plot(log_ranges, b_error, "s-", label="b error (D* exponent)", color="C2", markersize=4)
+    ax.plot(log_ranges, a_error, "o-", label="a (N* exponent)", color="C0", markersize=4)
+    ax.plot(log_ranges, b_error, "s-", label="b (D* exponent)", color="C2", markersize=4)
 
     ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
     
-    # Primary x-axis: log_range values
-    ax.set_xlabel("Sampling range around optimal N")
+    ax.set_xlabel("Sampling range")
     ax.set_ylabel("Relative error (%)")
-    ax.set_title("Exponent Recovery Error vs Sampling Range")
+    ax.set_title("Exponent Error")
     
     # Add secondary x-axis labels showing intuitive range
     tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
@@ -292,7 +342,98 @@ def plot_error_vs_grid_size(
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(tick_labels)
     
-    ax.legend()
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+
+def plot_intercept_error(
+    ax: plt.Axes,
+    experiment_results: dict,
+):
+    """Plot intercept recovery error vs sampling range.
+
+    Args:
+        ax: Matplotlib axes to plot on
+        experiment_results: Results from run_experiment
+    """
+    log_ranges = experiment_results["log_ranges"]
+    a_intercept_error = experiment_results["a_intercept_error"] * 100  # Convert to %
+    b_intercept_error = experiment_results["b_intercept_error"] * 100
+
+    ax.plot(log_ranges, a_intercept_error, "o-", label="a₀ (N* intercept)", color="C0", markersize=4)
+    ax.plot(log_ranges, b_intercept_error, "s-", label="b₀ (D* intercept)", color="C2", markersize=4)
+
+    ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
+    
+    ax.set_xlabel("Sampling range")
+    ax.set_ylabel("Relative error (%)")
+    ax.set_title("Intercept Error")
+    
+    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+    tick_labels = [log_range_to_label(lr) for lr in tick_positions]
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels)
+    
+    ax.legend(fontsize=8)
+    ax.grid(True, alpha=0.3)
+
+
+def plot_optimum_error(
+    ax: plt.Axes,
+    experiment_results: dict,
+):
+    """Plot per-budget optimum error as jitter plot vs sampling range.
+
+    Shows relative error in parabola-inferred N* and D* compared to true values,
+    with points for each compute budget. Opacity distinguishes compute budgets.
+
+    Args:
+        ax: Matplotlib axes to plot on
+        experiment_results: Results from run_experiment
+    """
+    log_ranges = experiment_results["log_ranges"]
+    compute_budgets = experiment_results["compute_budgets"]
+    N_opt_errors = experiment_results["N_opt_errors"] * 100  # (n_log_ranges, n_budgets)
+    D_opt_errors = experiment_results["D_opt_errors"] * 100
+    
+    n_budgets = len(compute_budgets)
+    
+    # Opacity increases with compute budget (darker = higher compute)
+    alphas = np.linspace(0.3, 1.0, n_budgets)
+    
+    for i, C in enumerate(compute_budgets):
+        ax.scatter(
+            log_ranges,
+            N_opt_errors[:, i],
+            c="C0",
+            alpha=alphas[i],
+            s=20,
+            marker="o",
+        )
+        ax.scatter(
+            log_ranges,
+            D_opt_errors[:, i],
+            c="C2",
+            alpha=alphas[i],
+            s=20,
+            marker="s",
+        )
+
+    ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
+    
+    ax.set_xlabel("Sampling range")
+    ax.set_ylabel("Relative error (%)")
+    ax.set_title("Parabola Optimum Error")
+    
+    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+    tick_labels = [log_range_to_label(lr) for lr in tick_positions]
+    ax.set_xticks(tick_positions)
+    ax.set_xticklabels(tick_labels)
+    
+    # Custom legend showing N* and D* with opacity note
+    ax.scatter([], [], c="C0", marker="o", s=20, alpha=1.0, label="N*")
+    ax.scatter([], [], c="C2", marker="s", s=20, alpha=1.0, label="D*")
+    ax.legend(fontsize=8, loc="upper left", title="light→dark = C↑", title_fontsize=7)
     ax.grid(True, alpha=0.3)
 
 
@@ -305,7 +446,7 @@ def create_figure(
 
     Row 1: IsoFLOP curves with parabola fits for 3 grid sizes
     Row 2: Power-law fits (N* and D* vs compute) for same 3 grid sizes
-    Row 3: Error plot spanning all columns
+    Row 3: Three error analysis subplots (exponent, intercept, optimum)
 
     Args:
         experiment_results: Results from run_experiment
@@ -358,9 +499,15 @@ def create_figure(
             show_ylabel=(i == 0),
         )
 
-    # Row 3: Error plot (spans all columns)
-    ax_error = fig.add_subplot(gs[2, :])
-    plot_error_vs_grid_size(ax_error, experiment_results)
+    # Row 3: Three error analysis subplots
+    ax_exponent = fig.add_subplot(gs[2, 0])
+    plot_exponent_error(ax_exponent, experiment_results)
+    
+    ax_intercept = fig.add_subplot(gs[2, 1])
+    plot_intercept_error(ax_intercept, experiment_results)
+    
+    ax_optimum = fig.add_subplot(gs[2, 2])
+    plot_optimum_error(ax_optimum, experiment_results)
 
     bias_parts = []
     if sim_config.drift_rate != 0.0:

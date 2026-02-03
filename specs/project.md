@@ -49,7 +49,12 @@ Produce a single figure with three rows:
    - True N* and D* with connecting lines (dashed)
    - This reveals slope divergence between true and inferred optima
 
-3. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
+3. **Error analysis panel**: Three subplots showing relative error as a function of sampling range:
+   - **Exponent error**: Relative error in recovered scaling exponents a and b
+   - **Intercept error**: Relative error in power-law fit intercepts a₀ and b₀ (from N* = a₀·C^a and D* = b₀·C^b)
+   - **Optimum error**: Relative error in parabola-inferred N* and D* compared to true optimal values, shown per compute budget (not aggregated)
+   
+   This reveals whether error grows systematically with wider sampling and which quantities are most sensitive.
 
 
 ### Experiment 2: Exponent Imbalance Sensitivity
