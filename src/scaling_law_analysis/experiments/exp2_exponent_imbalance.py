@@ -34,16 +34,20 @@ def plot_combined_errors(
         ax_a: Axes for 'a' exponent errors
         ax_b: Axes for 'b' exponent errors
     """
-    colors = plt.cm.viridis(np.linspace(0, 0.9, len(all_results)))
+    # Sort by imbalance ratio for consistent legend ordering
+    sorted_results = sorted(
+        all_results, key=lambda r: r["config"].loss.imbalance_ratio
+    )
+    colors = plt.cm.viridis(np.linspace(0, 0.9, len(sorted_results)))
 
-    for i, results in enumerate(all_results):
+    for i, results in enumerate(sorted_results):
         sim_config = results["config"]
         loss = sim_config.loss
         log_ranges = results["log_ranges"]
         a_error = results["a_error"] * 100
         b_error = results["b_error"] * 100
 
-        label = f"{sim_config.name} (α={loss.alpha}, β={loss.beta})"
+        label = f"{sim_config.name} (α={loss.alpha:.3g}, β={loss.beta:.3g}, ratio={loss.imbalance_ratio:.2f})"
 
         ax_a.plot(
             log_ranges, a_error,
@@ -64,7 +68,7 @@ def plot_combined_errors(
         ax.grid(True, alpha=0.3)
 
         # Set x-axis labels
-        tick_positions = [0.05, 0.5, 1.0, 1.5, 2.0]
+        tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
         tick_labels = [log_range_to_label(lr) for lr in tick_positions]
         ax.set_xticks(tick_positions)
         ax.set_xticklabels(tick_labels)
@@ -102,7 +106,7 @@ def main():
 
     # Experiment parameters (same as Experiment 1)
     compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-    log_ranges = np.linspace(0.05, 2.0, 20)
+    log_ranges = np.linspace(0.3, 2.0, 20)  # ±2x to ±100x
     n_points = 15
 
     # Output directory for Experiment 2
@@ -135,7 +139,7 @@ def main():
         # Update title for Experiment 2 context
         fig.suptitle(
             f"Experiment 2: {sim_config.name} configuration (α/β ratio = {loss.imbalance_ratio:.2f})\n"
-            f"α={loss.alpha}, β={loss.beta} → a={loss.a:.4f}, b={loss.b:.4f}",
+            f"α={loss.alpha:.3g}, β={loss.beta:.3g} → a={loss.a:.4f}, b={loss.b:.4f}",
             fontsize=11,
             y=0.98,
         )

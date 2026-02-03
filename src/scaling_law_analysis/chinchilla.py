@@ -153,9 +153,11 @@ def compute_center_offset(
     """Compute the sampling center offset for a given compute budget.
 
     Combines two independent effects:
-    1. drift_rate: Linear drift in log-compute space
-       - At min compute: offset = -drift_rate (smaller N)
-       - At max compute: offset = +drift_rate (larger N)
+    1. drift_rate: Linear drift in log-compute space starting from zero at the
+       lowest compute budget
+       - At min compute: offset = 0 (no drift)
+       - At max compute: offset = -drift_rate (smaller N)
+       This means all budgets except the first undershoot toward smaller N.
     2. center_scale: Constant multiplicative factor applied to all centers
        - scale > 1: all centers shifted right (larger N)
        - scale < 1: all centers shifted left (smaller N)
@@ -177,15 +179,15 @@ def compute_center_offset(
     if center_scale != 1.0:
         offset += np.log10(center_scale)
 
-    # Add linear drift offset
+    # Add linear drift offset (0 at min compute, -drift_rate at max compute)
     if drift_rate != 0.0:
         log_C_all = np.log10(compute_budgets)
-        log_C_mid = (log_C_all.min() + log_C_all.max()) / 2
-        log_C_half_range = (log_C_all.max() - log_C_all.min()) / 2
+        log_C_min = log_C_all.min()
+        log_C_range = log_C_all.max() - log_C_min
 
-        if log_C_half_range > 0:
-            normalized_log_C = (np.log10(C) - log_C_mid) / log_C_half_range
-            offset += drift_rate * normalized_log_C
+        if log_C_range > 0:
+            normalized_log_C = (np.log10(C) - log_C_min) / log_C_range
+            offset -= drift_rate * normalized_log_C
 
     return offset
 
@@ -307,7 +309,7 @@ def fit_parabola(
     )
 
 
-def approach2_recover(
+def fit_approach2(
     compute_budgets: np.ndarray,
     surface: LossSurface,
     drift_rate: float = 0.0,
@@ -325,9 +327,9 @@ def approach2_recover(
         surface: Loss surface configuration
         drift_rate: Rate at which sampling center drifts from optimal as a
                     function of compute budget. When non-zero, centers are shifted
-                    left (smaller N) at low compute and right (larger N) at high
-                    compute. The drift is linear in log-compute space and measured
-                    in log10 units of N.
+                    left (smaller N) at all budgets except the lowest, where drift
+                    is zero. The drift is linear in log-compute space (0 at min,
+                    -drift_rate at max) and measured in log10 units of N.
         center_scale: Constant multiplier applied to all sampling centers.
                       When 1.0, centers are at true optimal N*.
                       When >1, all centers are shifted right (larger N).

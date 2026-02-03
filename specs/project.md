@@ -20,10 +20,10 @@ The purpose of this project is to:
    - Ground truth: α=0.34, β=0.28, A=406.4, B=410.7, E=1.69
    - No statistical noise (pure deterministic loss surface)
 
-2. For each sampling range (narrow to wide):
+2. For each sampling range (from ±2x to ±100x around the optimum):
    - Sample IsoFLOP contours at 5 compute budgets: 10^17 to 10^21 FLOPs
    - Optionally apply sampling center bias via:
-     - drift_rate: linear drift from optimal (left at low compute, right at high compute)
+     - drift_rate: asymmetric linear drift from optimal (0 at lowest compute budget, -drift_rate at highest, causing undershoot toward smaller N)
      - center_scale: constant multiplier applied to all sampling centers
    - Fit parabolas to L vs log(N) for each budget → extract N*
    - Fit parabolas to L vs log(D) for each budget → extract D*
@@ -58,16 +58,17 @@ Produce a single figure with three rows:
 
 **Method**:
 
-1. Generate synthetic loss data using the same procedure as Experiment 1, across five loss surface configurations:
-   - **Symmetric**: α=0.31, β=0.31, A=400, B=400 (fully symmetric)
-   - **Balanced**: α=0.31, β=0.31 (equal exponents, Chinchilla A/B)
-   - **Default**: α=0.34, β=0.28 (baseline from Experiment 1)
-   - **Moderate imbalance**: α=0.372, β=0.248 (α is 1.5× larger, sum=0.62)
-   - **High imbalance**: α=0.496, β=0.124 (α is 4× larger, sum=0.62)
+1. Generate synthetic loss data using the same procedure as Experiment 1, across six loss surface configurations defined by their α/β ratio (keeping α+β=0.62 constant):
+   - **Reference**: α=0.34, β=0.28 (Chinchilla paper defaults, ratio≈1.21)
+   - **Balanced**: ratio=1.0 (equal exponents)
+   - **Small imbalance**: ratio=1.5
+   - **Moderate imbalance**: ratio=2.0
+   - **High imbalance**: ratio=3.0
+   - **Extreme imbalance**: ratio=9.0
 
 2. For each configuration:
-   - Use fixed drift_rate=0.05 and center_scale=1.0
-   - Sweep sampling ranges as in Experiment 1
+   - Use fixed drift_rate=0.2 and center_scale=1.0
+   - Sweep sampling ranges from ±2x to ±100x around the optimum
    - Recover exponents a and b via Approach 2
 
 **Visualization**:

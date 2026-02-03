@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from scaling_law_analysis.chinchilla import LossSurface, DEFAULT_LOSS_SURFACE, CHINCHILLA_PARAMS
+from scaling_law_analysis.chinchilla import LossSurface, DEFAULT_LOSS_SURFACE
 
 
 @dataclass
@@ -18,41 +18,71 @@ class SimulationConfig:
 
     name: str
     loss: LossSurface
-    drift_rate: float = 0.05
+    drift_rate: float = 0.2
     center_scale: float = 1.0
 
 
+# Sum of alpha + beta (matches Chinchilla paper: 0.34 + 0.28 = 0.62)
+EXPONENT_SUM = 0.62
+
+
+def exponents_from_ratio(ratio: float) -> tuple[float, float]:
+    """Compute alpha and beta from their ratio, keeping sum constant.
+
+    Args:
+        ratio: Desired alpha/beta ratio
+
+    Returns:
+        Tuple of (alpha, beta) where alpha + beta = EXPONENT_SUM
+    """
+    beta = EXPONENT_SUM / (1 + ratio)
+    alpha = EXPONENT_SUM * ratio / (1 + ratio)
+    return alpha, beta
+
+
 # Predefined configurations for Experiment 2
-SYMMETRIC_CONFIG = SimulationConfig(
-    name="symmetric",
-    loss=LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=CHINCHILLA_PARAMS["E"]),
-)
-
-BALANCED_CONFIG = SimulationConfig(
-    name="balanced",
-    loss=LossSurface.from_chinchilla(alpha=0.31, beta=0.31),
-)
-
-DEFAULT_CONFIG = SimulationConfig(
-    name="default",
+# Reference: Chinchilla paper values (ratio ≈ 1.21)
+REFERENCE_CONFIG = SimulationConfig(
+    name="reference",
     loss=DEFAULT_LOSS_SURFACE,
 )
 
-MODERATE_IMBALANCE_CONFIG = SimulationConfig(
-    name="moderate_imbalance",
-    loss=LossSurface.from_chinchilla(alpha=0.372, beta=0.248),
+# Balanced: ratio = 1 (equal exponents)
+BALANCED_CONFIG = SimulationConfig(
+    name="balanced",
+    loss=LossSurface.from_chinchilla(*exponents_from_ratio(1)),
 )
 
+# Small imbalance: ratio = 1.5
+SMALL_IMBALANCE_CONFIG = SimulationConfig(
+    name="small_imbalance",
+    loss=LossSurface.from_chinchilla(*exponents_from_ratio(1.5)),
+)
+
+# Moderate imbalance: ratio = 2
+MODERATE_IMBALANCE_CONFIG = SimulationConfig(
+    name="moderate_imbalance",
+    loss=LossSurface.from_chinchilla(*exponents_from_ratio(2)),
+)
+
+# High imbalance: ratio = 3
 HIGH_IMBALANCE_CONFIG = SimulationConfig(
     name="high_imbalance",
-    loss=LossSurface.from_chinchilla(alpha=0.496, beta=0.124),
+    loss=LossSurface.from_chinchilla(*exponents_from_ratio(3)),
+)
+
+# Extreme imbalance: ratio = 9
+EXTREME_IMBALANCE_CONFIG = SimulationConfig(
+    name="extreme_imbalance",
+    loss=LossSurface.from_chinchilla(*exponents_from_ratio(9)),
 )
 
 # All Experiment 2 configurations
 EXP2_CONFIGS = [
-    SYMMETRIC_CONFIG,
+    REFERENCE_CONFIG,
     BALANCED_CONFIG,
-    DEFAULT_CONFIG,
+    SMALL_IMBALANCE_CONFIG,
     MODERATE_IMBALANCE_CONFIG,
     HIGH_IMBALANCE_CONFIG,
+    EXTREME_IMBALANCE_CONFIG,
 ]

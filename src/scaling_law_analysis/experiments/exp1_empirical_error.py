@@ -15,9 +15,9 @@ from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
     compute_center_offset,
     isoflop_sample,
-    approach2_recover,
+    fit_approach2,
 )
-from scaling_law_analysis.experiments.common import SimulationConfig, DEFAULT_CONFIG
+from scaling_law_analysis.experiments.common import SimulationConfig, BALANCED_CONFIG
 
 
 def log_range_to_label(log_range: float) -> str:
@@ -54,7 +54,7 @@ def run_experiment(
     results = []
 
     for log_range in log_ranges:
-        result = approach2_recover(
+        result = fit_approach2(
             compute_budgets=compute_budgets,
             surface=loss,
             drift_rate=sim_config.drift_rate,
@@ -239,7 +239,7 @@ def plot_power_law_fits(
     # Add exponent annotations
     ax.text(
         0.05, 0.95,
-        f"a={result.a:.3f} (true={loss.a:.3f})",
+        f"a={result.a:.4f} (true={loss.a:.4f})",
         transform=ax.transAxes,
         fontsize=8,
         verticalalignment="top",
@@ -247,7 +247,7 @@ def plot_power_law_fits(
     )
     ax.text(
         0.05, 0.85,
-        f"b={result.b:.3f} (true={loss.b:.3f})",
+        f"b={result.b:.4f} (true={loss.b:.4f})",
         transform=ax.transAxes,
         fontsize=8,
         verticalalignment="top",
@@ -287,7 +287,7 @@ def plot_error_vs_grid_size(
     ax.set_title("Exponent Recovery Error vs Sampling Range")
     
     # Add secondary x-axis labels showing intuitive range
-    tick_positions = [0.05, 0.5, 1.0, 1.5, 2.0]
+    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(tick_labels)
@@ -370,7 +370,7 @@ def create_figure(
     bias_str = f", {', '.join(bias_parts)}" if bias_parts else ""
     fig.suptitle(
         f"Experiment 1: Approach 2 Accuracy vs Grid Resolution{bias_str}\n"
-        f"True: α={loss.alpha}, β={loss.beta} → a=β/(α+β)={loss.a:.4f}, b=α/(α+β)={loss.b:.4f}",
+        f"True: α={loss.alpha:.3g}, β={loss.beta:.3g} → a=β/(α+β)={loss.a:.4f}, b=α/(α+β)={loss.b:.4f}",
         fontsize=11,
         y=0.98,
     )
@@ -385,11 +385,11 @@ def main(
     """Run Experiment 1 and generate output figure.
 
     Args:
-        sim_config: Simulation configuration. Defaults to DEFAULT_CONFIG.
+        sim_config: Simulation configuration. Defaults to BALANCED_CONFIG.
         output_path: Path to save the figure. Defaults to results/exp1_empirical_error.png.
     """
     if sim_config is None:
-        sim_config = DEFAULT_CONFIG
+        sim_config = BALANCED_CONFIG
 
     loss = sim_config.loss
 
@@ -399,7 +399,7 @@ def main(
 
     # Experiment parameters
     compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-    log_ranges = np.linspace(0.05, 2.0, 20)  # Grid step sizes to test
+    log_ranges = np.linspace(0.3, 2.0, 20)  # Grid step sizes to test (±2x to ±100x)
     n_points = 15  # Points per IsoFLOP curve
 
     print(f"\nCompute budgets: {compute_budgets}")
