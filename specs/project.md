@@ -52,14 +52,37 @@ Produce a single figure with three rows:
 3. **Error analysis panel**: Plot relative error in recovered exponents (a and b) as a function of sampling range. This should reveal whether error grows systematically with wider sampling.
 
 
-### Experiment 2: Empirical Sensitivity
+### Experiment 2: Exponent Imbalance Sensitivity
+
+**Hypothesis**: The accuracy of Chinchilla Approach 2 is sensitive to scaling exponent imbalance. Greater asymmetry between α and β leads to larger recovery errors.
+
+**Method**:
+
+1. Generate synthetic loss data using the same procedure as Experiment 1, across five loss surface configurations:
+   - **Symmetric**: α=0.31, β=0.31, A=400, B=400 (fully symmetric)
+   - **Balanced**: α=0.31, β=0.31 (equal exponents, Chinchilla A/B)
+   - **Default**: α=0.34, β=0.28 (baseline from Experiment 1)
+   - **Moderate imbalance**: α=0.372, β=0.248 (α is 1.5× larger, sum=0.62)
+   - **High imbalance**: α=0.496, β=0.124 (α is 4× larger, sum=0.62)
+
+2. For each configuration:
+   - Use fixed drift_rate=0.05 and center_scale=1.0
+   - Sweep sampling ranges as in Experiment 1
+   - Recover exponents a and b via Approach 2
+
+**Visualization**:
+
+Produce a single figure showing relative error in recovered exponents (a and b) as a function of sampling range, with one curve per configuration. This reveals how exponent imbalance affects sensitivity to sampling range.
+
+
+### Experiment 3: Analytical Error
 
 Hypothesis: It is possible to analytically model the error in the inferred exponents via Approach 2 as a function of compute budget and grid resolution
 
 Steps:
 - TODO: complete
 
-### Experiment 3: Parametric fits
+### Experiment 4: Parametric fits
 
 Hypothesis: It is possible to fit scaling laws parametrically with variable projection and grid search (over alpha/beta) in a manner that is both more stable and more accurate than Chinchilla Approach 3
 

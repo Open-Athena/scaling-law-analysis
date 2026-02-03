@@ -21,63 +21,127 @@ CHINCHILLA_PARAMS = {
 }
 
 
-def chinchilla_loss(
-    N: np.ndarray,
-    D: np.ndarray,
-    alpha: float,
-    beta: float,
-    A: float,
-    B: float,
-    E: float,
-) -> np.ndarray:
-    """Compute Chinchilla loss L(N, D) = E + A/N^α + B/D^β.
+@dataclass(frozen=True)
+class LossSurface:
+    """Configuration for the loss function L(N, D) = E + A/N^α + B/D^β.
 
-    Args:
-        N: Number of parameters (can be array)
-        D: Number of training tokens (can be array)
+    Attributes:
         alpha: Parameter scaling exponent
         beta: Data scaling exponent
         A: Parameter scaling coefficient
         B: Data scaling coefficient
         E: Irreducible loss (entropy of natural text)
-
-    Returns:
-        Loss values corresponding to each (N, D) pair
     """
-    return E + A / (N**alpha) + B / (D**beta)
+
+    alpha: float
+    beta: float
+    A: float
+    B: float
+    E: float
+
+    @property
+    def a(self) -> float:
+        """N* scaling exponent: a = β/(α+β)."""
+        return self.beta / (self.alpha + self.beta)
+
+    @property
+    def b(self) -> float:
+        """D* scaling exponent: b = α/(α+β)."""
+        return self.alpha / (self.alpha + self.beta)
+
+    @property
+    def imbalance_ratio(self) -> float:
+        """Ratio of alpha to beta (α/β)."""
+        return self.alpha / self.beta
+
+    @property
+    def G(self) -> float:
+        """Scaling constant relating optimal N* and D* to compute.
+
+        From the Chinchilla paper (Appendix A), minimizing L(N,D) subject to
+        C = 6ND yields the optimal allocation where:
+            N* = G · (C/6)^a
+            D* = (1/G) · (C/6)^b
+
+        The constant G is defined as:
+            G = (αA / βB)^(1/(α+β))
+
+        This ensures N* · D* = C/6 holds exactly.
+        """
+        return (self.alpha * self.A / (self.beta * self.B)) ** (1 / (self.alpha + self.beta))
+
+    def N_opt(self, C: float) -> float:
+        """Compute optimal parameter count N* for a given compute budget.
+
+        From the Chinchilla paper, the optimal allocation is:
+            N* = G · (C/6)^(β/(α+β))
+
+        where G = (αA/βB)^(1/(α+β)) and C = 6ND is the compute approximation.
+
+        Args:
+            C: Compute budget in FLOPs
+
+        Returns:
+            Optimal number of parameters N*
+        """
+        return self.G * ((C / 6) ** self.a)
+
+    def D_opt(self, C: float) -> float:
+        """Compute optimal token count D* for a given compute budget.
+
+        From the Chinchilla paper, the optimal allocation is:
+            D* = (1/G) · (C/6)^(α/(α+β))
+
+        where G = (αA/βB)^(1/(α+β)) and C = 6ND is the compute approximation.
+
+        Args:
+            C: Compute budget in FLOPs
+
+        Returns:
+            Optimal number of training tokens D*
+        """
+        return (1 / self.G) * ((C / 6) ** self.b)
+
+    def loss(self, N: np.ndarray, D: np.ndarray) -> np.ndarray:
+        """Compute loss L(N, D) = E + A/N^α + B/D^β.
+
+        Args:
+            N: Number of parameters (can be array)
+            D: Number of training tokens (can be array)
+
+        Returns:
+            Loss values corresponding to each (N, D) pair
+        """
+        return self.E + self.A / (N**self.alpha) + self.B / (D**self.beta)
+
+    @classmethod
+    def from_chinchilla(cls, alpha: float, beta: float) -> "LossSurface":
+        """Create a LossSurface with Chinchilla paper A, B, E values.
+
+        Args:
+            alpha: Parameter scaling exponent
+            beta: Data scaling exponent
+
+        Returns:
+            LossSurface with Chinchilla coefficients
+        """
+        return cls(
+            alpha=alpha,
+            beta=beta,
+            A=CHINCHILLA_PARAMS["A"],
+            B=CHINCHILLA_PARAMS["B"],
+            E=CHINCHILLA_PARAMS["E"],
+        )
 
 
-def optimal_allocation(
-    C: float,
-    alpha: float,
-    beta: float,
-    A: float,
-    B: float,
-) -> tuple[float, float]:
-    """Compute optimal N* and D* for a given compute budget.
-
-    The optimal allocation minimizes L(N, D) subject to C = 6ND.
-
-    From the Chinchilla paper, the closed-form solution is:
-        N* = G * (C/6)^(β/(α+β))
-        D* = (1/G) * (C/6)^(α/(α+β))
-    where G = (α*A / (β*B))^(1/(α+β))
-
-    Args:
-        C: Compute budget in FLOPs
-        alpha, beta: Scaling exponents
-        A, B: Scaling coefficients
-
-    Returns:
-        Tuple of (N*, D*) optimal parameter and token counts
-    """
-    G = (alpha * A / (beta * B)) ** (1 / (alpha + beta))
-    C_eff = C / 6  # Effective compute (C = 6ND approximation)
-
-    N_opt = G * (C_eff ** (beta / (alpha + beta)))
-    D_opt = (1 / G) * (C_eff ** (alpha / (alpha + beta)))
-
-    return N_opt, D_opt
+# Default loss surface using Chinchilla paper parameters
+DEFAULT_LOSS_SURFACE = LossSurface(
+    alpha=CHINCHILLA_PARAMS["alpha"],
+    beta=CHINCHILLA_PARAMS["beta"],
+    A=CHINCHILLA_PARAMS["A"],
+    B=CHINCHILLA_PARAMS["B"],
+    E=CHINCHILLA_PARAMS["E"],
+)
 
 
 def compute_center_offset(
@@ -131,11 +195,7 @@ def isoflop_sample(
     n_points: int,
     log_range: float,
     center_offset: float,
-    alpha: float,
-    beta: float,
-    A: float,
-    B: float,
-    E: float,
+    surface: LossSurface,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Sample points along an IsoFLOP contour (constant compute budget).
 
@@ -148,17 +208,13 @@ def isoflop_sample(
         log_range: Range in log10 space around optimal N (±log_range)
         center_offset: Offset in log10 space to shift sampling center from optimal N*
                        Positive values shift center to larger N, negative to smaller N
-        alpha, beta: Scaling exponents
-        A, B: Scaling coefficients
-        E: Irreducible loss
+        surface: Loss surface configuration
 
     Returns:
         Tuple of (N, D, L) arrays - parameter counts, token counts, and losses
     """
-    N_opt, _ = optimal_allocation(C=C, alpha=alpha, beta=beta, A=A, B=B)
-
     # Sample N logarithmically around (possibly offset) center
-    log_N_center = np.log10(N_opt) + center_offset
+    log_N_center = np.log10(surface.N_opt(C)) + center_offset
     log_N_min = log_N_center - log_range
     log_N_max = log_N_center + log_range
     N = np.logspace(log_N_min, log_N_max, n_points)
@@ -167,7 +223,7 @@ def isoflop_sample(
     D = C / (6 * N)
 
     # Compute loss at each point
-    L = chinchilla_loss(N=N, D=D, alpha=alpha, beta=beta, A=A, B=B, E=E)
+    L = surface.loss(N, D)
 
     return N, D, L
 
@@ -253,15 +309,11 @@ def fit_parabola(
 
 def approach2_recover(
     compute_budgets: np.ndarray,
-    drift_rate: float,
-    center_scale: float,
-    n_points: int,
-    log_range: float,
-    alpha: float,
-    beta: float,
-    A: float,
-    B: float,
-    E: float,
+    surface: LossSurface,
+    drift_rate: float = 0.0,
+    center_scale: float = 1.0,
+    n_points: int = 15,
+    log_range: float = 1.0,
 ) -> Approach2Result:
     """Recover scaling exponents using Chinchilla Approach 2.
 
@@ -270,21 +322,18 @@ def approach2_recover(
 
     Args:
         compute_budgets: Array of compute budgets (FLOPs)
+        surface: Loss surface configuration
         drift_rate: Rate at which sampling center drifts from optimal as a
                     function of compute budget. When non-zero, centers are shifted
                     left (smaller N) at low compute and right (larger N) at high
                     compute. The drift is linear in log-compute space and measured
-                    in log10 units of N. The effect is constant regardless of log_range.
+                    in log10 units of N.
         center_scale: Constant multiplier applied to all sampling centers.
                       When 1.0, centers are at true optimal N*.
                       When >1, all centers are shifted right (larger N).
                       When <1, all centers are shifted left (smaller N).
-                      This is independent of and additive with drift_rate in log space.
         n_points: Number of points per IsoFLOP curve
         log_range: Sampling range in log10 space around optimal N (and D)
-        alpha, beta: Scaling exponents
-        A, B: Scaling coefficients
-        E: Irreducible loss
 
     Returns:
         Approach2Result with recovered exponents a and b
@@ -307,18 +356,14 @@ def approach2_recover(
             n_points=n_points,
             log_range=log_range,
             center_offset=center_offset,
-            alpha=alpha,
-            beta=beta,
-            A=A,
-            B=B,
-            E=E,
+            surface=surface,
         )
-        
+
         # Fit parabola to L vs log(N) to find N*
         fit_N = fit_parabola(np.log10(N), L)
         parabola_fits_N.append(fit_N)
         N_opts.append(fit_N.x_opt)
-        
+
         # Fit parabola to L vs log(D) to find D*
         fit_D = fit_parabola(np.log10(D), L)
         parabola_fits_D.append(fit_D)
