@@ -18,7 +18,15 @@ from scaling_law_analysis.chinchilla import (
     isoflop_sample,
     fit_approach2,
 )
-from scaling_law_analysis.experiments.common import SimulationConfig, BALANCED_CONFIG
+from scaling_law_analysis.experiments.common import (
+    SimulationConfig,
+    BALANCED_CONFIG,
+    prepare_output_dir,
+    COMPUTE_BUDGETS,
+    LOG_RANGES,
+    N_POINTS,
+    TICK_POSITIONS,
+)
 
 
 def log_range_to_label(log_range: float) -> str:
@@ -164,10 +172,10 @@ def plot_isoflop_fits(
             center_scale=sim_config.center_scale,
         )
 
-        # Get sampled data
+        # Get sampled data (use same n_points as fit for consistency)
         N, D, L = isoflop_sample(
             C=C,
-            n_points=20,
+            n_points=N_POINTS,
             log_range=log_range,
             center_offset=center_offset,
             surface=loss,
@@ -337,10 +345,10 @@ def plot_exponent_error(
     ax.set_title("Exponent Error")
     
     # Add secondary x-axis labels showing intuitive range
-    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+    tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels)
+    ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
     
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
@@ -369,10 +377,10 @@ def plot_intercept_error(
     ax.set_ylabel("Relative error (%)")
     ax.set_title("Intercept Error")
     
-    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+    tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels)
+    ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
     
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
@@ -398,8 +406,9 @@ def plot_optimum_error(
     
     n_budgets = len(compute_budgets)
     
-    # Opacity increases with compute budget (darker = higher compute)
-    alphas = np.linspace(0.3, 1.0, n_budgets)
+    # Opacity and size increase with compute budget (darker/larger = higher compute)
+    alphas = np.linspace(0.2, 1.0, n_budgets)
+    sizes = np.linspace(10, 36, n_budgets)
     
     for i, C in enumerate(compute_budgets):
         ax.scatter(
@@ -407,7 +416,7 @@ def plot_optimum_error(
             N_opt_errors[:, i],
             c="C0",
             alpha=alphas[i],
-            s=20,
+            s=sizes[i],
             marker="o",
         )
         ax.scatter(
@@ -415,7 +424,7 @@ def plot_optimum_error(
             D_opt_errors[:, i],
             c="C2",
             alpha=alphas[i],
-            s=20,
+            s=sizes[i],
             marker="s",
         )
 
@@ -425,10 +434,10 @@ def plot_optimum_error(
     ax.set_ylabel("Relative error (%)")
     ax.set_title("Parabola Optimum Error")
     
-    tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+    tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
-    ax.set_xticklabels(tick_labels)
+    ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
     
     # Custom legend showing N* and D* with opacity note
     ax.scatter([], [], c="C0", marker="o", s=20, alpha=1.0, label="N*")
@@ -525,29 +534,22 @@ def create_figure(
     return fig
 
 
-def main(
-    sim_config: SimulationConfig | None = None,
-    output_path: Path | None = None,
-):
-    """Run Experiment 1 and generate output figure.
-
-    Args:
-        sim_config: Simulation configuration. Defaults to BALANCED_CONFIG.
-        output_path: Path to save the figure. Defaults to results/exp1_empirical_error.png.
-    """
-    if sim_config is None:
-        sim_config = BALANCED_CONFIG
-
+def main():
+    """Run Experiment 1 and generate output figure."""
+    sim_config = BALANCED_CONFIG
     loss = sim_config.loss
 
     print("=" * 70)
     print(f"Experiment 1: Empirical Error Analysis ({sim_config.name})")
     print("=" * 70)
 
+    # Prepare output directory
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp1")
+
     # Experiment parameters
-    compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-    log_ranges = np.linspace(0.3, 2.0, 20)  # Grid step sizes to test (±2x to ±100x)
-    n_points = 15  # Points per IsoFLOP curve
+    compute_budgets = COMPUTE_BUDGETS
+    log_ranges = LOG_RANGES
+    n_points = N_POINTS
 
     print(f"\nCompute budgets: {compute_budgets}")
     print(f"Grid step sizes (log_range): {log_ranges[0]:.2f} to {log_ranges[-1]:.2f}")
@@ -599,11 +601,9 @@ def main(
     fig = create_figure(results, display_log_ranges, compute_budgets)
 
     # Save figure
-    if output_path is None:
-        output_path = config.RESULTS_DIR / "exp1_empirical_error.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"\nFigure saved to: {output_path}")
+    fig_path = output_dir / f"{sim_config.name}.png"
+    fig.savefig(fig_path, dpi=150, bbox_inches="tight", facecolor="white")
+    print(f"\nFigure saved to: {fig_path}")
 
     plt.close(fig)
 

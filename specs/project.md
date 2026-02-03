@@ -81,14 +81,32 @@ Produce a single figure with three rows:
 Produce a single figure showing relative error in recovered exponents (a and b) as a function of sampling range, with one curve per configuration. This reveals how exponent imbalance affects sensitivity to sampling range.
 
 
-### Experiment 3: Analytical Error
+### Experiment 3: Sampling Drift Sensitivity
+
+**Hypothesis**: The accuracy of Chinchilla Approach 2 is sensitive to systematic biases in the sampling center.
+
+**Method**:
+
+1. Generate synthetic loss data using a symmetric/balanced loss surface (α=β=0.31, A=B=400, E=1.69) across five sampling bias configurations:
+   - **Baseline**: no drift, no center scaling
+   - **Drift 0.2** and **Drift 0.4**: linear drift only
+   - **Scale 1.5** and **Scale 2.0**: center scaling only
+
+2. For each configuration, sweep sampling ranges from ±2x to ±100x (as in Experiment 2) and recover exponents via Approach 2.
+
+**Visualization**:
+
+Produce a single figure showing relative error in recovered exponents (a and b) as a function of sampling range, with one curve per configuration.
+
+
+### Experiment 4: Analytical Error
 
 Hypothesis: It is possible to analytically model the error in the inferred exponents via Approach 2 as a function of compute budget and grid resolution
 
 Steps:
 - TODO: complete
 
-### Experiment 4: Parametric fits
+### Experiment 5: Parametric fits
 
 Hypothesis: It is possible to fit scaling laws parametrically with variable projection and grid search (over alpha/beta) in a manner that is both more stable and more accurate than Chinchilla Approach 3
 

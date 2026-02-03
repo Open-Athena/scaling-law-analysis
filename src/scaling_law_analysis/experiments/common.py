@@ -1,8 +1,58 @@
 """Common configuration and utilities for scaling law experiments."""
 
+import shutil
 from dataclasses import dataclass
+from pathlib import Path
+
+import numpy as np
 
 from scaling_law_analysis.chinchilla import LossSurface, DEFAULT_LOSS_SURFACE
+
+
+# =============================================================================
+# Experiment Parameters
+# =============================================================================
+
+# Compute budgets (in FLOPs) for IsoFLOP sampling
+# Spans 4 orders of magnitude from 10^17 to 10^21
+COMPUTE_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
+
+# Sampling range parameter (log_range) controls how far from optimal N* we sample.
+# For a given log_range value, N is sampled from N*/factor to N*×factor,
+# where factor = 10^log_range.
+#
+# Examples:
+#   log_range=0.3 → factor≈2   → N spans [N*/2, N*×2]     (±2x)
+#   log_range=1.0 → factor=10  → N spans [N*/10, N*×10]   (±10x)
+#   log_range=2.0 → factor=100 → N spans [N*/100, N*×100] (±100x)
+#
+# We sweep from narrow (±2x) to wide (±100x) sampling ranges.
+LOG_RANGES = np.linspace(0.3, 2.0, 20)
+
+# Number of points sampled along each IsoFLOP contour
+N_POINTS = 15
+
+# X-axis tick positions for plots (in log_range units)
+TICK_POSITIONS = [0.3, 0.5, 1.0, 1.5, 2.0]
+
+
+# =============================================================================
+# Utilities
+# =============================================================================
+
+def prepare_output_dir(output_dir: Path) -> Path:
+    """Clear and recreate an output directory for experiment results.
+
+    Args:
+        output_dir: Path to the output directory
+
+    Returns:
+        The output directory path
+    """
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
 
 
 @dataclass
@@ -85,4 +135,17 @@ EXP2_CONFIGS = [
     MODERATE_IMBALANCE_CONFIG,
     HIGH_IMBALANCE_CONFIG,
     EXTREME_IMBALANCE_CONFIG,
+]
+
+
+# Experiment 3 configurations: Sampling Drift Sensitivity
+# Use symmetric loss surface: A=B=400, alpha=beta=0.31
+EXP3_LOSS_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+
+EXP3_CONFIGS = [
+    SimulationConfig(name="baseline", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=1.0),
+    SimulationConfig(name="drift_0.2", loss=EXP3_LOSS_SURFACE, drift_rate=0.2, center_scale=1.0),
+    SimulationConfig(name="drift_0.4", loss=EXP3_LOSS_SURFACE, drift_rate=0.4, center_scale=1.0),
+    SimulationConfig(name="scale_1.5", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=1.5),
+    SimulationConfig(name="scale_2.0", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=2.0),
 ]

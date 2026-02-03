@@ -14,6 +14,11 @@ from scaling_law_analysis import config
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
     EXP2_CONFIGS,
+    prepare_output_dir,
+    COMPUTE_BUDGETS,
+    LOG_RANGES,
+    N_POINTS,
+    TICK_POSITIONS,
 )
 from scaling_law_analysis.experiments.exp1_empirical_error import (
     run_experiment,
@@ -68,10 +73,10 @@ def plot_combined_errors(
         ax.grid(True, alpha=0.3)
 
         # Set x-axis labels
-        tick_positions = [0.3, 0.5, 1.0, 1.5, 2.0]
+        tick_positions = TICK_POSITIONS
         tick_labels = [log_range_to_label(lr) for lr in tick_positions]
         ax.set_xticks(tick_positions)
-        ax.set_xticklabels(tick_labels)
+        ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
 
 
 def create_combined_figure(all_results: list[dict]) -> plt.Figure:
@@ -104,14 +109,13 @@ def main():
     print("Experiment 2: Exponent Imbalance Sensitivity Analysis")
     print("=" * 70)
 
-    # Experiment parameters (same as Experiment 1)
-    compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-    log_ranges = np.linspace(0.3, 2.0, 20)  # ±2x to ±100x
-    n_points = 15
+    # Experiment parameters
+    compute_budgets = COMPUTE_BUDGETS
+    log_ranges = LOG_RANGES
+    n_points = N_POINTS
 
     # Output directory for Experiment 2
-    output_dir = config.RESULTS_DIR / "exp2"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp2")
 
     all_results = []
 
