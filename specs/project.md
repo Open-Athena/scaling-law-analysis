@@ -141,7 +141,7 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
 
 ### Experiment 5: Parametric Surface Fitting
 
-**Hypothesis**: Variable projection with grid search (over α/β) provides stable and accurate scaling law parameter recovery.
+**Hypothesis**: Variable projection with grid search (over α/β) provides stable and accurate scaling law parameter recovery, and extrapolation using fitted parameters remains accurate even at compute budgets far beyond the fitting range.
 
 **Method**:
 
@@ -151,15 +151,14 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
    - Input: Arrays of N, D, and L values (token counts, parameter counts, and loss) pooled across all compute budgets
    - Use **variable projection** (also known as separable least squares):
      - For fixed (α, β), the loss function L = E + A·N^(-α) + B·D^(-β) is linear in (E, A, B)
-     - Perform a fine 2D grid search over (α, β) space
-     - At each grid point, solve for (E, A, B) using non-negative least squares (NNLS) to enforce physical constraints
-     - Select the (α, β) grid point that minimizes the total residual sum of squares
-   - Grid search parameters:
-     - α range: [0.05, 0.95] with 256 points
-     - β range: [0.05, 0.95] with 256 points
+     - Stage 1: Coarse 2D grid search over (α, β) to find a good starting point
+     - Stage 2: Local refinement of (α, β) using Nelder-Mead optimization
+     - At each (α, β) evaluation, solve for (E, A, B) using non-negative least squares (NNLS) to enforce physical constraints
    - Diagnostic checks (raise errors if violated):
-     - Any of E, A, B are at or near zero (hitting NNLS constraint boundary)
-     - Best (α, β) is at the edge of the grid search range
+     - Optimization fails to converge
+     - Final (α, β) at or near bounds
+     - Any of E, A, B at or near zero (hitting NNLS constraint boundary)
+     - Any parameter is NaN or Inf
    - Return a result object containing all 5 fitted parameters (E, A, B, α, β)
 
 3. For each configuration (loss surface × sampling bias × sampling range):
@@ -167,14 +166,21 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
    - Fit the surface using `fit_surface`
    - Compute relative errors for all 5 parameters compared to ground truth
 
+4. For extrapolation analysis, use the same setup as Experiment 4.
+
 **Visualization**:
 
-Produce a single figure organized as a grid with one row per loss surface (3 rows) and 5 columns (one per parameter: E, A, B, α, β). Each panel shows relative error vs sampling range, with one curve per sampling bias configuration. This reveals:
-- How parameter recovery accuracy depends on sampling range
-- Which parameters are most sensitive to sampling biases
-- How loss surface geometry affects parameter recovery
+Produce two figures:
 
-The figure should follow the same style as the parameter errors figure from Experiment 3.
+1. **Parameter estimation errors** (one figure):
+   - Grid with one row per loss surface (3 rows) and 5 columns (one per parameter: E, A, B, α, β)
+   - Each panel shows relative error vs sampling range, with one curve per sampling bias configuration
+   - This reveals how parameter recovery accuracy depends on sampling range, which parameters are most sensitive to sampling biases, and how loss surface geometry affects parameter recovery
+   - Follow the same style as the parameter errors figure from Experiment 3
+
+2. **Extrapolation errors** (one figure):
+   - Same layout and style as Experiment 4's extrapolation figure
+   - This allows direct comparison of extrapolation error when using surface fitting vs Approach 2
 
 
 ### Experiment 6: Analytical Error

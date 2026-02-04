@@ -4,40 +4,36 @@ This experiment investigates fitting the loss surface L(N, D) = E + A/N^α + B/D
 directly via variable projection (grid search over α/β + NNLS for E/A/B).
 
 Hypothesis: Variable projection with grid search (over α/β) provides stable and
-accurate scaling law parameter recovery.
+accurate scaling law parameter recovery, and extrapolation using fitted parameters
+remains accurate even at compute budgets far beyond the fitting range.
 """
-
-from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
-from scaling_law_analysis.chinchilla import (
-    LossSurface,
-    fit_surface,
-    isoflop_sample,
-    compute_center_offset,
-)
+from scaling_law_analysis.chinchilla import fit_surface
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
-    LOSS_SURFACES as ALL_LOSS_SURFACES,
+    LOSS_SURFACES,
     BIAS_CONFIGS,
+    DISPLAY_LOG_RANGES,
+    DISPLAY_LOG_RANGE_NAMES,
     prepare_output_dir,
     COMPUTE_BUDGETS,
+    EXTRAPOLATION_BUDGETS,
     LOG_RANGES,
     N_POINTS,
     TICK_POSITIONS,
+    sample_isoflop_data,
+    run_extrapolation_analysis,
+    create_extrapolation_figure,
+    log_range_to_label,
 )
-from scaling_law_analysis.experiments.exp1_empirical_error import log_range_to_label
-
-# TODO: Use all loss surfaces once performance is verified
-# LOSS_SURFACES = ALL_LOSS_SURFACES
-LOSS_SURFACES = [ALL_LOSS_SURFACES[1]]  # chinchilla only for now
 
 
 def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
-    """Apply common axis configuration."""
+    """Apply common axis configuration for parameter error plots."""
     ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
     ax.set_xlabel("Sampling range")
     ax.set_ylabel("Relative error (%)")
@@ -51,46 +47,17 @@ def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
     ax.set_xticklabels(tick_labels, fontsize=7, rotation=30, ha="right")
 
 
-def sample_isoflop_data(
+def surface_fitter(
     sim_config: SimulationConfig,
     compute_budgets: np.ndarray,
     log_range: float,
     n_points: int,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Sample IsoFLOP data across all compute budgets.
-
-    Args:
-        sim_config: Simulation configuration with loss surface and bias parameters
-        compute_budgets: Array of compute budgets (FLOPs)
-        log_range: Sampling range in log10 space around optimal N
-        n_points: Number of points per IsoFLOP curve
-
-    Returns:
-        Tuple of (N, D, L) arrays pooled across all compute budgets
-    """
-    all_N = []
-    all_D = []
-    all_L = []
-
-    for C in compute_budgets:
-        center_offset = compute_center_offset(
-            C=C,
-            compute_budgets=compute_budgets,
-            drift_rate=sim_config.drift_rate,
-            center_scale=sim_config.center_scale,
-        )
-        N, D, L = isoflop_sample(
-            C=C,
-            n_points=n_points,
-            log_range=log_range,
-            center_offset=center_offset,
-            surface=sim_config.loss,
-        )
-        all_N.append(N)
-        all_D.append(D)
-        all_L.append(L)
-
-    return np.concatenate(all_N), np.concatenate(all_D), np.concatenate(all_L)
+):
+    """Fit surface parameters and return D_opt function."""
+    N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
+    result = fit_surface(N, D, L)
+    fitted_surface = result.to_loss_surface()
+    return fitted_surface.D_opt
 
 
 def compute_param_errors(
@@ -114,48 +81,28 @@ def compute_param_errors(
     n_ranges = len(log_ranges)
 
     # Arrays to store relative errors
-    E_errors = np.zeros(n_ranges)
-    A_errors = np.zeros(n_ranges)
-    B_errors = np.zeros(n_ranges)
-    alpha_errors = np.zeros(n_ranges)
-    beta_errors = np.zeros(n_ranges)
+    errors = {key: np.zeros(n_ranges) for key in ["E", "A", "B", "alpha", "beta"]}
 
     for i, log_range in enumerate(log_ranges):
-        # Sample data
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
-
-        # Fit surface
         result = fit_surface(N, D, L)
 
         # Compute relative errors
-        E_errors[i] = (result.E - loss.E) / loss.E
-        A_errors[i] = (result.A - loss.A) / loss.A
-        B_errors[i] = (result.B - loss.B) / loss.B
-        alpha_errors[i] = (result.alpha - loss.alpha) / loss.alpha
-        beta_errors[i] = (result.beta - loss.beta) / loss.beta
+        errors["E"][i] = (result.E - loss.E) / loss.E
+        errors["A"][i] = (result.A - loss.A) / loss.A
+        errors["B"][i] = (result.B - loss.B) / loss.B
+        errors["alpha"][i] = (result.alpha - loss.alpha) / loss.alpha
+        errors["beta"][i] = (result.beta - loss.beta) / loss.beta
 
-    return {
-        "config": sim_config,
-        "log_ranges": log_ranges,
-        "E_error": E_errors,
-        "A_error": A_errors,
-        "B_error": B_errors,
-        "alpha_error": alpha_errors,
-        "beta_error": beta_errors,
-    }
+    return {"config": sim_config, "log_ranges": log_ranges, **errors}
 
 
-def run_all_configurations(
+def run_param_error_analysis(
     compute_budgets: np.ndarray,
     log_ranges: np.ndarray,
     n_points: int,
 ) -> dict[str, list[dict]]:
-    """Run experiments for all loss surface and bias configurations.
-
-    Args:
-        compute_budgets: Compute budgets for IsoFLOP sampling
-        log_ranges: Sampling ranges to sweep
-        n_points: Number of points per IsoFLOP curve
+    """Run parameter error analysis for all configurations.
 
     Returns:
         Dict mapping surface_name -> list of results (one per bias config)
@@ -191,31 +138,22 @@ def run_all_configurations(
 
             # Print summary at widest sampling range
             print(f"    Errors at widest range:")
-            print(f"      E: {results['E_error'][-1]*100:+.2f}%")
-            print(f"      A: {results['A_error'][-1]*100:+.2f}%")
-            print(f"      B: {results['B_error'][-1]*100:+.2f}%")
-            print(f"      α: {results['alpha_error'][-1]*100:+.2f}%")
-            print(f"      β: {results['beta_error'][-1]*100:+.2f}%")
+            for key in ["E", "A", "B", "alpha", "beta"]:
+                label = "α" if key == "alpha" else ("β" if key == "beta" else key)
+                print(f"      {label}: {results[key][-1]*100:+.2f}%")
 
         all_results[surface_name] = surface_results
 
     return all_results
 
 
-def create_param_errors_figure(
-    all_results: dict[str, list[dict]],
-) -> plt.Figure:
-    """Create parameter estimation errors figure (n_surfaces rows × 5 cols).
-
-    Rows: one per loss surface
-    Cols: E, A, B, α, β
-    """
+def create_param_errors_figure(all_results: dict[str, list[dict]]) -> plt.Figure:
+    """Create parameter estimation errors figure (n_surfaces rows × 5 cols)."""
     n_surfaces = len(LOSS_SURFACES)
     param_names = ["E", "A", "B", "α", "β"]
-    error_keys = ["E_error", "A_error", "B_error", "alpha_error", "beta_error"]
+    error_keys = ["E", "A", "B", "alpha", "beta"]
 
     fig, axes = plt.subplots(n_surfaces, 5, figsize=(20, 4 * n_surfaces))
-    # Ensure axes is 2D even with single row
     if n_surfaces == 1:
         axes = axes[np.newaxis, :]
 
@@ -229,27 +167,14 @@ def create_param_errors_figure(
             for i, results in enumerate(results_list):
                 log_ranges = results["log_ranges"]
                 label = results["config"].name
-                color = colors[i]
-
                 errors = results[error_key] * 100  # Convert to %
-                ax.plot(log_ranges, errors, "o-", color=color, markersize=3, label=label)
+                ax.plot(log_ranges, errors, "o-", color=colors[i], markersize=3, label=label)
 
-            # Configure axis
-            ratio = loss.alpha / loss.beta
             row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f})"
-            _configure_ax(
-                ax,
-                f"{param_name} error\n{row_label}",
-                show_legend=(row == 0 and col == 4),
-            )
+            _configure_ax(ax, f"{param_name} error\n{row_label}", show_legend=(row == 0 and col == 4))
 
-    fig.suptitle(
-        "Experiment 5: Parameter Estimation Errors via Surface Fitting",
-        fontsize=12,
-        y=0.995,
-    )
+    fig.suptitle("Experiment 5: Parameter Estimation Errors via Surface Fitting", fontsize=12, y=0.995)
     fig.tight_layout()
-
     return fig
 
 
@@ -259,28 +184,60 @@ def main():
     print("Experiment 5: Parametric Surface Fitting")
     print("=" * 70)
 
-    compute_budgets = COMPUTE_BUDGETS
-    log_ranges = LOG_RANGES
-    n_points = N_POINTS
-
-    # Prepare output directory
     output_dir = prepare_output_dir(config.RESULTS_DIR / "exp5")
 
-    # Run all configurations
-    all_results = run_all_configurations(compute_budgets, log_ranges, n_points)
+    # --- Part 1: Parameter Error Analysis ---
+    print("\n" + "#" * 70)
+    print("Part 1: Parameter Error Analysis")
+    print("#" * 70)
 
-    # Create and save parameter errors figure
+    param_results = run_param_error_analysis(COMPUTE_BUDGETS, LOG_RANGES, N_POINTS)
+
     print(f"\n{'─' * 70}")
     print("Generating parameter errors figure...")
-    param_fig = create_param_errors_figure(all_results)
+    param_fig = create_param_errors_figure(param_results)
     param_path = output_dir / "surface_param_errors.png"
     param_fig.savefig(param_path, dpi=150, bbox_inches="tight", facecolor="white")
     print(f"Saved: {param_path}")
     plt.close(param_fig)
 
-    # Summary table
+    # --- Part 2: Extrapolation Error Analysis ---
+    print("\n" + "#" * 70)
+    print("Part 2: Extrapolation Error Analysis")
+    print("#" * 70)
+
+    print(f"\nFitting compute budgets: {COMPUTE_BUDGETS}")
+    print(f"Extrapolation budgets: {EXTRAPOLATION_BUDGETS[0]:.0e} to {EXTRAPOLATION_BUDGETS[-1]:.0e}")
+
+    extrap_results = run_extrapolation_analysis(
+        fitter=surface_fitter,
+        compute_budgets=COMPUTE_BUDGETS,
+        extrapolation_budgets=EXTRAPOLATION_BUDGETS,
+        log_ranges=DISPLAY_LOG_RANGES,
+        log_range_names=DISPLAY_LOG_RANGE_NAMES,
+        n_points=N_POINTS,
+        loss_surfaces=LOSS_SURFACES,
+        bias_configs=BIAS_CONFIGS,
+    )
+
+    print(f"\n{'─' * 70}")
+    print("Generating extrapolation error figure...")
+    extrap_fig = create_extrapolation_figure(
+        all_results=extrap_results,
+        loss_surfaces=LOSS_SURFACES,
+        log_range_names=DISPLAY_LOG_RANGE_NAMES,
+        log_ranges=DISPLAY_LOG_RANGES,
+        title="Experiment 5: Extrapolation Error Analysis (Surface Fitting)",
+        subtitle="Fitting: 10¹⁷-10²¹ FLOPs → Extrapolating to 10²²-10²⁵ FLOPs",
+    )
+    extrap_path = output_dir / "surface_extrapolation_error.png"
+    extrap_fig.savefig(extrap_path, dpi=150, bbox_inches="tight", facecolor="white")
+    print(f"Saved: {extrap_path}")
+    plt.close(extrap_fig)
+
+    # --- Summary ---
     print("\n" + "=" * 70)
-    print("Summary: Maximum errors at largest sampling range")
+    print("Summary: Parameter errors at largest sampling range")
     print("=" * 70)
 
     for surface_name, _ in LOSS_SURFACES:
@@ -288,21 +245,26 @@ def main():
         print(f"{'Config':<15} {'E%':>8} {'A%':>8} {'B%':>8} {'α%':>8} {'β%':>8}")
         print("-" * 60)
 
-        for results in all_results[surface_name]:
-            sim_config = results["config"]
-            E_err = results["E_error"][-1] * 100
-            A_err = results["A_error"][-1] * 100
-            B_err = results["B_error"][-1] * 100
-            alpha_err = results["alpha_error"][-1] * 100
-            beta_err = results["beta_error"][-1] * 100
-            print(
-                f"{sim_config.name:<15} "
-                f"{E_err:>+8.2f} {A_err:>+8.2f} {B_err:>+8.2f} "
-                f"{alpha_err:>+8.2f} {beta_err:>+8.2f}"
-            )
+        for results in param_results[surface_name]:
+            vals = [results[k][-1] * 100 for k in ["E", "A", "B", "alpha", "beta"]]
+            print(f"{results['config'].name:<15} " + " ".join(f"{v:>+8.2f}" for v in vals))
+
+    print("\n" + "=" * 70)
+    print("Summary: Maximum D* extrapolation errors")
+    print("=" * 70)
+
+    for range_name in DISPLAY_LOG_RANGE_NAMES:
+        print(f"\n{range_name.upper()} sampling range:")
+        for surface_name, _ in LOSS_SURFACES:
+            print(f"\n  {surface_name}:")
+            print(f"  {'Config':<15} {'max_D_err%':>12}")
+            print(f"  {'-' * 30}")
+            for results in extrap_results[range_name][surface_name]:
+                max_D_err = np.abs(results["D_rel_errors"]).max() * 100
+                print(f"  {results['config'].name:<15} {max_D_err:>12.2f}")
 
     print("\nExperiment 5 complete.")
-    return all_results
+    return {"param_results": param_results, "extrap_results": extrap_results}
 
 
 if __name__ == "__main__":

@@ -3,10 +3,17 @@
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
+import matplotlib.pyplot as plt
 
-from scaling_law_analysis.chinchilla import LossSurface, DEFAULT_LOSS_SURFACE
+from scaling_law_analysis.chinchilla import (
+    LossSurface,
+    DEFAULT_LOSS_SURFACE,
+    isoflop_sample,
+    compute_center_offset,
+)
 
 
 # =============================================================================
@@ -53,6 +60,18 @@ def prepare_output_dir(output_dir: Path) -> Path:
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
+
+
+def log_range_to_label(log_range: float) -> str:
+    """Convert log_range to human-readable N sampling range.
+
+    log_range=1.0 means N spans 10^-1 to 10^1 around optimal = 0.1x to 10x.
+    """
+    factor = 10**log_range
+    if factor >= 10:
+        return f"±{factor:.0f}x"
+    else:
+        return f"±{factor:.1f}x"
 
 
 @dataclass
@@ -175,3 +194,246 @@ EXP3_CONFIGS = [
     SimulationConfig(name=name, loss=SYMMETRIC_LOSS_SURFACE, drift_rate=drift_rate, center_scale=center_scale)
     for drift_rate, center_scale, name in BIAS_CONFIGS
 ]
+
+
+# =============================================================================
+# Extrapolation Analysis (shared by Experiments 4 & 5)
+# =============================================================================
+
+# Extrapolation compute budgets: 10^22 to 10^25 FLOPs (beyond fitting range)
+EXTRAPOLATION_BUDGETS = np.geomspace(1e22, 1e25, 16)
+
+
+def sample_isoflop_data(
+    sim_config: SimulationConfig,
+    compute_budgets: np.ndarray,
+    log_range: float,
+    n_points: int,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Sample IsoFLOP data across all compute budgets.
+
+    Args:
+        sim_config: Simulation configuration with loss surface and bias parameters
+        compute_budgets: Array of compute budgets (FLOPs)
+        log_range: Sampling range in log10 space around optimal N
+        n_points: Number of points per IsoFLOP curve
+
+    Returns:
+        Tuple of (N, D, L) arrays pooled across all compute budgets
+    """
+    all_N = []
+    all_D = []
+    all_L = []
+
+    for C in compute_budgets:
+        center_offset = compute_center_offset(
+            C=C,
+            compute_budgets=compute_budgets,
+            drift_rate=sim_config.drift_rate,
+            center_scale=sim_config.center_scale,
+        )
+        N, D, L = isoflop_sample(
+            C=C,
+            n_points=n_points,
+            log_range=log_range,
+            center_offset=center_offset,
+            surface=sim_config.loss,
+        )
+        all_N.append(N)
+        all_D.append(D)
+        all_L.append(L)
+
+    return np.concatenate(all_N), np.concatenate(all_D), np.concatenate(all_L)
+
+
+# Type alias for extrapolation fitter: takes config and returns D_opt function
+ExtrapolationFitter = Callable[
+    [SimulationConfig, np.ndarray, float, int],  # sim_config, compute_budgets, log_range, n_points
+    Callable[[float], float],  # Returns D_opt(C) function
+]
+
+
+def compute_extrapolation_errors(
+    sim_config: SimulationConfig,
+    compute_budgets: np.ndarray,
+    extrapolation_budgets: np.ndarray,
+    log_range: float,
+    n_points: int,
+    fitter: ExtrapolationFitter,
+) -> dict:
+    """Compute extrapolation errors using a given fitting method.
+
+    Args:
+        sim_config: Simulation configuration
+        compute_budgets: Compute budgets for fitting (FLOPs)
+        extrapolation_budgets: Compute budgets for extrapolation (FLOPs)
+        log_range: Sampling range in log10 space
+        n_points: Number of points per IsoFLOP curve
+        fitter: Function that fits the data and returns a D_opt(C) callable
+
+    Returns:
+        Dictionary with extrapolation error results
+    """
+    loss = sim_config.loss
+
+    # Fit using the provided fitter and get D_opt function
+    D_opt_fn = fitter(sim_config, compute_budgets, log_range, n_points)
+
+    # Compute true and inferred D* at each extrapolation budget
+    true_D_opts = np.array([loss.D_opt(C) for C in extrapolation_budgets])
+    inferred_D_opts = np.array([D_opt_fn(C) for C in extrapolation_budgets])
+
+    # Relative error in D*
+    D_rel_errors = (inferred_D_opts - true_D_opts) / true_D_opts
+
+    return {
+        "config": sim_config,
+        "log_range": log_range,
+        "extrapolation_budgets": extrapolation_budgets,
+        "true_D_opts": true_D_opts,
+        "inferred_D_opts": inferred_D_opts,
+        "D_rel_errors": D_rel_errors,
+    }
+
+
+def run_extrapolation_analysis(
+    fitter: ExtrapolationFitter,
+    compute_budgets: np.ndarray,
+    extrapolation_budgets: np.ndarray,
+    log_ranges: list[float],
+    log_range_names: list[str],
+    n_points: int,
+    loss_surfaces: list[tuple[str, LossSurface]],
+    bias_configs: list[tuple[float, float, str]],
+) -> dict[str, dict[str, list[dict]]]:
+    """Run extrapolation analysis for all configurations.
+
+    Args:
+        fitter: Function that fits the data and returns a D_opt(C) callable
+        compute_budgets: Compute budgets for fitting
+        extrapolation_budgets: Compute budgets for extrapolation
+        log_ranges: Sampling ranges to test
+        log_range_names: Names for each sampling range
+        n_points: Number of points per IsoFLOP curve
+        loss_surfaces: List of (name, LossSurface) tuples
+        bias_configs: List of (drift_rate, center_scale, name) tuples
+
+    Returns:
+        Nested dict: log_range_name -> surface_name -> list of results
+    """
+    all_results: dict[str, dict[str, list[dict]]] = {}
+
+    for log_range, range_name in zip(log_ranges, log_range_names):
+        print(f"\n{'#' * 70}")
+        print(f"Sampling Range: {range_name} ({log_range_to_label(log_range)})")
+        print(f"{'#' * 70}")
+
+        all_results[range_name] = {}
+
+        for surface_name, loss in loss_surfaces:
+            print(f"\n{'=' * 70}")
+            print(f"Loss Surface: {surface_name}")
+            print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}")
+            print("=" * 70)
+
+            surface_results = []
+
+            for drift_rate, center_scale, bias_name in bias_configs:
+                sim_config = SimulationConfig(
+                    name=bias_name,
+                    loss=loss,
+                    drift_rate=drift_rate,
+                    center_scale=center_scale,
+                )
+
+                print(f"\n  Configuration: {bias_name}")
+
+                results = compute_extrapolation_errors(
+                    sim_config=sim_config,
+                    compute_budgets=compute_budgets,
+                    extrapolation_budgets=extrapolation_budgets,
+                    log_range=log_range,
+                    n_points=n_points,
+                    fitter=fitter,
+                )
+                surface_results.append(results)
+
+                # Print summary
+                print(f"    Max D* error: {np.abs(results['D_rel_errors']).max() * 100:.2f}%")
+
+            all_results[range_name][surface_name] = surface_results
+
+    return all_results
+
+
+def create_extrapolation_figure(
+    all_results: dict[str, dict[str, list[dict]]],
+    loss_surfaces: list[tuple[str, LossSurface]],
+    log_range_names: list[str],
+    log_ranges: list[float],
+    title: str,
+    subtitle: str,
+) -> plt.Figure:
+    """Create extrapolation error figure (rows=sampling ranges, cols=loss surfaces).
+
+    Args:
+        all_results: Nested dict from run_extrapolation_analysis
+        loss_surfaces: List of (name, LossSurface) tuples
+        log_range_names: Names for each sampling range
+        log_ranges: Sampling range values (for labels)
+        title: Main figure title
+        subtitle: Subtitle with additional context
+
+    Returns:
+        matplotlib Figure
+    """
+    n_ranges = len(log_range_names)
+    n_surfaces = len(loss_surfaces)
+    fig, axes = plt.subplots(n_ranges, n_surfaces, figsize=(5 * n_surfaces, 4 * n_ranges))
+
+    for row, (range_name, log_range) in enumerate(zip(log_range_names, log_ranges)):
+        range_label = log_range_to_label(log_range)
+
+        for col, (surface_name, loss) in enumerate(loss_surfaces):
+            ax = axes[row, col]
+            results_list = all_results[range_name][surface_name]
+            colors = plt.cm.viridis(np.linspace(0, 0.9, len(results_list)))
+
+            for i, results in enumerate(results_list):
+                sim_config = results["config"]
+                budgets = results["extrapolation_budgets"]
+                D_rel_errors = results["D_rel_errors"] * 100  # Convert to %
+
+                label = sim_config.name
+                ax.plot(
+                    budgets,
+                    D_rel_errors,
+                    "o-",
+                    color=colors[i],
+                    markersize=4,
+                    label=label,
+                )
+
+            ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
+            ax.set_xlabel("Compute budget (FLOPs)")
+            ax.set_xscale("log")
+            ax.grid(True, alpha=0.3)
+
+            # Title with loss surface and sampling range info
+            ratio = loss.alpha / loss.beta
+            ax.set_title(
+                f"{surface_name} / {range_name} ({range_label})\n"
+                f"α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={ratio:.2f}",
+                fontsize=9,
+            )
+
+            ax.set_ylabel("Relative error in D* (%)")
+
+            # Show legend only in top-right panel
+            if row == 0 and col == n_surfaces - 1:
+                ax.legend(fontsize=7, loc="best")
+
+    fig.suptitle(f"{title}\n{subtitle}", fontsize=12, y=1.01)
+    fig.tight_layout()
+
+    return fig

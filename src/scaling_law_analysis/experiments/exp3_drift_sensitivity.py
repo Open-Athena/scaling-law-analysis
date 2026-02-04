@@ -25,10 +25,10 @@ from scaling_law_analysis.experiments.common import (
     LOG_RANGES,
     N_POINTS,
     TICK_POSITIONS,
+    log_range_to_label,
 )
 from scaling_law_analysis.experiments.exp1_empirical_error import (
     run_experiment,
-    log_range_to_label,
     create_figure as create_exp1_figure,
 )
 
