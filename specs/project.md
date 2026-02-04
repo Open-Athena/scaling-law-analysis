@@ -87,16 +87,35 @@ Produce a single figure showing relative error in recovered exponents (a and b) 
 
 **Method**:
 
-1. Generate synthetic loss data using a symmetric/balanced loss surface (α=β=0.31, A=B=400, E=1.69) across five sampling bias configurations:
+1. Generate synthetic loss data across three loss surface configurations:
+   - **Symmetric**: α=β=0.31, A=B=400, E=1.69 (balanced)
+   - **Chinchilla**: α=0.34, β=0.28, A=406.4, B=410.7, E=1.69 (paper defaults)
+   - **High imbalance**: α/β ratio = 3.0 (keeping α+β=0.62)
+
+2. For each loss surface, test five sampling bias configurations:
    - **Baseline**: no drift, no center scaling
    - **Drift 0.2** and **Drift 0.4**: linear drift only
    - **Scale 1.5** and **Scale 2.0**: center scaling only
 
-2. For each configuration, sweep sampling ranges from ±2x to ±100x (as in Experiment 2) and recover exponents via Approach 2.
+3. For each configuration, sweep sampling ranges from ±2x to ±100x (as in Experiment 2) and recover exponents via Approach 2.
 
 **Visualization**:
 
-Produce a single figure showing relative error in recovered exponents (a and b) as a function of sampling range, with one curve per configuration.
+Produce the following figures:
+
+1. **Parameter estimation errors** (one combined figure):
+   - Grid with one row per loss surface (3 rows) and 4 columns
+   - Columns show: (1) N* exponent error, (2) D* exponent error, (3) N* intercept error, (4) D* intercept error
+   - Each plot shows relative error vs sampling range, with one curve per sampling bias configuration
+
+2. **Optimal value estimation errors** (one figure per loss surface):
+   - Each loss surface gets its own figure showing errors across all compute budgets
+   - One row per sampling bias configuration, using only baseline, highest drift (drift_0.4), and highest scale (scale_2.0) for clarity (3 rows)
+   - Four columns: (1) N* relative error, (2) D* relative error, (3) N* signed error, (4) D* signed error
+   - Relative error: (inferred - true) / true, expressed as percentage
+   - Signed error: inferred - true, in absolute units (parameter count or token count)
+   - Use distinct colors for N* vs D* columns to make results visually distinct; use increasing opacity and marker size to denote higher compute budgets (consistent with Experiment 1)
+   - This reveals how optima errors vary with both sampling range and compute scale
 
 
 ### Experiment 4: Extrapolation Error
@@ -105,27 +124,20 @@ Produce a single figure showing relative error in recovered exponents (a and b) 
 
 **Method**:
 
-1. Generate synthetic loss data across three loss surface configurations:
-   - **Symmetric**: α=β=0.31, A=B=400 (balanced)
-   - **Chinchilla**: α=0.34, β=0.28, A=406.4, B=410.7 (paper defaults)
-   - **High imbalance**: α/β ratio = 3.0
+1. Use the same three loss surface configurations as Experiment 3 (symmetric, chinchilla, high_imbalance).
 
-2. For each loss surface, test five sampling bias configurations:
-   - **Baseline**: drift=0, center_scale=1
-   - **Drift 0.2**: drift=0.2, center_scale=1
-   - **Drift 0.4**: drift=0.4, center_scale=1
-   - **Scale 1.5**: drift=0, center_scale=1.5
-   - **Scale 2.0**: drift=0, center_scale=2.0
+2. Use the same five sampling bias configurations as Experiment 3 (baseline, drift_0.2, drift_0.4, scale_1.5, scale_2.0).
 
-3. Use a fixed sampling range (±10x around optimal) for extrapolation analysis.
+3. Use the same three sampling ranges as Experiment 1 (narrow, medium, wide).
 
-4. Fit scaling law exponents using existing compute budgets (10^17 to 10^21 FLOPs).
-
-5. Extrapolate to higher compute budgets (10^22 to 10^25 FLOPs) and compare inferred vs true optimal token counts D* at each budget.
+4. For each combination of loss surface, sampling bias, and sampling range:
+   - Fit scaling law exponents using existing compute budgets (10^17 to 10^21 FLOPs)
+   - Extrapolate to higher compute budgets (10^22 to 10^25 FLOPs)
+   - Compare inferred vs true optimal token counts D* at each extrapolation budget
 
 **Visualization**:
 
-Produce a faceted figure with one panel per loss surface, showing the relative error in inferred D* as a function of compute budget, with one curve per sampling configuration. This reveals how extrapolation error depends on both the loss surface geometry and sampling biases.
+Produce a single figure organized as a grid with one row per sampling range (3 rows: narrow, medium, wide) and one column per loss surface (3 columns: symmetric, chinchilla, high_imbalance). Each panel shows the relative error in inferred D* as a function of extrapolation compute budget, with one curve per sampling bias configuration. This reveals how extrapolation error depends on the sampling range, loss surface geometry, and sampling biases.
 
 
 ### Experiment 5: Analytical Error

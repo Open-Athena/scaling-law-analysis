@@ -138,14 +138,40 @@ EXP2_CONFIGS = [
 ]
 
 
-# Experiment 3 configurations: Sampling Drift Sensitivity
-# Use symmetric loss surface: A=B=400, alpha=beta=0.31
-EXP3_LOSS_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+# =============================================================================
+# Shared Configurations for Experiments 3 & 4
+# =============================================================================
+
+# Loss surfaces shared by Experiments 3 & 4
+SYMMETRIC_LOSS_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+
+LOSS_SURFACES: list[tuple[str, LossSurface]] = [
+    ("symmetric", SYMMETRIC_LOSS_SURFACE),
+    ("chinchilla", DEFAULT_LOSS_SURFACE),
+    ("high_imbalance", HIGH_IMBALANCE_CONFIG.loss),
+]
+
+# Sampling bias configurations shared by Experiments 3 & 4
+# Each tuple is (drift_rate, center_scale, name)
+BIAS_CONFIGS: list[tuple[float, float, str]] = [
+    (0.0, 1.0, "baseline"),
+    (0.2, 1.0, "drift_0.2"),
+    (0.4, 1.0, "drift_0.4"),
+    (0.0, 1.5, "scale_1.5"),
+    (0.0, 2.0, "scale_2.0"),
+]
+
+# Display log ranges (narrow, medium, wide) - indices into LOG_RANGES
+# Used by Experiments 1 (for display) and 4 (for extrapolation analysis)
+DISPLAY_LOG_RANGE_INDICES = [0, len(LOG_RANGES) // 2, -1]
+DISPLAY_LOG_RANGES = [LOG_RANGES[i] for i in DISPLAY_LOG_RANGE_INDICES]
+DISPLAY_LOG_RANGE_NAMES = ["narrow", "medium", "wide"]
+
+
+# Legacy aliases for backward compatibility
+EXP3_LOSS_SURFACE = SYMMETRIC_LOSS_SURFACE
 
 EXP3_CONFIGS = [
-    SimulationConfig(name="baseline", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=1.0),
-    SimulationConfig(name="drift_0.2", loss=EXP3_LOSS_SURFACE, drift_rate=0.2, center_scale=1.0),
-    SimulationConfig(name="drift_0.4", loss=EXP3_LOSS_SURFACE, drift_rate=0.4, center_scale=1.0),
-    SimulationConfig(name="scale_1.5", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=1.5),
-    SimulationConfig(name="scale_2.0", loss=EXP3_LOSS_SURFACE, drift_rate=0.0, center_scale=2.0),
+    SimulationConfig(name=name, loss=SYMMETRIC_LOSS_SURFACE, drift_rate=drift_rate, center_scale=center_scale)
+    for drift_rate, center_scale, name in BIAS_CONFIGS
 ]
