@@ -1,0 +1,19 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+  # Black for code formatting
+  - repo: https://github.com/psf/black
+    rev: 25.1.0
+    hooks:
+      - id: black
+        language_version: python3
+
+  # Pyrefly for type checking (uses uv to run from project environment)
+  - repo: local
+    hooks:
+      - id: pyrefly
+        name: Pyrefly (type checking)
+        entry: uv run pyrefly check .
+        language: system
+        pass_filenames: false
+        types: [python]

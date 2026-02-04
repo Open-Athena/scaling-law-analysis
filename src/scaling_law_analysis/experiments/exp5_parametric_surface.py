@@ -112,7 +112,9 @@ def run_param_error_analysis(
     for surface_name, loss in LOSS_SURFACES:
         print(f"\n{'=' * 70}")
         print(f"Loss Surface: {surface_name}")
-        print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}, E={loss.E:.2f}")
+        print(
+            f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}, E={loss.E:.2f}"
+        )
         print("=" * 70)
 
         surface_results = []
@@ -159,7 +161,7 @@ def create_param_errors_figure(all_results: dict[str, list[dict]]) -> plt.Figure
 
     for row, (surface_name, loss) in enumerate(LOSS_SURFACES):
         results_list = all_results[surface_name]
-        colors = plt.cm.viridis(np.linspace(0, 0.9, len(results_list)))
+        colors = plt.colormaps["viridis"](np.linspace(0, 0.9, len(results_list)))
 
         for col, (param_name, error_key) in enumerate(zip(param_names, error_keys)):
             ax = axes[row, col]
@@ -168,12 +170,22 @@ def create_param_errors_figure(all_results: dict[str, list[dict]]) -> plt.Figure
                 log_ranges = results["log_ranges"]
                 label = results["config"].name
                 errors = results[error_key] * 100  # Convert to %
-                ax.plot(log_ranges, errors, "o-", color=colors[i], markersize=3, label=label)
+                ax.plot(
+                    log_ranges, errors, "o-", color=colors[i], markersize=3, label=label
+                )
 
             row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f})"
-            _configure_ax(ax, f"{param_name} error\n{row_label}", show_legend=(row == 0 and col == 4))
+            _configure_ax(
+                ax,
+                f"{param_name} error\n{row_label}",
+                show_legend=(row == 0 and col == 4),
+            )
 
-    fig.suptitle("Experiment 5: Parameter Estimation Errors via Surface Fitting", fontsize=12, y=0.995)
+    fig.suptitle(
+        "Experiment 5: Parameter Estimation Errors via Surface Fitting",
+        fontsize=12,
+        y=0.995,
+    )
     fig.tight_layout()
     return fig
 
@@ -207,7 +219,9 @@ def main():
     print("#" * 70)
 
     print(f"\nFitting compute budgets: {COMPUTE_BUDGETS}")
-    print(f"Extrapolation budgets: {EXTRAPOLATION_BUDGETS[0]:.0e} to {EXTRAPOLATION_BUDGETS[-1]:.0e}")
+    print(
+        f"Extrapolation budgets: {EXTRAPOLATION_BUDGETS[0]:.0e} to {EXTRAPOLATION_BUDGETS[-1]:.0e}"
+    )
 
     extrap_results = run_extrapolation_analysis(
         fitter=surface_fitter,
@@ -247,7 +261,9 @@ def main():
 
         for results in param_results[surface_name]:
             vals = [results[k][-1] * 100 for k in ["E", "A", "B", "alpha", "beta"]]
-            print(f"{results['config'].name:<15} " + " ".join(f"{v:>+8.2f}" for v in vals))
+            print(
+                f"{results['config'].name:<15} " + " ".join(f"{v:>+8.2f}" for v in vals)
+            )
 
     print("\n" + "=" * 70)
     print("Summary: Maximum D* extrapolation errors")

@@ -70,7 +70,9 @@ def run_all_configurations(
     for surface_name, loss in LOSS_SURFACES:
         print(f"\n{'=' * 70}")
         print(f"Loss Surface: {surface_name}")
-        print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}")
+        print(
+            f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}"
+        )
         print("=" * 70)
 
         surface_results = []
@@ -126,7 +128,7 @@ def create_param_errors_figure(
 
     for row, (surface_name, loss) in enumerate(LOSS_SURFACES):
         results_list = all_results[surface_name]
-        colors = plt.cm.viridis(np.linspace(0, 0.9, len(results_list)))
+        colors = plt.colormaps["viridis"](np.linspace(0, 0.9, len(results_list)))
 
         for i, results in enumerate(results_list):
             log_ranges = results["log_ranges"]
@@ -134,21 +136,53 @@ def create_param_errors_figure(
             color = colors[i]
 
             # Col 0: N* exponent error
-            axes[row, 0].plot(log_ranges, results["a_error"] * 100, "o-", color=color, markersize=3, label=label)
+            axes[row, 0].plot(
+                log_ranges,
+                results["a_error"] * 100,
+                "o-",
+                color=color,
+                markersize=3,
+                label=label,
+            )
             # Col 1: D* exponent error
-            axes[row, 1].plot(log_ranges, results["b_error"] * 100, "o-", color=color, markersize=3, label=label)
+            axes[row, 1].plot(
+                log_ranges,
+                results["b_error"] * 100,
+                "o-",
+                color=color,
+                markersize=3,
+                label=label,
+            )
             # Col 2: N* intercept error
-            axes[row, 2].plot(log_ranges, results["a_intercept_error"] * 100, "o-", color=color, markersize=3, label=label)
+            axes[row, 2].plot(
+                log_ranges,
+                results["a_intercept_error"] * 100,
+                "o-",
+                color=color,
+                markersize=3,
+                label=label,
+            )
             # Col 3: D* intercept error
-            axes[row, 3].plot(log_ranges, results["b_intercept_error"] * 100, "o-", color=color, markersize=3, label=label)
+            axes[row, 3].plot(
+                log_ranges,
+                results["b_intercept_error"] * 100,
+                "o-",
+                color=color,
+                markersize=3,
+                label=label,
+            )
 
         # Configure axes for this row
         ratio = loss.alpha / loss.beta
-        row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={ratio:.2f})"
+        row_label = (
+            f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={ratio:.2f})"
+        )
         _configure_ax(axes[row, 0], f"N* exponent error\n{row_label}")
         _configure_ax(axes[row, 1], f"D* exponent error\n{row_label}")
         _configure_ax(axes[row, 2], f"N* intercept error\n{row_label}")
-        _configure_ax(axes[row, 3], f"D* intercept error\n{row_label}", show_legend=(row == 0))
+        _configure_ax(
+            axes[row, 3], f"D* intercept error\n{row_label}", show_legend=(row == 0)
+        )
 
     fig.suptitle(
         "Experiment 3: Parameter Estimation Errors vs Sampling Bias",
@@ -184,7 +218,9 @@ def create_optima_errors_figure(
     filtered_results = [r for r in results_list if r["config"].name in selected_configs]
     # Sort to ensure consistent order: baseline, drift_0.4, scale_2.0
     config_order = ["baseline", "drift_0.4", "scale_2.0"]
-    filtered_results = sorted(filtered_results, key=lambda r: config_order.index(r["config"].name))
+    filtered_results = sorted(
+        filtered_results, key=lambda r: config_order.index(r["config"].name)
+    )
 
     compute_budgets = filtered_results[0]["compute_budgets"]
     n_budgets = len(compute_budgets)
@@ -222,13 +258,21 @@ def create_optima_errors_figure(
             D_signed_errors = results["D_opt_errors"][:, j] * true_D_opts[j]
 
             # Col 0: N* relative error
-            axes[row, 0].scatter(log_ranges, N_rel_errors, c=color_N, alpha=alpha, s=size, marker="o")
+            axes[row, 0].scatter(
+                log_ranges, N_rel_errors, c=color_N, alpha=alpha, s=size, marker="o"
+            )
             # Col 1: D* relative error
-            axes[row, 1].scatter(log_ranges, D_rel_errors, c=color_D, alpha=alpha, s=size, marker="s")
+            axes[row, 1].scatter(
+                log_ranges, D_rel_errors, c=color_D, alpha=alpha, s=size, marker="s"
+            )
             # Col 2: N* signed error
-            axes[row, 2].scatter(log_ranges, N_signed_errors, c=color_N, alpha=alpha, s=size, marker="o")
+            axes[row, 2].scatter(
+                log_ranges, N_signed_errors, c=color_N, alpha=alpha, s=size, marker="o"
+            )
             # Col 3: D* signed error
-            axes[row, 3].scatter(log_ranges, D_signed_errors, c=color_D, alpha=alpha, s=size, marker="s")
+            axes[row, 3].scatter(
+                log_ranges, D_signed_errors, c=color_D, alpha=alpha, s=size, marker="s"
+            )
 
         # Configure axes for this row
         _configure_ax(axes[row, 0], f"N* relative error (%)\n{config_name}")
@@ -265,7 +309,9 @@ def main():
     output_dir = prepare_output_dir(config.RESULTS_DIR / "exp3")
 
     # Run all configurations (also saves individual figures)
-    all_results = run_all_configurations(compute_budgets, log_ranges, n_points, output_dir)
+    all_results = run_all_configurations(
+        compute_budgets, log_ranges, n_points, output_dir
+    )
 
     # Create and save parameter errors figure
     print(f"\n{'─' * 70}")
@@ -280,7 +326,9 @@ def main():
     print(f"\n{'─' * 70}")
     print("Generating optima errors figures (one per surface)...")
     for surface_name, loss in LOSS_SURFACES:
-        optima_fig = create_optima_errors_figure(surface_name, loss, all_results[surface_name])
+        optima_fig = create_optima_errors_figure(
+            surface_name, loss, all_results[surface_name]
+        )
         optima_path = output_dir / f"{surface_name}_optima_errors.png"
         optima_fig.savefig(optima_path, dpi=150, bbox_inches="tight", facecolor="white")
         print(f"Saved: {optima_path}")
@@ -300,7 +348,9 @@ def main():
             sim_config = results["config"]
             max_a_err = results["a_error"][-1] * 100
             max_b_err = results["b_error"][-1] * 100
-            print(f"{sim_config.name:<15} {sim_config.drift_rate:>8.1f} {sim_config.center_scale:>8.1f} {max_a_err:>+10.2f} {max_b_err:>+10.2f}")
+            print(
+                f"{sim_config.name:<15} {sim_config.drift_rate:>8.1f} {sim_config.center_scale:>8.1f} {max_a_err:>+10.2f} {max_b_err:>+10.2f}"
+            )
 
     print("\nExperiment 3 complete.")
     return all_results

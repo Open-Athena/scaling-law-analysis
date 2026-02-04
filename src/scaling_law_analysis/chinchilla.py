@@ -9,13 +9,13 @@ This module provides:
 
 import numpy as np
 from dataclasses import dataclass
-from typing import NamedTuple
+from typing import NamedTuple, Union
 
 from scipy.optimize import minimize, nnls
 
 
 # Chinchilla paper ground truth parameters;
-# see "D.2. Approach 3: Parametric fitting of the loss" 
+# see "D.2. Approach 3: Parametric fitting of the loss"
 CHINCHILLA_PARAMS = {
     "A": 406.4,
     "B": 410.7,
@@ -72,7 +72,9 @@ class LossSurface:
 
         This ensures N* · D* = C/6 holds exactly.
         """
-        return (self.alpha * self.A / (self.beta * self.B)) ** (1 / (self.alpha + self.beta))
+        return (self.alpha * self.A / (self.beta * self.B)) ** (
+            1 / (self.alpha + self.beta)
+        )
 
     def N_opt(self, C: float) -> float:
         """Compute optimal parameter count N* for a given compute budget.
@@ -106,17 +108,19 @@ class LossSurface:
         """
         return (1 / self.G) * ((C / 6) ** self.b)
 
-    def loss(self, N: np.ndarray, D: np.ndarray) -> np.ndarray:
+    def loss(
+        self, N: Union[float, np.ndarray], D: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """Compute loss L(N, D) = E + A/N^α + B/D^β.
 
         Args:
-            N: Number of parameters (can be array)
-            D: Number of training tokens (can be array)
+            N: Number of parameters (scalar or array)
+            D: Number of training tokens (scalar or array)
 
         Returns:
             Loss values corresponding to each (N, D) pair
         """
-        return self.E + self.A / (N**self.alpha) + self.B / (D**self.beta)
+        return self.E + self.A / (N**self.alpha) + self.B / (D**self.beta)  # type: ignore[operator]
 
     @classmethod
     def from_chinchilla(cls, alpha: float, beta: float) -> "LossSurface":
@@ -230,6 +234,8 @@ def isoflop_sample(
 
     # Compute loss at each point
     L = surface.loss(N, D)
+    if not isinstance(L, np.ndarray):
+        L = np.array([L])
 
     return N, D, L
 
@@ -246,11 +252,11 @@ class ParabolaFit(NamedTuple):
 @dataclass
 class Approach2Result:
     """Results from Approach 2 parameter recovery.
-    
+
     Approach 2 fits power laws:
         N* ∝ C^a  where a = β/(α+β)
         D* ∝ C^b  where b = α/(α+β)
-    
+
     Note: a and b satisfy a + b = 1.
     """
 
@@ -280,7 +286,7 @@ class Approach2Result:
             Inferred optimal number of training tokens D*
         """
         log10_D = self.b * np.log10(C) + self.b_intercept
-        return 10 ** log10_D
+        return 10**log10_D
 
 
 def fit_parabola(
@@ -477,18 +483,20 @@ def _compute_rss_and_params(
     N_neg_alpha = np.exp(-alpha * log_N)
     D_neg_beta = np.exp(-beta * log_D)
 
-    design_matrix = np.column_stack([
-        np.ones(len(L)),
-        N_neg_alpha,
-        D_neg_beta,
-    ])
+    design_matrix = np.column_stack(
+        [
+            np.ones(len(L)),
+            N_neg_alpha,
+            D_neg_beta,
+        ]
+    )
 
     params, rnorm = nnls(design_matrix, L)
     # nnls returns the 2-norm ||Ax - b||, but we need RSS = ||Ax - b||^2.
     # Using rnorm directly would break Nelder-Mead convergence: at the optimum,
     # RSS ≈ 1e-28 but rnorm ≈ 1e-14, which exceeds fatol=1e-15 and causes
     # the optimizer to run forever trying to improve.
-    rss = rnorm ** 2
+    rss = rnorm**2
 
     return rss, params
 
@@ -502,7 +510,9 @@ def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> None:
         )
 
 
-def _check_at_bounds(name: str, val: float, lo: float, hi: float, tol: float = 1e-6) -> None:
+def _check_at_bounds(
+    name: str, val: float, lo: float, hi: float, tol: float = 1e-6
+) -> None:
     """Raise if value is at or near bounds."""
     if val - lo < tol:
         raise ValueError(f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}.")
@@ -593,7 +603,9 @@ def fit_surface(
     """
     N, D, L = np.asarray(N), np.asarray(D), np.asarray(L)
     if not (len(N) == len(D) == len(L)):
-        raise ValueError(f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}")
+        raise ValueError(
+            f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
+        )
 
     log_N, log_D = np.log(N), np.log(D)
 
@@ -613,11 +625,13 @@ def fit_surface(
         method="Nelder-Mead",
         options=OPTIMIZER_OPTIONS,
     )
-    if not result.success:
-        raise ValueError(f"Optimization failed: {result.message} (iterations: {result.nit})")
+    if result is None or not result.success:
+        message = result.message if result else "Unknown error"
+        nit = result.nit if result else 0
+        raise ValueError(f"Optimization failed: {message} (iterations: {nit})")
 
     # Extract final parameters
-    alpha, beta = result.x
+    alpha, beta = float(result.x[0]), float(result.x[1])
     rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
 
     # Diagnostic checks
@@ -629,6 +643,11 @@ def fit_surface(
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=rss)
 
     return SurfaceFitResult(
-        E=E, A=A, B=B, alpha=alpha, beta=beta,
-        residual_sum_squares=rss, n_points=len(N),
+        E=E,
+        A=A,
+        B=B,
+        alpha=alpha,
+        beta=beta,
+        residual_sum_squares=rss,
+        n_points=len(N),
     )

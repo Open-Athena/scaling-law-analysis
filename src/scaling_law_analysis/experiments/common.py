@@ -47,6 +47,7 @@ TICK_POSITIONS = [0.3, 0.5, 1.0, 1.5, 2.0]
 # Utilities
 # =============================================================================
 
+
 def prepare_output_dir(output_dir: Path) -> Path:
     """Clear and recreate an output directory for experiment results.
 
@@ -191,7 +192,12 @@ DISPLAY_LOG_RANGE_NAMES = ["narrow", "medium", "wide"]
 EXP3_LOSS_SURFACE = SYMMETRIC_LOSS_SURFACE
 
 EXP3_CONFIGS = [
-    SimulationConfig(name=name, loss=SYMMETRIC_LOSS_SURFACE, drift_rate=drift_rate, center_scale=center_scale)
+    SimulationConfig(
+        name=name,
+        loss=SYMMETRIC_LOSS_SURFACE,
+        drift_rate=drift_rate,
+        center_scale=center_scale,
+    )
     for drift_rate, center_scale, name in BIAS_CONFIGS
 ]
 
@@ -248,7 +254,12 @@ def sample_isoflop_data(
 
 # Type alias for extrapolation fitter: takes config and returns D_opt function
 ExtrapolationFitter = Callable[
-    [SimulationConfig, np.ndarray, float, int],  # sim_config, compute_budgets, log_range, n_points
+    [
+        SimulationConfig,
+        np.ndarray,
+        float,
+        int,
+    ],  # sim_config, compute_budgets, log_range, n_points
     Callable[[float], float],  # Returns D_opt(C) function
 ]
 
@@ -333,7 +344,9 @@ def run_extrapolation_analysis(
         for surface_name, loss in loss_surfaces:
             print(f"\n{'=' * 70}")
             print(f"Loss Surface: {surface_name}")
-            print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}")
+            print(
+                f"  α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}"
+            )
             print("=" * 70)
 
             surface_results = []
@@ -359,7 +372,9 @@ def run_extrapolation_analysis(
                 surface_results.append(results)
 
                 # Print summary
-                print(f"    Max D* error: {np.abs(results['D_rel_errors']).max() * 100:.2f}%")
+                print(
+                    f"    Max D* error: {np.abs(results['D_rel_errors']).max() * 100:.2f}%"
+                )
 
             all_results[range_name][surface_name] = surface_results
 
@@ -389,7 +404,9 @@ def create_extrapolation_figure(
     """
     n_ranges = len(log_range_names)
     n_surfaces = len(loss_surfaces)
-    fig, axes = plt.subplots(n_ranges, n_surfaces, figsize=(5 * n_surfaces, 4 * n_ranges))
+    fig, axes = plt.subplots(
+        n_ranges, n_surfaces, figsize=(5 * n_surfaces, 4 * n_ranges)
+    )
 
     for row, (range_name, log_range) in enumerate(zip(log_range_names, log_ranges)):
         range_label = log_range_to_label(log_range)
@@ -397,7 +414,7 @@ def create_extrapolation_figure(
         for col, (surface_name, loss) in enumerate(loss_surfaces):
             ax = axes[row, col]
             results_list = all_results[range_name][surface_name]
-            colors = plt.cm.viridis(np.linspace(0, 0.9, len(results_list)))
+            colors = plt.colormaps["viridis"](np.linspace(0, 0.9, len(results_list)))
 
             for i, results in enumerate(results_list):
                 sim_config = results["config"]

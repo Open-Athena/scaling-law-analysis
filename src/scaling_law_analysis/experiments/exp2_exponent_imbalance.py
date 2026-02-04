@@ -40,10 +40,8 @@ def plot_combined_errors(
         ax_b: Axes for 'b' exponent errors
     """
     # Sort by imbalance ratio for consistent legend ordering
-    sorted_results = sorted(
-        all_results, key=lambda r: r["config"].loss.imbalance_ratio
-    )
-    colors = plt.cm.viridis(np.linspace(0, 0.9, len(sorted_results)))
+    sorted_results = sorted(all_results, key=lambda r: r["config"].loss.imbalance_ratio)
+    colors = plt.colormaps["viridis"](np.linspace(0, 0.9, len(sorted_results)))
 
     for i, results in enumerate(sorted_results):
         sim_config = results["config"]
@@ -55,12 +53,20 @@ def plot_combined_errors(
         label = f"{sim_config.name} (α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={loss.imbalance_ratio:.2f})"
 
         ax_a.plot(
-            log_ranges, a_error,
-            "o-", color=colors[i], markersize=4, label=label,
+            log_ranges,
+            a_error,
+            "o-",
+            color=colors[i],
+            markersize=4,
+            label=label,
         )
         ax_b.plot(
-            log_ranges, b_error,
-            "s-", color=colors[i], markersize=4, label=label,
+            log_ranges,
+            b_error,
+            "s-",
+            color=colors[i],
+            markersize=4,
+            label=label,
         )
 
     # Configure axes
@@ -123,7 +129,9 @@ def main():
         loss = sim_config.loss
         print(f"\n{'─' * 70}")
         print(f"Configuration: {sim_config.name}")
-        print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f} (ratio={loss.imbalance_ratio:.2f})")
+        print(
+            f"  α={loss.alpha:.2f}, β={loss.beta:.2f} (ratio={loss.imbalance_ratio:.2f})"
+        )
         print(f"  a={loss.a:.4f}, b={loss.b:.4f}")
         print(f"{'─' * 70}")
 
@@ -137,7 +145,11 @@ def main():
         all_results.append(results)
 
         # Generate individual figure (same format as Experiment 1)
-        display_log_ranges = [log_ranges[0], log_ranges[len(log_ranges) // 2], log_ranges[-1]]
+        display_log_ranges = [
+            log_ranges[0],
+            log_ranges[len(log_ranges) // 2],
+            log_ranges[-1],
+        ]
         fig = create_figure(results, display_log_ranges, compute_budgets)
 
         # Update title for Experiment 2 context
@@ -175,7 +187,9 @@ def main():
         loss = sim_config.loss
         max_a_err = results["a_error"][-1] * 100
         max_b_err = results["b_error"][-1] * 100
-        print(f"{sim_config.name:<20} {loss.imbalance_ratio:>10.2f} {max_a_err:>+10.2f} {max_b_err:>+10.2f}")
+        print(
+            f"{sim_config.name:<20} {loss.imbalance_ratio:>10.2f} {max_a_err:>+10.2f} {max_b_err:>+10.2f}"
+        )
 
     print("\nExperiment 2 complete.")
     return all_results

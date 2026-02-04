@@ -31,22 +31,23 @@ from scaling_law_analysis.experiments.common import (
 
 def log_range_to_label(log_range: float) -> str:
     """Convert log_range to human-readable N sampling range.
-    
+
     log_range=1.0 means N spans 10^-1 to 10^1 around optimal = 0.1x to 10x.
     """
-    factor = 10 ** log_range
+    factor = 10**log_range
     if factor >= 10:
         return f"±{factor:.0f}x"
     else:
         return f"±{factor:.1f}x"
 
+
 def compute_true_intercepts(loss) -> tuple[float, float]:
     """Compute true power-law intercepts for N* and D* vs C.
-    
+
     The true power laws are:
         N* = G · (C/6)^a  →  log10(N*) = a·log10(C) + (log10(G) - a·log10(6))
         D* = (1/G) · (C/6)^b  →  log10(D*) = b·log10(C) + (-log10(G) - b·log10(6))
-    
+
     Returns:
         Tuple of (true_a_intercept, true_b_intercept) in log10 space
     """
@@ -80,7 +81,7 @@ def run_experiment(
     a_intercept_recovered = []
     b_intercept_recovered = []
     results = []
-    
+
     # Per-budget optimum errors: shape (n_log_ranges, n_budgets)
     N_opt_errors = []
     D_opt_errors = []
@@ -104,7 +105,7 @@ def run_experiment(
         a_intercept_recovered.append(result.a_intercept)
         b_intercept_recovered.append(result.b_intercept)
         results.append(result)
-        
+
         # Per-budget relative errors in N* and D*
         N_opt_errors.append((result.N_opts - true_N_opts) / true_N_opts)
         D_opt_errors.append((result.D_opts - true_D_opts) / true_D_opts)
@@ -132,8 +133,10 @@ def run_experiment(
         "true_b_intercept": true_b_intercept,
         "a_intercept_recovered": a_intercept_recovered,
         "b_intercept_recovered": b_intercept_recovered,
-        "a_intercept_error": (a_intercept_recovered - true_a_intercept) / abs(true_a_intercept),
-        "b_intercept_error": (b_intercept_recovered - true_b_intercept) / abs(true_b_intercept),
+        "a_intercept_error": (a_intercept_recovered - true_a_intercept)
+        / abs(true_a_intercept),
+        "b_intercept_error": (b_intercept_recovered - true_b_intercept)
+        / abs(true_b_intercept),
         # Per-budget optimum errors
         "N_opt_errors": N_opt_errors,
         "D_opt_errors": D_opt_errors,
@@ -162,7 +165,7 @@ def plot_isoflop_fits(
         show_ylabel: Whether to show y-axis label
     """
     loss = sim_config.loss
-    colors = plt.cm.viridis(np.linspace(0, 1, len(compute_budgets)))
+    colors = plt.colormaps["viridis"](np.linspace(0, 1, len(compute_budgets)))
 
     for i, (C, fit) in enumerate(zip(compute_budgets, result.parabola_fits_N)):
         center_offset = compute_center_offset(
@@ -192,7 +195,7 @@ def plot_isoflop_fits(
 
         # Mark true optimum
         N_true, D_true = loss.N_opt(C), loss.D_opt(C)
-        L_true = loss.loss(N_true, D_true)
+        L_true = float(loss.loss(N_true, D_true))
         ax.scatter(
             [np.log10(N_true)],
             [L_true],
@@ -266,7 +269,15 @@ def plot_power_law_fits(
 
     # Plot N* (left axis)
     ax.scatter(log_C, np.log10(N_opts), c=color_N, s=40, zorder=3, label="Inferred N*")
-    ax.scatter(log_C, np.log10(true_N_opts), c=color_N, marker="x", s=60, zorder=3, label="True N*")
+    ax.scatter(
+        log_C,
+        np.log10(true_N_opts),
+        c=color_N,
+        marker="x",
+        s=60,
+        zorder=3,
+        label="True N*",
+    )
 
     # Plot N* fit line (solid for inferred)
     log_C_fine = np.linspace(log_C.min(), log_C.max(), 100)
@@ -277,8 +288,24 @@ def plot_power_law_fits(
     ax.plot(log_C, np.log10(true_N_opts), c=color_N, lw=1.5, alpha=0.8, linestyle="--")
 
     # Plot D* (right axis)
-    ax2.scatter(log_C, np.log10(D_opts), c=color_D, s=40, zorder=3, marker="s", label="Inferred D*")
-    ax2.scatter(log_C, np.log10(true_D_opts), c=color_D, marker="x", s=60, zorder=3, label="True D*")
+    ax2.scatter(
+        log_C,
+        np.log10(D_opts),
+        c=color_D,
+        s=40,
+        zorder=3,
+        marker="s",
+        label="Inferred D*",
+    )
+    ax2.scatter(
+        log_C,
+        np.log10(true_D_opts),
+        c=color_D,
+        marker="x",
+        s=60,
+        zorder=3,
+        label="True D*",
+    )
 
     # Plot D* fit line (solid for inferred)
     log_D_fit = result.b * log_C_fine + result.b_intercept
@@ -297,7 +324,8 @@ def plot_power_law_fits(
 
     # Add exponent annotations
     ax.text(
-        0.05, 0.95,
+        0.05,
+        0.95,
         f"a={result.a:.4f} (true={loss.a:.4f})",
         transform=ax.transAxes,
         fontsize=8,
@@ -305,7 +333,8 @@ def plot_power_law_fits(
         color=color_N,
     )
     ax.text(
-        0.05, 0.85,
+        0.05,
+        0.85,
         f"b={result.b:.4f} (true={loss.b:.4f})",
         transform=ax.transAxes,
         fontsize=8,
@@ -335,21 +364,25 @@ def plot_exponent_error(
     a_error = experiment_results["a_error"] * 100  # Convert to %
     b_error = experiment_results["b_error"] * 100
 
-    ax.plot(log_ranges, a_error, "o-", label="a (N* exponent)", color="C0", markersize=4)
-    ax.plot(log_ranges, b_error, "s-", label="b (D* exponent)", color="C2", markersize=4)
+    ax.plot(
+        log_ranges, a_error, "o-", label="a (N* exponent)", color="C0", markersize=4
+    )
+    ax.plot(
+        log_ranges, b_error, "s-", label="b (D* exponent)", color="C2", markersize=4
+    )
 
     ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
-    
+
     ax.set_xlabel("Sampling range")
     ax.set_ylabel("Relative error (%)")
     ax.set_title("Exponent Error")
-    
+
     # Add secondary x-axis labels showing intuitive range
     tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
-    
+
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
@@ -368,20 +401,34 @@ def plot_intercept_error(
     a_intercept_error = experiment_results["a_intercept_error"] * 100  # Convert to %
     b_intercept_error = experiment_results["b_intercept_error"] * 100
 
-    ax.plot(log_ranges, a_intercept_error, "o-", label="a₀ (N* intercept)", color="C0", markersize=4)
-    ax.plot(log_ranges, b_intercept_error, "s-", label="b₀ (D* intercept)", color="C2", markersize=4)
+    ax.plot(
+        log_ranges,
+        a_intercept_error,
+        "o-",
+        label="a₀ (N* intercept)",
+        color="C0",
+        markersize=4,
+    )
+    ax.plot(
+        log_ranges,
+        b_intercept_error,
+        "s-",
+        label="b₀ (D* intercept)",
+        color="C2",
+        markersize=4,
+    )
 
     ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
-    
+
     ax.set_xlabel("Sampling range")
     ax.set_ylabel("Relative error (%)")
     ax.set_title("Intercept Error")
-    
+
     tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
-    
+
     ax.legend(fontsize=8)
     ax.grid(True, alpha=0.3)
 
@@ -403,13 +450,13 @@ def plot_optimum_error(
     compute_budgets = experiment_results["compute_budgets"]
     N_opt_errors = experiment_results["N_opt_errors"] * 100  # (n_log_ranges, n_budgets)
     D_opt_errors = experiment_results["D_opt_errors"] * 100
-    
+
     n_budgets = len(compute_budgets)
-    
+
     # Opacity and size increase with compute budget (darker/larger = higher compute)
     alphas = np.linspace(0.2, 1.0, n_budgets)
     sizes = np.linspace(10, 36, n_budgets)
-    
+
     for i, C in enumerate(compute_budgets):
         ax.scatter(
             log_ranges,
@@ -429,16 +476,16 @@ def plot_optimum_error(
         )
 
     ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
-    
+
     ax.set_xlabel("Sampling range")
     ax.set_ylabel("Relative error (%)")
     ax.set_title("Parabola Optimum Error")
-    
+
     tick_positions = TICK_POSITIONS
     tick_labels = [log_range_to_label(lr) for lr in tick_positions]
     ax.set_xticks(tick_positions)
     ax.set_xticklabels(tick_labels, fontsize=8, rotation=30, ha="right")
-    
+
     # Custom legend showing N* and D* with opacity note
     ax.scatter([], [], c="C0", marker="o", s=20, alpha=1.0, label="N*")
     ax.scatter([], [], c="C2", marker="s", s=20, alpha=1.0, label="D*")
@@ -484,7 +531,9 @@ def create_figure(
         actual_log_ranges.append(experiment_results["log_ranges"][idx])
 
     # Row 1: IsoFLOP fits for 3 grid sizes
-    for i, (result, actual_log_range) in enumerate(zip(results_for_display, actual_log_ranges)):
+    for i, (result, actual_log_range) in enumerate(
+        zip(results_for_display, actual_log_ranges)
+    ):
         ax = fig.add_subplot(gs[0, i])
         plot_isoflop_fits(
             ax=ax,
@@ -497,7 +546,9 @@ def create_figure(
         )
 
     # Row 2: Power-law fits for same 3 grid sizes
-    for i, (result, actual_log_range) in enumerate(zip(results_for_display, actual_log_ranges)):
+    for i, (result, actual_log_range) in enumerate(
+        zip(results_for_display, actual_log_ranges)
+    ):
         ax = fig.add_subplot(gs[1, i])
         plot_power_law_fits(
             ax=ax,
@@ -511,10 +562,10 @@ def create_figure(
     # Row 3: Three error analysis subplots
     ax_exponent = fig.add_subplot(gs[2, 0])
     plot_exponent_error(ax_exponent, experiment_results)
-    
+
     ax_intercept = fig.add_subplot(gs[2, 1])
     plot_intercept_error(ax_intercept, experiment_results)
-    
+
     ax_optimum = fig.add_subplot(gs[2, 2])
     plot_optimum_error(ax_optimum, experiment_results)
 
@@ -582,7 +633,9 @@ def main():
     print("-" * 70)
 
     # Print results table
-    print(f"\n{'log_range':>10} {'a_rec':>10} {'b_rec':>10} {'a_err%':>10} {'b_err%':>10}")
+    print(
+        f"\n{'log_range':>10} {'a_rec':>10} {'b_rec':>10} {'a_err%':>10} {'b_err%':>10}"
+    )
     print("-" * 70)
 
     for i, lr in enumerate(log_ranges):
@@ -590,14 +643,20 @@ def main():
         b_rec = results["b_recovered"][i]
         a_err = results["a_error"][i] * 100
         b_err = results["b_error"][i] * 100
-        print(f"{lr:>10.2f} {a_rec:>10.4f} {b_rec:>10.4f} {a_err:>+10.2f} {b_err:>+10.2f}")
+        print(
+            f"{lr:>10.2f} {a_rec:>10.4f} {b_rec:>10.4f} {a_err:>+10.2f} {b_err:>+10.2f}"
+        )
 
     print("-" * 70)
     print(f"{'True':>10} {true_a:>10.4f} {true_b:>10.4f}")
 
     # Generate figure
     print("\nGenerating figure...")
-    display_log_ranges = [log_ranges[0], log_ranges[len(log_ranges) // 2], log_ranges[-1]]
+    display_log_ranges = [
+        log_ranges[0],
+        log_ranges[len(log_ranges) // 2],
+        log_ranges[-1],
+    ]
     fig = create_figure(results, display_log_ranges, compute_budgets)
 
     # Save figure

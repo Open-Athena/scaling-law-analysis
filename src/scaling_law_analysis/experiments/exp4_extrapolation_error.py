@@ -56,7 +56,9 @@ def main():
     output_dir = prepare_output_dir(config.RESULTS_DIR / "exp4")
 
     print(f"\nFitting compute budgets: {COMPUTE_BUDGETS}")
-    print(f"Extrapolation budgets: {EXTRAPOLATION_BUDGETS[0]:.0e} to {EXTRAPOLATION_BUDGETS[-1]:.0e}")
+    print(
+        f"Extrapolation budgets: {EXTRAPOLATION_BUDGETS[0]:.0e} to {EXTRAPOLATION_BUDGETS[-1]:.0e}"
+    )
     print(f"\nLoss surfaces: {[name for name, _ in LOSS_SURFACES]}")
 
     # Run extrapolation analysis
