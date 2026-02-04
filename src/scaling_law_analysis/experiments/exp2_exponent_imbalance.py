@@ -52,7 +52,7 @@ def plot_combined_errors(
         a_error = results["a_error"] * 100
         b_error = results["b_error"] * 100
 
-        label = f"{sim_config.name} (α={loss.alpha:.3g}, β={loss.beta:.3g}, ratio={loss.imbalance_ratio:.2f})"
+        label = f"{sim_config.name} (α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={loss.imbalance_ratio:.2f})"
 
         ax_a.plot(
             log_ranges, a_error,
@@ -123,7 +123,7 @@ def main():
         loss = sim_config.loss
         print(f"\n{'─' * 70}")
         print(f"Configuration: {sim_config.name}")
-        print(f"  α={loss.alpha}, β={loss.beta} (ratio={loss.imbalance_ratio:.2f})")
+        print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f} (ratio={loss.imbalance_ratio:.2f})")
         print(f"  a={loss.a:.4f}, b={loss.b:.4f}")
         print(f"{'─' * 70}")
 
@@ -143,7 +143,7 @@ def main():
         # Update title for Experiment 2 context
         fig.suptitle(
             f"Experiment 2: {sim_config.name} configuration (α/β ratio = {loss.imbalance_ratio:.2f})\n"
-            f"α={loss.alpha:.3g}, β={loss.beta:.3g} → a={loss.a:.4f}, b={loss.b:.4f}",
+            f"α={loss.alpha:.2f}, β={loss.beta:.2f} → a={loss.a:.4f}, b={loss.b:.4f}",
             fontsize=11,
             y=0.98,
         )

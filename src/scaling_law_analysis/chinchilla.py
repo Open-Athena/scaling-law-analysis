@@ -159,10 +159,10 @@ def compute_center_offset(
        - At max compute: offset = -drift_rate (smaller N)
        This means all budgets except the first undershoot toward smaller N.
     2. center_scale: Constant multiplicative factor applied to all centers
-       - scale > 1: all centers shifted right (larger N)
-       - scale < 1: all centers shifted left (smaller N)
+       - scale > 1: all centers shifted left (smaller N)
+       - scale < 1: all centers shifted right (larger N)
 
-    Both effects are additive in log10 space.
+    Both effects are subtractive in log10 space (positive values shift toward smaller N).
 
     Args:
         C: Compute budget for which to compute offset
@@ -175,11 +175,11 @@ def compute_center_offset(
     """
     offset = 0.0
 
-    # Add constant scale offset
+    # Subtract constant scale offset (scale > 1 shifts left toward smaller N)
     if center_scale != 1.0:
-        offset += np.log10(center_scale)
+        offset -= np.log10(center_scale)
 
-    # Add linear drift offset (0 at min compute, -drift_rate at max compute)
+    # Subtract linear drift offset (0 at min compute, -drift_rate at max compute)
     if drift_rate != 0.0:
         log_C_all = np.log10(compute_budgets)
         log_C_min = log_C_all.min()
@@ -260,6 +260,24 @@ class Approach2Result:
     N_opts: np.ndarray  # Optimal N* from each parabola fit
     D_opts: np.ndarray  # Optimal D* from each parabola fit
 
+    def D_opt(self, C: float) -> float:
+        """Compute inferred optimal token count D* for a given compute budget.
+
+        Uses the fitted power law from Approach 2:
+            log₁₀(D*) = b · log₁₀(C) + b_intercept
+
+        This can be used to extrapolate D* to compute budgets beyond those
+        used for fitting.
+
+        Args:
+            C: Compute budget in FLOPs
+
+        Returns:
+            Inferred optimal number of training tokens D*
+        """
+        log10_D = self.b * np.log10(C) + self.b_intercept
+        return 10 ** log10_D
+
 
 def fit_parabola(
     log_x: np.ndarray,
@@ -332,8 +350,8 @@ def fit_approach2(
                     -drift_rate at max) and measured in log10 units of N.
         center_scale: Constant multiplier applied to all sampling centers.
                       When 1.0, centers are at true optimal N*.
-                      When >1, all centers are shifted right (larger N).
-                      When <1, all centers are shifted left (smaller N).
+                      When >1, all centers are shifted left (smaller N).
+                      When <1, all centers are shifted right (larger N).
         n_points: Number of points per IsoFLOP curve
         log_range: Sampling range in log10 space around optimal N (and D)
 

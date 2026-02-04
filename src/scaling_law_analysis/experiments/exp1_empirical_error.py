@@ -526,7 +526,7 @@ def create_figure(
     bias_str = f", {', '.join(bias_parts)}" if bias_parts else ""
     fig.suptitle(
         f"Experiment 1: Approach 2 Accuracy vs Grid Resolution{bias_str}\n"
-        f"True: α={loss.alpha:.3g}, β={loss.beta:.3g} → a=β/(α+β)={loss.a:.4f}, b=α/(α+β)={loss.b:.4f}",
+        f"True: α={loss.alpha:.2f}, β={loss.beta:.2f} → a=β/(α+β)={loss.a:.4f}, b=α/(α+β)={loss.b:.4f}",
         fontsize=11,
         y=0.98,
     )
@@ -556,8 +556,8 @@ def main():
     print(f"Points per IsoFLOP curve: {n_points}")
     print(f"Drift rate: {sim_config.drift_rate}")
     print(f"Center scale: {sim_config.center_scale}")
-    print(f"Alpha: {loss.alpha}, Beta: {loss.beta}")
-    print(f"A: {loss.A}, B: {loss.B}, E: {loss.E}")
+    print(f"Alpha: {loss.alpha:.2f}, Beta: {loss.beta:.2f}")
+    print(f"A: {loss.A:.1f}, B: {loss.B:.1f}, E: {loss.E:.2f}")
 
     # Run experiment
     print("\nRunning parameter recovery...")
@@ -576,7 +576,7 @@ def main():
     print("Approach 2 recovers power law exponents:")
     print("  N* ∝ C^a  where a = β/(α+β)")
     print("  D* ∝ C^b  where b = α/(α+β)")
-    print(f"\nGround truth: α={loss.alpha}, β={loss.beta}")
+    print(f"\nGround truth: α={loss.alpha:.2f}, β={loss.beta:.2f}")
     print(f"  → True a = {true_a:.4f} (N* exponent)")
     print(f"  → True b = {true_b:.4f} (D* exponent)")
     print("-" * 70)

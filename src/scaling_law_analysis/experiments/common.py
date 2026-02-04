@@ -91,9 +91,9 @@ def exponents_from_ratio(ratio: float) -> tuple[float, float]:
 
 
 # Predefined configurations for Experiment 2
-# Reference: Chinchilla paper values (ratio ≈ 1.21)
-REFERENCE_CONFIG = SimulationConfig(
-    name="reference",
+# Chinchilla: paper values (ratio ≈ 1.21)
+CHINCHILLA_CONFIG = SimulationConfig(
+    name="chinchilla",
     loss=DEFAULT_LOSS_SURFACE,
 )
 
@@ -129,7 +129,7 @@ EXTREME_IMBALANCE_CONFIG = SimulationConfig(
 
 # All Experiment 2 configurations
 EXP2_CONFIGS = [
-    REFERENCE_CONFIG,
+    CHINCHILLA_CONFIG,
     BALANCED_CONFIG,
     SMALL_IMBALANCE_CONFIG,
     MODERATE_IMBALANCE_CONFIG,

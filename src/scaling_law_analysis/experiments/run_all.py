@@ -4,6 +4,7 @@ from scaling_law_analysis.experiments import (
     exp1_empirical_error,
     exp2_exponent_imbalance,
     exp3_drift_sensitivity,
+    exp4_extrapolation_error,
 )
 
 
@@ -20,6 +21,9 @@ def main():
 
     print("\n")
     exp3_drift_sensitivity.main()
+
+    print("\n")
+    exp4_extrapolation_error.main()
 
     print("\n" + "=" * 80)
     print("ALL EXPERIMENTS COMPLETE")

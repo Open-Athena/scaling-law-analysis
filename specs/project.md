@@ -99,14 +99,43 @@ Produce a single figure showing relative error in recovered exponents (a and b) 
 Produce a single figure showing relative error in recovered exponents (a and b) as a function of sampling range, with one curve per configuration.
 
 
-### Experiment 4: Analytical Error
+### Experiment 4: Extrapolation Error
+
+**Hypothesis**: The accuracy of scaling law exponent inference degrades when extrapolating to compute budgets beyond those used for fitting. The magnitude of this error depends on the loss surface geometry.
+
+**Method**:
+
+1. Generate synthetic loss data across three loss surface configurations:
+   - **Symmetric**: α=β=0.31, A=B=400 (balanced)
+   - **Chinchilla**: α=0.34, β=0.28, A=406.4, B=410.7 (paper defaults)
+   - **High imbalance**: α/β ratio = 3.0
+
+2. For each loss surface, test five sampling bias configurations:
+   - **Baseline**: drift=0, center_scale=1
+   - **Drift 0.2**: drift=0.2, center_scale=1
+   - **Drift 0.4**: drift=0.4, center_scale=1
+   - **Scale 1.5**: drift=0, center_scale=1.5
+   - **Scale 2.0**: drift=0, center_scale=2.0
+
+3. Use a fixed sampling range (±10x around optimal) for extrapolation analysis.
+
+4. Fit scaling law exponents using existing compute budgets (10^17 to 10^21 FLOPs).
+
+5. Extrapolate to higher compute budgets (10^22 to 10^25 FLOPs) and compare inferred vs true optimal token counts D* at each budget.
+
+**Visualization**:
+
+Produce a faceted figure with one panel per loss surface, showing the relative error in inferred D* as a function of compute budget, with one curve per sampling configuration. This reveals how extrapolation error depends on both the loss surface geometry and sampling biases.
+
+
+### Experiment 5: Analytical Error
 
 Hypothesis: It is possible to analytically model the error in the inferred exponents via Approach 2 as a function of compute budget and grid resolution
 
 Steps:
 - TODO: complete
 
-### Experiment 5: Parametric fits
+### Experiment 6: Parametric fits
 
 Hypothesis: It is possible to fit scaling laws parametrically with variable projection and grid search (over alpha/beta) in a manner that is both more stable and more accurate than Chinchilla Approach 3
 

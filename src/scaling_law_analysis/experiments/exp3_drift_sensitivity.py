@@ -116,7 +116,7 @@ def create_figure(all_results: list[dict]) -> plt.Figure:
     loss = EXP3_LOSS_SURFACE
     fig.suptitle(
         "Experiment 3: Error Analysis vs Sampling Bias\n"
-        f"Loss surface: α={loss.alpha}, β={loss.beta}, A={loss.A}, B={loss.B} (symmetric)",
+        f"Loss surface: α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f} (symmetric)",
         fontsize=11,
         y=0.98,
     )
@@ -163,7 +163,7 @@ def main():
         # Update title for Experiment 3 context (include loss surface params to show it's symmetric)
         fig.suptitle(
             f"Experiment 3: {sim_config.name} configuration\n"
-            f"Loss surface: α={loss.alpha}, β={loss.beta}, A={loss.A}, B={loss.B} (symmetric)\n"
+            f"Loss surface: α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f} (symmetric)\n"
             f"drift_rate={sim_config.drift_rate}, center_scale={sim_config.center_scale}",
             fontsize=11,
             y=0.995,
