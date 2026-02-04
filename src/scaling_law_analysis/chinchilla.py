@@ -4,14 +4,18 @@ This module provides:
 - The Chinchilla loss function L(N, D) = E + A/N^α + B/D^β
 - IsoFLOP sampling along constant compute contours
 - Approach 2 parameter recovery via parabolic fits
+- Surface fitting via variable projection (grid search + NNLS)
 """
 
 import numpy as np
 from dataclasses import dataclass
 from typing import NamedTuple
 
+from scipy.optimize import minimize
 
-# Chinchilla paper ground truth parameters
+
+# Chinchilla paper ground truth parameters;
+# see "D.2. Approach 3: Parametric fitting of the loss" 
 CHINCHILLA_PARAMS = {
     "A": 406.4,
     "B": 410.7,
@@ -407,4 +411,165 @@ def fit_approach2(
         compute_budgets=compute_budgets,
         N_opts=N_opts,
         D_opts=D_opts,
+    )
+
+
+# =============================================================================
+# Surface Fitting via Variable Projection
+# =============================================================================
+
+
+@dataclass
+class SurfaceFitResult:
+    """Results from fitting the loss surface L(N, D) = E + A/N^α + B/D^β.
+
+    Attributes:
+        E: Fitted irreducible loss
+        A: Fitted parameter scaling coefficient
+        B: Fitted data scaling coefficient
+        alpha: Fitted parameter scaling exponent
+        beta: Fitted data scaling exponent
+        residual_sum_squares: Sum of squared residuals at optimal fit
+        n_points: Number of data points used in fit
+    """
+
+    E: float
+    A: float
+    B: float
+    alpha: float
+    beta: float
+    residual_sum_squares: float
+    n_points: int
+
+    def to_loss_surface(self) -> LossSurface:
+        """Convert fit result to a LossSurface object."""
+        return LossSurface(
+            alpha=self.alpha,
+            beta=self.beta,
+            A=self.A,
+            B=self.B,
+            E=self.E,
+        )
+
+
+# Default grid search parameters
+DEFAULT_ALPHA_GRID = np.linspace(0.05, 0.95, 256)
+DEFAULT_BETA_GRID = np.linspace(0.05, 0.95, 256)
+
+
+def _compute_rss_and_params(
+    alpha: float,
+    beta: float,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> tuple[float, np.ndarray]:
+    """Compute RSS and OLS parameters for given (α, β).
+
+    For fixed (α, β), solves the linear least squares problem for (E, A, B).
+
+    Returns:
+        Tuple of (residual_sum_squares, params_array[E, A, B])
+    """
+    N_neg_alpha = np.exp(-alpha * log_N)
+    D_neg_beta = np.exp(-beta * log_D)
+
+    design_matrix = np.column_stack([
+        np.ones(len(L)),
+        N_neg_alpha,
+        D_neg_beta,
+    ])
+
+    params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
+    rss = np.sum((L - design_matrix @ params) ** 2)
+
+    return rss, params
+
+
+def fit_surface(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    alpha_grid: np.ndarray = DEFAULT_ALPHA_GRID,
+    beta_grid: np.ndarray = DEFAULT_BETA_GRID,
+) -> SurfaceFitResult:
+    """Fit the loss surface L(N, D) = E + A/N^α + B/D^β via variable projection.
+
+    Uses a 2D grid search over (α, β) to find a good starting point, then
+    refines with local optimization. At each (α, β) evaluation, solves the
+    linear least squares problem for (E, A, B).
+
+    Args:
+        N: Array of parameter counts
+        D: Array of token counts
+        L: Array of loss values (same length as N and D)
+        alpha_grid: Grid of α values for initial search
+        beta_grid: Grid of β values for initial search
+
+    Returns:
+        SurfaceFitResult with fitted parameters
+
+    Raises:
+        ValueError: If grid search finds best (α, β) at edge (refinement may be unreliable)
+    """
+    N = np.asarray(N)
+    D = np.asarray(D)
+    L = np.asarray(L)
+
+    if not (len(N) == len(D) == len(L)):
+        raise ValueError(f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}")
+
+    n_points = len(N)
+
+    # Precompute log values for efficiency
+    log_N = np.log(N)
+    log_D = np.log(D)
+
+    # Stage 1: Grid search to find starting point
+    best_rss = np.inf
+    best_alpha_idx = None
+    best_beta_idx = None
+
+    for i, alpha in enumerate(alpha_grid):
+        for j, beta in enumerate(beta_grid):
+            rss, _ = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+            if rss < best_rss:
+                best_rss = rss
+                best_alpha_idx = i
+                best_beta_idx = j
+
+    # Diagnostic check: Best (α, β) at grid edge
+    for name, idx, grid in [("α", best_alpha_idx, alpha_grid), ("β", best_beta_idx, beta_grid)]:
+        if idx == 0 or idx == len(grid) - 1:
+            raise ValueError(
+                f"Best {name}={grid[idx]:.4f} is at grid edge. "
+                f"Consider expanding grid range [{grid[0]:.2f}, {grid[-1]:.2f}]."
+            )
+
+    # Stage 2: Local refinement from best grid point
+    def objective(x):
+        alpha, beta = x
+        rss, _ = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+        return rss
+
+    x0 = [alpha_grid[best_alpha_idx], beta_grid[best_beta_idx]]
+    result = minimize(
+        objective,
+        x0,
+        method="L-BFGS-B",
+        bounds=[(alpha_grid[0], alpha_grid[-1]), (beta_grid[0], beta_grid[-1])],
+    )
+
+    alpha_opt, beta_opt = result.x
+    rss_opt, params_opt = _compute_rss_and_params(alpha_opt, beta_opt, log_N, log_D, L)
+    E, A, B = params_opt
+
+    return SurfaceFitResult(
+        E=E,
+        A=A,
+        B=B,
+        alpha=alpha_opt,
+        beta=beta_opt,
+        residual_sum_squares=rss_opt,
+        n_points=n_points,
     )

@@ -139,21 +139,50 @@ Produce the following figures:
 
 Produce a single figure organized as a grid with one row per sampling range (3 rows: narrow, medium, wide) and one column per loss surface (3 columns: symmetric, chinchilla, high_imbalance). Each panel shows the relative error in inferred D* as a function of extrapolation compute budget, with one curve per sampling bias configuration. This reveals how extrapolation error depends on the sampling range, loss surface geometry, and sampling biases.
 
+### Experiment 5: Parametric Surface Fitting
 
-### Experiment 5: Analytical Error
+**Hypothesis**: Variable projection with grid search (over α/β) provides stable and accurate scaling law parameter recovery.
+
+**Method**:
+
+1. Generate synthetic loss data using the same procedure as Experiments 3 and 4.
+
+2. Implement a new `fit_surface` function in `chinchilla.py` that fits all 5 parameters simultaneously:
+   - Input: Arrays of N, D, and L values (token counts, parameter counts, and loss) pooled across all compute budgets
+   - Use **variable projection** (also known as separable least squares):
+     - For fixed (α, β), the loss function L = E + A·N^(-α) + B·D^(-β) is linear in (E, A, B)
+     - Perform a fine 2D grid search over (α, β) space
+     - At each grid point, solve for (E, A, B) using non-negative least squares (NNLS) to enforce physical constraints
+     - Select the (α, β) grid point that minimizes the total residual sum of squares
+   - Grid search parameters:
+     - α range: [0.05, 0.95] with 256 points
+     - β range: [0.05, 0.95] with 256 points
+   - Diagnostic checks (raise errors if violated):
+     - Any of E, A, B are at or near zero (hitting NNLS constraint boundary)
+     - Best (α, β) is at the edge of the grid search range
+   - Return a result object containing all 5 fitted parameters (E, A, B, α, β)
+
+3. For each configuration (loss surface × sampling bias × sampling range):
+   - Pool the sampled (N, D, L) data across all compute budgets
+   - Fit the surface using `fit_surface`
+   - Compute relative errors for all 5 parameters compared to ground truth
+
+**Visualization**:
+
+Produce a single figure organized as a grid with one row per loss surface (3 rows) and 5 columns (one per parameter: E, A, B, α, β). Each panel shows relative error vs sampling range, with one curve per sampling bias configuration. This reveals:
+- How parameter recovery accuracy depends on sampling range
+- Which parameters are most sensitive to sampling biases
+- How loss surface geometry affects parameter recovery
+
+The figure should follow the same style as the parameter errors figure from Experiment 3.
+
+
+### Experiment 6: Analytical Error
 
 Hypothesis: It is possible to analytically model the error in the inferred exponents via Approach 2 as a function of compute budget and grid resolution
 
 Steps:
 - TODO: complete
-
-### Experiment 6: Parametric fits
-
-Hypothesis: It is possible to fit scaling laws parametrically with variable projection and grid search (over alpha/beta) in a manner that is both more stable and more accurate than Chinchilla Approach 3
-
-Steps:
-- TODO: complete
-
 
 ## Background
 
