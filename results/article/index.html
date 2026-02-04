@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Hidden Pitfalls of Chinchilla Approach 2</title>
+    <meta name="description"
+        content="An analysis of systematic biases in scaling law inference using the IsoFLOP parabolic fitting method.">
+
+    <!-- MathJax for LaTeX rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --text-primary: #e8e8e8;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6b6b6b;
+            --accent-blue: #3b82f6;
+            --accent-green: #22c55e;
+            --accent-purple: #a855f7;
+            --border-color: #333;
+            --code-bg: #1e1e1e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.7;
+            font-size: 17px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 4rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 4rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            padding-top: 1rem;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Lists */
+        ul,
+        ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Emphasis */
+        strong {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        em {
+            font-style: italic;
+        }
+
+        /* Code */
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background: var(--code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            color: var(--accent-blue);
+        }
+
+        /* Math blocks */
+        .math-block {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent-purple);
+            padding: 1.5rem;
+            margin: 2rem 0;
+            border-radius: 0 8px 8px 0;
+            overflow-x: auto;
+        }
+
+        /* Figures */
+        figure {
+            margin: 2.5rem 0;
+            text-align: center;
+        }
+
+        figure img {
+            max-width: 100%;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        figcaption {
+            margin-top: 1rem;
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        /* Tables */
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .comparison-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .comparison-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+        }
+
+        .comparison-table tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Error highlighting */
+        .error-negligible {
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        .error-significant {
+            color: #ef4444;
+            font-weight: 600;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Callouts */
+        .callout {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .callout.key-point {
+            border-left: 4px solid var(--accent-green);
+        }
+
+        .callout.warning {
+            border-left: 4px solid #f59e0b;
+        }
+
+        .callout-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .callout p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Process steps */
+        .process-steps {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1.5rem 1.5rem 1.5rem 2rem;
+            margin: 2rem 0;
+        }
+
+        .process-steps ol {
+            margin: 0;
+            padding-left: 1.2rem;
+        }
+
+        .process-steps li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .process-steps li:last-child {
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .container {
+                padding: 2rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            h2 {
+                font-size: 1.4rem;
+            }
+
+            .comparison-table {
+                font-size: 0.85rem;
+            }
+
+            .comparison-table th,
+            .comparison-table td {
+                padding: 0.75rem 0.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <article class="container">
+        <header>
+            <h1>The Hidden Pitfalls of Chinchilla Approach 2</h1>
+            <p class="subtitle">Systematic biases in scaling law inference from IsoFLOP parabolic fitting</p>
+        </header>
+
+        <!-- Section 1: Approaches to Fitting Scaling Laws -->
+        <section id="approaches">
+            <h2>Approaches to Fitting Scaling Laws</h2>
+
+            <p>
+                Neural scaling laws describe how model performance improves with compute.
+                The Chinchilla loss surface models this relationship as:
+            </p>
+
+            <div class="math-block">
+                \[
+                L(N, D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}
+                \]
+            </div>
+
+            <p>
+                where \(N\) is the number of parameters, \(D\) is the number of training tokens,
+                \(E\) is the irreducible loss, and \(A, B, \alpha, \beta\) capture how quickly
+                performance improves with scale.
+            </p>
+
+            <p>
+                Given a compute budget \(C \approx 6ND\), the optimal allocation satisfies:
+            </p>
+
+            <div class="math-block">
+                \[
+                N^* \propto C^a \quad \text{where} \quad a = \frac{\beta}{\alpha + \beta}
+                \]
+                \[
+                D^* \propto C^b \quad \text{where} \quad b = \frac{\alpha}{\alpha + \beta}
+                \]
+            </div>
+
+            <p>
+                Recovering the exponents \(a\) and \(b\) from empirical training runs is crucial
+                for planning efficient large-scale training. Two canonical approaches exist:
+            </p>
+
+            <h3>Approach 2: IsoFLOP Parabolic Fitting</h3>
+
+            <p>
+                This is the workhorse method from the Chinchilla paper. The key insight is that
+                along a fixed-compute contour (IsoFLOP curve), loss as a function of \(\log N\)
+                is approximately parabolic near the optimum.
+            </p>
+
+            <div class="process-steps">
+                <ol>
+                    <li>
+                        <strong>Sample IsoFLOP contours:</strong> For each compute budget \(C\),
+                        train models at various \((N, D)\) pairs satisfying \(C = 6ND\)
+                    </li>
+                    <li>
+                        <strong>Fit parabolas:</strong> For each budget, fit
+                        \(L = a(\log N)^2 + b(\log N) + c\) and extract the minimum \(N^*\)
+                    </li>
+                    <li>
+                        <strong>Fit power laws:</strong> Regress \(\log N^*\) against \(\log C\)
+                        to recover the exponent \(a\) (and similarly for \(D^*\), \(b\))
+                    </li>
+                </ol>
+            </div>
+
+            <p>
+                The appeal is simplicity: only polynomial fits, no nonlinear optimization.
+                The parabolic approximation comes from a Taylor expansion of the loss surface
+                around the optimum.
+            </p>
+
+            <h3>Approach 3: Direct Surface Fitting</h3>
+
+            <p>
+                The alternative is to fit all five parameters \((E, A, B, \alpha, \beta)\)
+                simultaneously via nonlinear least squares. This avoids the parabolic
+                approximation entirely but is notoriously unstable—highly sensitive to
+                initialization and prone to converging to spurious local minima.
+            </p>
+
+            <div class="callout key-point">
+                <div class="callout-title">📌 Article Focus</div>
+                <p>
+                    This article examines pitfalls of <strong>Approach 2</strong> using
+                    noise-free synthetic data. By eliminating statistical noise, we isolate
+                    the systematic biases inherent to the method itself.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2: The Happy Path -->
+        <section id="happy-path">
+            <h2>The Happy Path: Symmetric Surfaces</h2>
+
+            <p>
+                Before examining failure modes, let's establish that Approach 2 works
+                perfectly under ideal conditions. Consider a <strong>symmetric</strong>
+                loss surface where \(\alpha = \beta\):
+            </p>
+
+            <div class="math-block">
+                \[
+                L(N, D) = 1.69 + \frac{400}{N^{0.31}} + \frac{400}{D^{0.31}}
+                \]
+            </div>
+
+            <p>
+                With equal exponents, the optimal allocation splits compute evenly between
+                parameters and data. The true scaling exponents are:
+            </p>
+
+            <div class="math-block">
+                \[
+                a = b = \frac{0.31}{0.31 + 0.31} = 0.5
+                \]
+            </div>
+
+            <p>
+                We sample five IsoFLOP contours spanning \(10^{17}\) to \(10^{21}\) FLOPs,
+                fit parabolas to each, and extract the optimal token count \(D^*\).
+            </p>
+
+            <figure>
+                <img src="happy_path.png" alt="Approach 2 on symmetric surface showing perfect recovery">
+                <figcaption>
+                    <strong>Figure 1:</strong> Approach 2 applied to a symmetric loss surface.
+                    Left: IsoFLOP curves with fitted parabolas. True (×) and inferred (+) optima
+                    are indistinguishable. Right: Power-law fit recovers the exact scaling exponent.
+                </figcaption>
+            </figure>
+
+            <p>
+                The results confirm perfect recovery of the token scaling exponent and intercept:
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>True Value</th>
+                        <th>Inferred Value</th>
+                        <th>Relative Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>b (D* exponent)</td>
+                        <td>0.500000</td>
+                        <td>0.500000</td>
+                        <td>+6.2×10⁻¹²%</td>
+                    </tr>
+                    <tr>
+                        <td>b₀ (D* intercept)</td>
+                        <td>−0.389076</td>
+                        <td>−0.389076</td>
+                        <td>−1.4×10⁻¹⁰%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Key Result</div>
+                <p>
+                    On a symmetric loss surface with perfect sampling, Approach 2 recovers
+                    both exponents and intercepts with machine-precision accuracy. The
+                    parabolic approximation is exact when \(\alpha = \beta\).
+                </p>
+            </div>
+
+            <p>
+                This establishes our baseline: Approach 2 is not inherently flawed. The
+                problems arise when we deviate from these ideal conditions—as we'll see
+                in the following sections.
+            </p>
+        </section>
+
+        <!-- Section 3: Asymmetric Surfaces -->
+        <section id="asymmetric">
+            <h2>Asymmetric Surfaces: When Intercepts Go Wrong</h2>
+
+            <p>
+                Real loss surfaces are rarely symmetric. The Chinchilla paper found
+                \(\alpha = 0.34\) and \(\beta = 0.28\)—a modest asymmetry. What happens
+                to Approach 2 when we break the symmetry assumption?
+            </p>
+
+            <p>
+                We test two configurations:
+            </p>
+
+            <ul>
+                <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)</li>
+                <li><strong>High Imbalance:</strong> \(\alpha = 0.46\), \(\beta = 0.15\) (ratio = 3.0)</li>
+            </ul>
+
+            <figure>
+                <img src="asymmetric.png" alt="Approach 2 on asymmetric surfaces showing intercept errors">
+                <figcaption>
+                    <strong>Figure 2:</strong> Approach 2 on asymmetric loss surfaces.
+                    Note the visible gap between true (dashed) and inferred (solid) power-law
+                    lines in the High Imbalance case—the exponents match perfectly, but
+                    the intercepts differ.
+                </figcaption>
+            </figure>
+
+            <h3>Chinchilla Surface</h3>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>True Value</th>
+                        <th>Inferred Value</th>
+                        <th>Relative Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>b (D* exponent)</td>
+                        <td>0.548387</td>
+                        <td>0.548387</td>
+                        <td class="error-negligible">≈ 0%</td>
+                    </tr>
+                    <tr>
+                        <td>b₀ (D* intercept)</td>
+                        <td>−0.555357</td>
+                        <td>−0.577937</td>
+                        <td class="error-significant">−4.1%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>High Imbalance Surface</h3>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Parameter</th>
+                        <th>True Value</th>
+                        <th>Inferred Value</th>
+                        <th>Relative Error</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>b (D* exponent)</td>
+                        <td>0.750000</td>
+                        <td>0.750000</td>
+                        <td class="error-negligible">≈ 0%</td>
+                    </tr>
+                    <tr>
+                        <td>b₀ (D* intercept)</td>
+                        <td>−1.345791</td>
+                        <td>−1.459200</td>
+                        <td class="error-significant">−8.4%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="callout warning">
+                <div class="callout-title">⚠️ Key Finding</div>
+                <p>
+                    <strong>The exponents are recovered perfectly, but the intercepts are systematically
+                        biased.</strong>
+                    The more asymmetric the surface, the larger the intercept error. This is
+                    invisible when validating within the fitting range, but becomes critical
+                    during extrapolation.
+                </p>
+            </div>
+
+            <p>
+                Why does this happen? The parabolic approximation comes from a Taylor expansion
+                around the optimum. When \(\alpha = \beta\), the expansion is symmetric and the
+                parabola vertex lands exactly at the true optimum. When \(\alpha \neq \beta\),
+                higher-order terms shift the vertex location—but the curvature (which determines
+                the power-law exponent) remains correct.
+            </p>
+
+            <p>
+                This creates an insidious failure mode: the method appears to work perfectly
+                when checking exponent recovery, but silently corrupts the intercepts needed
+                for extrapolation.
+            </p>
+        </section>
+
+    </article>
+</body>
+
+</html>
