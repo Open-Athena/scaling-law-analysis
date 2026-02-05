@@ -21,17 +21,19 @@
 
     <style>
         :root {
-            --bg-primary: #0f0f0f;
-            --bg-secondary: #1a1a1a;
-            --bg-tertiary: #252525;
-            --text-primary: #e8e8e8;
-            --text-secondary: #a0a0a0;
-            --text-muted: #6b6b6b;
-            --accent-blue: #3b82f6;
-            --accent-green: #22c55e;
-            --accent-purple: #a855f7;
-            --border-color: #333;
-            --code-bg: #1e1e1e;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #191919;
+            --text-secondary: #525252;
+            --text-muted: #8b8b8b;
+            --accent-primary: #c4704f;
+            --accent-secondary: #d4a574;
+            --accent-success: #16a34a;
+            --accent-error: #dc2626;
+            --border-color: #e5e5e5;
+            --code-bg: #f5f5f5;
+            --code-text: #c4704f;
         }
 
         * {
@@ -44,38 +46,39 @@
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
-            line-height: 1.7;
+            line-height: 1.75;
             font-size: 17px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 920px;
             margin: 0 auto;
-            padding: 4rem 2rem;
+            padding: 5rem 2rem;
         }
 
         /* Header */
         header {
-            margin-bottom: 4rem;
+            margin-bottom: 3.5rem;
             padding-bottom: 2rem;
             border-bottom: 1px solid var(--border-color);
         }
 
         h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            line-height: 1.2;
-            margin-bottom: 1rem;
-            background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            font-size: 2.75rem;
+            font-weight: 600;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            color: var(--text-primary);
+            letter-spacing: -0.02em;
         }
 
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             color: var(--text-secondary);
             font-weight: 400;
+            line-height: 1.5;
         }
 
         /* Sections */
@@ -84,15 +87,23 @@
         }
 
         h2 {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 600;
             margin-bottom: 1.5rem;
             color: var(--text-primary);
             padding-top: 1rem;
+            letter-spacing: -0.01em;
         }
 
         h3 {
-            font-size: 1.3rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 2.5rem 0 1rem;
+            color: var(--text-primary);
+        }
+
+        h4 {
+            font-size: 1.1rem;
             font-weight: 600;
             margin: 2rem 0 1rem;
             color: var(--text-primary);
@@ -103,6 +114,17 @@
             color: var(--text-primary);
         }
 
+        a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease;
+        }
+
+        a:hover {
+            border-bottom-color: var(--accent-primary);
+        }
+
         /* Lists */
         ul,
         ol {
@@ -111,7 +133,7 @@
         }
 
         li {
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.6rem;
             color: var(--text-primary);
         }
 
@@ -128,20 +150,20 @@
         /* Code */
         code {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9em;
+            font-size: 0.875em;
             background: var(--code-bg);
-            padding: 0.2em 0.4em;
+            padding: 0.2em 0.45em;
             border-radius: 4px;
-            color: var(--accent-blue);
+            color: var(--code-text);
         }
 
         /* Math blocks */
         .math-block {
             background: var(--bg-secondary);
-            border-left: 3px solid var(--accent-purple);
-            padding: 1.5rem;
+            border-left: 3px solid var(--accent-secondary);
+            padding: 1.5rem 1.75rem;
             margin: 2rem 0;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 6px 6px 0;
             overflow-x: auto;
         }
 
@@ -154,14 +176,19 @@
         figure img {
             max-width: 100%;
             border-radius: 8px;
-            border: 1px solid var(--border-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         figcaption {
             margin-top: 1rem;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             color: var(--text-secondary);
-            font-style: italic;
+            text-align: left;
+            line-height: 1.6;
+        }
+
+        figcaption strong {
+            color: var(--text-primary);
         }
 
         /* Tables */
@@ -183,43 +210,54 @@
             background: var(--bg-secondary);
             font-weight: 600;
             color: var(--text-primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
         }
 
         .comparison-table td {
             font-family: 'JetBrains Mono', monospace;
-            font-size: 0.9em;
+            font-size: 0.875em;
         }
 
-        .comparison-table tr:hover {
+        .comparison-table tbody tr {
+            transition: background 0.15s ease;
+        }
+
+        .comparison-table tbody tr:hover {
             background: var(--bg-tertiary);
         }
 
         /* Error highlighting */
         .error-negligible {
-            color: var(--accent-green);
+            color: var(--accent-success);
             font-weight: 500;
         }
 
         .error-significant {
-            color: #ef4444;
+            color: var(--accent-error);
             font-weight: 600;
-            background: rgba(239, 68, 68, 0.1);
+            background: rgba(220, 38, 38, 0.08);
+            padding: 0.15em 0.35em;
+            border-radius: 3px;
         }
 
         /* Callouts */
         .callout {
             background: var(--bg-secondary);
             border-radius: 8px;
-            padding: 1.5rem;
+            padding: 1.5rem 1.75rem;
             margin: 2rem 0;
+            border: 1px solid var(--border-color);
         }
 
         .callout.key-point {
-            border-left: 4px solid var(--accent-green);
+            border-left: 4px solid var(--accent-primary);
+            border-left-width: 4px;
         }
 
         .callout.warning {
-            border-left: 4px solid #f59e0b;
+            border-left: 4px solid #d97706;
         }
 
         .callout-title {
@@ -228,6 +266,13 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+
+        .callout p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
         }
 
         .callout p:last-child {
@@ -240,6 +285,7 @@
             border-radius: 8px;
             padding: 1.5rem 1.5rem 1.5rem 2rem;
             margin: 2rem 0;
+            border: 1px solid var(--border-color);
         }
 
         .process-steps ol {
@@ -248,8 +294,13 @@
         }
 
         .process-steps li {
-            padding: 0.5rem 0;
+            padding: 0.65rem 0;
             border-bottom: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+
+        .process-steps li strong {
+            color: var(--text-primary);
         }
 
         .process-steps li:last-child {
@@ -259,15 +310,15 @@
         /* Responsive */
         @media (max-width: 600px) {
             .container {
-                padding: 2rem 1rem;
+                padding: 2.5rem 1.25rem;
             }
 
             h1 {
-                font-size: 1.8rem;
+                font-size: 2rem;
             }
 
             h2 {
-                font-size: 1.4rem;
+                font-size: 1.5rem;
             }
 
             .comparison-table {
@@ -277,6 +328,12 @@
             .comparison-table th,
             .comparison-table td {
                 padding: 0.75rem 0.5rem;
+            }
+
+            .callout,
+            .process-steps,
+            .math-block {
+                padding: 1.25rem;
             }
         }
     </style>
@@ -469,19 +526,25 @@
             <h2>Asymmetric Surfaces: When Intercepts Go Wrong</h2>
 
             <p>
-                Here's the surprising part. We now test Approach 2 using the
-                <strong>exact parameters reported in the Chinchilla paper</strong>:
-                \(\alpha = 0.34\), \(\beta = 0.28\), \(A = 406.4\), \(B = 410.7\), \(E = 1.69\).
-                Same methodology, same loss surface, perfect noiseless data centered exactly
-                on the true optima.
+                We repeat the exact same procedure as before—perfect sampling centers, no noise,
+                identical methodology. The only change: the loss surface is now <strong>asymmetric</strong>
+                (\(\alpha \neq \beta\)).
+            </p>
+
+            <h3>What Happens</h3>
+
+            <p>
+                Simulation results show that when the loss surface is asymmetric, Approach 2 produces
+                systematically wrong intercepts while exponents remain accurate. This isn't statistical
+                noise—it's a deterministic bias from fitting parabolas to a non-parabolic surface.
             </p>
 
             <p>
-                We also test a more extreme case to see how the effect scales:
+                We test two configurations to see how the effect scales:
             </p>
 
             <ul>
-                <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)—the paper's own values</li>
+                <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)</li>
                 <li><strong>High Imbalance:</strong> \(\alpha = 0.46\), \(\beta = 0.15\) (ratio = 3.0)</li>
             </ul>
 
@@ -495,7 +558,7 @@
                 </figcaption>
             </figure>
 
-            <h3>Chinchilla Surface</h3>
+            <h4>Chinchilla Surface</h4>
 
             <table class="comparison-table">
                 <thead>
@@ -522,7 +585,7 @@
                 </tbody>
             </table>
 
-            <h3>High Imbalance Surface</h3>
+            <h4>High Imbalance Surface</h4>
 
             <table class="comparison-table">
                 <thead>
@@ -549,33 +612,101 @@
                 </tbody>
             </table>
 
-            <div class="callout warning">
-                <div class="callout-title">⚠️ Surprising Finding</div>
+            <h3>Why This Is Surprising</h3>
+
+            <p>
+                A few percent error in the intercept might seem minor, but consider that this simulation
+                gave Approach 2 every advantage. The data is perfect—no measurement noise, with every
+                point lying exactly on the true loss surface. The sampling is perfect too, with IsoFLOP
+                grids centered precisely at the true optimum—something you wouldn't know how to do in
+                practice. And the parameters are standard, taken directly from the Chinchilla paper
+                rather than constructed to expose a weakness.
+            </p>
+
+            <div class="callout key-point">
+                <div class="callout-title">📌 Key Finding</div>
                 <p>
-                    <strong>The Chinchilla paper's own methodology, applied to their own reported
-                        loss surface, produces systematically wrong intercepts.</strong>
-                    This isn't statistical noise or a sampling artifact—it's a deterministic bias
-                    inherent to fitting parabolas to a non-parabolic surface. The exponents are
-                    exact, but the intercepts are systematically off.
+                    Even under these ideal conditions, Approach 2 produces biased intercepts for
+                    asymmetric surfaces. The error is systematic—a property of the parabolic
+                    approximation, not statistical noise.
                 </p>
             </div>
 
+            <h3>Why It Happens</h3>
+
             <p>
-                Why does this happen? The loss function along an IsoFLOP contour is
-                \(L \propto N^{-\alpha} + N^{\beta}\)—a sum of power laws, not a parabola.
-                When \(\alpha = \beta\), this is symmetric in log-space and the fitted
-                parabola's vertex lands exactly at the true optimum. When \(\alpha \neq \beta\),
-                the asymmetry shifts the vertex away from the true minimum by a predictable
-                amount that depends only on \(\alpha\), \(\beta\), and the sampling width.
+                The IsoFLOP loss curve is not a true parabola—it contains exponential terms.
+                When a parabola is fit to this curve, the parabola's minimum (vertex) doesn't
+                land exactly at the true optimum. It shifts slightly—and the key insight is that
+                this shift depends only on the loss surface shape (\(\alpha\), \(\beta\)) and
+                the sampling grid. It does not depend on compute budget. The sampling grid size
+                becomes important here: wider grids amplify the mismatch between the true curve
+                and its parabolic approximation, increasing the vertex shift.
             </p>
 
             <p>
-                Crucially, this vertex shift is <em>constant across compute budgets</em>.
-                When fitting \(\log N^* \propto a \log C\), a constant offset affects
-                only the intercept, not the slope. This is why exponents are exact while
-                intercepts are wrong—a subtle failure mode that standard validation
-                (checking exponent recovery) won't catch.
+                Since the vertex shift is constant across all compute budgets, it biases every
+                inferred \(N^*\) by the same multiplicative factor. When fitting
+                \(\log N^*\) vs \(\log C\) to extract scaling exponents:
             </p>
+
+            <ul>
+                <li>The <strong>slope (exponent)</strong> is unchanged—multiplying all \(N^*\) values
+                    by a constant factor adds a constant to \(\log N^*\), which doesn't affect the slope</li>
+                <li>The <strong>intercept</strong> absorbs the entire error—it's biased by exactly
+                    that multiplicative factor</li>
+            </ul>
+
+            <p>
+                <strong>Exact derivation:</strong> The intercept error can be derived analytically
+                in closed form. The parabola vertex shifts by \(\delta w\) (in log-space), giving
+                an intercept error of:
+            </p>
+
+            <div class="math-block">
+                \[
+                \text{Intercept error} = 10^{\delta w} - 1
+                \]
+            </div>
+
+            <p>
+                where \(\delta w = f(\alpha, \beta, W, n)\) depends only on the surface exponents
+                and the sampling grid (width \(W\), number of points \(n\))—not on \(C\), \(E\),
+                \(A\), or \(B\). Key properties:
+            </p>
+
+            <ul>
+                <li>\(\delta w = 0\) when \(\alpha = \beta\) (symmetric surfaces have no error)</li>
+                <li>\(\delta w\) grows with \(|\alpha - \beta|\) (more asymmetry → more error)</li>
+                <li>\(\delta w\) grows with \(W\) (wider sampling range → more error)</li>
+            </ul>
+
+            <p>
+                For example, with the Chinchilla parameters (\(\alpha = 0.34\), \(\beta = 0.28\)):
+                a narrow grid (\(W = 0.3\)) yields 0.3% intercept error, while a wider grid
+                (\(W = 2.0\)) yields 15.5% error. <a href="scaling_exponent_errors.html">See the
+                full derivation</a> for the closed-form vertex shift formula.
+            </p>
+
+            <p>
+                <strong>Intuition via Taylor expansion:</strong> A parabola is a 2nd-order polynomial,
+                which is equivalent to a 2nd-order Taylor expansion around the optimum. The approximation
+                \(L(w) \approx L(0) + \frac{1}{2}L''(0)w^2\) is only valid when higher-order terms are
+                negligible—i.e., when samples are close to the true minimum. As sampling range increases,
+                3rd and 4th order terms grow. For symmetric surfaces (\(\alpha = \beta\)), odd-order
+                terms cancel by symmetry, preserving the vertex location. For asymmetric surfaces,
+                they don't cancel, shifting the fitted vertex away from the true optimum.
+            </p>
+
+            <h3>Why It Matters</h3>
+
+            <!-- TODO: Fill in extrapolation analysis -->
+            <p>
+                <em>[WIP: Extrapolation analysis showing how intercept errors compound at higher compute budgets.
+                Will include: D* = b₀ × C^b formula, error quantification at 10²² to 10²⁵ FLOPs,
+                figure showing extrapolation error vs compute budget.]</em>
+            </p>
+
         </section>
 
     </article>

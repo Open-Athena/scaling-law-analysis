@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scaling Exponent Errors in Approach 2</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f9fafb;
+            --bg-tertiary: #f3f4f6;
+            --text-primary: #191919;
+            --text-secondary: #525252;
+            --text-muted: #8b8b8b;
+            --accent-primary: #c4704f;
+            --accent-secondary: #d4a574;
+            --accent-success: #16a34a;
+            --border-color: #e5e5e5;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 5rem 2rem;
+            line-height: 1.75;
+            font-size: 17px;
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        h1, h2, h3 {
+            color: var(--text-primary);
+            letter-spacing: -0.01em;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 600;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        p {
+            margin-bottom: 1.25rem;
+        }
+
+        ul, ol {
+            margin-bottom: 1.25rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .derivation {
+            background: var(--bg-secondary);
+            padding: 1.5rem 1.75rem;
+            margin: 1.5rem 0;
+            border-left: 3px solid var(--text-muted);
+            border-radius: 0 6px 6px 0;
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--text-muted);
+        }
+
+        .result {
+            background: var(--bg-secondary);
+            padding: 1.5rem 1.75rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-success);
+        }
+
+        .result strong {
+            color: var(--text-primary);
+        }
+
+        .note {
+            background: var(--bg-secondary);
+            padding: 1.25rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 6px 6px 0;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-secondary);
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        .note strong {
+            color: var(--text-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 2rem 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875em;
+        }
+
+        tbody tr {
+            transition: background 0.15s ease;
+        }
+
+        tbody tr:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body {
+                padding: 2.5rem 1.25rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            h2 {
+                font-size: 1.3rem;
+            }
+
+            table {
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .derivation, .result, .note {
+                padding: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<h1>Derivation: Scaling Exponent and Intercept Errors in Chinchilla Approach 2</h1>
+
+<p>We derive a closed-form expression for the vertex shift δw as a function of the loss surface parameters (α, β) and grid specification (W, n).</p>
+
+<h2>1. Setup</h2>
+
+<p>The loss along an IsoFLOP contour is:</p>
+\[ L(N; C) = E + A N^{-\alpha} + B \cdot 6^\beta C^{-\beta} N^\beta \]
+
+<p>Let \(w = \log_{10}(N/N^*)\), where \(N^*\) is the true optimum. Then:</p>
+
+<div class="derivation">
+\[ L(w) = E + P \cdot 10^{-\alpha w} + R \cdot 10^{\beta w} \]
+where \(P = A \cdot (N^*)^{-\alpha}\) and \(R = B \cdot 6^\beta C^{-\beta} (N^*)^\beta\).
+</div>
+
+<p>At the true optimum, the first-order condition gives:</p>
+\[ \alpha P = \beta R \]
+
+<h2>2. Parabola Fit via Least Squares</h2>
+
+<p>We sample at \(n\) equally-spaced points \(w_i \in [-W, W]\) and fit a parabola:</p>
+\[ \hat{L}(w) = a_0 + a_1 w + a_2 w^2 \]
+
+<p>For symmetric grid points, the least-squares coefficients are:</p>
+
+<div class="derivation">
+\[ a_1 = \frac{\sum_i w_i \cdot L(w_i)}{\sum_i w_i^2} \]
+
+\[ a_2 = \frac{n \sum_i w_i^2 L(w_i) - (\sum_i w_i^2)(\sum_i L(w_i))}{n \sum_i w_i^4 - (\sum_i w_i^2)^2} \]
+</div>
+
+<h2>3. Key Simplification: Normalize by R</h2>
+
+<p>Since \(\alpha P = \beta R\), we have \(P = (\beta/\alpha) R\). The loss becomes:</p>
+\[ L(w) = E + R \left[ \frac{\beta}{\alpha} \cdot 10^{-\alpha w} + 10^{\beta w} \right] \]
+
+<p>Define the <strong>normalized loss contribution</strong>:</p>
+\[ \tilde{L}(w) = \frac{\beta}{\alpha} \cdot 10^{-\alpha w} + 10^{\beta w} \]
+
+<p>The actual loss is \(L(w) = E + R \cdot \tilde{L}(w)\).</p>
+
+<div class="note">
+<strong>Critical observation:</strong> The constant \(E\) doesn't affect the parabola vertex (it shifts the parabola vertically but not horizontally). The scale factor \(R\) cancels in the ratio \(a_1/a_2\). Therefore:
+\[ \delta w = -\frac{a_1}{2a_2} = f(\alpha, \beta, W, n) \]
+<strong>The vertex shift depends only on α, β, W, and n — not on C, E, A, B, or R.</strong>
+</div>
+
+<h2>4. Closed-Form Expression for δw</h2>
+
+<p>Substituting \(\tilde{L}(w_i)\) into the least-squares formulas:</p>
+
+<div class="result">
+<strong>Vertex shift formula:</strong>
+\[ \delta w = -\frac{a_1}{2a_2} = -\frac{\sum_i w_i \cdot \tilde{L}(w_i)}{2 \sum_i w_i^2} \cdot \frac{n \sum_i w_i^4 - (\sum_i w_i^2)^2}{n \sum_i w_i^2 \tilde{L}(w_i) - (\sum_i w_i^2)(\sum_i \tilde{L}(w_i))} \]
+
+where:
+\[ \tilde{L}(w) = \frac{\beta}{\alpha} \cdot 10^{-\alpha w} + 10^{\beta w} \]
+
+and the sums are over equally-spaced points \(w_i \in [-W, W]\).
+</div>
+
+<h3>Special Case: α = β</h3>
+
+<p>When \(\alpha = \beta\), the normalized loss simplifies to:</p>
+\[ \tilde{L}(w) = 10^{-\alpha w} + 10^{\alpha w} = 2 \cosh(\alpha w \ln 10) \]
+
+<p>This is symmetric about \(w = 0\), so \(\sum_i w_i \tilde{L}(w_i) = 0\) (odd function times even function summed over symmetric points).</p>
+
+<p>Therefore \(a_1 = 0\) and \(\delta w = 0\).</p>
+
+<h2>5. Intercept Error</h2>
+
+<p>The inferred optimum is:</p>
+\[ \hat{N}^* = N^* \cdot 10^{\delta w} \]
+
+<p>Since the true scaling is \(N^* = a_0 \cdot C^a\), the inferred scaling is:</p>
+\[ \hat{N}^* = a_0 \cdot 10^{\delta w} \cdot C^a = \hat{a}_0 \cdot C^a \]
+
+<div class="result">
+<strong>Intercept error:</strong>
+\[ \frac{\hat{a}_0 - a_0}{a_0} = 10^{\delta w} - 1 \]
+
+where \(\delta w = f(\alpha, \beta, W, n)\) is the vertex shift formula above.
+</div>
+
+<h2>6. Exponent Preservation</h2>
+
+<p>Since \(\delta w\) is independent of \(C\):</p>
+\[ \log_{10}(\hat{N}^*) = \log_{10}(a_0) + \delta w + a \cdot \log_{10}(C) \]
+
+<p>Fitting \(\log_{10}(\hat{N}^*)\) vs \(\log_{10}(C)\) across multiple compute budgets:</p>
+<ul>
+    <li><strong>Slope</strong> = \(a\) (exact, because \(\delta w\) is constant)</li>
+    <li><strong>Intercept</strong> = \(\log_{10}(a_0) + \delta w\) (shifted by \(\delta w\))</li>
+</ul>
+
+<div class="result">
+<strong>Main Result:</strong>
+<ul>
+    <li><strong>Exponent error = 0</strong> (exactly, for any α, β, W, n)</li>
+    <li><strong>Intercept error = \(10^{\delta w(\alpha, \beta, W, n)} - 1\)</strong></li>
+</ul>
+</div>
+
+<h2>7. Numerical Examples</h2>
+
+<p>For n = 15 points:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Surface</th>
+            <th>α</th>
+            <th>β</th>
+            <th>W</th>
+            <th>δw</th>
+            <th>Intercept error</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Symmetric</td>
+            <td>0.31</td>
+            <td>0.31</td>
+            <td>1.0</td>
+            <td>0</td>
+            <td>0%</td>
+        </tr>
+        <tr>
+            <td>Chinchilla</td>
+            <td>0.34</td>
+            <td>0.28</td>
+            <td>0.3</td>
+            <td>0.0014</td>
+            <td>0.33%</td>
+        </tr>
+        <tr>
+            <td>Chinchilla</td>
+            <td>0.34</td>
+            <td>0.28</td>
+            <td>1.0</td>
+            <td>0.0157</td>
+            <td>3.7%</td>
+        </tr>
+        <tr>
+            <td>Chinchilla</td>
+            <td>0.34</td>
+            <td>0.28</td>
+            <td>2.0</td>
+            <td>0.0626</td>
+            <td>15.5%</td>
+        </tr>
+        <tr>
+            <td>High imbalance</td>
+            <td>0.465</td>
+            <td>0.155</td>
+            <td>1.0</td>
+            <td>0.0795</td>
+            <td>20.1%</td>
+        </tr>
+        <tr>
+            <td>High imbalance</td>
+            <td>0.465</td>
+            <td>0.155</td>
+            <td>2.0</td>
+            <td>0.2992</td>
+            <td>99.2%</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>8. Summary</h2>
+
+<div class="result">
+<p>The vertex shift \(\delta w\) is a closed-form function of α, β, W, and n:</p>
+
+\[ \delta w = f(\alpha, \beta, W, n) \]
+
+<p>Key properties:</p>
+<ul>
+    <li>\(\delta w = 0\) when \(\alpha = \beta\) (symmetric loss)</li>
+    <li>\(\delta w\) grows with \(|\alpha - \beta|\) (asymmetry)</li>
+    <li>\(\delta w\) grows with \(W\) (wider sampling range)</li>
+    <li>\(\delta w\) is <strong>independent of C</strong> → exponent is exactly preserved</li>
+</ul>
+</div>
+
+</body>
+</html>
