@@ -139,7 +139,7 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
 
 1. Generate synthetic loss data using the same procedure as Experiments 3 and 4.
 
-2. Implement a new `fit_surface` function in `chinchilla.py` that fits all 5 parameters simultaneously:
+2. Fit all 5 parameters simultaneously:
    - Input: Arrays of N, D, and L values (token counts, parameter counts, and loss) pooled across all compute budgets
    - Use **variable projection** (also known as separable least squares):
      - For fixed (α, β), the loss function L = E + A·N^(-α) + B·D^(-β) is linear in (E, A, B)
@@ -155,7 +155,7 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
 
 3. For each configuration (loss surface × sampling bias × sampling range):
    - Pool the sampled (N, D, L) data across all compute budgets
-   - Fit the surface using `fit_surface`
+   - Fit the surface
    - Compute relative errors for all 5 parameters compared to ground truth
 
 4. For extrapolation analysis, use the same setup as Experiment 4.
@@ -213,12 +213,16 @@ Produce two figures:
    - If δw is constant across C, it only adds a constant offset, affecting the intercept but not the exponent
    - Look back at your expression for δw from step 5: does it contain C, or only α, β, W, n?
 
+**Visualization**:
+
+Produce a single figure with one panel per loss surface configuration (symmetric, chinchilla, high imbalance). Each panel shows:
+- Numerical intercept error from Approach 2 vs grid half-width W
+- Predicted intercept error from the derived formula vs grid half-width W
+- Maximum deviation between numerical and predicted values annotated
+
+This validates that the derived closed-form expression exactly matches numerical results.
+
 **Validation**: 
 - Compare derived expressions against numerical Approach 2 results across multiple surface configurations (symmetric, chinchilla, high imbalance)
 - Target machine precision agreement (1e-10)
 - Sanity check: symmetric surfaces (α = β) should produce zero error
-
-**Deliverables**:
-- `results/experiments/exp6/scaling_exponent_errors.html` — derivation document
-- `src/scaling_law_analysis/experiments/exp6_analytical_error.py` — validation code
-- `results/experiments/exp6/validation_intercept_errors.png` — comparison figure

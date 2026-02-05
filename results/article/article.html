@@ -421,18 +421,9 @@
             <p>
                 The alternative is to fit all five parameters \((E, A, B, \alpha, \beta)\)
                 simultaneously via nonlinear least squares. This avoids the parabolic
-                approximation entirely but is notoriously unstable—highly sensitive to
+                approximation entirely but is notoriously unstable: highly sensitive to
                 initialization and prone to converging to spurious local minima.
             </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">📌 Article Focus</div>
-                <p>
-                    This article examines pitfalls of <strong>Approach 2</strong> using
-                    noise-free synthetic data. By eliminating statistical noise, we isolate
-                    the systematic biases inherent to the method itself.
-                </p>
-            </div>
         </section>
 
         <!-- Section 2: The Happy Path -->
@@ -508,16 +499,16 @@
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    On a symmetric loss surface with perfect sampling, Approach 2 recovers
-                    both exponents and intercepts with machine-precision accuracy. The
-                    parabolic approximation is exact when \(\alpha = \beta\).
+                    On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling, 
+                    Approach 2 recovers both exponents and intercepts with machine-precision 
+                    accuracy. The parabolic approximation is exact when \(\alpha = \beta\).
                 </p>
             </div>
 
             <p>
-                This establishes our baseline: Approach 2 is not inherently flawed. The
-                problems arise when we deviate from these ideal conditions—as we'll see
-                in the following sections.
+                This establishes our baseline: Approach 2 is precisely correct under ideal conditions that 
+                are unrealistic in practice.  The problems arise when we deviate from these ideal conditions, as we'll see
+                in the following sections where these conditions are perturbed in controlled ways.
             </p>
         </section>
 
@@ -526,8 +517,8 @@
             <h2>Asymmetric Surfaces: When Intercepts Go Wrong</h2>
 
             <p>
-                We repeat the exact same procedure as before—perfect sampling centers, no noise,
-                identical methodology. The only change: the loss surface is now <strong>asymmetric</strong>
+                We repeat the exact same procedure as before: perfect sampling centers, no noise,
+                identical methodology. The only change is that the loss surface is now <strong>asymmetric</strong>
                 (\(\alpha \neq \beta\)).
             </p>
 
@@ -536,7 +527,7 @@
             <p>
                 Simulation results show that when the loss surface is asymmetric, Approach 2 produces
                 systematically wrong intercepts while exponents remain accurate. This isn't statistical
-                noise—it's a deterministic bias from fitting parabolas to a non-parabolic surface.
+                noise; it's a deterministic bias from fitting parabolas to a non-parabolic surface.
             </p>
 
             <p>
@@ -553,7 +544,7 @@
                 <figcaption>
                     <strong>Figure 2:</strong> Approach 2 on asymmetric loss surfaces.
                     Note the visible gap between true (dashed) and inferred (solid) power-law
-                    lines in the High Imbalance case—the exponents match perfectly, but
+                    lines in the High Imbalance case. The exponents match perfectly, but
                     the intercepts differ.
                 </figcaption>
             </figure>
@@ -616,18 +607,18 @@
 
             <p>
                 A few percent error in the intercept might seem minor, but consider that this simulation
-                gave Approach 2 every advantage. The data is perfect—no measurement noise, with every
+                gave Approach 2 every advantage. The data is perfect: no measurement noise, with every
                 point lying exactly on the true loss surface. The sampling is perfect too, with IsoFLOP
-                grids centered precisely at the true optimum—something you wouldn't know how to do in
-                practice. And the parameters are standard, taken directly from the Chinchilla paper
-                rather than constructed to expose a weakness.
+                grids centered precisely at the true optimum (something you wouldn't know how to do in
+                practice). And the parameters are standard, taken directly from the Chinchilla paper
+                rather than contrived to expose a potentially unrealistic weakness.
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">📌 Key Finding</div>
+                <div class="callout-title">✓ Key Result</div>
                 <p>
                     Even under these ideal conditions, Approach 2 produces biased intercepts for
-                    asymmetric surfaces. The error is systematic—a property of the parabolic
+                    asymmetric surfaces. The error is systematic, a property of the parabolic
                     approximation, not statistical noise.
                 </p>
             </div>
@@ -635,9 +626,9 @@
             <h3>Why It Happens</h3>
 
             <p>
-                The IsoFLOP loss curve is not a true parabola—it contains exponential terms.
+                The IsoFLOP loss curve is not a true parabola; it contains exponential terms.
                 When a parabola is fit to this curve, the parabola's minimum (vertex) doesn't
-                land exactly at the true optimum. It shifts slightly—and the key insight is that
+                land exactly at the true optimum. It shifts slightly, and the key insight is that
                 this shift depends only on the loss surface shape (\(\alpha\), \(\beta\)) and
                 the sampling grid. It does not depend on compute budget. The sampling grid size
                 becomes important here: wider grids amplify the mismatch between the true curve
@@ -651,9 +642,9 @@
             </p>
 
             <ul>
-                <li>The <strong>slope (exponent)</strong> is unchanged—multiplying all \(N^*\) values
+                <li>The <strong>slope (exponent)</strong> is unchanged: multiplying all \(N^*\) values
                     by a constant factor adds a constant to \(\log N^*\), which doesn't affect the slope</li>
-                <li>The <strong>intercept</strong> absorbs the entire error—it's biased by exactly
+                <li>The <strong>intercept</strong> absorbs the entire error, biased by exactly
                     that multiplicative factor</li>
             </ul>
 
@@ -671,8 +662,10 @@
 
             <p>
                 where \(\delta w = f(\alpha, \beta, W, n)\) depends only on the surface exponents
-                and the sampling grid (width \(W\), number of points \(n\))—not on \(C\), \(E\),
-                \(A\), or \(B\). Key properties:
+                and the sampling grid (width \(W\) in log-space, number of points \(n\) per IsoFLOP curve), not on \(C\), \(E\),
+                \(A\), or \(B\). Here \(W\) spans \(10^{-W/2}\) to \(10^{W/2}\) times the optimal \(N^*\),
+                so \(W = 2.0\) means sampling from \(0.1\times\) to \(10\times\) the optimum.
+                And \(n = 10\) means 10 model sizes per compute budget. Key properties:
             </p>
 
             <ul>
@@ -684,15 +677,21 @@
             <p>
                 For example, with the Chinchilla parameters (\(\alpha = 0.34\), \(\beta = 0.28\)):
                 a narrow grid (\(W = 0.3\)) yields 0.3% intercept error, while a wider grid
-                (\(W = 2.0\)) yields 15.5% error. <a href="scaling_exponent_errors.html">See the
-                full derivation</a> for the closed-form vertex shift formula.
+                (\(W = 2.0\)) yields 15.5% error.
+            </p>
+
+            <p>
+                The <a href="scaling_exponent_errors.html">full derivation</a> provides the
+                closed-form expression for vertex shift \(\delta w\) as a function of \(\alpha\),
+                \(\beta\), \(W\), and \(n\). It also shows how this shift translates directly
+                into intercept error, independent of compute budget.
             </p>
 
             <p>
                 <strong>Intuition via Taylor expansion:</strong> A parabola is a 2nd-order polynomial,
                 which is equivalent to a 2nd-order Taylor expansion around the optimum. The approximation
                 \(L(w) \approx L(0) + \frac{1}{2}L''(0)w^2\) is only valid when higher-order terms are
-                negligible—i.e., when samples are close to the true minimum. As sampling range increases,
+                negligible, i.e., when samples are close to the true minimum. As sampling range increases,
                 3rd and 4th order terms grow. For symmetric surfaces (\(\alpha = \beta\)), odd-order
                 terms cancel by symmetry, preserving the vertex location. For asymmetric surfaces,
                 they don't cancel, shifting the fitted vertex away from the true optimum.
