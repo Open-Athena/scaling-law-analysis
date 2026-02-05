@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Hidden Pitfalls of Chinchilla Approach 2</title>
+    <title>Problems with Chinchilla Approach 2</title>
     <meta name="description"
         content="An analysis of systematic biases in scaling law inference using the IsoFLOP parabolic fitting method.">
 
@@ -342,9 +342,36 @@
 <body>
     <article class="container">
         <header>
-            <h1>The Hidden Pitfalls of Chinchilla Approach 2</h1>
+            <h1>Problems with Chinchilla Approach 2</h1>
             <p class="subtitle">Systematic biases in scaling law inference from IsoFLOP parabolic fitting</p>
         </header>
+
+        <!-- Section: Motivation -->
+        <section id="motivation">
+            <h2>Motivation</h2>
+
+            <p>
+                <em>[TBD: Origin of Approach 2, the Chinchilla paper context]</em>
+            </p>
+
+            <p>
+                <em>[TBD: Who uses this method — labs, researchers, practitioners applying scaling laws]</em>
+            </p>
+
+            <p>
+                <em>[TBD: Why they use it — simplicity, avoids nonlinear optimization, interpretable steps]</em>
+            </p>
+
+            <p>
+                <em>[TBD: Why I'm personally using it — specific context for this analysis, scaling laws for scientific data modalities]</em>
+            </p>
+
+            <p>
+                This article examines pitfalls of Approach 2 using noise-free synthetic data.
+                By eliminating statistical noise, we isolate the systematic biases inherent
+                to the method itself.
+            </p>
+        </section>
 
         <!-- Section 1: Approaches to Fitting Scaling Laws -->
         <section id="approaches">
@@ -388,7 +415,7 @@
             <h3>Approach 2: IsoFLOP Parabolic Fitting</h3>
 
             <p>
-                This is the workhorse method from the Chinchilla paper. The key insight is that
+                This method is presented in the Chinchilla paper. The key insight is that
                 along a fixed-compute contour (IsoFLOP curve), loss as a function of \(\log N\)
                 is approximately parabolic near the optimum.
             </p>

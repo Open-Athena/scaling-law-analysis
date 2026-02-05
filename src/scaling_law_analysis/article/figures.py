@@ -192,20 +192,6 @@ def plot_power_law_fit_D(
     ax.legend(loc="lower right", fontsize=9)
 
 
-def compute_true_intercepts(surface: LossSurface) -> tuple[float, float]:
-    """Compute true power-law intercepts for N* and D* vs C.
-
-    The true power laws are:
-        N* = G · (C/6)^a  →  log10(N*) = a·log10(C) + (log10(G) - a·log10(6))
-        D* = (1/G) · (C/6)^b  →  log10(D*) = b·log10(C) + (-log10(G) - b·log10(6))
-    """
-    log_G = np.log10(surface.G)
-    log_6 = np.log10(6)
-    true_a_intercept = log_G - surface.a * log_6
-    true_b_intercept = -log_G - surface.b * log_6
-    return true_a_intercept, true_b_intercept
-
-
 def create_happy_path_figure(output_dir: Path) -> dict:
     """Create the Happy Path figure for Section 2 (D* only).
 
@@ -226,9 +212,6 @@ def create_happy_path_figure(output_dir: Path) -> dict:
         n_points=N_POINTS,
         log_range=log_range,
     )
-
-    # Compute true intercepts
-    true_a_intercept, true_b_intercept = compute_true_intercepts(surface)
 
     # Create figure with 2 subplots
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
@@ -258,7 +241,7 @@ def create_happy_path_figure(output_dir: Path) -> dict:
         "surface": surface,
         "result": result,
         "true_b": surface.b,
-        "true_b_intercept": true_b_intercept,
+        "true_b_intercept": surface.b_intercept,
         "inferred_b": result.b,
         "inferred_b_intercept": result.b_intercept,
     }
@@ -354,15 +337,12 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
             log_range=log_range,
         )
 
-        # Compute true intercepts
-        true_a_intercept, true_b_intercept = compute_true_intercepts(surface)
-
         # Store results
         results[name.lower().replace(" ", "_")] = {
             "surface": surface,
             "result": result,
             "true_b": surface.b,
-            "true_b_intercept": true_b_intercept,
+            "true_b_intercept": surface.b_intercept,
             "inferred_b": result.b,
             "inferred_b_intercept": result.b_intercept,
         }

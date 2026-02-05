@@ -17,3 +17,11 @@ repos:
         language: system
         pass_filenames: false
         types: [python]
+
+      - id: pytest
+        name: Pytest (unit tests)
+        entry: uv run pytest tests/ -q
+        language: system
+        pass_filenames: false
+        types: [python]
+        stages: [pre-commit]

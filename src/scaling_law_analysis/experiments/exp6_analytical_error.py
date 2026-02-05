@@ -133,16 +133,6 @@ def compute_numerical_errors(
     Returns:
         Dictionary with arrays of exponent and intercept errors
     """
-    # True values
-    true_a = surface.a
-
-    # True intercept in the basis used by fit_approach2
-    # fit_approach2 fits: log10(N*) = a * log10(C) + a_intercept
-    # True relation: N* = G * (C/6)^a = G * 6^(-a) * C^a
-    # So: log10(N*) = log10(G) - a*log10(6) + a*log10(C)
-    # Therefore: true_a_intercept = log10(G) - a*log10(6)
-    true_a_intercept = np.log10(surface.G) - true_a * np.log10(6)
-
     exponent_errors = []
     intercept_errors = []
 
@@ -157,19 +147,19 @@ def compute_numerical_errors(
         )
 
         # Exponent error (should be ~0)
-        exponent_errors.append(result.a - true_a)
+        exponent_errors.append(result.a - surface.a)
 
         # Intercept error (relative)
         intercept_errors.append(
-            (10**result.a_intercept - 10**true_a_intercept) / 10**true_a_intercept
+            (10**result.a_intercept - 10**surface.a_intercept) / 10**surface.a_intercept
         )
 
     return {
         "log_ranges": log_ranges,
         "exponent_errors": np.array(exponent_errors),
         "intercept_errors": np.array(intercept_errors),
-        "true_a": true_a,
-        "true_a_intercept": true_a_intercept,
+        "true_a": surface.a,
+        "true_a_intercept": surface.a_intercept,
     }
 
 

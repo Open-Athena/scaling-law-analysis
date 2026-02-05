@@ -41,23 +41,6 @@ def log_range_to_label(log_range: float) -> str:
         return f"±{factor:.1f}x"
 
 
-def compute_true_intercepts(loss) -> tuple[float, float]:
-    """Compute true power-law intercepts for N* and D* vs C.
-
-    The true power laws are:
-        N* = G · (C/6)^a  →  log10(N*) = a·log10(C) + (log10(G) - a·log10(6))
-        D* = (1/G) · (C/6)^b  →  log10(D*) = b·log10(C) + (-log10(G) - b·log10(6))
-
-    Returns:
-        Tuple of (true_a_intercept, true_b_intercept) in log10 space
-    """
-    log_G = np.log10(loss.G)
-    log_6 = np.log10(6)
-    true_a_intercept = log_G - loss.a * log_6
-    true_b_intercept = -log_G - loss.b * log_6
-    return true_a_intercept, true_b_intercept
-
-
 def run_experiment(
     sim_config: SimulationConfig,
     compute_budgets: np.ndarray,
@@ -89,7 +72,6 @@ def run_experiment(
     # Compute true values
     true_N_opts = np.array([loss.N_opt(C) for C in compute_budgets])
     true_D_opts = np.array([loss.D_opt(C) for C in compute_budgets])
-    true_a_intercept, true_b_intercept = compute_true_intercepts(loss)
 
     for log_range in log_ranges:
         result = fit_approach2(
@@ -129,14 +111,14 @@ def run_experiment(
         "a_error": (a_recovered - loss.a) / loss.a,
         "b_error": (b_recovered - loss.b) / loss.b,
         # Intercepts
-        "true_a_intercept": true_a_intercept,
-        "true_b_intercept": true_b_intercept,
+        "true_a_intercept": loss.a_intercept,
+        "true_b_intercept": loss.b_intercept,
         "a_intercept_recovered": a_intercept_recovered,
         "b_intercept_recovered": b_intercept_recovered,
-        "a_intercept_error": (a_intercept_recovered - true_a_intercept)
-        / abs(true_a_intercept),
-        "b_intercept_error": (b_intercept_recovered - true_b_intercept)
-        / abs(true_b_intercept),
+        "a_intercept_error": (a_intercept_recovered - loss.a_intercept)
+        / abs(loss.a_intercept),
+        "b_intercept_error": (b_intercept_recovered - loss.b_intercept)
+        / abs(loss.b_intercept),
         # Per-budget optimum errors
         "N_opt_errors": N_opt_errors,
         "D_opt_errors": D_opt_errors,

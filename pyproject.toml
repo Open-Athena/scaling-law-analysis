@@ -27,4 +27,5 @@ dev = [
     "black>=26.1.0",
     "pre-commit>=4.5.1",
     "pyrefly>=0.51.0",
+    "pytest",
 ]

@@ -9,7 +9,7 @@ This module provides:
 
 import numpy as np
 from dataclasses import dataclass
-from typing import NamedTuple, Union
+from typing import Union
 
 from scipy.optimize import minimize, nnls
 
@@ -75,6 +75,28 @@ class LossSurface:
         return (self.alpha * self.A / (self.beta * self.B)) ** (
             1 / (self.alpha + self.beta)
         )
+
+    @property
+    def a_intercept(self) -> float:
+        """Intercept of log₁₀(N*) vs log₁₀(C) power law.
+
+        From N* = G · (C/6)^a:
+            log₁₀(N*) = a·log₁₀(C) + (log₁₀(G) - a·log₁₀(6))
+
+        The intercept is: log₁₀(G) - a·log₁₀(6)
+        """
+        return np.log10(self.G) - self.a * np.log10(6)
+
+    @property
+    def b_intercept(self) -> float:
+        """Intercept of log₁₀(D*) vs log₁₀(C) power law.
+
+        From D* = (1/G) · (C/6)^b:
+            log₁₀(D*) = b·log₁₀(C) + (-log₁₀(G) - b·log₁₀(6))
+
+        The intercept is: -log₁₀(G) - b·log₁₀(6)
+        """
+        return -np.log10(self.G) - self.b * np.log10(6)
 
     def N_opt(self, C: float) -> float:
         """Compute optimal parameter count N* for a given compute budget.
@@ -240,7 +262,42 @@ def isoflop_sample(
     return N, D, L
 
 
-class ParabolaFit(NamedTuple):
+@dataclass(frozen=True)
+class PowerLawFit:
+    """Results from fitting a power law relationship in log-log space.
+
+    Fits the model: log₁₀(y) = exponent · log₁₀(x) + intercept
+    Equivalently: y = 10^intercept · x^exponent
+    """
+
+    exponent: float  # Slope in log-log space (power law exponent)
+    intercept: float  # Intercept in log₁₀ space
+
+
+def fit_power_law(x: np.ndarray, y: np.ndarray) -> PowerLawFit:
+    """Fit a power law relationship y = a · x^b via linear regression in log-log space.
+
+    Fits: log₁₀(y) = exponent · log₁₀(x) + intercept
+
+    This is used in Chinchilla Approach 2 to fit:
+        N* = 10^a_intercept · C^a  (optimal parameters vs compute)
+        D* = 10^b_intercept · C^b  (optimal tokens vs compute)
+
+    Args:
+        x: Independent variable (e.g., compute budgets)
+        y: Dependent variable (e.g., optimal N* or D* values)
+
+    Returns:
+        PowerLawFit with exponent and intercept
+    """
+    log_x = np.log10(x)
+    log_y = np.log10(y)
+    exponent, intercept = np.polyfit(log_x, log_y, 1)
+    return PowerLawFit(exponent=float(exponent), intercept=float(intercept))
+
+
+@dataclass(frozen=True)
+class ParabolaFit:
     """Results from fitting a parabola to IsoFLOP data."""
 
     coeffs: np.ndarray  # Polynomial coefficients [a, b, c] for ax² + bx + c
@@ -301,25 +358,25 @@ def fit_parabola(
     Args:
         log_x: Log10 of x values (e.g., parameter counts N or token counts D)
         L: Loss values
-        min_curvature: Minimum absolute value for quadratic coefficient.
-                       Raises ValueError if |a| < min_curvature.
+        min_curvature: Minimum value for quadratic coefficient (must be positive
+                       for an upward-facing parabola with a minimum).
 
     Returns:
         ParabolaFit with coefficients and minimum location
 
     Raises:
-        ValueError: If quadratic coefficient is too small (degenerate/flat parabola)
+        ValueError: If quadratic coefficient is not sufficiently positive
     """
     # Fit quadratic: L = a*log(x)² + b*log(x) + c
     coeffs = np.polyfit(log_x, L, 2)
     a, b, c = coeffs
 
-    # Check for degenerate parabola (flat loss surface)
-    if abs(a) < min_curvature:
+    # Require positive curvature (upward-facing parabola) to have a minimum
+    if a < min_curvature:
         raise ValueError(
-            f"Parabola fit has near-zero curvature (a={a:.2e}). "
-            f"This indicates a flat loss surface or insufficient data. "
-            f"Consider using more points or a narrower sampling range."
+            f"Parabola fit has non-positive curvature (a={a:.2e}). "
+            f"A minimum requires positive curvature (upward-facing parabola). "
+            f"This may indicate a flat loss surface, insufficient data, or inverted curvature."
         )
 
     # Minimum at log(x*) = -b / (2a)
@@ -402,16 +459,15 @@ def fit_approach2(
     N_opts = np.array(N_opts)
     D_opts = np.array(D_opts)
 
-    # Stage 2: Linear fits in log-log space
-    log_C = np.log10(compute_budgets)
-    a, a_intercept = np.polyfit(log_C, np.log10(N_opts), 1)
-    b, b_intercept = np.polyfit(log_C, np.log10(D_opts), 1)
+    # Stage 2: Fit power laws N* ∝ C^a and D* ∝ C^b in log-log space
+    N_fit = fit_power_law(compute_budgets, N_opts)
+    D_fit = fit_power_law(compute_budgets, D_opts)
 
     return Approach2Result(
-        a=a,
-        b=b,
-        a_intercept=a_intercept,
-        b_intercept=b_intercept,
+        a=N_fit.exponent,
+        b=D_fit.exponent,
+        a_intercept=N_fit.intercept,
+        b_intercept=D_fit.intercept,
         parabola_fits_N=parabola_fits_N,
         parabola_fits_D=parabola_fits_D,
         compute_budgets=compute_budgets,
