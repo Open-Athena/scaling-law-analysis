@@ -34,11 +34,11 @@ Figures: IsoFLOP curves with parabola fits (symmetric). Power-law fits showing p
 
 Conditions: asymmetric surface (Chinchilla: α=0.34, β=0.28), perfect sampling centers, no noise.
 
-Exponents a, b still perfectly recovered. Intercepts a₀, b₀ now have systematic error. Wider sampling range → larger intercept error. Compare Chinchilla vs. high imbalance (α/β = 3) to exaggerate effect. Inferred parabola minima are subtly shifted from true optima.
+**Surprising finding**: Using the Chinchilla paper's own reported parameters, Approach 2 produces systematically wrong intercepts — even with perfect data. This isn't statistical noise; it's a deterministic bias from fitting parabolas to a non-parabolic surface. Exponents are still exact, but intercept error grows with sampling range.
 
-Key message: asymmetry silently corrupts intercepts used for extrapolation.
+Key message: Approach 2 applied to the Chinchilla loss surface introduces systematic intercept errors that affect extrapolation.
 
-Figures: Side-by-side Chinchilla vs. high imbalance isoflops. Exponent error (~0) vs. intercept error (nonzero) by sampling range. True vs. inferred parabola minima overlay.
+Figures: Chinchilla vs. high imbalance isoflops. Exponent error (~0) vs. intercept error (nonzero) by sampling range. True vs. inferred parabola minima overlay.
 
 ---
 
@@ -48,7 +48,7 @@ Figures: Side-by-side Chinchilla vs. high imbalance isoflops. Exponent error (~0
 
 **Drifting bias**: Bias varies with compute budget (undershoots at low C, overshoots at high C). BOTH exponents and intercepts are wrong.
 
-Key message: only constant multiplicative bias preserves exponents; any other pattern corrupts everything.
+Key message: only constant multiplicative bias preserves exponents; any other pattern introduces errors in both.
 
 Figures: Comparison of no bias vs. constant scale vs. drift. Exponent error curves for each bias type.
 

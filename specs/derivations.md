@@ -37,6 +37,7 @@ Mathematical derivations for scaling law inference errors.
    - From step 6, log(N̂*) = log(N*) + δw·log(10). If δw varies with C, it changes the slope of log(N̂*) vs log(C), corrupting the exponent
    - If δw is constant across C, it only adds a constant offset, affecting the intercept but not the exponent
    - Look back at your expression for δw from step 5: does it contain C, or only α, β, W, n?
+
 **Validation**: 
 - Compare derived expressions against numerical Approach 2 results across multiple surface configurations (symmetric, chinchilla, high imbalance)
 - Target machine precision agreement (1e-10)

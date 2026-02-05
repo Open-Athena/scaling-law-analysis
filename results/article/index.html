@@ -469,17 +469,19 @@
             <h2>Asymmetric Surfaces: When Intercepts Go Wrong</h2>
 
             <p>
-                Real loss surfaces are rarely symmetric. The Chinchilla paper found
-                \(\alpha = 0.34\) and \(\beta = 0.28\)—a modest asymmetry. What happens
-                to Approach 2 when we break the symmetry assumption?
+                Here's the surprising part. We now test Approach 2 using the
+                <strong>exact parameters reported in the Chinchilla paper</strong>:
+                \(\alpha = 0.34\), \(\beta = 0.28\), \(A = 406.4\), \(B = 410.7\), \(E = 1.69\).
+                Same methodology, same loss surface, perfect noiseless data centered exactly
+                on the true optima.
             </p>
 
             <p>
-                We test two configurations:
+                We also test a more extreme case to see how the effect scales:
             </p>
 
             <ul>
-                <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)</li>
+                <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)—the paper's own values</li>
                 <li><strong>High Imbalance:</strong> \(\alpha = 0.46\), \(\beta = 0.15\) (ratio = 3.0)</li>
             </ul>
 
@@ -548,28 +550,31 @@
             </table>
 
             <div class="callout warning">
-                <div class="callout-title">⚠️ Key Finding</div>
+                <div class="callout-title">⚠️ Surprising Finding</div>
                 <p>
-                    <strong>The exponents are recovered perfectly, but the intercepts are systematically
-                        biased.</strong>
-                    The more asymmetric the surface, the larger the intercept error. This is
-                    invisible when validating within the fitting range, but becomes critical
-                    during extrapolation.
+                    <strong>The Chinchilla paper's own methodology, applied to their own reported
+                        loss surface, produces systematically wrong intercepts.</strong>
+                    This isn't statistical noise or a sampling artifact—it's a deterministic bias
+                    inherent to fitting parabolas to a non-parabolic surface. The exponents are
+                    exact, but the intercepts are systematically off.
                 </p>
             </div>
 
             <p>
-                Why does this happen? The parabolic approximation comes from a Taylor expansion
-                around the optimum. When \(\alpha = \beta\), the expansion is symmetric and the
-                parabola vertex lands exactly at the true optimum. When \(\alpha \neq \beta\),
-                higher-order terms shift the vertex location—but the curvature (which determines
-                the power-law exponent) remains correct.
+                Why does this happen? The loss function along an IsoFLOP contour is
+                \(L \propto N^{-\alpha} + N^{\beta}\)—a sum of power laws, not a parabola.
+                When \(\alpha = \beta\), this is symmetric in log-space and the fitted
+                parabola's vertex lands exactly at the true optimum. When \(\alpha \neq \beta\),
+                the asymmetry shifts the vertex away from the true minimum by a predictable
+                amount that depends only on \(\alpha\), \(\beta\), and the sampling width.
             </p>
 
             <p>
-                This creates an insidious failure mode: the method appears to work perfectly
-                when checking exponent recovery, but silently corrupts the intercepts needed
-                for extrapolation.
+                Crucially, this vertex shift is <em>constant across compute budgets</em>.
+                When fitting \(\log N^* \propto a \log C\), a constant offset affects
+                only the intercept, not the slope. This is why exponents are exact while
+                intercepts are wrong—a subtle failure mode that standard validation
+                (checking exponent recovery) won't catch.
             </p>
         </section>
 
