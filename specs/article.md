@@ -1,6 +1,6 @@
 # Article Spec: Scaling Law Fitting Pitfalls
 
-HTML blog post, ~10 minute read. Demonstrates systematic biases in Chinchilla Approach 2 using noise-free synthetic data. Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances. Uses custom code extractions, not direct experiment outputs. Taylor math deferred to future work.
+HTML blog post, ~10 minute read. Demonstrates systematic biases in Chinchilla Approach 2 using noise-free synthetic data. Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances. Uses custom code extractions, not direct experiment outputs.
 
 ---
 

@@ -595,7 +595,7 @@ def main():
     print("=" * 70)
 
     # Prepare output directory
-    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp1")
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp1")
 
     # Experiment parameters
     compute_budgets = COMPUTE_BUDGETS

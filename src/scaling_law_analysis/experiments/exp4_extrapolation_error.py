@@ -53,7 +53,7 @@ def main():
     print("=" * 70)
 
     # Prepare output directory
-    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp4")
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp4")
 
     print(f"\nFitting compute budgets: {COMPUTE_BUDGETS}")
     print(

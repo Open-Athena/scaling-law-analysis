@@ -10,8 +10,8 @@ as a function of α, β, and grid width W.
 import numpy as np
 import matplotlib.pyplot as plt
 
+from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import LossSurface, fit_approach2
-from scaling_law_analysis.config import RESULTS_DIR
 from scaling_law_analysis.experiments.common import (
     COMPUTE_BUDGETS,
     LOG_RANGES,
@@ -19,6 +19,7 @@ from scaling_law_analysis.experiments.common import (
     SYMMETRIC_LOSS_SURFACE,
     DEFAULT_LOSS_SURFACE,
     HIGH_IMBALANCE_CONFIG,
+    prepare_output_dir,
 )
 
 
@@ -333,8 +334,8 @@ def main():
 
     # Create and save figure
     fig = create_validation_figure(results)
-    output_path = RESULTS_DIR / "derivations" / "validation_intercept_errors.png"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp6")
+    output_path = output_dir / "validation_intercept_errors.png"
     fig.savefig(output_path, dpi=150, bbox_inches="tight")
     print(f"\nFigure saved to: {output_path}")
 

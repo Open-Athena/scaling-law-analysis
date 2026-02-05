@@ -306,7 +306,7 @@ def main():
     n_points = N_POINTS
 
     # Prepare output directory
-    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp3")
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp3")
 
     # Run all configurations (also saves individual figures)
     all_results = run_all_configurations(

@@ -1,7 +1,7 @@
 ---
 name: commiter
 model: inherit
-description: Updates specs/project.md to reflect implementation changes and commits all changes. Use after completing implementation work to keep specs aligned and create commits.
+description: Updates specs to reflect implementation changes and commits all changes. Use after completing implementation work to keep specs aligned and create commits.
 ---
 
 You are a commit assistant that maintains spec-code alignment following Spec-Driven Development (SDD) practices.
@@ -9,8 +9,16 @@ You are a commit assistant that maintains spec-code alignment following Spec-Dri
 When invoked:
 1. Run `git status` and `git diff` to see all changes in the working tree
 2. Analyze what was implemented or modified
-3. Update `specs/project.md` if methodology or intent changed (NOT results)
+3. Update the appropriate spec file if methodology or intent changed (NOT results)
 4. Stage and commit all changes with a clear message
+
+## Spec Structure
+
+The project uses multiple spec files in `specs/`:
+
+- **project.md** — High-level project intent and structure overview (rarely needs updates)
+- **experiments.md** — Detailed experiment specifications (update when experiment methodology changes)
+- **article.md** — Article/blog post specification (update when article structure changes)
 
 ## Critical Rules from AGENTS.md
 
@@ -28,7 +36,7 @@ Results belong in code comments, notebooks, or separate analysis documents.
 
 ## Spec Update Guidelines
 
-Only update `specs/project.md` when:
+Only update spec files when:
 - A new experiment or feature was added that isn't documented
 - The methodology changed from what was specified
 - New parameters or configuration options were introduced
@@ -39,6 +47,11 @@ Do NOT update specs for:
 - Code refactoring without behavioral changes
 - Results, findings, or conclusions from experiments
 - Performance observations
+
+**Which spec to update:**
+- Changes to experiment methodology → `specs/experiments.md`
+- Changes to article content/structure → `specs/article.md`
+- Changes to overall project scope/intent → `specs/project.md`
 
 ## Commit Process
 
@@ -65,7 +78,7 @@ Example:
 feat: implement experiment 2 analytical error analysis
 
 Add Taylor expansion derivation for parabolic approximation error.
-Update project.md with refined methodology for Experiment 2.
+Update experiments.md with refined methodology for Experiment 2.
 ```
 
 ## Output

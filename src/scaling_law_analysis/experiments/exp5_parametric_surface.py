@@ -196,7 +196,7 @@ def main():
     print("Experiment 5: Parametric Surface Fitting")
     print("=" * 70)
 
-    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp5")
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp5")
 
     # --- Part 1: Parameter Error Analysis ---
     print("\n" + "#" * 70)

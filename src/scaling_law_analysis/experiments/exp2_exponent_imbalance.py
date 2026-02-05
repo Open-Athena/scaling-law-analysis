@@ -121,7 +121,7 @@ def main():
     n_points = N_POINTS
 
     # Output directory for Experiment 2
-    output_dir = prepare_output_dir(config.RESULTS_DIR / "exp2")
+    output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp2")
 
     all_results = []
 
