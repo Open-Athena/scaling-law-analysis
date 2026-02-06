@@ -228,6 +228,117 @@
             background: var(--bg-tertiary);
         }
 
+        /* Collapsible data tables */
+        details.data-table-container {
+            margin: 1.5rem 0;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--bg-secondary);
+        }
+
+        details.data-table-container summary {
+            padding: 0.75rem 1.25rem;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        details.data-table-container summary:hover {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+        }
+
+        details.data-table-container[open] summary {
+            border-bottom: 1px solid var(--border-color);
+            border-radius: 8px 8px 0 0;
+        }
+
+        details.data-table-container .data-table-wrapper {
+            padding: 1rem;
+            overflow-x: auto;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 0.6rem 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .data-table th {
+            background: var(--bg-tertiary);
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .data-table td {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8em;
+        }
+
+        .data-table td:first-child,
+        .data-table th:first-child {
+            text-align: left;
+        }
+
+        .data-table tbody tr:hover {
+            background: rgba(196, 112, 79, 0.05);
+        }
+
+        .data-table td[title] {
+            cursor: help;
+            border-bottom: 1px dotted var(--text-muted);
+        }
+
+        .data-table .error-zero {
+            color: var(--accent-success);
+            font-weight: 500;
+        }
+
+        .data-table .error-low {
+            color: #ca8a04;
+            font-weight: 600;
+        }
+
+        .data-table .error-medium {
+            color: #ea580c;
+            font-weight: 600;
+        }
+
+        .data-table .error-high {
+            color: var(--accent-error);
+            font-weight: 700;
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 3px;
+            padding: 0.15em 0.35em;
+        }
+
+        .data-table .surface-header {
+            font-weight: 600;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .data-table .surface-header td {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.85rem;
+        }
+
         /* Error highlighting */
         .error-negligible {
             color: var(--accent-success);
@@ -753,6 +864,134 @@
                 </figcaption>
             </figure>
 
+            <details class="data-table-container">
+                <summary>📊 View raw data</summary>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Surface</th>
+                                <th>α</th>
+                                <th>β</th>
+                                <th>Grid</th>
+                                <th>True D*</th>
+                                <th>Inferred D*</th>
+                                <th>Abs Error</th>
+                                <th>Rel Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Symmetric Surface -->
+                            <tr class="surface-header">
+                                <td colspan="8">Symmetric Surface (α = β)</td>
+                            </tr>
+                            <tr>
+                                <td>Symmetric</td>
+                                <td>0.31</td>
+                                <td>0.31</td>
+                                <td>narrow (±2×)</td>
+                                <td title="4.082482904638630e+11">408.2B</td>
+                                <td title="4.082482904641234e+11">408.2B</td>
+                                <td title="2.603759765625000e-01">≈0</td>
+                                <td title="0.000000000063779%" class="error-zero">≈0%</td>
+                            </tr>
+                            <tr>
+                                <td>Symmetric</td>
+                                <td>0.31</td>
+                                <td>0.31</td>
+                                <td>medium (±16×)</td>
+                                <td title="4.082482904638630e+11">408.2B</td>
+                                <td title="4.082482904640383e+11">408.2B</td>
+                                <td title="1.752319335937500e-01">≈0</td>
+                                <td title="0.000000000042923%" class="error-zero">≈0%</td>
+                            </tr>
+                            <tr>
+                                <td>Symmetric</td>
+                                <td>0.31</td>
+                                <td>0.31</td>
+                                <td>wide (±100×)</td>
+                                <td title="4.082482904638630e+11">408.2B</td>
+                                <td title="4.082482904638679e+11">408.2B</td>
+                                <td title="4.882812500000000e-03">≈0</td>
+                                <td title="0.000000000001196%" class="error-zero">≈0%</td>
+                            </tr>
+                            <!-- Chinchilla Surface -->
+                            <tr class="surface-header">
+                                <td colspan="8">Chinchilla Surface (α ≠ β)</td>
+                            </tr>
+                            <tr>
+                                <td>Chinchilla</td>
+                                <td>0.34</td>
+                                <td>0.28</td>
+                                <td>narrow (±2×)</td>
+                                <td title="4.035834749563681e+12">4.04T</td>
+                                <td title="4.022730066901460e+12">4.02T</td>
+                                <td title="-1.310468266222070e+10">−13.1B</td>
+                                <td title="-0.324708108121559%" class="error-low">−0.32%</td>
+                            </tr>
+                            <tr>
+                                <td>Chinchilla</td>
+                                <td>0.34</td>
+                                <td>0.28</td>
+                                <td>medium (±16×)</td>
+                                <td title="4.035834749563681e+12">4.04T</td>
+                                <td title="3.831365914273064e+12">3.83T</td>
+                                <td title="-2.044688352906162e+11">−204.5B</td>
+                                <td title="-5.066333187024608%" class="error-medium">−5.07%</td>
+                            </tr>
+                            <tr>
+                                <td>Chinchilla</td>
+                                <td>0.34</td>
+                                <td>0.28</td>
+                                <td>wide (±100×)</td>
+                                <td title="4.035834749563681e+12">4.04T</td>
+                                <td title="3.493998467123849e+12">3.49T</td>
+                                <td title="-5.418362824398315e+11">−541.8B</td>
+                                <td title="-13.425631029575980%" class="error-high">−13.43%</td>
+                            </tr>
+                            <!-- High Imbalance Surface -->
+                            <tr class="surface-header">
+                                <td colspan="8">High Imbalance Surface (α/β = 3)</td>
+                            </tr>
+                            <tr>
+                                <td>High Imbalance</td>
+                                <td>0.465</td>
+                                <td>0.155</td>
+                                <td>narrow (±2×)</td>
+                                <td title="4.510334355952566e+16">45.1Q</td>
+                                <td title="4.435308406514074e+16">44.4Q</td>
+                                <td title="-7.502594943849120e+14">−750.3T</td>
+                                <td title="-1.663423230241786%" class="error-low">−1.66%</td>
+                            </tr>
+                            <tr>
+                                <td>High Imbalance</td>
+                                <td>0.465</td>
+                                <td>0.155</td>
+                                <td>medium (±16×)</td>
+                                <td title="4.510334355952566e+16">45.1Q</td>
+                                <td title="3.473762636518682e+16">34.7Q</td>
+                                <td title="-1.036571719433884e+16">−10.4Q</td>
+                                <td title="-22.982148054408793%" class="error-high">−22.98%</td>
+                            </tr>
+                            <tr>
+                                <td>High Imbalance</td>
+                                <td>0.465</td>
+                                <td>0.155</td>
+                                <td>wide (±100×)</td>
+                                <td title="4.510334355952566e+16">45.1Q</td>
+                                <td title="2.264622387360425e+16">22.6Q</td>
+                                <td title="-2.245711968592140e+16">−22.5Q</td>
+                                <td title="-49.790365666091610%" class="error-high">−49.79%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+                        B = billion, T = trillion, Q = quadrillion. Hover over cells for full-precision values.
+                        Training range: 10¹⁷–10²¹ FLOPs. Evaluation budget: 10²⁴ FLOPs.
+                    </p>
+                </div>
+            </details>
+
             <p>
                 The key observations from this figure are:
             </p>
@@ -764,7 +1003,7 @@
                     \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
                     the model</li>
                 <li><strong>Wider grids amplify error:</strong> Moving from narrow (±2×) to wide (±100×)
-                    grids increases error from 5% to 13% on Chinchilla, and from 2% to 50% on High Imbalance</li>
+                    grids increases error from 0.3% to 13% on Chinchilla, and from 1.7% to 50% on High Imbalance</li>
                 <li><strong>Asymmetry magnifies everything:</strong> The High Imbalance surface
                     (\(\alpha/\beta = 3\)) shows roughly 4× larger errors than Chinchilla at each grid width</li>
             </ul>
@@ -772,9 +1011,10 @@
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    At 10²⁴ FLOPs, the true optimal token count is roughly 4 trillion. A 13% underestimate
-                    (Chinchilla surface, wide grid) means training on 500 billion fewer tokens than optimal.
-                    A 50% underestimate (High Imbalance, wide grid) means missing 2 trillion tokens.
+                    For the Chinchilla surface at 10²⁴ FLOPs, the true optimal token count is roughly 4 trillion.
+                    A 13% underestimate (wide grid) means training on 542 billion fewer tokens than optimal.
+                    For the High Imbalance surface, which has dramatically different scaling, a 50% underestimate
+                    (wide grid) means missing 22.5 quadrillion tokens of the 45 quadrillion optimal.
                 </p>
             </div>
 

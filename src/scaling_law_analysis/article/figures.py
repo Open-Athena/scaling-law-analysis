@@ -434,6 +434,8 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     Bar chart showing relative error in D* prediction at 10²⁴ FLOPs,
     grouped by loss surface and sampling grid width.
 
+    Also exports raw data to CSV for transparency.
+
     Returns:
         Dict with error data for each surface and grid width.
     """
@@ -447,6 +449,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
 
     # Extrapolate to a single budget
     EVAL_BUDGET = 1e24
+    TRAINING_RANGE = "1e17-1e21"
 
     # Colors for grid widths
     colors = ["#2ca02c", "#1f77b4", "#d62728"]  # green, blue, red
@@ -602,11 +605,33 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     )
     fig.tight_layout()
 
-    # Save
+    # Save figure
     fig_path = output_dir / "extrapolation_error.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
+
+    # Export raw data to CSV for transparency
+    csv_path = output_dir / "extrapolation_error_data.csv"
+    with open(csv_path, "w") as f:
+        f.write(
+            "surface,alpha,beta,grid_name,log_range,training_range,eval_budget,"
+            "true_D,inferred_D,abs_error,rel_error_pct\n"
+        )
+        for surface_name, surface in surfaces:
+            key = surface_name.lower().replace(" ", "_")
+            for grid_name, log_range in GRID_WIDTHS:
+                data = results[key][grid_name]
+                true_D = data["true_D"]
+                inferred_D = data["inferred_D"]
+                abs_error = inferred_D - true_D
+                rel_error = data["rel_error_pct"]
+                f.write(
+                    f"{surface_name},{surface.alpha},{surface.beta},"
+                    f'"{grid_name}",{log_range},{TRAINING_RANGE},{EVAL_BUDGET:.0e},'
+                    f"{true_D:.15e},{inferred_D:.15e},{abs_error:.15e},{rel_error:.15f}\n"
+                )
+    print(f"Saved: {csv_path}")
 
     return results
 
