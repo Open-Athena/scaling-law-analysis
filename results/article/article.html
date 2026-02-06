@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Problems with Chinchilla Approach 2</title>
     <meta name="description"
-        content="An analysis of systematic biases in scaling law inference using the IsoFLOP parabolic fitting method.">
+        content="An analysis of systematic biases in scaling law inference using the IsoFLOP parabola fits method.">
 
     <!-- MathJax for LaTeX rendering -->
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -343,7 +343,7 @@
     <article class="container">
         <header>
             <h1>Problems with Chinchilla Approach 2</h1>
-            <p class="subtitle">Systematic biases in scaling law inference from IsoFLOP parabolic fitting</p>
+            <p class="subtitle">Systematic biases in scaling law inference from IsoFLOP parabola fits</p>
         </header>
 
         <!-- Section: Motivation -->
@@ -726,12 +726,57 @@
 
             <h3>Why It Matters</h3>
 
-            <!-- TODO: Fill in extrapolation analysis -->
             <p>
-                <em>[WIP: Extrapolation analysis showing how intercept errors compound at higher compute budgets.
-                Will include: D* = b₀ × C^b formula, error quantification at 10²² to 10²⁵ FLOPs,
-                figure showing extrapolation error vs compute budget.]</em>
+                Extrapolation to higher compute budgets requires both exponents and intercepts to be correct.
+                The previous section established that asymmetric loss surfaces produce provably biased
+                intercepts even under ideal experimental conditions. Here we quantify what those errors
+                mean in practical terms by examining compute-optimal token prediction: given a compute
+                budget, how many tokens does the inferred scaling law predict?
             </p>
+
+            <p>
+                Up to this point, all analysis has assumed a single fixed sampling grid width.
+                We now examine how token prediction error varies with both compute budget and
+                sampling grid width. For surfaces with asymmetric exponents, wider sampling grids
+                amplify the parabola-fitting mismatch, increasing the constant vertex shift and
+                thus the intercept bias.
+            </p>
+
+            <figure>
+                <img src="extrapolation_error.png" alt="Bar chart showing token prediction error by surface and grid width">
+                <figcaption>
+                    <strong>Figure 3:</strong> Relative error in compute-optimal token prediction when
+                    extrapolating from the training range (10¹⁷-10²¹ FLOPs) to 10²⁴ FLOPs. Negative values
+                    indicate underestimation: the inferred scaling law predicts fewer tokens than optimal.
+                    Bars are grouped by sampling grid width. Annotations show the actual compute-optimal
+                    token count (True) versus the Approach 2 estimate (Pred) for the Chinchilla surface.
+                </figcaption>
+            </figure>
+
+            <p>
+                The key observations from this figure are:
+            </p>
+
+            <ul>
+                <li><strong>Symmetric surfaces are immune:</strong> When \(\alpha = \beta\), all grid
+                    widths produce zero error</li>
+                <li><strong>Asymmetric surfaces underestimate:</strong> Negative errors mean the inferred
+                    \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
+                    the model</li>
+                <li><strong>Wider grids amplify error:</strong> Moving from narrow (±2×) to wide (±100×)
+                    grids increases error from 5% to 13% on Chinchilla, and from 2% to 50% on High Imbalance</li>
+                <li><strong>Asymmetry magnifies everything:</strong> The High Imbalance surface
+                    (\(\alpha/\beta = 3\)) shows roughly 4× larger errors than Chinchilla at each grid width</li>
+            </ul>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Key Result</div>
+                <p>
+                    At 10²⁴ FLOPs, the true optimal token count is roughly 4 trillion. A 13% underestimate
+                    (Chinchilla surface, wide grid) means training on 500 billion fewer tokens than optimal.
+                    A 50% underestimate (High Imbalance, wide grid) means missing 2 trillion tokens.
+                </p>
+            </div>
 
         </section>
 

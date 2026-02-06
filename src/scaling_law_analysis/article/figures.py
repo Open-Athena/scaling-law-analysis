@@ -282,7 +282,7 @@ def format_comparison_table(data: dict) -> str:
 
 
 # =============================================================================
-# Main
+# Section 3: Asymmetric Surface Configurations
 # =============================================================================
 
 # Loss surface configurations for asymmetric section
@@ -375,6 +375,242 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
     return results
 
 
+# =============================================================================
+# Section 3b: Extrapolation Error Figure ("Why It Matters")
+# =============================================================================
+
+# Sampling grid widths for extrapolation analysis
+# narrow: ±2x (log_range ≈ 0.3), medium: ±16x (log_range ≈ 1.2), wide: ±100x (log_range = 2.0)
+GRID_WIDTHS = [
+    ("narrow (±2x)", 0.3),
+    ("medium (±16x)", 1.2),
+    ("wide (±100x)", 2.0),
+]
+
+# Training budget range for fitting
+TRAINING_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
+
+
+def compute_extrapolation_errors(
+    surface: LossSurface,
+    training_budgets: np.ndarray,
+    eval_budgets: np.ndarray,
+    log_range: float,
+    n_points: int = 15,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute D* errors at evaluation budgets.
+
+    Args:
+        surface: Loss surface to use
+        training_budgets: Compute budgets for fitting
+        eval_budgets: Compute budgets for evaluation
+        log_range: Sampling grid width in log10 space
+        n_points: Points per IsoFLOP curve
+
+    Returns:
+        Tuple of (true_D, inferred_D, abs_errors) arrays at each eval budget
+    """
+    # Fit using Approach 2 on training budgets
+    result = fit_approach2(
+        compute_budgets=training_budgets,
+        surface=surface,
+        drift_rate=0.0,
+        center_scale=1.0,
+        n_points=n_points,
+        log_range=log_range,
+    )
+
+    # Compute errors at evaluation budgets
+    true_D = np.array([surface.D_opt(C) for C in eval_budgets])
+    inferred_D = np.array([result.D_opt(C) for C in eval_budgets])
+    abs_errors = inferred_D - true_D
+
+    return true_D, inferred_D, abs_errors
+
+
+def create_extrapolation_error_figure(output_dir: Path) -> dict:
+    """Create the extrapolation error figure for "Why It Matters" section.
+
+    Bar chart showing relative error in D* prediction at 10²⁴ FLOPs,
+    grouped by loss surface and sampling grid width.
+
+    Returns:
+        Dict with error data for each surface and grid width.
+    """
+    setup_style()
+
+    surfaces = [
+        ("Symmetric", SYMMETRIC_SURFACE),
+        ("Chinchilla", CHINCHILLA_SURFACE),
+        ("High Imbalance", HIGH_IMBALANCE_SURFACE),
+    ]
+
+    # Extrapolate to a single budget
+    EVAL_BUDGET = 1e24
+
+    # Colors for grid widths
+    colors = ["#2ca02c", "#1f77b4", "#d62728"]  # green, blue, red
+
+    fig, ax = plt.subplots(figsize=(10, 3.8))
+
+    results = {}
+    x_positions = np.arange(len(surfaces))
+    bar_width = 0.25
+    offsets = [-bar_width, 0, bar_width]
+
+    # Collect token annotations to place later with arrows
+    token_annotations = []
+
+    for i, ((grid_name, log_range), color, offset) in enumerate(
+        zip(GRID_WIDTHS, colors, offsets)
+    ):
+        rel_errors = []
+        annotations = []
+
+        for surface_name, surface in surfaces:
+            # Compute error at single budget
+            true_D, inferred_D, errors = compute_extrapolation_errors(
+                surface=surface,
+                training_budgets=TRAINING_BUDGETS,
+                eval_budgets=np.array([EVAL_BUDGET]),
+                log_range=log_range,
+            )
+
+            rel_error = errors[0] / true_D[0] * 100
+            rel_errors.append(rel_error)
+            annotations.append((true_D[0], inferred_D[0]))
+
+            # Store results
+            key = surface_name.lower().replace(" ", "_")
+            if key not in results:
+                results[key] = {}
+            results[key][grid_name] = {
+                "true_D": true_D[0],
+                "inferred_D": inferred_D[0],
+                "rel_error_pct": rel_error,
+            }
+
+        # Plot bars
+        bars = ax.bar(
+            x_positions + offset,
+            rel_errors,
+            bar_width,
+            label=grid_name,
+            color=color,
+            alpha=0.85,
+            edgecolor="white",
+            linewidth=0.5,
+        )
+
+        # Annotate ALL bars with percentage values at y=0
+        for j, (bar, (true_D, inferred_D)) in enumerate(zip(bars, annotations)):
+            height = bar.get_height()
+            surface_name = surfaces[j][0]
+
+            # Percentage annotation - 1 decimal unless 0
+            if abs(height) < 0.05:
+                pct_label = "0%"
+            else:
+                pct_label = f"{height:.1f}%"
+
+            ax.annotate(
+                pct_label,
+                xy=(bar.get_x() + bar.get_width() / 2, 0.8),
+                ha="center",
+                va="bottom",
+                fontsize=9,
+                fontweight="bold",
+                color="black",
+            )
+
+            # Collect token count annotations for Chinchilla surface only (all grid widths)
+            if surface_name == "Chinchilla":
+                # Format token counts with 2 decimal places
+                def format_tokens(t):
+                    if t >= 1e15:
+                        return f"{t/1e15:.2f}Q"  # Quadrillion
+                    elif t >= 1e12:
+                        return f"{t/1e12:.2f}T"  # Trillion
+                    else:
+                        return f"{t/1e9:.2f}B"  # Billion
+
+                true_str = format_tokens(true_D)
+                inf_str = format_tokens(inferred_D)
+
+                # Store bar position and annotation text for later
+                bar_x = bar.get_x() + bar.get_width() / 2
+                bar_bottom = height  # Bottom of bar (bars go negative from 0)
+                token_annotations.append(
+                    {
+                        "text": f"True: {true_str}\nPred: {inf_str}",
+                        "bar_x": bar_x,
+                        "bar_bottom": bar_bottom,
+                        "grid_name": grid_name,
+                    }
+                )
+
+    # Styling
+    ax.set_xlabel("Loss Surface")
+    ax.set_ylabel("Relative Error in D* (%)")
+    ax.set_xticks(x_positions)
+    ax.set_xticklabels(
+        [f"{name}\n(α={s.alpha:.2f}, β={s.beta:.2f})" for name, s in surfaces],
+        fontsize=10,
+    )
+    ax.axhline(0, color="black", linewidth=0.8)
+    ax.legend(title="Sampling Grid", loc="lower left")
+    ax.grid(True, axis="y", alpha=0.3)
+
+    # Set y-axis to show negative values prominently
+    y_min = min(ax.get_ylim()[0], -55)
+    ax.set_ylim(y_min, 5)
+
+    # Add token annotations for Chinchilla in a fan shape below the bars
+    # Fan out: left annotation to the left, center stays centered, right to the right
+    annotation_y = -24  # y position for text boxes (below the plot area)
+    # Fan positions: spread out horizontally below the Chinchilla bars
+    fan_x_offsets = [-0.35, 0.0, 0.35]  # offset from bar_x for fan effect
+
+    for idx, ann in enumerate(token_annotations):
+        bar_x = float(ann["bar_x"])
+        bar_bottom = float(ann["bar_bottom"])
+        x_text = bar_x + fan_x_offsets[idx]
+        ax.annotate(
+            ann["text"],
+            xy=(bar_x, bar_bottom),  # Arrow points to bar bottom
+            xytext=(x_text, annotation_y),  # Text position in fan shape below
+            ha="center",
+            va="top",
+            fontsize=8,
+            fontweight="bold",
+            color="black",
+            bbox=dict(
+                boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.9
+            ),
+            arrowprops=dict(
+                arrowstyle="->",
+                color="gray",
+                lw=1.2,
+            ),
+        )
+
+    fig.suptitle(
+        "Token Prediction Error by Surface and Grid Width\n"
+        f"(Fitting: 10¹⁷-10²¹ FLOPs → Extrapolating to 10²⁴ FLOPs)",
+        fontsize=12,
+        y=0.98,
+    )
+    fig.tight_layout()
+
+    # Save
+    fig_path = output_dir / "extrapolation_error.png"
+    fig.savefig(fig_path)
+    plt.close(fig)
+    print(f"Saved: {fig_path}")
+
+    return results
+
+
 def generate_all_figures(output_dir: Path) -> dict:
     """Generate all article figures.
 
@@ -389,6 +625,9 @@ def generate_all_figures(output_dir: Path) -> dict:
 
     # Section 3: Asymmetric Surfaces
     data["asymmetric"] = create_asymmetric_figure(output_dir)
+
+    # Section 3b: Extrapolation Error ("Why It Matters")
+    data["extrapolation"] = create_extrapolation_error_figure(output_dir)
 
     return data
 
@@ -407,3 +646,15 @@ if __name__ == "__main__":
 
     print("\n=== Asymmetric: High Imbalance ===")
     print(format_comparison_table(data["asymmetric"]["high_imbalance"]))
+
+    print("\n=== Extrapolation Error Summary ===")
+    for surface_name, surface_data in data["extrapolation"].items():
+        print(f"\n{surface_name}:")
+        for grid_name, grid_data in surface_data.items():
+            true_D = grid_data["true_D"]
+            inferred_D = grid_data["inferred_D"]
+            rel_error_pct = grid_data["rel_error_pct"]
+            abs_error = abs(inferred_D - true_D)
+            print(
+                f"  {grid_name}: |error| = {abs_error:.2e} tokens ({rel_error_pct:.1f}%)"
+            )

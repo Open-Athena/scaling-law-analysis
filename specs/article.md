@@ -47,7 +47,7 @@ Figures: IsoFLOP curves with parabola fits (symmetric). Power-law fits showing p
 
 ---
 
-## Asymmetric Surfaces — Intercepts Go Wrong
+## Asymmetric Surfaces — Intercept and Extrapolation Errors
 
 Conditions: asymmetric surface (α ≠ β), perfect sampling centers, no noise.
 
@@ -75,15 +75,15 @@ Since the vertex shift is constant across all compute budgets, it biases every i
 
 ### Why It Matters
 
-Extrapolation uses both exponents AND intercepts: `D* = b₀ × C^b`. Small intercept error → large extrapolation error at high compute. Quantify relative error in D* at 10²² to 10²⁵ FLOPs.
+Extrapolation to higher compute budgets requires both exponents and intercepts to be correct. The previous section established that asymmetric loss surfaces produce provably biased intercepts even under ideal experimental conditions. Here we quantify what those errors mean in practical terms by examining compute-optimal token prediction: given a compute budget, how many tokens does the inferred scaling law predict?
 
-Key message: intercept errors that seem small can compound significantly at scale.
+Up to this point, all analysis has assumed a single fixed sampling grid width. We now examine how token prediction error varies with both compute budget and sampling grid width. For surfaces with asymmetric exponents, wider sampling grids amplify the parabola-fitting mismatch, increasing the constant vertex shift and thus the intercept bias.
 
-Figures: Extrapolation error vs. compute budget. Annotate magnitude (e.g., "2× overestimate of tokens needed").
+Figures: Bar chart with x-axis = loss surface (symmetric, chinchilla, high_imbalance), y-axis = relative error in D* (%). Bars grouped by sampling grid width (narrow ±2x, medium ±16x, wide ±100x). Single extrapolation budget (10²⁴ FLOPs). Negative bars = underestimation. Annotate with true D* scale.
 
 ---
 
-## Sampling Bias — When Exponents Break Too
+## Sampling Bias — Exponent and Extrapolation Errors
 
 Conditions: symmetric surface (α = β), with intentional sampling center bias.
 
