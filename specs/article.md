@@ -37,7 +37,7 @@ Figure: Schematic of Approach 2 pipeline (sample → fit parabolas → extract m
 
 ## The Happy Path — Symmetric Surfaces
 
-Conditions: symmetric surface (α = β, A = B), perfect sampling centers, no noise.
+Conditions: symmetric surface (α = β, A = B), perfect sampling centers, extra large (±16×) sampling grid, no noise.
 
 Show isoflop curves and parabola fits. Exponents a, b perfectly recovered. Intercepts a₀, b₀ perfectly recovered. Extrapolation is perfect.
 
@@ -49,7 +49,7 @@ Figures: IsoFLOP curves with parabola fits (symmetric). Power-law fits showing p
 
 ## Asymmetric Surfaces — Intercept and Extrapolation Errors
 
-Conditions: asymmetric surface (α ≠ β), perfect sampling centers, no noise.
+Conditions: asymmetric surface (α ≠ β), perfect sampling centers, extra large (±16×) sampling grid, no noise.
 
 ### What Happens
 
@@ -79,13 +79,24 @@ Extrapolation to higher compute budgets requires both exponents and intercepts t
 
 Up to this point, all analysis has assumed a single fixed sampling grid width. We now examine how token prediction error varies with both compute budget and sampling grid width. For surfaces with asymmetric exponents, wider sampling grids amplify the parabola-fitting mismatch, increasing the constant vertex shift and thus the intercept bias.
 
-Figures: Bar chart with x-axis = loss surface (symmetric, chinchilla, high_imbalance), y-axis = relative error in D* (%). Bars grouped by sampling grid width (narrow ±2x, medium ±16x, wide ±100x). Single extrapolation budget (10²⁴ FLOPs). Negative bars = underestimation. Annotate with true D* scale.
+A sampling grid of "±k×" means model sizes range from 1/k× to k× the true optimum at each compute budget. The total range covered is k² (the ratio of largest to smallest model size). The log₁₀ of that ratio tells you how many factors of 10, or "decades," the grid spans end-to-end (e.g. a value of 1.81 means the largest model is 10^1.81 ≈ 64× the smallest). The table below shows the four grid widths used in this analysis:
+
+| Grid Name          | ±k×  | Sampling Range     | Total Ratio | Decade Span (factors of 10) |
+|--------------------|------|--------------------|-------------|-----------------------------|
+| Extra Small (XS)    | ±2×  | 1/2× to 2×        | 4×          | 0.60                        |
+| Small (S)          | ±4×  | 1/4× to 4×        | 16×         | 1.20                        |
+| Large (L)          | ±8×  | 1/8× to 8×        | 64×         | 1.81                        |
+| Extra Large (XL)    | ±16× | 1/16× to 16×      | 256×        | 2.41                        |
+
+In practice, scaling law experiments typically sample across 1 to 2 decades in token count, placing the Small and Large grids squarely within the realistic range. The Extra Small and Extra Large grids bracket this range on either side, illustrating how the biases shrink or grow as the sampling window narrows or widens. The Extra Large grid (±16×, ~2.4 decades) is the default used in all single-grid analyses in the preceding sections.
+
+Figures: Bar chart with x-axis = loss surface (symmetric, chinchilla, high_imbalance), y-axis = relative error in D* (%). Bars grouped by sampling grid width (extra small ±2×, small ±4×, large ±8×, extra large ±16×). Single extrapolation budget (10²⁴ FLOPs). Negative bars = underestimation. Annotate with true D* scale.
 
 ---
 
 ## Sampling Bias — Exponent and Extrapolation Errors
 
-Conditions: symmetric surface (α = β), with intentional sampling center bias.
+Conditions: symmetric surface (α = β), extra large (±16×) sampling grid, with intentional sampling center bias.
 
 **Constant multiplicative bias**: All sampling centers shifted by constant factor (e.g., 1.5×). Exponents still perfect, intercepts biased. Why: constant multiplicative offset in log-space is constant additive → shifts intercept only. This is the same mechanism as asymmetric surfaces with no sampling bias — both produce a constant vertex shift across compute budgets.
 

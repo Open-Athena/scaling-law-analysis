@@ -21,7 +21,7 @@ from scaling_law_analysis.chinchilla import (
 
 SYMMETRIC_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
 COMPUTE_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-LOG_RANGE = 1.2  # ±16x sampling range
+LOG_RANGE = np.log10(16)  # Extra Large (XL) ±16× sampling grid
 N_POINTS = 15
 
 
@@ -379,12 +379,13 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
 # Section 3b: Extrapolation Error Figure ("Why It Matters")
 # =============================================================================
 
-# Sampling grid widths for extrapolation analysis
-# narrow: ±2x (log_range ≈ 0.3), medium: ±16x (log_range ≈ 1.2), wide: ±100x (log_range = 2.0)
+# Sampling grid widths for extrapolation analysis ("Why It Matters" section)
+# XS: ±2×, S: ±4×, L: ±8×, XL: ±16×
 GRID_WIDTHS = [
-    ("narrow (±2x)", 0.3),
-    ("medium (±16x)", 1.2),
-    ("wide (±100x)", 2.0),
+    ("XS (±2×)", np.log10(2)),
+    ("S (±4×)", np.log10(4)),
+    ("L (±8×)", np.log10(8)),
+    ("XL (±16×)", np.log10(16)),
 ]
 
 # Training budget range for fitting
@@ -451,15 +452,15 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     EVAL_BUDGET = 1e24
     TRAINING_RANGE = "1e17-1e21"
 
-    # Colors for grid widths
-    colors = ["#2ca02c", "#1f77b4", "#d62728"]  # green, blue, red
+    # Colors for grid widths (4 grids: XS, S, L, XL)
+    colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]  # green, blue, orange, red
 
-    fig, ax = plt.subplots(figsize=(10, 3.8))
+    fig, ax = plt.subplots(figsize=(11, 4))
 
     results = {}
     x_positions = np.arange(len(surfaces))
-    bar_width = 0.25
-    offsets = [-bar_width, 0, bar_width]
+    bar_width = 0.18
+    offsets = [-1.5 * bar_width, -0.5 * bar_width, 0.5 * bar_width, 1.5 * bar_width]
 
     # Collect token annotations to place later with arrows
     token_annotations = []
@@ -521,8 +522,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
                 xy=(bar.get_x() + bar.get_width() / 2, 0.8),
                 ha="center",
                 va="bottom",
-                fontsize=9,
-                fontweight="bold",
+                fontsize=10,
                 color="black",
             )
 
@@ -545,7 +545,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
                 bar_bottom = height  # Bottom of bar (bars go negative from 0)
                 token_annotations.append(
                     {
-                        "text": f"True: {true_str}\nPred: {inf_str}",
+                        "text": f"$D^*$ = {true_str}\n$\\hat{{D}}^*$ = {inf_str}",
                         "bar_x": bar_x,
                         "bar_bottom": bar_bottom,
                         "grid_name": grid_name,
@@ -561,7 +561,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
         fontsize=10,
     )
     ax.axhline(0, color="black", linewidth=0.8)
-    ax.legend(title="Sampling Grid", loc="lower left")
+    ax.legend(title="Sampling Grid", loc="lower left", fontsize=10)
     ax.grid(True, axis="y", alpha=0.3)
 
     # Set y-axis to show negative values prominently
@@ -569,10 +569,52 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     ax.set_ylim(y_min, 5)
 
     # Add token annotations for Chinchilla in a fan shape below the bars
-    # Fan out: left annotation to the left, center stays centered, right to the right
-    annotation_y = -24  # y position for text boxes (below the plot area)
-    # Fan positions: spread out horizontally below the Chinchilla bars
-    fan_x_offsets = [-0.35, 0.0, 0.35]  # offset from bar_x for fan effect
+    # Fan out: spread annotations horizontally below the Chinchilla bars
+    annotation_y_outer = -18  # y position for outer (1st, 4th) text boxes
+    annotation_y_inner = (
+        -28
+    )  # y position for inner (2nd, 3rd) text boxes, slightly lower
+    annotation_ys = [
+        annotation_y_outer,
+        annotation_y_inner,
+        annotation_y_inner,
+        annotation_y_outer,
+    ]
+    # Fan positions: spread out horizontally for 4 bars
+    # Outer annotations pulled inward, inner annotations stay close to their bars
+    fan_x_offsets = [-0.30, -0.10, 0.10, 0.30]
+
+    # Inner annotations (S, L grids) get a thicker border to highlight practical ranges
+    bbox_styles = [
+        dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor="gray",
+            linewidth=1,
+            alpha=0.9,
+        ),
+        dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor="#333333",
+            linewidth=1.8,
+            alpha=0.95,
+        ),
+        dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor="#333333",
+            linewidth=1.8,
+            alpha=0.95,
+        ),
+        dict(
+            boxstyle="round,pad=0.3",
+            facecolor="white",
+            edgecolor="gray",
+            linewidth=1,
+            alpha=0.9,
+        ),
+    ]
 
     for idx, ann in enumerate(token_annotations):
         bar_x = float(ann["bar_x"])
@@ -581,15 +623,12 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
         ax.annotate(
             ann["text"],
             xy=(bar_x, bar_bottom),  # Arrow points to bar bottom
-            xytext=(x_text, annotation_y),  # Text position in fan shape below
+            xytext=(x_text, annotation_ys[idx]),  # Text position in fan shape below
             ha="center",
             va="top",
-            fontsize=8,
-            fontweight="bold",
+            fontsize=10,
             color="black",
-            bbox=dict(
-                boxstyle="round,pad=0.3", facecolor="white", edgecolor="gray", alpha=0.9
-            ),
+            bbox=bbox_styles[idx],
             arrowprops=dict(
                 arrowstyle="->",
                 color="gray",

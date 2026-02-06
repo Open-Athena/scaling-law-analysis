@@ -566,7 +566,7 @@
 
         <!-- Section 2: The Happy Path -->
         <section id="happy-path">
-            <h2>The Happy Path: Symmetric Surfaces</h2>
+            <h2>The Happy Path — Symmetric Surfaces</h2>
 
             <p>
                 Before examining failure modes, let's establish that Approach 2 works
@@ -652,7 +652,7 @@
 
         <!-- Section 3: Asymmetric Surfaces -->
         <section id="asymmetric">
-            <h2>Asymmetric Surfaces: When Intercepts Go Wrong</h2>
+            <h2>Asymmetric Surfaces — Intercept and Extrapolation Errors</h2>
 
             <p>
                 We repeat the exact same procedure as before: perfect sampling centers, no noise,
@@ -708,7 +708,7 @@
                     <tr>
                         <td>b₀ (D* intercept)</td>
                         <td>−0.555357</td>
-                        <td>−0.577937</td>
+                        <td>−0.578092</td>
                         <td class="error-significant">−4.1%</td>
                     </tr>
                 </tbody>
@@ -735,8 +735,8 @@
                     <tr>
                         <td>b₀ (D* intercept)</td>
                         <td>−1.345791</td>
-                        <td>−1.459200</td>
-                        <td class="error-significant">−8.4%</td>
+                        <td>−1.459957</td>
+                        <td class="error-significant">−8.5%</td>
                     </tr>
                 </tbody>
             </table>
@@ -802,7 +802,7 @@
                 where \(\delta w = f(\alpha, \beta, W, n)\) depends only on the surface exponents
                 and the sampling grid (width \(W\) in log-space, number of points \(n\) per IsoFLOP curve), not on \(C\), \(E\),
                 \(A\), or \(B\). Here \(W\) spans \(10^{-W/2}\) to \(10^{W/2}\) times the optimal \(N^*\),
-                so \(W = 2.0\) means sampling from \(0.1\times\) to \(10\times\) the optimum.
+                so \(W = 2.41\) (the XL grid) means sampling from \(\frac{1}{16}\times\) to \(16\times\) the optimum.
                 And \(n = 10\) means 10 model sizes per compute budget. Key properties:
             </p>
 
@@ -814,8 +814,8 @@
 
             <p>
                 For example, with the Chinchilla parameters (\(\alpha = 0.34\), \(\beta = 0.28\)):
-                a narrow grid (\(W = 0.3\)) yields 0.3% intercept error, while a wider grid
-                (\(W = 2.0\)) yields 15.5% error.
+                the XS grid (\(W = 0.60\)) yields 0.3% intercept error, while the XL grid
+                (\(W = 2.41\)) yields 4.1% error.
             </p>
 
             <p>
@@ -850,7 +850,69 @@
                 We now examine how token prediction error varies with both compute budget and
                 sampling grid width. For surfaces with asymmetric exponents, wider sampling grids
                 amplify the parabola-fitting mismatch, increasing the constant vertex shift and
-                thus the intercept bias.
+                thus the intercept bias. To make this comparison concrete, we first define what
+                "wider" and "narrower" mean in quantitative terms.
+            </p>
+
+            <p>
+                A sampling grid of "±kx" means the sampled values (whether
+                model sizes or token counts) range from <sup>1</sup>&frasl;<sub>k</sub> to k times the true optimum at
+                each compute budget. The total range covered is k² (the ratio of largest to
+                smallest), and the log₁₀ of that ratio tells you how many factors of
+                10, or "decades," the grid spans end-to-end (e.g. a value of 1.81 means
+                the largest sample is 10<sup>1.81</sup> ≈ 64x the smallest). The table
+                below shows the four grid widths used in this analysis:
+            </p>
+
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Grid Name</th>
+                        <th>±kx</th>
+                        <th>Sampling Range</th>
+                        <th>Total Ratio</th>
+                        <th>Decade Span (factors of 10)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Extra Small (XS)</td>
+                        <td>±2x</td>
+                        <td>1/2x to 2x</td>
+                        <td>4x</td>
+                        <td>0.60</td>
+                    </tr>
+                    <tr>
+                        <td>Small (S)</td>
+                        <td>±4x</td>
+                        <td>1/4x to 4x</td>
+                        <td>16x</td>
+                        <td>1.20</td>
+                    </tr>
+                    <tr>
+                        <td>Large (L)</td>
+                        <td>±8x</td>
+                        <td>1/8x to 8x</td>
+                        <td>64x</td>
+                        <td>1.81</td>
+                    </tr>
+                    <tr>
+                        <td>Extra Large (XL)</td>
+                        <td>±16x</td>
+                        <td>1/16x to 16x</td>
+                        <td>256x</td>
+                        <td>2.41</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p>
+                In practice, scaling law experiments typically sample across 1 to 2 decades in
+                token count, placing the Small and Large grids squarely within the realistic range.
+                The Extra Small and Extra Large grids bracket this range on either side, illustrating
+                how the biases shrink or grow as the sampling window narrows or widens. The Extra
+                Large grid (±16x, ~2.4 decades) is the default used in all single-grid
+                analyses in the preceding sections.
             </p>
 
             <figure>
@@ -859,8 +921,9 @@
                     <strong>Figure 3:</strong> Relative error in compute-optimal token prediction when
                     extrapolating from the training range (10¹⁷-10²¹ FLOPs) to 10²⁴ FLOPs. Negative values
                     indicate underestimation: the inferred scaling law predicts fewer tokens than optimal.
-                    Bars are grouped by sampling grid width. Annotations show the actual compute-optimal
-                    token count (True) versus the Approach 2 estimate (Pred) for the Chinchilla surface.
+                    Bars are grouped by sampling grid width. Annotations for the Chinchilla surface
+                    show \(D^*\) (true compute-optimal token count) versus \(\hat{D}^*\) (the
+                    Approach 2 estimate).
                 </figcaption>
             </figure>
 
@@ -889,31 +952,41 @@
                                 <td>Symmetric</td>
                                 <td>0.31</td>
                                 <td>0.31</td>
-                                <td>narrow (±2×)</td>
+                                <td>XS (±2×)</td>
                                 <td title="4.082482904638630e+11">408.2B</td>
-                                <td title="4.082482904641234e+11">408.2B</td>
-                                <td title="2.603759765625000e-01">≈0</td>
-                                <td title="0.000000000063779%" class="error-zero">≈0%</td>
+                                <td title="4.082482904640633e+11">408.2B</td>
+                                <td title="2.002563476562500e-01">≈0</td>
+                                <td title="0.000000000049053%" class="error-zero">≈0%</td>
                             </tr>
                             <tr>
                                 <td>Symmetric</td>
                                 <td>0.31</td>
                                 <td>0.31</td>
-                                <td>medium (±16×)</td>
+                                <td>S (±4×)</td>
                                 <td title="4.082482904638630e+11">408.2B</td>
-                                <td title="4.082482904640383e+11">408.2B</td>
-                                <td title="1.752319335937500e-01">≈0</td>
-                                <td title="0.000000000042923%" class="error-zero">≈0%</td>
+                                <td title="4.082482904638362e+11">408.2B</td>
+                                <td title="-2.685546875000000e-02">≈0</td>
+                                <td title="-0.000000000006578%" class="error-zero">≈0%</td>
                             </tr>
                             <tr>
                                 <td>Symmetric</td>
                                 <td>0.31</td>
                                 <td>0.31</td>
-                                <td>wide (±100×)</td>
+                                <td>L (±8×)</td>
                                 <td title="4.082482904638630e+11">408.2B</td>
-                                <td title="4.082482904638679e+11">408.2B</td>
-                                <td title="4.882812500000000e-03">≈0</td>
-                                <td title="0.000000000001196%" class="error-zero">≈0%</td>
+                                <td title="4.082482904638746e+11">408.2B</td>
+                                <td title="1.153564453125000e-02">≈0</td>
+                                <td title="0.000000000002826%" class="error-zero">≈0%</td>
+                            </tr>
+                            <tr>
+                                <td>Symmetric</td>
+                                <td>0.31</td>
+                                <td>0.31</td>
+                                <td>XL (±16×)</td>
+                                <td title="4.082482904638630e+11">408.2B</td>
+                                <td title="4.082482904640399e+11">408.2B</td>
+                                <td title="1.768798828125000e-01">≈0</td>
+                                <td title="0.000000000043327%" class="error-zero">≈0%</td>
                             </tr>
                             <!-- Chinchilla Surface -->
                             <tr class="surface-header">
@@ -923,31 +996,41 @@
                                 <td>Chinchilla</td>
                                 <td>0.34</td>
                                 <td>0.28</td>
-                                <td>narrow (±2×)</td>
+                                <td>XS (±2×)</td>
                                 <td title="4.035834749563681e+12">4.04T</td>
-                                <td title="4.022730066901460e+12">4.02T</td>
-                                <td title="-1.310468266222070e+10">−13.1B</td>
-                                <td title="-0.324708108121559%" class="error-low">−0.32%</td>
+                                <td title="4.022640080071175e+12">4.02T</td>
+                                <td title="-1.319466949250537e+10">−13.2B</td>
+                                <td title="-0.326937803732719%" class="error-low">−0.33%</td>
                             </tr>
                             <tr>
                                 <td>Chinchilla</td>
                                 <td>0.34</td>
                                 <td>0.28</td>
-                                <td>medium (±16×)</td>
+                                <td>S (±4×)</td>
                                 <td title="4.035834749563681e+12">4.04T</td>
-                                <td title="3.831365914273064e+12">3.83T</td>
-                                <td title="-2.044688352906162e+11">−204.5B</td>
-                                <td title="-5.066333187024608%" class="error-medium">−5.07%</td>
+                                <td title="3.983323492914587e+12">3.98T</td>
+                                <td title="-5.251125664909375e+10">−52.5B</td>
+                                <td title="-1.301125043704300%" class="error-low">−1.30%</td>
                             </tr>
                             <tr>
                                 <td>Chinchilla</td>
                                 <td>0.34</td>
                                 <td>0.28</td>
-                                <td>wide (±100×)</td>
+                                <td>L (±8×)</td>
                                 <td title="4.035834749563681e+12">4.04T</td>
-                                <td title="3.493998467123849e+12">3.49T</td>
-                                <td title="-5.418362824398315e+11">−541.8B</td>
-                                <td title="-13.425631029575980%" class="error-high">−13.43%</td>
+                                <td title="3.918678311395280e+12">3.92T</td>
+                                <td title="-1.171564381684004e+11">−117.2B</td>
+                                <td title="-2.902904738135434%" class="error-medium">−2.90%</td>
+                            </tr>
+                            <tr>
+                                <td>Chinchilla</td>
+                                <td>0.34</td>
+                                <td>0.28</td>
+                                <td>XL (±16×)</td>
+                                <td title="4.035834749563681e+12">4.04T</td>
+                                <td title="3.829997307632958e+12">3.83T</td>
+                                <td title="-2.058374419307222e+11">−205.8B</td>
+                                <td title="-5.100244551712022%" class="error-medium">−5.10%</td>
                             </tr>
                             <!-- High Imbalance Surface -->
                             <tr class="surface-header">
@@ -957,31 +1040,41 @@
                                 <td>High Imbalance</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
-                                <td>narrow (±2×)</td>
+                                <td>XS (±2×)</td>
                                 <td title="4.510334355952566e+16">45.1Q</td>
-                                <td title="4.435308406514074e+16">44.4Q</td>
-                                <td title="-7.502594943849120e+14">−750.3T</td>
-                                <td title="-1.663423230241786%" class="error-low">−1.66%</td>
+                                <td title="4.434797634319416e+16">44.3Q</td>
+                                <td title="-7.553672163314960e+14">−755.4T</td>
+                                <td title="-1.674747716507073%" class="error-low">−1.67%</td>
                             </tr>
                             <tr>
                                 <td>High Imbalance</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
-                                <td>medium (±16×)</td>
+                                <td>S (±4×)</td>
                                 <td title="4.510334355952566e+16">45.1Q</td>
-                                <td title="3.473762636518682e+16">34.7Q</td>
-                                <td title="-1.036571719433884e+16">−10.4Q</td>
-                                <td title="-22.982148054408793%" class="error-high">−22.98%</td>
+                                <td title="4.217262808974590e+16">42.2Q</td>
+                                <td title="-2.930715469779760e+15">−2.9Q</td>
+                                <td title="-6.497778742083532%" class="error-medium">−6.50%</td>
                             </tr>
                             <tr>
                                 <td>High Imbalance</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
-                                <td>wide (±100×)</td>
+                                <td>L (±8×)</td>
                                 <td title="4.510334355952566e+16">45.1Q</td>
-                                <td title="2.264622387360425e+16">22.6Q</td>
-                                <td title="-2.245711968592140e+16">−22.5Q</td>
-                                <td title="-49.790365666091610%" class="error-high">−49.79%</td>
+                                <td title="3.882927967488314e+16">38.8Q</td>
+                                <td title="-6.274063884642520e+15">−6.3Q</td>
+                                <td title="-13.910418584294648%" class="error-high">−13.91%</td>
+                            </tr>
+                            <tr>
+                                <td>High Imbalance</td>
+                                <td>0.465</td>
+                                <td>0.155</td>
+                                <td>XL (±16×)</td>
+                                <td title="4.510334355952566e+16">45.1Q</td>
+                                <td title="3.467711572211202e+16">34.7Q</td>
+                                <td title="-1.042622783741363e+16">−10.4Q</td>
+                                <td title="-23.116308048545221%" class="error-high">−23.12%</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1002,25 +1095,53 @@
                 <li><strong>Asymmetric surfaces underestimate:</strong> Negative errors mean the inferred
                     \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
                     the model</li>
-                <li><strong>Wider grids amplify error:</strong> Moving from narrow (±2×) to wide (±100×)
-                    grids increases error from 0.3% to 13% on Chinchilla, and from 1.7% to 50% on High Imbalance</li>
+                <li><strong>Wider grids amplify error:</strong> Moving from XS (±2x) to XL (±16x)
+                    grids increases error from 0.3% to 5.1% on Chinchilla, and from 1.7% to 23% on High Imbalance</li>
                 <li><strong>Asymmetry magnifies everything:</strong> The High Imbalance surface
-                    (\(\alpha/\beta = 3\)) shows roughly 4× larger errors than Chinchilla at each grid width</li>
+                    (\(\alpha/\beta = 3\)) shows roughly 4–5x larger errors than Chinchilla at each grid width</li>
             </ul>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    For the Chinchilla surface at 10²⁴ FLOPs, the true optimal token count is roughly 4 trillion.
-                    A 13% underestimate (wide grid) means training on 542 billion fewer tokens than optimal.
-                    For the High Imbalance surface, which has dramatically different scaling, a 50% underestimate
-                    (wide grid) means missing 22.5 quadrillion tokens of the 45 quadrillion optimal.
+                    Consider the Chinchilla surface with the Large grid (±8x), a practical sampling
+                    range for real experiments. When extrapolating to 10²⁴ FLOPs, the true optimal
+                    token count is 4.04 trillion, but Approach 2 predicts only 3.92 trillion: a 2.9%
+                    underestimate, or roughly 117 billion fewer tokens than optimal. While 2.9% may
+                    seem modest, recall that this simulation uses unrealistically ideal conditions:
+                    perfectly centered sampling grids at every compute budget and zero measurement
+                    noise. Real experiments, where the true optimum is unknown, data is noisy,
+                    and the scaling exponent imbalance may be larger than Chinchilla's modest
+                    \(\alpha/\beta \approx 1.2\), can only do worse.
                 </p>
             </div>
 
         </section>
 
     </article>
+
+    <!-- Prevent line breaks between inline math and trailing punctuation -->
+    <script>
+        document.getElementById('MathJax-script').addEventListener('load', () => {
+            MathJax.startup.promise.then(() => {
+                document.querySelectorAll('mjx-container.MathJax:not([display="true"])').forEach(el => {
+                    const next = el.nextSibling;
+                    if (next && next.nodeType === 3) {
+                        const match = next.textContent.match(/^([.,;:!?)]+)/);
+                        if (match) {
+                            const wrapper = document.createElement('span');
+                            wrapper.style.whiteSpace = 'nowrap';
+                            el.parentNode.insertBefore(wrapper, el);
+                            wrapper.appendChild(el);
+                            const punct = next.textContent.slice(0, match[1].length);
+                            next.textContent = next.textContent.slice(match[1].length);
+                            wrapper.appendChild(document.createTextNode(punct));
+                        }
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>
