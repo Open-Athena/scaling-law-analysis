@@ -47,27 +47,6 @@ uv run python -m scaling_law_analysis.experiments.run_all
   - Sampling bias affects both exponents and intercepts, depending on the nature of that bias
     - A constant multiplicative bias, i.e. constant offset from center, effects only the intercepts
     - Anything else that does not result in a constant, multiplicative change from true centers effects both exponents and intercepts (e.g. drift)
-- Results post
-  - Start with symmetric loss surface
-    - Assume perfect knowledge of optimal sampling centers
-    - Explain what isoflops from it look like
-    - Explain the fitting and extrapolation process
-    - Show that this is perfect for exponent and intercept recovery + extrapolation 
-  - Now what happens if the surface has slighly assymmetric scaling?
-    - Assume perfect knowledge of optimal sampling centers
-    - Assume chinchilla params
-    - Now the exponents are perfect, but the intercepts are off 
-    - Compare to high imbalance loss surface to show more exaggerated effects (still with perfect exponents)
-    - Explain how the width of the sampling grid now somehow determines the accuracy of the intercept recovery
-    - Show data on the accuracy of N*/D* recovery vs compute budgets
-    - Explain errors in Taylor approximation accuracy
-  - Now what happens if the sampling is not centered?
-    - Assume a constant multiplicative bias from center
-    - Show that exponents are still perfect somehow, but intercepts are not
-    - Show mathematically why this is
-    - Assume a drifting bias instead and how that makes both erroneous
-    - This error in both also occurs if sampling centers are moved by some constant N on a linear scale -- the change needs to be multiplicative and constant to exactly cancel out exponent inference errors
-  - How much does this matter for extrapolation?
-  - Show that if parabolas are avoided in favor of true curve fits, all of the above problems go away
-    - Explain how it is very hard even in this noise-free synthetic case to get Approach 3 to work
-    - Explain how variable projection + grid search is necessary to get perfect inference
+- Links to share from simple demo example:
+  - https://gemini.google.com/share/67e761f19481
+  - https://chatgpt.com/share/69853e09-8180-800e-8eaf-0840cd5d2d45
