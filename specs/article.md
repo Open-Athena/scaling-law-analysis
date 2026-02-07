@@ -130,3 +130,21 @@
 - Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`
 - Key result: all five loss surface parameters (E, A, B, α, β) recovered perfectly; extrapolation is exact
 - Key message: variable projection makes direct surface fitting robust and eliminates the biases introduced by the parabolic approximation
+
+---
+
+## IsoFLOP Curves in the Wild — Evidence from Published Studies
+
+- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/isoflop_curve_examples.png`
+- These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
+- Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
+- This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
+
+---
+
+## Conclusion
+
+- **These biases are structural, not statistical**: the errors documented here exist on noise-free data with perfect experimental conditions; real experiments, which contend with measurement noise and unknown optima, can only make them worse
+- **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
+- **A practical alternative exists**: variable projection recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
+- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider variable projection as a robust alternative

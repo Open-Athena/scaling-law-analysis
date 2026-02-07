@@ -569,6 +569,8 @@
                     </ol>
                 </li>
                 <li><a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a></li>
+                <li><a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a></li>
+                <li><a href="#conclusion">Conclusion</a></li>
             </ol>
         </nav>
 
@@ -1428,6 +1430,89 @@
                     and eliminates the biases introduced by the parabolic approximation.
                 </p>
             </div>
+
+        </section>
+
+        <!-- Section 6: IsoFLOP Curves in the Wild -->
+        <section id="in-the-wild">
+            <h2>IsoFLOP Curves in the Wild — Evidence from Published Studies</h2>
+
+            <p>
+                The previous sections used synthetic, noise-free simulations to isolate Approach 2's
+                biases under controlled conditions. A natural question is whether the conditions that
+                trigger these biases, asymmetric loss surfaces and imperfectly centered sampling,
+                actually arise in practice. To get a sense of this, we can look at IsoFLOP curves
+                published in three of the most prominent scaling law
+                studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>.
+            </p>
+
+            <figure>
+                <img src="isoflop_curve_examples.png"
+                    alt="IsoFLOP curves from Chinchilla, Llama 3, and DeepSeek scaling law papers">
+                <figcaption>
+                    <strong>Figure 7:</strong> IsoFLOP curves from three published scaling law studies.
+                    Left: Chinchilla (training loss vs parameters). Center: Llama 3 (validation loss vs
+                    training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each panel shows
+                    curves at multiple compute budgets, fit using Approach 2.
+                </figcaption>
+            </figure>
+
+            <p>
+                Several features relevant to the biases studied in this article are visible across
+                all three panels:
+            </p>
+
+            <ul>
+                <li><strong>Asymmetric curve shapes:</strong> The IsoFLOP curves are visibly steeper on
+                    one side of the minimum than the other, consistent with \(\alpha \neq \beta\). This
+                    is the condition under which the parabolic approximation introduces systematic
+                    intercept bias.</li>
+                <li><strong>Off-center sampling:</strong> At some compute budgets, the sampling grid
+                    does not appear centered at the curve minimum. The degree of off-centering also
+                    appears to vary across compute budgets, which is the drifting-bias pattern that
+                    corrupts both exponents and intercepts.</li>
+            </ul>
+
+            <p>
+                To be clear, this is not a criticism of these studies. These are among the most careful
+                and influential scaling law analyses published. The point is a more general one: the
+                conditions under which Approach 2's biases activate, asymmetric surfaces and imperfect
+                sampling centers, appear to be the norm rather than the exception. The idealized
+                conditions of the Happy Path (symmetric surface, perfectly centered grids) are the
+                special case.
+            </p>
+
+        </section>
+
+        <!-- Section 7: Conclusion -->
+        <section id="conclusion">
+            <h2>Conclusion</h2>
+
+            <p>
+                The biases documented in this article are structural, not statistical. They exist
+                on noise-free data with perfect experimental conditions. Real experiments, which
+                contend with measurement noise and unknown optima, can only make them worse.
+            </p>
+
+            <p>
+                Two independent sources of error compound in practice. Surface asymmetry
+                (\(\alpha \neq \beta\)) biases intercepts, and off-center sampling biases
+                intercepts or exponents depending on whether the offset is constant or varies
+                with compute budget. Both act simultaneously in any real experiment.
+            </p>
+
+            <p>
+                A practical alternative exists. Variable projection recovers all five surface
+                parameters with machine precision, uses the same intuitive linear separation
+                that makes Approach 2 appealing, and is straightforward to implement.
+            </p>
+
+            <p>
+                For practitioners using Approach 2: be aware that intercept estimates carry a
+                systematic bias that grows with exponent asymmetry and sampling grid width.
+                When precision matters for extrapolation to large compute budgets, consider
+                variable projection as a robust alternative.
+            </p>
 
         </section>
 
