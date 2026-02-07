@@ -48,15 +48,11 @@ The figure generator (`scaling_law_analysis.article.figures`) exports numerical 
 
 Specific values from these CSVs (e.g. error percentages, token counts) are hardcoded in `results/article/article.html` — both in prose and in data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match.
 
-## Deploy to GCS
+## Deploy to GitHub Pages
 
-```bash
-gsutil cp \
-  -h "Content-Type:text/html; charset=utf-8" \
-  -h "Cache-Control:public, max-age=3600" \
-  results/article/article_standalone.html \
-  gs://<BUCKET_NAME>/article.html
-```
+The standalone HTML is deployed to GitHub Pages via a manually triggered workflow (`.github/workflows/deploy.yml`). It copies `results/article/article_standalone.html` to the `gh-pages` branch as `index.html`. Trigger it from the Actions tab → "Deploy Article" → "Run workflow".
+
+One-time setup: in repo Settings → Pages, set source to **Deploy from a branch**, branch `gh-pages`, root `/`.
 
 ### Full build workflow
 
@@ -68,5 +64,5 @@ gsutil cp \
 5. **Edit article**: `results/article/article.html`
 6. **Build supplementary PDF** — skip if `scaling_parameter_errors.html` hasn't changed (see [above](#scaling-parameter-errors-pdf))
 7. **Build standalone HTML** (see [Standalone HTML](#standalone-html) above)
-
-Deployment is **not** part of the default build. It should only be run after human review, as an explicit separate step (see [Deploy to GCS](#deploy-to-gcs)).
+8. **Push to `main`**
+9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab
