@@ -20,11 +20,16 @@
 
 ## Motivation
 
-- TBD: origin of Approach 2 and the Chinchilla paper context
-- TBD: who uses this method (labs, researchers, practitioners)
-- TBD: why they use it (simplicity, avoids nonlinear optimization, interpretable steps)
-- TBD: personal motivation (scaling laws for scientific data modalities)
-- Article focus: examine pitfalls of Approach 2 using noise-free synthetic data; by eliminating noise, isolate systematic biases inherent to the method itself
+- Chinchilla Approach 2 is arguably the most widely adopted method for fitting scaling laws in practice today
+- Used by top AI labs including DeepMind [chinchilla] [sovit] (its creators), Meta [llama3] [optibert], DeepSeek [deepseek], Microsoft [ehr_scaling], Amazon [il_scaling], Waymo [waymo_scaling], and Arc Institute [evo], among others
+  - TODO: Continue to pad this list out later
+- Also a workhorse method for academic studies [dit_scaling] [dlm_scaling] [biosignal_scaling] and high-profile practitioner tutorials (e.g. Andrej Karpathy)
+- Its appeal lies in stability and data efficiency relative to nonlinear optimization over all loss surface parameters; this owes to its reliance on 2nd-order Taylor approximations fit as parabolas and the fact that it estimates only the more actionable scaling exponents rather than the full set of surface parameters
+- To our knowledge, the sensitivity of these approximations and the method's behavior on loss surfaces that are less symmetric than the original Chinchilla form (where token and parameter scaling exponents are roughly equal) have not been studied in detail
+- We investigate this through noise-free synthetic simulations that isolate systematic biases inherent to the method itself
+- We show how these biases impact downstream decisions like dataset size selection for final training runs at large compute budgets
+- We show how extrapolation errors trace back to suboptimal isoflop experiment design, and that pathologies in these designs can be observed in real, high-profile scaling law studies even if they are difficult to quantify precisely
+- We propose an alternative fitting method that is simple, stable, and free of these biases while building on the same intuitive computational shortcut: optimizing exponential terms separately from linear terms
 
 ---
 

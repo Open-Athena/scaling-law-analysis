@@ -6,7 +6,57 @@
   venue: ArXiv
   url: https://arxiv.org/abs/2203.15556
 
-- key: kaplan2020
-  title: Scaling Laws for Neural Language Models
+- key: llama3
+  title: The Llama 3 Herd of Models
   venue: ArXiv
-  url: https://arxiv.org/abs/2001.08361
+  url: https://arxiv.org/abs/2407.21783
+
+- key: deepseek
+  title: "DeepSeek LLM: Scaling Open-Source Language Models with Longtermism"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2401.02954
+
+- key: ehr_scaling
+  title: Exploring Scaling Laws for EHR Foundation Models
+  venue: ArXiv
+  url: https://arxiv.org/abs/2505.22964
+
+- key: evo
+  title: Sequence modeling and design from molecular to genome scale with Evo
+  venue: bioRxiv
+  url: https://www.biorxiv.org/content/10.1101/2024.02.27.582234v2
+
+- key: il_scaling
+  title: Scaling Laws for Imitation Learning in Single-Agent Games
+  venue: TMLR
+  url: https://arxiv.org/abs/2307.09423
+
+- key: sovit
+  title: "Getting ViT in Shape: Scaling Laws for Compute-Optimal Model Design"
+  venue: NeurIPS
+  url: https://arxiv.org/abs/2305.13035
+
+- key: waymo_scaling
+  title: Scaling Laws of Motion Forecasting and Planning -- Technical Report
+  venue: ArXiv
+  url: https://arxiv.org/abs/2506.08228
+
+- key: optibert
+  title: Training compute-optimal transformer encoder models
+  venue: Other
+  url: https://aclanthology.org/2025.emnlp-main.1804.pdf
+
+- key: dit_scaling
+  title: Scaling Laws For Diffusion Transformers
+  venue: ArXiv
+  url: https://arxiv.org/abs/2410.08184
+
+- key: dlm_scaling
+  title: Scaling Behavior of Discrete Diffusion Language Models
+  venue: ArXiv
+  url: https://arxiv.org/abs/2512.10858
+
+- key: biosignal_scaling
+  title: Scaling Laws for Compute Optimal Biosignal Transformers
+  venue: Other
+  url: https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content
