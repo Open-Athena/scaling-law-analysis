@@ -399,6 +399,7 @@ def compute_extrapolation_errors(
     eval_budgets: np.ndarray,
     log_range: float,
     n_points: int = 15,
+    center_scale: float = 1.0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute D* errors at evaluation budgets.
 
@@ -408,6 +409,7 @@ def compute_extrapolation_errors(
         eval_budgets: Compute budgets for evaluation
         log_range: Sampling grid width in log10 space
         n_points: Points per IsoFLOP curve
+        center_scale: Constant multiplicative offset for sampling centers
 
     Returns:
         Tuple of (true_D, inferred_D, abs_errors) arrays at each eval budget
@@ -417,7 +419,7 @@ def compute_extrapolation_errors(
         compute_budgets=training_budgets,
         surface=surface,
         drift_rate=0.0,
-        center_scale=1.0,
+        center_scale=center_scale,
         n_points=n_points,
         log_range=log_range,
     )
@@ -682,7 +684,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
 
 # 16 grid widths from XS (±2×) to XL (±16×)
 OFF_CENTER_LOG_RANGES = np.linspace(np.log10(2), np.log10(16), 16)
-OFF_CENTER_SCALE = 2.0
+OFF_CENTER_SCALE = 3.0
 
 
 def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
@@ -692,13 +694,16 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     preserves exponents perfectly but biases intercepts, on a
     symmetric surface where asymmetry effects are absent.
 
-    Layout: 1 row × 3 columns
-        Col 1: IsoFLOP contours at L (±8×) with center_scale=2
-        Col 2: D* exponent error vs grid width (16 points, XS to XL)
-        Col 3: D* intercept error vs grid width (16 points, XS to XL)
+    Layout: 2 rows × 2 columns
+        (0,0): IsoFLOP contours at L (±8×) with center_scale=2
+        (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width
+        (1,0): D* exponent error vs grid width (16 points, XS to XL)
+        (1,1): D* intercept error vs grid width (16 points, XS to XL)
+
+    Also exports raw extrapolation data to CSV.
 
     Returns:
-        Dict with error sweep data.
+        Dict with error sweep data and extrapolation results.
     """
     setup_style()
 
@@ -707,7 +712,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     center_scale = OFF_CENTER_SCALE
     log_ranges = OFF_CENTER_LOG_RANGES
 
-    # --- Compute D* errors across grid widths ---
+    # --- Compute D* errors across grid widths (for exponent/intercept plots) ---
     b_errors = []
     b_intercept_errors = []
 
@@ -728,6 +733,24 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     b_errors = np.array(b_errors)
     b_intercept_errors = np.array(b_intercept_errors)
 
+    # --- Compute extrapolation errors at 10²⁴ FLOPs (for bar chart) ---
+    EVAL_BUDGET = 1e24
+    extrap_data = (
+        []
+    )  # list of (grid_name, log_range, rel_error_pct, true_D, inferred_D)
+    for grid_name, grid_log_range in GRID_WIDTHS:
+        true_D, inferred_D, errors = compute_extrapolation_errors(
+            surface=surface,
+            training_budgets=TRAINING_BUDGETS,
+            eval_budgets=np.array([EVAL_BUDGET]),
+            log_range=grid_log_range,
+            center_scale=center_scale,
+        )
+        rel_error = errors[0] / true_D[0] * 100
+        extrap_data.append(
+            (grid_name, grid_log_range, rel_error, true_D[0], inferred_D[0])
+        )
+
     # --- IsoFLOP contour data at L (±8×) grid ---
     log_range_display = np.log10(8)
     result_display = fit_approach2(
@@ -739,12 +762,19 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         log_range=log_range_display,
     )
 
-    # --- Create figure ---
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+    # --- Create figure (2x2 layout, top row 2x height of bottom row) ---
+    fig, axes = plt.subplots(
+        2,
+        2,
+        figsize=(14, 9),
+        height_ratios=[2, 1],
+    )
 
-    # Panel 1: IsoFLOP contours (L vs log D)
-    ax_iso = axes[0]
-    colors = plt.colormaps["viridis"](np.linspace(0.1, 0.9, len(compute_budgets)))
+    # --- Panel (0,0): IsoFLOP contours (L vs log D) ---
+    ax_iso = axes[0, 0]
+    viridis_colors = plt.colormaps["viridis"](
+        np.linspace(0.1, 0.9, len(compute_budgets))
+    )
 
     for i, (C, fit) in enumerate(zip(compute_budgets, result_display.parabola_fits_D)):
         center_offset = compute_center_offset(
@@ -763,12 +793,12 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         log_D = np.log10(D)
 
         # Sampled points
-        ax_iso.scatter(log_D, L, c=[colors[i]], s=30, alpha=0.8, zorder=3)
+        ax_iso.scatter(log_D, L, c=[viridis_colors[i]], s=30, alpha=0.8, zorder=3)
 
         # Parabola fit
         log_D_fine = np.linspace(log_D.min(), log_D.max(), 100)
         L_fit = np.polyval(fit.coeffs, log_D_fine)
-        ax_iso.plot(log_D_fine, L_fit, c=colors[i], lw=1.5, alpha=0.9)
+        ax_iso.plot(log_D_fine, L_fit, c=viridis_colors[i], lw=1.5, alpha=0.9)
 
         # Sampling center marker (black diamond)
         N_center = surface.N_opt(C) / center_scale
@@ -811,7 +841,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
 
     ax_iso.set_xlabel(r"$\log_{10}(D)$  [tokens]")
     ax_iso.set_ylabel("Loss")
-    ax_iso.set_title(f"IsoFLOP Curves — grid=±8× (Large), offset={center_scale:.0f}×")
+    ax_iso.set_title("IsoFLOP Curves (±8× grid)")
     ax_iso.scatter(
         [],
         [],
@@ -828,23 +858,71 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     )
     ax_iso.legend(loc="upper right")
 
-    # Shared y-axis range for error panels (driven by intercept errors)
+    # --- Panel (0,1): Extrapolation error bar chart ---
+    ax_bar = axes[0, 1]
+    grid_colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]
+    grid_names = [name for name, _, _, _, _ in extrap_data]
+    rel_errors = [err for _, _, err, _, _ in extrap_data]
+    x_bar = np.arange(len(extrap_data))
+
+    bars = ax_bar.bar(
+        x_bar,
+        rel_errors,
+        color=grid_colors,
+        alpha=0.85,
+        edgecolor="white",
+        linewidth=0.5,
+    )
+    for bar in bars:
+        height = bar.get_height()
+        if abs(height) < 0.05:
+            pct_label = "0%"
+        elif height > 0:
+            pct_label = f"+{height:.1f}%"
+        else:
+            pct_label = f"{height:.1f}%"
+        va = "bottom" if height >= 0 else "top"
+        y_offset = 0.05 if height >= 0 else -0.05
+        ax_bar.annotate(
+            pct_label,
+            xy=(bar.get_x() + bar.get_width() / 2, height + y_offset),
+            ha="center",
+            va=va,
+            fontsize=12,
+            color="black",
+        )
+
+    ax_bar.set_xticks(x_bar)
+    ax_bar.set_xticklabels(grid_names, fontsize=9)
+    ax_bar.set_xlabel("Sampling grid width")
+    ax_bar.set_ylabel("Relative Error in D* (%)")
+    ax_bar.axhline(0, color="black", linewidth=0.8)
+    ax_bar.grid(True, axis="y", alpha=0.3)
+    # Add margin above tallest bar for annotation clearance
+    y_top = max(rel_errors) * 1.15 if max(rel_errors) > 0 else 2.0
+    ax_bar.set_ylim(ax_bar.get_ylim()[0], max(ax_bar.get_ylim()[1], y_top))
+    ax_bar.set_title(
+        "Token Prediction Error at $10^{24}$ FLOPs\n"
+        f"(Fitting: $10^{{17}}$-$10^{{21}}$ FLOPs)"
+    )
+
+    # --- Shared y-axis range for error panels (driven by intercept errors) ---
     all_errors = np.concatenate([b_errors, b_intercept_errors])
     y_margin = max(0.5, 0.15 * (all_errors.max() - all_errors.min()))
     y_min = all_errors.min() - y_margin
     y_max = all_errors.max() + y_margin
 
-    # Tick positions for error plot x-axes
+    # Tick positions for error plot x-axes (with XS/S/L/XL monickers)
     tick_log_ranges = [np.log10(2), np.log10(4), np.log10(8), np.log10(16)]
-    tick_labels = ["±2×", "±4×", "±8×", "±16×"]
+    tick_labels = ["±2× (XS)", "±4× (S)", "±8× (L)", "±16× (XL)"]
 
-    # Panel 2: D* exponent error
-    ax_exp = axes[1]
+    # --- Panel (1,0): D* exponent error ---
+    ax_exp = axes[1, 0]
     ax_exp.plot(
         log_ranges, b_errors, "s-", label="b (D* exponent)", color="C2", markersize=4
     )
     ax_exp.axhline(0, color="gray", linestyle="--", alpha=0.5)
-    ax_exp.set_xlabel("Sampling range")
+    ax_exp.set_xlabel("Sampling grid width")
     ax_exp.set_ylabel("Relative error (%)")
     ax_exp.set_title("Exponent Error (b)")
     ax_exp.set_xticks(tick_log_ranges)
@@ -853,8 +931,8 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     ax_exp.legend(fontsize=9)
     ax_exp.grid(True, alpha=0.3)
 
-    # Panel 3: D* intercept error
-    ax_int = axes[2]
+    # --- Panel (1,1): D* intercept error ---
+    ax_int = axes[1, 1]
     ax_int.plot(
         log_ranges,
         b_intercept_errors,
@@ -864,7 +942,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         markersize=4,
     )
     ax_int.axhline(0, color="gray", linestyle="--", alpha=0.5)
-    ax_int.set_xlabel("Sampling range")
+    ax_int.set_xlabel("Sampling grid width")
     ax_int.set_ylabel("Relative error (%)")
     ax_int.set_title("Intercept Error (b₀)")
     ax_int.set_xticks(tick_log_ranges)
@@ -882,16 +960,36 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     )
     fig.tight_layout()
 
-    # Save
+    # Save figure
     fig_path = output_dir / "off_center_constant_bias.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
+    # Export extrapolation data to CSV
+    csv_path = output_dir / "off_center_extrapolation_data.csv"
+    with open(csv_path, "w") as f:
+        f.write(
+            "surface,alpha,beta,center_scale,grid_name,log_range,"
+            "training_range,eval_budget,"
+            "true_D,inferred_D,abs_error,rel_error_pct\n"
+        )
+        for grid_name, grid_log_range, rel_error, true_D, inferred_D in extrap_data:
+            abs_error = inferred_D - true_D
+            f.write(
+                f"Symmetric,{surface.alpha},{surface.beta},{center_scale},"
+                f'"{grid_name}",{grid_log_range},'
+                f"1e17-1e21,{EVAL_BUDGET:.0e},"
+                f"{true_D:.15e},{inferred_D:.15e},"
+                f"{abs_error:.15e},{rel_error:.15f}\n"
+            )
+    print(f"Saved: {csv_path}")
+
     return {
         "log_ranges": log_ranges,
         "b_errors": b_errors,
         "b_intercept_errors": b_intercept_errors,
+        "extrapolation": extrap_data,
     }
 
 

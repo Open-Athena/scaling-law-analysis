@@ -462,19 +462,19 @@
             <h2>Motivation</h2>
 
             <p>
-                <em>[TBD: Origin of Approach 2, the Chinchilla paper context]</em>
+                <em>TBD: Origin of Approach 2, the Chinchilla paper context</em>
             </p>
 
             <p>
-                <em>[TBD: Who uses this method — labs, researchers, practitioners applying scaling laws]</em>
+                <em>TBD: Who uses this method, including labs, researchers, practitioners applying scaling laws</em>
             </p>
 
             <p>
-                <em>[TBD: Why they use it — simplicity, avoids nonlinear optimization, interpretable steps]</em>
+                <em>TBD: Why they use it, including simplicity, avoids nonlinear optimization, interpretable steps</em>
             </p>
 
             <p>
-                <em>[TBD: Why I'm personally using it — specific context for this analysis, scaling laws for scientific data modalities]</em>
+                <em>TBD: Personal motivation for this analysis, scaling laws for scientific data modalities</em>
             </p>
 
             <p>
@@ -1142,8 +1142,8 @@
             <p>
                 The simplest form of off-center sampling is a constant multiplicative offset: every
                 compute budget's sampling center is shifted by the same factor from the true optimum.
-                A "2× offset" means each IsoFLOP grid is centered at \(2 \times D^*\) instead of
-                \(D^*\), so the grid midpoint consistently sits at twice the true optimal token count.
+                A "3× offset" means each IsoFLOP grid is centered at \(3 \times D^*\) instead of
+                \(D^*\), so the grid midpoint consistently sits at three times the true optimal token count.
             </p>
 
             <p>
@@ -1159,43 +1159,68 @@
                 <img src="off_center_constant_bias.png"
                     alt="Off-center sampling with constant multiplicative bias showing zero exponent error but systematic intercept error">
                 <figcaption>
-                    <strong>Figure 4:</strong> Effect of a constant 2× offset in sampling centers on
-                    the symmetric surface. Left: IsoFLOP curves at the Large grid (±8×), with black
+                    <strong>Figure 4:</strong> Effect of a constant 3× offset in sampling centers on
+                    the symmetric surface. Top left: IsoFLOP curves at the Large grid (±8×), with black
                     diamonds marking the (off-center) sampling center, red × the true \(D^*\), and
-                    blue + the inferred \(D^*\). Center and right: exponent and intercept errors
-                    across grid widths from XS (±2×) to XL (±16×), plotted on the same y-axis scale.
-                    The exponent is recovered perfectly (flat at zero) while the intercept shows
-                    systematic bias that varies with grid width.
+                    blue + the inferred \(D^*\). Top right: extrapolation error in compute-optimal
+                    token prediction at 10²⁴ FLOPs for each grid width, using the same XS through XL
+                    grids defined earlier. Bottom row: exponent and intercept errors across grid widths
+                    from XS (±2×) to XL (±16×), plotted on the same y-axis scale. The exponent is
+                    recovered perfectly (flat at zero) while the intercept shows systematic bias that
+                    varies with grid width.
                 </figcaption>
             </figure>
 
             <p>
-                The pattern in the intercept error panel is worth noting. At narrow grid widths,
-                the intercept error is positive (the inferred \(D^*\) overshoots), then crosses zero
-                and becomes negative at wider grids. This reflects how the parabola fit responds to
-                the interaction between the off-center shift and the sampling range: at different
-                grid widths, the asymmetric tails of the true loss curve are weighted differently,
-                pulling the fitted vertex in different directions.
+                The extrapolation bar chart (top right) shows what this means for token prediction:
+                all four grid widths overestimate \(D^*\), with the narrowest grid (XS) producing the
+                largest error. This is the reverse of the asymmetry bias pattern, where wider grids
+                amplified error. Here, narrower grids are more sensitive to off-center placement because
+                fewer samples lie near the true optimum.
+            </p>
+
+            <p>
+                The intercept error panel (bottom right) confirms the pattern across the full
+                continuum of grid widths. The error is always positive (the inferred \(D^*\)
+                overshoots) and decreases monotonically as the grid widens, reflecting how a wider
+                sampling range brings more of the true loss curve's shape into the fit, partially
+                compensating for the misplaced center.
             </p>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    A constant multiplicative offset in sampling centers preserves the scaling
-                    exponent perfectly but biases the intercept. This is the same mechanism as
-                    asymmetry bias: any effect that shifts every parabola vertex by the same amount
-                    in log-space will corrupt the intercept while leaving the exponent intact.
+                    Consider the symmetric surface with the Large grid (±8×) and a 3× offset,
+                    where every IsoFLOP grid is centered at three times the true optimal token count.
+                    When extrapolating to 10²⁴ FLOPs, the true optimal token count is 408.2 billion,
+                    but Approach 2 predicts 419.0 billion: a 2.6% overestimate, roughly 10.8 billion
+                    more tokens than optimal. Compare this with the Chinchilla asymmetry result at the
+                    same grid width: a 2.9% underestimate. The magnitudes are comparable,
+                    but the sources are entirely different. Asymmetry bias comes from the
+                    shape of the loss surface; off-center bias comes from where you place the grid.
+                    In a real experiment, both act simultaneously.
                 </p>
             </div>
 
             <h3>Drifting Bias</h3>
 
             <p>
-                <em>[TBD: When the offset grows with compute budget (e.g., prior estimates become
+                <em>TBD: When the offset grows with compute budget (e.g., prior estimates become
                 progressively worse at higher compute), both exponents and intercepts are corrupted.
                 This is qualitatively different from constant bias and represents a more severe
-                failure mode.]</em>
+                failure mode. Exact presentation details are yet to be determined.</em>
             </p>
+
+            <figure>
+                <img src="off_center_drifting_bias.png"
+                    alt="Off-center sampling with drifting bias showing both exponent and intercept errors">
+                <figcaption>
+                    <strong>Figure 5 (placeholder):</strong> <em>TBD: Effect of a drifting offset
+                    in sampling centers on the symmetric surface. Unlike constant bias, the offset
+                    grows with compute budget, corrupting both the exponent and the intercept.
+                    Final figure details are yet to be determined.</em>
+                </figcaption>
+            </figure>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Message</div>
