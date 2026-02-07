@@ -11,6 +11,7 @@ from scaling_law_analysis.chinchilla import (
     LossSurface,
     isoflop_sample,
     fit_approach2,
+    compute_center_offset,
     Approach2Result,
 )
 
@@ -675,6 +676,225 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     return results
 
 
+# =============================================================================
+# Section 4: Off-Center Sampling — Constant Multiplicative Bias
+# =============================================================================
+
+# 16 grid widths from XS (±2×) to XL (±16×)
+OFF_CENTER_LOG_RANGES = np.linspace(np.log10(2), np.log10(16), 16)
+OFF_CENTER_SCALE = 2.0
+
+
+def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
+    """Create the constant multiplicative bias figure for Section 4.
+
+    Shows that a constant multiplicative bias in sampling centers
+    preserves exponents perfectly but biases intercepts, on a
+    symmetric surface where asymmetry effects are absent.
+
+    Layout: 1 row × 3 columns
+        Col 1: IsoFLOP contours at L (±8×) with center_scale=2
+        Col 2: D* exponent error vs grid width (16 points, XS to XL)
+        Col 3: D* intercept error vs grid width (16 points, XS to XL)
+
+    Returns:
+        Dict with error sweep data.
+    """
+    setup_style()
+
+    surface = SYMMETRIC_SURFACE
+    compute_budgets = COMPUTE_BUDGETS
+    center_scale = OFF_CENTER_SCALE
+    log_ranges = OFF_CENTER_LOG_RANGES
+
+    # --- Compute D* errors across grid widths ---
+    b_errors = []
+    b_intercept_errors = []
+
+    for lr in log_ranges:
+        result = fit_approach2(
+            compute_budgets=compute_budgets,
+            surface=surface,
+            drift_rate=0.0,
+            center_scale=center_scale,
+            n_points=N_POINTS,
+            log_range=lr,
+        )
+        b_errors.append((result.b - surface.b) / surface.b * 100)
+        b_intercept_errors.append(
+            (result.b_intercept - surface.b_intercept) / abs(surface.b_intercept) * 100
+        )
+
+    b_errors = np.array(b_errors)
+    b_intercept_errors = np.array(b_intercept_errors)
+
+    # --- IsoFLOP contour data at L (±8×) grid ---
+    log_range_display = np.log10(8)
+    result_display = fit_approach2(
+        compute_budgets=compute_budgets,
+        surface=surface,
+        drift_rate=0.0,
+        center_scale=center_scale,
+        n_points=N_POINTS,
+        log_range=log_range_display,
+    )
+
+    # --- Create figure ---
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5))
+
+    # Panel 1: IsoFLOP contours (L vs log D)
+    ax_iso = axes[0]
+    colors = plt.colormaps["viridis"](np.linspace(0.1, 0.9, len(compute_budgets)))
+
+    for i, (C, fit) in enumerate(zip(compute_budgets, result_display.parabola_fits_D)):
+        center_offset = compute_center_offset(
+            C=C,
+            compute_budgets=compute_budgets,
+            drift_rate=0.0,
+            center_scale=center_scale,
+        )
+        N, D, L = isoflop_sample(
+            C=C,
+            n_points=N_POINTS,
+            log_range=log_range_display,
+            center_offset=center_offset,
+            surface=surface,
+        )
+        log_D = np.log10(D)
+
+        # Sampled points
+        ax_iso.scatter(log_D, L, c=[colors[i]], s=30, alpha=0.8, zorder=3)
+
+        # Parabola fit
+        log_D_fine = np.linspace(log_D.min(), log_D.max(), 100)
+        L_fit = np.polyval(fit.coeffs, log_D_fine)
+        ax_iso.plot(log_D_fine, L_fit, c=colors[i], lw=1.5, alpha=0.9)
+
+        # Sampling center marker (black diamond)
+        N_center = surface.N_opt(C) / center_scale
+        D_center = C / (6 * N_center)
+        L_center = float(surface.loss(N_center, D_center))
+        ax_iso.scatter(
+            [np.log10(D_center)],
+            [L_center],
+            c="black",
+            marker="D",
+            s=90,
+            zorder=5,
+            linewidths=1,
+            edgecolors="white",
+        )
+
+        # True optimum (red X)
+        D_true = surface.D_opt(C)
+        L_true = float(surface.loss(surface.N_opt(C), D_true))
+        ax_iso.scatter(
+            [np.log10(D_true)],
+            [L_true],
+            c="red",
+            marker="x",
+            s=100,
+            zorder=4,
+            linewidths=2.5,
+        )
+
+        # Inferred optimum (blue +)
+        ax_iso.scatter(
+            [fit.log_x_opt],
+            [fit.L_min],
+            c="blue",
+            marker="+",
+            s=100,
+            zorder=4,
+            linewidths=2.5,
+        )
+
+    ax_iso.set_xlabel(r"$\log_{10}(D)$  [tokens]")
+    ax_iso.set_ylabel("Loss")
+    ax_iso.set_title(f"IsoFLOP Curves — grid=±8× (Large), offset={center_scale:.0f}×")
+    ax_iso.scatter(
+        [],
+        [],
+        c="black",
+        marker="D",
+        s=100,
+        linewidths=1,
+        edgecolors="white",
+        label="Sampling center",
+    )
+    ax_iso.scatter([], [], c="red", marker="x", s=80, linewidths=2, label="True $D^*$")
+    ax_iso.scatter(
+        [], [], c="blue", marker="+", s=80, linewidths=2, label="Inferred $D^*$"
+    )
+    ax_iso.legend(loc="upper right")
+
+    # Shared y-axis range for error panels (driven by intercept errors)
+    all_errors = np.concatenate([b_errors, b_intercept_errors])
+    y_margin = max(0.5, 0.15 * (all_errors.max() - all_errors.min()))
+    y_min = all_errors.min() - y_margin
+    y_max = all_errors.max() + y_margin
+
+    # Tick positions for error plot x-axes
+    tick_log_ranges = [np.log10(2), np.log10(4), np.log10(8), np.log10(16)]
+    tick_labels = ["±2×", "±4×", "±8×", "±16×"]
+
+    # Panel 2: D* exponent error
+    ax_exp = axes[1]
+    ax_exp.plot(
+        log_ranges, b_errors, "s-", label="b (D* exponent)", color="C2", markersize=4
+    )
+    ax_exp.axhline(0, color="gray", linestyle="--", alpha=0.5)
+    ax_exp.set_xlabel("Sampling range")
+    ax_exp.set_ylabel("Relative error (%)")
+    ax_exp.set_title("Exponent Error (b)")
+    ax_exp.set_xticks(tick_log_ranges)
+    ax_exp.set_xticklabels(tick_labels, fontsize=9)
+    ax_exp.set_ylim(y_min, y_max)
+    ax_exp.legend(fontsize=9)
+    ax_exp.grid(True, alpha=0.3)
+
+    # Panel 3: D* intercept error
+    ax_int = axes[2]
+    ax_int.plot(
+        log_ranges,
+        b_intercept_errors,
+        "s-",
+        label="b₀ (D* intercept)",
+        color="C2",
+        markersize=4,
+    )
+    ax_int.axhline(0, color="gray", linestyle="--", alpha=0.5)
+    ax_int.set_xlabel("Sampling range")
+    ax_int.set_ylabel("Relative error (%)")
+    ax_int.set_title("Intercept Error (b₀)")
+    ax_int.set_xticks(tick_log_ranges)
+    ax_int.set_xticklabels(tick_labels, fontsize=9)
+    ax_int.set_ylim(y_min, y_max)
+    ax_int.legend(fontsize=9)
+    ax_int.grid(True, alpha=0.3)
+
+    fig.suptitle(
+        "Off-Center Sampling: Constant Multiplicative Bias\n"
+        f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
+        f" center offset = {center_scale:.0f}×",
+        fontsize=13,
+        y=1.02,
+    )
+    fig.tight_layout()
+
+    # Save
+    fig_path = output_dir / "off_center_constant_bias.png"
+    fig.savefig(fig_path)
+    plt.close(fig)
+    print(f"Saved: {fig_path}")
+
+    return {
+        "log_ranges": log_ranges,
+        "b_errors": b_errors,
+        "b_intercept_errors": b_intercept_errors,
+    }
+
+
 def generate_all_figures(output_dir: Path) -> dict:
     """Generate all article figures.
 
@@ -692,6 +912,9 @@ def generate_all_figures(output_dir: Path) -> dict:
 
     # Section 3b: Extrapolation Error ("Why It Matters")
     data["extrapolation"] = create_extrapolation_error_figure(output_dir)
+
+    # Section 4: Off-Center Sampling — Constant Multiplicative Bias
+    data["off_center_constant"] = create_off_center_constant_bias_figure(output_dir)
 
     return data
 
@@ -722,3 +945,11 @@ if __name__ == "__main__":
             print(
                 f"  {grid_name}: |error| = {abs_error:.2e} tokens ({rel_error_pct:.1f}%)"
             )
+
+    print("\n=== Off-Center Constant Bias Summary ===")
+    oc = data["off_center_constant"]
+    print(f"Exponent error (b): max |error| = {np.abs(oc['b_errors']).max():.2e}%")
+    print(
+        f"Intercept error (b₀): range [{oc['b_intercept_errors'].min():.2f}%, "
+        f"{oc['b_intercept_errors'].max():.2f}%]"
+    )

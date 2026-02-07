@@ -42,7 +42,7 @@
 - Use a concrete symmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
 - Note that equal exponents (α = β) mean compute splits evenly; true scaling exponents are a = b = 0.5
 - Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs, fit parabolas, extract optimal D*
-- Figure: IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
+- Figure (1 row × 2 columns): IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
 - Table: show perfect recovery of b (D* exponent) and b₀ (D* intercept) with machine-precision relative errors (~10⁻¹⁰ %)
 - Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabolic approximation is exact when α = β
 - Close by noting this baseline is precisely correct under ideal conditions that are unrealistic in practice; the following sections perturb these conditions in controlled ways
@@ -56,7 +56,7 @@
 - **What Happens**
   - Asymmetric surfaces produce systematically wrong intercepts while exponents remain accurate
   - Two test configurations: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and High Imbalance (α=0.465, β=0.155, ratio = 3.0)
-  - Figure: Approach 2 on both asymmetric surfaces; visible gap between true (dashed) and inferred (solid) power-law lines, especially for High Imbalance
+  - Figure (2 rows × 2 columns): Approach 2 on both asymmetric surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, High Imbalance; visible gap between true (dashed) and inferred (solid) power-law lines, especially for High Imbalance
   - Tables for each surface showing b exponent with negligible error but b₀ intercept with meaningful error; error larger for High Imbalance than Chinchilla
 
 - **Why This Is Surprising**
@@ -87,7 +87,7 @@
     | Extra Large (XL)   | ±16× | 1/16× to 16×      | 256×        | 2.41                        |
 
   - Note that real experiments typically span 1–2 decades, making S and L the realistic range; XS and XL bracket either side; XL is the default used in preceding single-grid analyses
-  - Figure: bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces; negative bars = underestimation
+  - Figure (1 row × 1 column): bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces; negative bars = underestimation
   - Collapsible raw data table with full-precision values for all surface/grid combinations
   - Key observations from the figure:
     - Symmetric surfaces are immune (zero error at all grid widths)
@@ -100,46 +100,21 @@
 
 ## Off-Center Sampling — Exponent and Extrapolation Errors
 
-### Introduction
-
-All analysis so far has assumed that IsoFLOP sampling grids are centered exactly at the true compute-optimal model size N* for each compute budget. In practice, you don't know N* before running the experiment; that's what you're trying to infer. The sampling center is chosen based on prior estimates, heuristics, or earlier smaller-scale runs, and these are rarely exactly right. We call the systematic offset between the assumed sampling center and the true optimum **off-center sampling**.
-
-This bias is distinct from the surface asymmetry errors studied in the previous section. Asymmetry errors arise from the shape of the loss surface itself (α ≠ β) and are present even when sampling is perfectly centered. Off-center sampling errors arise from where you place the sampling grid, regardless of the surface shape. In practice both effects compound, but to understand each in isolation, this section studies off-center sampling on **symmetric loss surfaces only** (α = β). On a symmetric surface, the previous section established that Approach 2 produces zero error with perfect centering. Any errors introduced here are therefore purely attributable to off-center sampling, with no confounding from surface asymmetry.
-
-Two forms of off-center sampling are studied, corresponding to distinct failure modes a practitioner might encounter:
-
-- **Constant multiplicative bias** (center_scale): every sampling center is shifted by the same multiplicative factor across all compute budgets (e.g., always sampling at 1.5× the true optimal N*). This models a persistent miscalibration, such as using a fixed rule-of-thumb that consistently overestimates or underestimates the optimal size.
-
-- **Drifting bias** (drift_rate): the sampling center diverges progressively from the true optimum as compute budget increases. At low compute, the guess is close; at high compute, it undershoots (toward smaller N). This models the more realistic scenario where prior knowledge degrades at scales beyond what has been explored, causing sampling centers to become increasingly stale as the experiment pushes to larger budgets.
-
-The key question is how each form of bias propagates through the Approach 2 pipeline: does it corrupt only the intercept (as surface asymmetry does), or does it also distort the exponents?
-
-Conditions: symmetric surface (α = β), extra large (±16×) sampling grid, with intentional off-center sampling.
-
-### Constant Multiplicative Bias
-
-All sampling centers shifted by constant factor (e.g., 1.5×). Exponents still perfect, intercepts biased. Why: constant multiplicative offset in log-space is constant additive → shifts intercept only. This is the same mechanism as asymmetric surfaces with perfectly centered sampling — both produce a constant vertex shift across compute budgets.
-
-### Drifting Bias
-
-Bias varies with compute budget (undershoots at low C, overshoots at high C). BOTH exponents and intercepts are wrong. Unlike a constant shift, a drift introduces a compute-dependent vertex shift, which changes the slope of log(N*) vs log(C), corrupting the exponent.
-
-Key message: only constant multiplicative bias preserves exponents; any other pattern introduces errors in both. Constant bias is structurally equivalent to the asymmetry effect (both produce uniform vertex shifts), while drift is qualitatively worse because it distorts the relationship between N* and C itself.
-
-Figures: Comparison of no bias vs. constant scale vs. drift. Exponent error curves for each bias type.
+- In practice you don't know N* before running the experiment; sampling centers are guesses based on prior estimates or heuristics
+- Distinct from asymmetry errors: this is about where you place the grid, not the shape of the surface
+- Study on symmetric surfaces only (α = β) to isolate the effect from asymmetry bias
+- **Constant multiplicative bias**: same factor at every compute budget; corrupts intercepts only (same mechanism as asymmetry errors)
+  - Define "2× offset": each IsoFLOP grid is centered at 2×D* instead of D*, so the grid midpoint sits at twice the true optimum
+  - Figure (1 row × 3 columns): IsoFLOP contours at L (±8×) grid with offset=2× on symmetric surface; D* exponent error and D* intercept error vs grid width (16 points from XS to XL), y-axes matched to show exponent is zero while intercept has systematic bias
+- **Drifting bias**: offset grows with compute budget; corrupts both exponents and intercepts
+- Key message: constant bias preserves exponents; any compute-dependent bias pattern distorts them
 
 ---
 
-## The Fix — Variable Projection Surface Fitting
+## Robust Surface Fitting via Variable Projection
 
-Challenge: naive nonlinear optimization is unstable.
-
-Solution: variable projection. For fixed (α, β), loss function is linear in (E, A, B). Grid search over (α, β), solve linear system for each. Select best, optionally refine with local optimizer.
-
-Result: all 5 parameters recovered perfectly. Extrapolation is perfect.
-
-Key message: variable projection makes direct fitting robust.
-
-Figures: Extrapolation comparison — Approach 2 vs. surface fitting.
-
-
+- Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
+- Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
+- Algorithm: grid search over (α, β), solve the linear system at each grid point, select best fit, optionally refine with a local optimizer
+- Result: all five parameters recovered perfectly; extrapolation is exact
+- Key message: variable projection makes direct surface fitting robust and eliminates the biases introduced by the parabolic approximation
