@@ -94,15 +94,33 @@ Figures: Bar chart with x-axis = loss surface (symmetric, chinchilla, high_imbal
 
 ---
 
-## Sampling Bias — Exponent and Extrapolation Errors
+## Off-Center Sampling — Exponent and Extrapolation Errors
 
-Conditions: symmetric surface (α = β), extra large (±16×) sampling grid, with intentional sampling center bias.
+### Introduction
 
-**Constant multiplicative bias**: All sampling centers shifted by constant factor (e.g., 1.5×). Exponents still perfect, intercepts biased. Why: constant multiplicative offset in log-space is constant additive → shifts intercept only. This is the same mechanism as asymmetric surfaces with no sampling bias — both produce a constant vertex shift across compute budgets.
+All analysis so far has assumed that IsoFLOP sampling grids are centered exactly at the true compute-optimal model size N* for each compute budget. In practice, you don't know N* before running the experiment; that's what you're trying to infer. The sampling center is chosen based on prior estimates, heuristics, or earlier smaller-scale runs, and these are rarely exactly right. We call the systematic offset between the assumed sampling center and the true optimum **off-center sampling**.
 
-**Drifting bias**: Bias varies with compute budget (undershoots at low C, overshoots at high C). BOTH exponents and intercepts are wrong.
+This bias is distinct from the surface asymmetry errors studied in the previous section. Asymmetry errors arise from the shape of the loss surface itself (α ≠ β) and are present even when sampling is perfectly centered. Off-center sampling errors arise from where you place the sampling grid, regardless of the surface shape. In practice both effects compound, but to understand each in isolation, this section studies off-center sampling on **symmetric loss surfaces only** (α = β). On a symmetric surface, the previous section established that Approach 2 produces zero error with perfect centering. Any errors introduced here are therefore purely attributable to off-center sampling, with no confounding from surface asymmetry.
 
-Key message: only constant multiplicative bias preserves exponents; any other pattern introduces errors in both.
+Two forms of off-center sampling are studied, corresponding to distinct failure modes a practitioner might encounter:
+
+- **Constant multiplicative bias** (center_scale): every sampling center is shifted by the same multiplicative factor across all compute budgets (e.g., always sampling at 1.5× the true optimal N*). This models a persistent miscalibration, such as using a fixed rule-of-thumb that consistently overestimates or underestimates the optimal size.
+
+- **Drifting bias** (drift_rate): the sampling center diverges progressively from the true optimum as compute budget increases. At low compute, the guess is close; at high compute, it undershoots (toward smaller N). This models the more realistic scenario where prior knowledge degrades at scales beyond what has been explored, causing sampling centers to become increasingly stale as the experiment pushes to larger budgets.
+
+The key question is how each form of bias propagates through the Approach 2 pipeline: does it corrupt only the intercept (as surface asymmetry does), or does it also distort the exponents?
+
+Conditions: symmetric surface (α = β), extra large (±16×) sampling grid, with intentional off-center sampling.
+
+### Constant Multiplicative Bias
+
+All sampling centers shifted by constant factor (e.g., 1.5×). Exponents still perfect, intercepts biased. Why: constant multiplicative offset in log-space is constant additive → shifts intercept only. This is the same mechanism as asymmetric surfaces with perfectly centered sampling — both produce a constant vertex shift across compute budgets.
+
+### Drifting Bias
+
+Bias varies with compute budget (undershoots at low C, overshoots at high C). BOTH exponents and intercepts are wrong. Unlike a constant shift, a drift introduces a compute-dependent vertex shift, which changes the slope of log(N*) vs log(C), corrupting the exponent.
+
+Key message: only constant multiplicative bias preserves exponents; any other pattern introduces errors in both. Constant bias is structurally equivalent to the asymmetry effect (both produce uniform vertex shifts), while drift is qualitatively worse because it distorts the relationship between N* and C itself.
 
 Figures: Comparison of no bias vs. constant scale vs. drift. Exponent error curves for each bias type.
 
