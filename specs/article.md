@@ -121,10 +121,12 @@
 
 ---
 
-## Robust Surface Fitting via Variable Projection
+## Robust Fits — Unbiased Estimation with Linear Separation
 
 - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
 - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
-- Algorithm: grid search over (α, β), solve the linear system at each grid point, select best fit, optionally refine with a local optimizer
-- Result: all five parameters recovered perfectly; extrapolation is exact
+- This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
+- Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space
+- Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`
+- Key result: all five loss surface parameters (E, A, B, α, β) recovered perfectly; extrapolation is exact
 - Key message: variable projection makes direct surface fitting robust and eliminates the biases introduced by the parabolic approximation

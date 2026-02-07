@@ -568,6 +568,7 @@
                         <li><a href="#drifting-bias">Drifting Bias</a></li>
                     </ol>
                 </li>
+                <li><a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a></li>
             </ol>
         </nav>
 
@@ -1370,6 +1371,61 @@
                     Constant bias preserves exponents; any compute-dependent bias pattern distorts
                     them. The distinction matters because exponent errors compound during extrapolation,
                     while intercept errors remain fixed.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- Section 5: Robust Fits -->
+        <section id="robust-fits">
+            <h2>Robust Fits — Unbiased Estimation with Linear Separation</h2>
+
+            <p>
+                The previous sections showed that Approach 2's parabolic approximation introduces
+                systematic biases in intercepts (from asymmetry) and potentially exponents (from
+                off-center sampling). The natural alternative, Approach 3, fits all five surface
+                parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear least squares,
+                but is notoriously unstable: highly sensitive to initialization and prone to
+                converging to spurious local minima.
+            </p>
+
+            <p>
+                Variable projection offers a middle path. It exploits the partially linear structure
+                of the loss surface: for any fixed values of the exponential terms \((\alpha, \beta)\),
+                the remaining parameters \((E, A, B)\) enter the model linearly and can be solved
+                exactly via ordinary least squares. This is the same computational shortcut that
+                motivates Approach 2, optimizing exponential terms separately from linear terms, but
+                applied here without the parabolic approximation.
+            </p>
+
+            <p>
+                The algorithm is straightforward: search over \((\alpha, \beta)\) and, at each
+                candidate, solve for \((E, A, B)\) analytically via non-negative least squares.
+                A coarse grid search identifies a good starting region, and a local optimizer
+                (Nelder-Mead) refines it. Crucially, the linear separation is maintained throughout:
+                the optimizer only ever navigates the two-dimensional \((\alpha, \beta)\) surface,
+                never the full five-parameter space.
+            </p>
+
+            <figure>
+                <img src="../../results/experiments/exp5/surface_param_errors.png"
+                    alt="Parameter recovery accuracy for variable projection across all five surface parameters">
+                <figcaption>
+                    <strong>Figure 6 (research image):</strong> <em>TODO: Determine final
+                    presentation and layout for article. Parameter recovery to machine precision
+                    across all five loss surface parameters, with no systematic deviations based
+                    on sampling grid centers, drift, or scaling exponent imbalance in the
+                    underlying loss surface.</em>
+                </figcaption>
+            </figure>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Key Result</div>
+                <p>
+                    All five loss surface parameters \((E, A, B, \alpha, \beta)\) are recovered
+                    perfectly. Because the fitted surface is exact, extrapolation to higher compute
+                    budgets is also exact. Variable projection makes direct surface fitting robust
+                    and eliminates the biases introduced by the parabolic approximation.
                 </p>
             </div>
 
