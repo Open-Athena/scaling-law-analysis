@@ -81,6 +81,70 @@
             line-height: 1.5;
         }
 
+        /* Table of Contents */
+        nav.toc {
+            margin-bottom: 3.5rem;
+            padding: 1.75rem 2rem;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        nav.toc h2 {
+            font-size: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+            padding-top: 0;
+        }
+
+        nav.toc ol {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+            counter-reset: toc-counter;
+        }
+
+        nav.toc > ol > li {
+            counter-increment: toc-counter;
+            margin-bottom: 0.4rem;
+        }
+
+        nav.toc > ol > li > a::before {
+            content: counter(toc-counter) ". ";
+            color: var(--text-muted);
+        }
+
+        nav.toc a {
+            color: var(--text-primary);
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-bottom: none;
+        }
+
+        nav.toc a:hover {
+            color: var(--accent-primary);
+            border-bottom: none;
+        }
+
+        nav.toc ol ol {
+            padding-left: 1.5rem;
+            margin-top: 0.3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        nav.toc ol ol li {
+            margin-bottom: 0.2rem;
+        }
+
+        nav.toc ol ol a {
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
         /* Sections */
         section {
             margin-bottom: 4rem;
@@ -457,6 +521,38 @@
             <p class="subtitle">Systematic biases in scaling law inference from IsoFLOP parabola fits</p>
         </header>
 
+        <!-- Table of Contents -->
+        <nav class="toc">
+            <h2>Contents</h2>
+            <ol>
+                <li><a href="#motivation">Motivation</a></li>
+                <li>
+                    <a href="#approaches">Preliminaries — Loss Surface, Notation, and Fitting Methods</a>
+                    <ol>
+                        <li><a href="#approach-2">Approach 2: IsoFLOP Parabolic Fitting</a></li>
+                        <li><a href="#approach-3">Approach 3: Direct Surface Fitting</a></li>
+                    </ol>
+                </li>
+                <li><a href="#happy-path">The Happy Path — Symmetric Surfaces</a></li>
+                <li>
+                    <a href="#asymmetric">Asymmetric Surfaces — Intercept and Extrapolation Errors</a>
+                    <ol>
+                        <li><a href="#what-happens">What Happens</a></li>
+                        <li><a href="#why-surprising">Why This Is Surprising</a></li>
+                        <li><a href="#why-it-happens">Why It Happens</a></li>
+                        <li><a href="#why-it-matters">Why It Matters</a></li>
+                    </ol>
+                </li>
+                <li>
+                    <a href="#off-center">Off-Center Sampling — Exponent and Extrapolation Errors</a>
+                    <ol>
+                        <li><a href="#constant-bias">Constant Multiplicative Bias</a></li>
+                        <li><a href="#drifting-bias">Drifting Bias</a></li>
+                    </ol>
+                </li>
+            </ol>
+        </nav>
+
         <!-- Section: Motivation -->
         <section id="motivation">
             <h2>Motivation</h2>
@@ -464,8 +560,7 @@
             <p>
                 Chinchilla Approach 2 is arguably the most widely adopted method for fitting
                 scaling laws in practice today. Introduced in the original Chinchilla
-                paper<sup><a href="#ref-chinchilla">[1]</a></sup>, it has since been used or
-                adapted by leading AI labs including
+                paper<sup><a href="#ref-chinchilla">[1]</a></sup>, it has since been used by leading AI labs including
                 DeepMind<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-sovit">[7]</a></sup>
                 (its creators),
                 Meta<sup><a href="#ref-llama3">[2]</a>,<a href="#ref-optibert">[9]</a></sup>,
@@ -515,7 +610,7 @@
 
         <!-- Section 1: Approaches to Fitting Scaling Laws -->
         <section id="approaches">
-            <h2>Approaches to Fitting Scaling Laws</h2>
+            <h2>Preliminaries — Loss Surface, Notation, and Fitting Methods</h2>
 
             <p>
                 Neural scaling laws describe how model performance improves with compute.
@@ -552,7 +647,7 @@
                 for planning efficient large-scale training. Two canonical approaches exist:
             </p>
 
-            <h3>Approach 2: IsoFLOP Parabolic Fitting</h3>
+            <h3 id="approach-2">Approach 2: IsoFLOP Parabolic Fitting</h3>
 
             <p>
                 This method is presented in the Chinchilla paper. The key insight is that
@@ -583,7 +678,7 @@
                 around the optimum.
             </p>
 
-            <h3>Approach 3: Direct Surface Fitting</h3>
+            <h3 id="approach-3">Approach 3: Direct Surface Fitting</h3>
 
             <p>
                 The alternative is to fit all five parameters \((E, A, B, \alpha, \beta)\)
@@ -689,7 +784,7 @@
                 (\(\alpha \neq \beta\)).
             </p>
 
-            <h3>What Happens</h3>
+            <h3 id="what-happens">What Happens</h3>
 
             <p>
                 Simulation results show that when the loss surface is asymmetric, Approach 2 produces
@@ -770,7 +865,7 @@
                 </tbody>
             </table>
 
-            <h3>Why This Is Surprising</h3>
+            <h3 id="why-surprising">Why This Is Surprising</h3>
 
             <p>
                 A few percent error in the intercept might seem minor, but consider that this simulation
@@ -790,7 +885,7 @@
                 </p>
             </div>
 
-            <h3>Why It Happens</h3>
+            <h3 id="why-it-happens">Why It Happens</h3>
 
             <p>
                 The IsoFLOP loss curve is not a true parabola; it contains exponential terms.
@@ -864,7 +959,7 @@
                 they don't cancel, shifting the fitted vertex away from the true optimum.
             </p>
 
-            <h3>Why It Matters</h3>
+            <h3 id="why-it-matters">Why It Matters</h3>
 
             <p>
                 Extrapolation to higher compute budgets requires both exponents and intercepts to be correct.
@@ -1119,7 +1214,7 @@
             </p>
 
             <ul>
-                <li><strong>Symmetric surfaces are immune:</strong> When \(\alpha = \beta\), all grid
+                <li><strong>Symmetric surfaces are unaffected:</strong> When \(\alpha = \beta\), all grid
                     widths produce zero error</li>
                 <li><strong>Asymmetric surfaces underestimate:</strong> Negative errors mean the inferred
                     \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
@@ -1166,7 +1261,7 @@
                 zero by construction.
             </p>
 
-            <h3>Constant Multiplicative Bias</h3>
+            <h3 id="constant-bias">Constant Multiplicative Bias</h3>
 
             <p>
                 The simplest form of off-center sampling is a constant multiplicative offset: every
@@ -1231,7 +1326,7 @@
                 </p>
             </div>
 
-            <h3>Drifting Bias</h3>
+            <h3 id="drifting-bias">Drifting Bias</h3>
 
             <p>
                 <em>TODO: When the offset grows with compute budget (e.g., prior estimates become

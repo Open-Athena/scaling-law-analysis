@@ -33,7 +33,7 @@
 
 ---
 
-## Approaches to Fitting Scaling Laws
+## Preliminaries — Loss Surface, Notation, and Fitting Methods
 
 - Introduce the Chinchilla loss surface: L(N, D) = E + A/N^α + B/D^β; define each term (N = parameters, D = tokens, E = irreducible loss, A/B/α/β = scaling coefficients)
 - State the compute-optimal allocation: N* ∝ C^a where a = β/(α+β), D* ∝ C^b where b = α/(α+β); recovering a and b from empirical runs is the goal
@@ -101,7 +101,7 @@
   - Figure (1 row × 1 column): bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces; negative bars = underestimation
   - Collapsible raw data table with full-precision values for all surface/grid combinations
   - Key observations from the figure:
-    - Symmetric surfaces are immune (zero error at all grid widths)
+    - Symmetric surfaces are unaffected (zero error at all grid widths)
     - Asymmetric surfaces always underestimate (predicting fewer tokens than optimal → undertraining)
     - Wider grids amplify error
     - More asymmetry magnifies everything (High Imbalance shows roughly 4–5x larger errors than Chinchilla at each grid width)
