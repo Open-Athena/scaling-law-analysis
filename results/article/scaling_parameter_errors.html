@@ -161,6 +161,61 @@
             background: var(--bg-tertiary);
         }
 
+        /* Print / PDF */
+        @media print {
+            body {
+                padding: 0;
+                font-size: 12px;
+                line-height: 1.45;
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+            }
+
+            h2 {
+                font-size: 1.15rem;
+                margin-top: 1.5rem;
+                margin-bottom: 0.75rem;
+                padding-bottom: 0.5rem;
+            }
+
+            h3 {
+                font-size: 1rem;
+                margin-top: 1rem;
+                margin-bottom: 0.5rem;
+            }
+
+            p {
+                margin-bottom: 0.6rem;
+            }
+
+            ul, ol {
+                margin-bottom: 0.6rem;
+            }
+
+            li {
+                margin-bottom: 0.25rem;
+            }
+
+            .derivation, .result, .note {
+                padding: 0.75rem 1rem;
+                margin: 0.75rem 0;
+            }
+
+            table {
+                margin: 1rem 0;
+                font-size: 0.85rem;
+            }
+
+            th, td {
+                padding: 0.4rem 0.6rem;
+            }
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             body {

@@ -30,18 +30,14 @@ async def main():
         await page.evaluate('() => MathJax.startup.promise')
         await page.wait_for_timeout(2000)
         await page.pdf(path=str(pdf), format='Letter', print_background=True,
-                       scale=0.85, margin=dict(top='15mm', bottom='15mm', left='10mm', right='10mm'))
+                       scale=0.95, margin=dict(top='12mm', bottom='12mm', left='12mm', right='12mm'))
         await browser.close()
 
 asyncio.run(main())
 "
 ```
 
-The article links to this PDF on GitHub, so if the HTML source or PDF has changed, commit and push before building the standalone HTML:
-
-```bash
-git add results/article/scaling_parameter_errors.pdf && git commit -m "Regenerate scaling parameter errors PDF" && git push
-```
+The article links to this PDF via a `blob/main` URL on GitHub, so no special commit ordering is needed — the link always resolves to the latest version on `main`.
 
 ## Syncing CSV Data with Article Text
 
