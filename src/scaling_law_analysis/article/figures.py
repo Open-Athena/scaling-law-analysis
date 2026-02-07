@@ -458,7 +458,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     # Colors for grid widths (4 grids: XS, S, L, XL)
     colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]  # green, blue, orange, red
 
-    fig, ax = plt.subplots(figsize=(11, 4))
+    fig, ax = plt.subplots(figsize=(11, 5.5))
 
     results = {}
     x_positions = np.arange(len(surfaces))
@@ -567,24 +567,15 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     ax.legend(title="Sampling Grid", loc="lower left", fontsize=10)
     ax.grid(True, axis="y", alpha=0.3)
 
-    # Set y-axis to show negative values prominently
-    y_min = min(ax.get_ylim()[0], -55)
-    ax.set_ylim(y_min, 5)
+    # Set y-axis tight to data
+    y_data_min = min(p.get_height() for p in ax.patches if hasattr(p, "get_height"))
+    ax.set_ylim(y_data_min - 2, 2)
 
-    # Add token annotations for Chinchilla in a fan shape below the bars
-    # Fan out: spread annotations horizontally below the Chinchilla bars
-    annotation_y_outer = -18  # y position for outer (1st, 4th) text boxes
-    annotation_y_inner = (
-        -28
-    )  # y position for inner (2nd, 3rd) text boxes, slightly lower
-    annotation_ys = [
-        annotation_y_outer,
-        annotation_y_inner,
-        annotation_y_inner,
-        annotation_y_outer,
-    ]
-    # Fan positions: spread out horizontally for 4 bars
-    # Outer annotations pulled inward, inner annotations stay close to their bars
+    # Add token annotations for Chinchilla bars, fanned just below bar tips
+    chinchilla_min = min(float(ann["bar_bottom"]) for ann in token_annotations)
+    ann_y_outer = chinchilla_min - 2.5
+    ann_y_inner = chinchilla_min - 5.5
+    annotation_ys = [ann_y_outer, ann_y_inner, ann_y_inner, ann_y_outer]
     fan_x_offsets = [-0.30, -0.10, 0.10, 0.30]
 
     # Inner annotations (S, L grids) get a thicker border to highlight practical ranges
