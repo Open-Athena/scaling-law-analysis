@@ -924,6 +924,14 @@
             </p>
 
             <p>
+                Because the IsoFLOP parabola is fit in \(\log N\) space (as described in the
+                Approach 2 procedure), the vertex shift directly biases \(N^*\). Since
+                \(C = 6ND\), analyzing the bias in either \(N^*\) or \(D^*\) is
+                sufficient; we focus on \(N^*\) here since that is where the parabolic
+                fit typically operates.
+            </p>
+
+            <p>
                 Since the vertex shift is constant across all compute budgets, it biases every
                 inferred \(N^*\) by the same multiplicative factor. When fitting
                 \(\log N^*\) vs \(\log C\) to extract scaling exponents:
