@@ -569,7 +569,12 @@
                     </ol>
                 </li>
                 <li><a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a></li>
-                <li><a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a></li>
+                <li>
+                    <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
+                    <ol>
+                        <li><a href="#putting-it-together">Putting It All Together</a></li>
+                    </ol>
+                </li>
                 <li><a href="#conclusion">Conclusion</a></li>
             </ol>
         </nav>
@@ -1481,6 +1486,59 @@
                 conditions of the Happy Path (symmetric surface, perfectly centered grids) are the
                 special case.
             </p>
+
+            <h3 id="putting-it-together">Putting It All Together</h3>
+
+            <p>
+                Given evidence that both surface asymmetry and off-center sampling are present in
+                real studies, we can simulate what happens when these biases act simultaneously.
+                Using the same three loss surfaces and five sampling bias configurations from earlier
+                sections, we fit Approach 2 on compute budgets from 10<sup>17</sup> to 10<sup>21</sup>
+                FLOPs and extrapolate \(D^*\) predictions out to 10<sup>25</sup> FLOPs. Results are
+                shown at two grid widths that bracket the realistic range: XS (±2×) and XL (±16×).
+            </p>
+
+            <figure>
+                <img src="combined_extrapolation_error.png"
+                    alt="Combined extrapolation error across grid widths, surfaces, and sampling biases">
+                <figcaption>
+                    <strong>Figure 8 (research image):</strong> <em>TODO: Determine final
+                    presentation and layout. Relative error in \(D^*\) when extrapolating beyond
+                    the fitting range, with asymmetry and sampling biases acting simultaneously.
+                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and high imbalance
+                    surfaces; one curve per bias configuration (baseline, drift, constant offset).</em>
+                </figcaption>
+            </figure>
+
+            <p>
+                At narrow grids (XS), the parabolic approximation is tight and asymmetry bias is
+                negligible; errors are dominated by sampling biases, with drift creating errors that
+                grow with extrapolation distance (reaching roughly 25% on the high imbalance surface
+                and 8% on the Chinchilla surface at 10<sup>25</sup> FLOPs). At wider grids (XL),
+                asymmetry bias dominates: the perfect-sampling baseline underestimates \(D^*\)
+                by about 5% on the Chinchilla surface and about 20% on the high imbalance surface.
+                In these particular configurations, the sampling biases happen to partially offset
+                the asymmetry error, but this is not guaranteed: the direction of each bias source
+                depends on the sign and magnitude of the offset, and the two can just as easily
+                compound as cancel.
+            </p>
+
+            <p>
+                <em>TODO: Add a configuration where the bias sources reinforce rather than offset
+                each other (e.g. an offset direction that pushes in the same direction as asymmetry
+                error), to demonstrate the compounding case directly.</em>
+            </p>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Key Result</div>
+                <p>
+                    Multiple bias sources act simultaneously in any real experiment. Even individually,
+                    asymmetry and sampling biases each produce meaningful errors; when they happen to
+                    align, the combined error can exceed either one alone. At practical grid widths
+                    with Chinchilla-like asymmetry, errors of 5% or more in \(D^*\) are typical, and
+                    on more asymmetric surfaces the errors reach 20% or more.
+                </p>
+            </div>
 
         </section>
 
