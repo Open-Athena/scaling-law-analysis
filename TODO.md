@@ -8,8 +8,8 @@ On article:
   - Make sure to show errors for more common grid widths (e.g. +/-10x)
   - Add section on what is a "normal" grid width
 - Links to share from simple demo example:
-  - https://gemini.google.com/share/67e761f19481
-  - https://chatgpt.com/share/69853e09-8180-800e-8eaf-0840cd5d2d45
+  - https://gemini.google.com/share/707eb7ef86ee
+  - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
 - Reduce decimal precision in figures where possible
 - Expand on this:
   - > For surfaces with asymmetric exponents, wider sampling grids amplify the parabola-fitting mismatch, increasing the constant vertex shift and thus the intercept bias.

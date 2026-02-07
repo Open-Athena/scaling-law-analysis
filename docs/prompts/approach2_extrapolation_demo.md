@@ -1,4 +1,4 @@
-# Approach 2 Extrapolation Demo
+# Chinchilla Approach 2 Extrapolation Error Demo
 
 Create a self-contained Python script comparing Chinchilla Approach 2 token predictions against the analytical ground truth.
 
@@ -10,7 +10,7 @@ The script should:
 - Use the compute constraint `C = 6 * N * D` (FLOPs)
 - Derive the analytical ground truth (Section 3): minimizing L subject to the compute constraint yields `Dₒₚₜ(C) = (1/G) * (C/6)^b` where `b = α/(α+β)` and `G = (α*A / (β*B))^(1/(α+β))`
 - Implement Approach 2 (Section 3):
-  - For each compute budget in `[1e17, 1e18, 1e19, 1e20, 1e21]`, sample 15 points along the IsoFLOP curve spanning ±16x around the true optimum (log₁₀ range = 1.2)
+  - For each compute budget in `[1e17, 1e18, 1e19, 1e20, 1e21]`, sample 16 points along the IsoFLOP curve spanning from `Dₒₚₜ/8` to `8*Dₒₚₜ` (a 64× ratio end-to-end, or ≈1.806 decades in log₁₀ space)
   - Fit a parabola to `L vs log₁₀(D)` for each budget and extract the vertex as the inferred `Dₒₚₜ`
 - Fit a power law `log₁₀(Dₒₚₜ) = b * log₁₀(C) + b₀` to the inferred optima via linear regression
 - Extrapolate to `C = 1e24` FLOPs: use the fitted coefficients (`b`, `b₀`) to predict `Dₒₚₜ` at the new budget, and compare against the analytical ground truth at the same budget
