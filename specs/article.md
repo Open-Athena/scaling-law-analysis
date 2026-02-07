@@ -1,96 +1,100 @@
-# Article Spec: Scaling Law Fitting Pitfalls
+# Article Spec: Problems with Chinchilla Approach 2
 
-## Agent Instructions
-
-- Create blog post as single html file based on this spec.
-- Length: target a ~20 minute read. 
-- Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances. 
-- Purpose: Demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data. 
-- Figures: Use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project.
-- Tone: Use a soft, neutral tone; avoid strong language like "catastrophic", "disastrous", "corrupted", etc. when referring to critiques of Approach 2; target a more balanced, informative tone.
-- Grammar: Avoid em dashes; use other grammatical devices instead.
+> **Editorial Guidelines**
+>
+> - Format: single self-contained HTML file
+> - Length: target a ~20 minute read
+> - Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances
+> - Purpose: demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data
+> - Figures: use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project
+> - Tone: soft, neutral; avoid strong language like "catastrophic", "disastrous", "corrupted" when referring to critiques of Approach 2; target a balanced, informative register
+> - Grammar: avoid em dashes; use other grammatical devices instead
 
 ---
 
 ## Motivation
 
-- **Where it comes from**: TBD — origin of Approach 2, the Chinchilla paper context
-- **Who uses this method**: TBD — labs, researchers, practitioners applying scaling laws
-- **Why they use it**: TBD — simplicity, avoids nonlinear optimization, interpretable steps
-- **Why I'm personally using it**: TBD — specific context for this analysis, scaling laws for scientific data modalities
-
-**Article focus**: This article examines pitfalls of Approach 2 using noise-free synthetic data. By eliminating statistical noise, we isolate the systematic biases inherent to the method itself.
+- TBD: origin of Approach 2 and the Chinchilla paper context
+- TBD: who uses this method (labs, researchers, practitioners)
+- TBD: why they use it (simplicity, avoids nonlinear optimization, interpretable steps)
+- TBD: personal motivation (scaling laws for scientific data modalities)
+- Article focus: examine pitfalls of Approach 2 using noise-free synthetic data; by eliminating noise, isolate systematic biases inherent to the method itself
 
 ---
 
 ## Approaches to Fitting Scaling Laws
 
-Brief recap of Chinchilla loss surface: `L(N, D) = E + A/N^α + B/D^β`
-
-**Approach 2** (IsoFLOP Parabolic Fitting): Sample loss along fixed-compute contours. Fit parabolas to `L vs. log(N)` at each compute budget. Extract optimal N* from parabola vertices. Fit power law `N* ∝ C^a` to infer scaling exponents. Key assumption: parabolas accurately approximate loss near optimum.
-
-**Approach 3** (Direct Surface Fitting): Fit all 5 parameters simultaneously via nonlinear optimization. Known to be unstable and initialization-sensitive.
-
-Figure: Schematic of Approach 2 pipeline (sample → fit parabolas → extract minima → fit power law)
+- Introduce the Chinchilla loss surface: L(N, D) = E + A/N^α + B/D^β; define each term (N = parameters, D = tokens, E = irreducible loss, A/B/α/β = scaling coefficients)
+- State the compute-optimal allocation: N* ∝ C^a where a = β/(α+β), D* ∝ C^b where b = α/(α+β); recovering a and b from empirical runs is the goal
+- **Approach 2: IsoFLOP Parabolic Fitting**
+  - Key insight: along a fixed-compute contour, loss as a function of log N is approximately parabolic near the optimum
+  - Three-step pipeline: (1) sample IsoFLOP contours at various (N, D) pairs for each compute budget, (2) fit parabolas and extract vertex N* for each budget, (3) regress log N* against log C to recover scaling exponent
+  - Appeal is simplicity: only polynomial fits, no nonlinear optimization; parabolic approximation comes from Taylor expansion around the optimum
+- **Approach 3: Direct Surface Fitting**
+  - Fit all five parameters (E, A, B, α, β) simultaneously via nonlinear least squares
+  - Avoids the parabolic approximation entirely but is notoriously unstable: sensitive to initialization, prone to spurious local minima
 
 ---
 
 ## The Happy Path — Symmetric Surfaces
 
-Conditions: symmetric surface (α = β, A = B), perfect sampling centers, extra large (±16×) sampling grid, no noise.
-
-Show isoflop curves and parabola fits. Exponents a, b perfectly recovered. Intercepts a₀, b₀ perfectly recovered. Extrapolation is perfect.
-
-Key message: under symmetric conditions, Approach 2 is flawless.
-
-Figures: IsoFLOP curves with parabola fits (symmetric). Power-law fits showing perfect alignment.
+- Frame as establishing a baseline before examining failure modes
+- Use a concrete symmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
+- Note that equal exponents (α = β) mean compute splits evenly; true scaling exponents are a = b = 0.5
+- Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs, fit parabolas, extract optimal D*
+- Figure: IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
+- Table: show perfect recovery of b (D* exponent) and b₀ (D* intercept) with machine-precision relative errors (~10⁻¹⁰ %)
+- Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabolic approximation is exact when α = β
+- Close by noting this baseline is precisely correct under ideal conditions that are unrealistic in practice; the following sections perturb these conditions in controlled ways
 
 ---
 
 ## Asymmetric Surfaces — Intercept and Extrapolation Errors
 
-Conditions: asymmetric surface (α ≠ β), perfect sampling centers, extra large (±16×) sampling grid, no noise.
+- Frame as repeating the exact same procedure as the Happy Path; only change is α ≠ β
 
-### What Happens
+- **What Happens**
+  - Asymmetric surfaces produce systematically wrong intercepts while exponents remain accurate
+  - Two test configurations: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and High Imbalance (α=0.465, β=0.155, ratio = 3.0)
+  - Figure: Approach 2 on both asymmetric surfaces; visible gap between true (dashed) and inferred (solid) power-law lines, especially for High Imbalance
+  - Tables for each surface showing b exponent with negligible error but b₀ intercept with meaningful error; error larger for High Imbalance than Chinchilla
 
-Simulation results show that when the loss surface is asymmetric, Approach 2 produces systematically wrong intercepts while exponents remain accurate. This isn't statistical noise — it's a deterministic bias from fitting parabolas to a non-parabolic surface.
+- **Why This Is Surprising**
+  - Acknowledge that a few percent may seem minor, then enumerate the ideal advantages given to Approach 2: perfect data (no noise, every point exactly on the true surface), perfect sampling (centered at true optimum), and standard parameters (from the Chinchilla paper, not contrived)
+  - Key result: even under these ideal conditions, Approach 2 produces biased intercepts; the error is inherent to the parabolic approximation
 
-Figures: Exponent error (~0) vs. intercept error (nonzero) by sampling range. True vs. inferred parabola minima overlay.
+- **Why It Happens**
+  - IsoFLOP loss curve is not a true parabola; it contains exponential terms
+  - Parabola vertex shift depends only on surface shape (α, β) and sampling grid, not on compute budget; wider grids amplify the mismatch
+  - Because the vertex shift is constant across compute budgets, it biases every N* by the same multiplicative factor:
+    - Slope (exponent) is unchanged (constant additive shift in log-space doesn't affect slope)
+    - Intercept absorbs the entire error
+  - Exact derivation: intercept error = 10^(δw) − 1, where δw = f(α, β, W, n) depends only on surface exponents and sampling grid (width W in log-space, n points per IsoFLOP curve); properties: δw = 0 when α = β, grows with |α − β|, grows with W
+  - Concrete example: show how Chinchilla parameters yield small intercept error at narrow grid vs. larger error at wide grid
+  - Link to full closed-form derivation document
+  - Taylor expansion intuition: parabola = 2nd-order Taylor expansion; higher-order terms grow with sampling range; odd-order terms cancel for symmetric surfaces (preserving vertex) but not for asymmetric ones (shifting vertex)
 
-### Why This Is Surprising
+- **Why It Matters**
+  - Transition: extrapolation requires both exponents and intercepts to be correct; now quantify the practical impact via compute-optimal token prediction
+  - Introduce varying grid widths; define the ±kx notation (range from 1/k to k times optimum, total ratio k², decade span = log₁₀(k²))
+  - Table of four grid widths:
 
-This happens for the Chinchilla paper's own reported parameters (α=0.34, β=0.28). Even with perfect, noiseless data sampled exactly at the true optimum, Approach 2 returns biased intercepts.
+    | Grid Name          | ±k×  | Sampling Range     | Total Ratio | Decade Span (factors of 10) |
+    |--------------------|------|--------------------|-------------|-----------------------------|
+    | Extra Small (XS)   | ±2×  | 1/2× to 2×        | 4×          | 0.60                        |
+    | Small (S)          | ±4×  | 1/4× to 4×        | 16×         | 1.20                        |
+    | Large (L)          | ±8×  | 1/8× to 8×        | 64×         | 1.81                        |
+    | Extra Large (XL)   | ±16× | 1/16× to 16×      | 256×        | 2.41                        |
 
-### Why It Happens
-
-The IsoFLOP loss curve is not a true parabola — it contains exponential terms. When a parabola is fit to this curve, the parabola's minimum (vertex) doesn't land exactly at the true optimum. It shifts slightly — and the key insight is that this shift depends only on the loss surface shape (α, β) and the sampling grid. It does not depend on compute budget. The sampling grid size becomes important here: wider grids amplify the mismatch between the true curve and its parabolic approximation, increasing the vertex shift.
-
-Since the vertex shift is constant across all compute budgets, it biases every inferred N* by the same multiplicative factor. When fitting log(N*) vs log(C) to extract scaling exponents:
-- The slope (exponent) is unchanged — multiplying all N* values by a constant factor adds a constant to log(N*), which doesn't affect the slope
-- The intercept absorbs the entire error — it's biased by exactly that multiplicative factor
-
-**Exact derivation**: The intercept error can be derived analytically in closed form as a function of only α, β, and the sampling grid — no other parameters affect it. Link to full derivation document. Include key results from the linked derivation (e.g., the closed-form expression for vertex shift and how it scales with grid width).
-
-**Intuition via Taylor expansion**: A parabola is a 2nd-order polynomial, which is equivalent to a 2nd-order Taylor expansion around the optimum. The approximation L(w) ≈ L(0) + ½L''(0)w² is only valid when higher-order terms are negligible — i.e., when samples are close to the true minimum. As sampling range increases, 3rd and 4th order terms grow. For symmetric surfaces (α = β), odd-order terms cancel by symmetry, preserving the vertex location. For asymmetric surfaces, they don't cancel, shifting the fitted vertex away from the true optimum.
-
-### Why It Matters
-
-Extrapolation to higher compute budgets requires both exponents and intercepts to be correct. The previous section established that asymmetric loss surfaces produce provably biased intercepts even under ideal experimental conditions. Here we quantify what those errors mean in practical terms by examining compute-optimal token prediction: given a compute budget, how many tokens does the inferred scaling law predict?
-
-Up to this point, all analysis has assumed a single fixed sampling grid width. We now examine how token prediction error varies with both compute budget and sampling grid width. For surfaces with asymmetric exponents, wider sampling grids amplify the parabola-fitting mismatch, increasing the constant vertex shift and thus the intercept bias.
-
-A sampling grid of "±k×" means model sizes range from 1/k× to k× the true optimum at each compute budget. The total range covered is k² (the ratio of largest to smallest model size). The log₁₀ of that ratio tells you how many factors of 10, or "decades," the grid spans end-to-end (e.g. a value of 1.81 means the largest model is 10^1.81 ≈ 64× the smallest). The table below shows the four grid widths used in this analysis:
-
-| Grid Name          | ±k×  | Sampling Range     | Total Ratio | Decade Span (factors of 10) |
-|--------------------|------|--------------------|-------------|-----------------------------|
-| Extra Small (XS)    | ±2×  | 1/2× to 2×        | 4×          | 0.60                        |
-| Small (S)          | ±4×  | 1/4× to 4×        | 16×         | 1.20                        |
-| Large (L)          | ±8×  | 1/8× to 8×        | 64×         | 1.81                        |
-| Extra Large (XL)    | ±16× | 1/16× to 16×      | 256×        | 2.41                        |
-
-In practice, scaling law experiments typically sample across 1 to 2 decades in token count, placing the Small and Large grids squarely within the realistic range. The Extra Small and Extra Large grids bracket this range on either side, illustrating how the biases shrink or grow as the sampling window narrows or widens. The Extra Large grid (±16×, ~2.4 decades) is the default used in all single-grid analyses in the preceding sections.
-
-Figures: Bar chart with x-axis = loss surface (symmetric, chinchilla, high_imbalance), y-axis = relative error in D* (%). Bars grouped by sampling grid width (extra small ±2×, small ±4×, large ±8×, extra large ±16×). Single extrapolation budget (10²⁴ FLOPs). Negative bars = underestimation. Annotate with true D* scale.
+  - Note that real experiments typically span 1–2 decades, making S and L the realistic range; XS and XL bracket either side; XL is the default used in preceding single-grid analyses
+  - Figure: bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces; negative bars = underestimation
+  - Collapsible raw data table with full-precision values for all surface/grid combinations
+  - Key observations from the figure:
+    - Symmetric surfaces are immune (zero error at all grid widths)
+    - Asymmetric surfaces always underestimate (predicting fewer tokens than optimal → undertraining)
+    - Wider grids amplify error
+    - More asymmetry magnifies everything (High Imbalance shows roughly 4–5x larger errors than Chinchilla at each grid width)
+  - Key result: highlight a concrete case using the Chinchilla surface with a practical grid width; show the absolute token shortfall at 10²⁴ FLOPs; emphasize these are ideal conditions, real experiments can only do worse
 
 ---
 
