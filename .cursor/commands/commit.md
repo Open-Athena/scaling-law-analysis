@@ -1,3 +1,0 @@
-# commit
-
-Commit current changes.

@@ -18,4 +18,4 @@
 ## Style
 - Always use absolute imports
 - Do not create `__init__.py` files with re-exports; keep them empty or omit them
-- Don't edit README.md unless explicitly asked
+- Don't edit TODO.md — it is maintained by humans only
