@@ -9,6 +9,12 @@
 > - Figures: use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project
 > - Tone: soft, neutral; avoid strong language like "catastrophic", "disastrous", "corrupted" when referring to critiques of Approach 2; target a balanced, informative register
 > - Grammar: avoid em dashes; use other grammatical devices instead
+> - References:
+>   - Source YAML: `docs/references/references.yaml`; generated HTML: `results/article/references/references.html` (run `uv run python -m scaling_law_analysis.references` to regenerate)
+>   - Inline citations: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list
+>   - To include in the article: copy the contents of `references.html` into the `<article>` as the last `<section>` before the closing `</article>` tag
+>   - In the outline, cite references as `[KEY]` (e.g. `[chinchilla]`); these map to keys in the YAML
+>   - All inline citations belong in the Motivation section unless explicitly noted otherwise; that section introduces every source referenced later in the article
 
 ---
 

@@ -37,16 +37,26 @@ uv run python -m scaling_law_analysis.experiments.run_all
 
 ## TODO
 
-- Conclusions to emphasize:
-  - It really only takes subtle differences in where parabola minima are to result in significant extrapolation errors
-    - Emphasize this by showing a chinchilla surface with center scaling and correct exponents / incorrect intercepts
-    - Discuss how close the true and inferred parabola minima are to each other, and how this would be virtually impossible to detect w/ statistical noise
-  - Extrapolation relies on scaling exponents AND intercepts from log-linear (D_opt ~ A * C^alpha) fits 
-    - See https://github.com/marin-community/marin/blob/ce63e88434e0a44eba787747dbdd6a97123fb650/lib/marin/src/marin/scaling_laws/isoflop_analysis.py#L396
-  - Taylor approximation accuracy effects intercept inference, not exponent inference
-  - Sampling bias affects both exponents and intercepts, depending on the nature of that bias
-    - A constant multiplicative bias, i.e. constant offset from center, effects only the intercepts
-    - Anything else that does not result in a constant, multiplicative change from true centers effects both exponents and intercepts (e.g. drift)
+On article:
+
+- Discuss practical relevance of sampling grid width
+  - Note that many experiments (like Llama3 and Marin) use token grids spanning 1-2 decades (OOMs base 10)
+  - This contrasts with the 16x sampling grid in the current write-up, which spans ~2.4 decades
+  - Make sure to show errors for more common grid widths (e.g. +/-10x)
+  - Add section on what is a "normal" grid width
 - Links to share from simple demo example:
   - https://gemini.google.com/share/67e761f19481
   - https://chatgpt.com/share/69853e09-8180-800e-8eaf-0840cd5d2d45
+- Reduce decimal precision in figures where possible
+- Move derivation to pdf in repo and link in article
+- Expand on this:
+  - > For surfaces with asymmetric exponents, wider sampling grids amplify the parabola-fitting mismatch, increasing the constant vertex shift and thus the intercept bias.
+  - Mention that it affects extrapolation as well
+- Rename "High Imbalance" to "Asymmetric"
+- Replace references to scaling grid sizes with code blocks e.g. `Small` instead of "Small"
+- Rephrase "Symmetric surfaces are immune"
+- Change y-range of first extrapolation error plot (bars are too small)
+- Update "The Happy Path — Symmetric Surfaces" section title
+- Create combined figure of real isoflop curve plots from Llama, DeepSeek, etc. showing how these sampling biases are real
+- Prior to final review:
+  - Review figures.py for ways to use existing code utilities and then regen
