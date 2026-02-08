@@ -65,4 +65,5 @@ One-time setup: in repo Settings → Pages, set source to **Deploy from a branch
 6. **Build supplementary PDF** — skip if `scaling_parameter_errors.html` hasn't changed (see [above](#scaling-parameter-errors-pdf))
 7. **Build standalone HTML** (see [Standalone HTML](#standalone-html) above)
 8. **Push to `main`**
-9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab
+9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab or via `gh workflow run`
+   - Agents: run without sandbox to avoid SSL errors
