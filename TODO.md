@@ -18,3 +18,10 @@ On article:
   - Make it clear that approach 2 only fits two params of the surface, and that just avoiding the others is an important part of its adoption
 - Prior to final review:
   - Review figures.py for ways to use existing code utilities and then regen
+- SDD refactor 
+  - Refactor AGENTS.md to explain specs 
+  - Move build.md to specs/ and add sync.md
+  - Add commands for build, sync, review, deploy (on top of global commit and push)
+  - copy review as subagent for orthogonality
+
+

@@ -2,14 +2,14 @@
 
 > **Editorial Guidelines**
 >
-> - Format: single self-contained HTML file (see `docs/build.md` for the full build workflow)
+> - Format: single self-contained HTML file (see `specs/build.md` for the full build workflow)
 > - Length: target a ~20 minute read
 > - Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances
 > - Purpose: demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data
 > - Figures: use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project
 > - Tone: soft, neutral; avoid strong language like "catastrophic", "disastrous", "corrupted" when referring to critiques of Approach 2; target a balanced, informative register
 > - Grammar: avoid em dashes; use other grammatical devices instead
-> - References (see `docs/build.md` for regeneration steps):
+> - References (see `specs/build.md` for regeneration steps):
 >   - Source of truth: `docs/references/references.yaml`
 >   - Inline citation format: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list
 >   - In this outline, cite as `[KEY]` (e.g. `[chinchilla]`); these map to keys in the YAML
