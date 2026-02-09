@@ -27,30 +27,20 @@ This project follows Spec-Driven Development (SDD). The `specs/` directory is a 
 
 ## Project Structure
 
-```
-specs/                       # This directory — see Spec Index above
-src/scaling_law_analysis/    # All implementation code
-  chinchilla.py              #   Loss surface and Approach 2 fitting
-  config.py                  #   Shared surface configurations
-  experiments/               #   Experiment scripts and runner
-  article/                   #   Article figure generation and standalone builder
-  references.py              #   Reference list generator from YAML
-docs/                        # Supplementary documentation
-  references/                #   references.yaml (source of truth for citations)
-results/                     # All generated outputs (git-tracked)
-  experiments/               #   Per-experiment figures (exp{N}/)
-  article/                   #   Article HTML, figures, CSVs, and supplementary PDF
-```
-
-## Implementation Map
-
-| Module | Role |
-|--------|------|
-| `chinchilla.py` | Loss surface model, IsoFLOP sampling, Approach 2 parabolic fitting, surface fitting via variable projection |
-| `config.py` | Project paths (`PROJECT_ROOT`, `RESULTS_DIR`) |
-| `experiments/common.py` | Shared experiment config: compute budgets, sampling ranges, surface configs, bias configs, plotting utilities |
-| `experiments/exp{N}_*.py` | Individual experiment scripts; each writes to `results/experiments/exp{N}/` |
-| `experiments/run_all.py` | Runs all experiments sequentially |
-| `article/figures.py` | Generates article figures and CSV data to `results/article/` |
-| `article/standalone.py` | Inlines images into self-contained HTML |
-| `references.py` | Renders `docs/references/references.yaml` to HTML |
+| Path | Role |
+|------|------|
+| `specs/` | Spec directory — see Spec Index above |
+| `src/scaling_law_analysis/` | All implementation code |
+| `  chinchilla.py` | Loss surface model, IsoFLOP sampling, Approach 2 parabolic fitting, surface fitting via variable projection |
+| `  config.py` | Project paths (`PROJECT_ROOT`, `RESULTS_DIR`), shared surface configurations |
+| `  references.py` | Renders `docs/references/references.yaml` to HTML |
+| `  experiments/common.py` | Shared experiment config: compute budgets, sampling ranges, surface configs, bias configs, plotting utilities |
+| `  experiments/exp{N}_*.py` | Individual experiment scripts; each writes to `results/experiments/exp{N}/` |
+| `  experiments/run_all.py` | Runs all experiments sequentially |
+| `  article/figures.py` | Generates article figures and CSV data to `results/article/` |
+| `  article/standalone.py` | Inlines images into self-contained HTML |
+| `docs/` | Supplementary documentation |
+| `  references/` | `references.yaml` — source of truth for citations |
+| `results/` | All generated outputs (git-tracked) |
+| `  experiments/` | Per-experiment figures (`exp{N}/`) |
+| `  article/` | Article HTML, figures, CSVs, and supplementary PDF |
