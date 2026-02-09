@@ -114,8 +114,8 @@
 - Distinct from asymmetry errors: this is about where you place the grid, not the shape of the surface
 - Study on symmetric surfaces only (α = β) to isolate the effect from asymmetry bias
 - **Constant multiplicative bias**: same factor at every compute budget; corrupts intercepts only (same mechanism as asymmetry errors)
-  - Define "2× offset": each IsoFLOP grid is centered at 2×D* instead of D*, so the grid midpoint sits at twice the true optimum
-  - Figure (1 row × 3 columns): IsoFLOP contours at L (±8×) grid with offset=2× on symmetric surface; D* exponent error and D* intercept error vs grid width (16 points from XS to XL), y-axes matched to show exponent is zero while intercept has systematic bias
+  - Define "3× offset": each IsoFLOP grid is centered at 3×D* instead of D*, so the grid midpoint sits at three times the true optimum
+  - Figure (1 row × 3 columns): IsoFLOP contours at L (±8×) grid with offset=3× on symmetric surface; D* exponent error and D* intercept error vs grid width (16 points from XS to XL), y-axes matched to show exponent is zero while intercept has systematic bias
 - **Drifting bias**: offset grows with compute budget; corrupts both exponents and intercepts
 - Key message: constant bias preserves exponents; any compute-dependent bias pattern distorts them
 
