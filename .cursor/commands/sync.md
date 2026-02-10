@@ -1,11 +1,11 @@
 # sync
 
-Synchronize specs and outputs per [specs/sync.md](../../specs/sync.md). Skip build steps (use /build separately).
+Synchronize specs and implementation per [specs/sync.md](../../specs/sync.md).
 
 ## Mode
 
 - **`/sync`** or **`/sync changes`**: Sync only what is affected by changes in the working tree.
-- **`/sync all`**: Review all spec ↔ output links regardless of local changes.
+- **`/sync all`**: Review all spec ↔ implementation links regardless of local changes.
 
 ## Output
 

@@ -1,33 +1,29 @@
-# Spec ↔ Output Sync
+# Spec ↔ Implementation Sync
 
-After changing any spec or output, check this document to see what else needs manual updating. Syncs are bidirectional: spec changes may require output edits, and output edits may require spec updates.
+After changing any spec or implementation, check this document to see what else needs updating. Changes may originate on either side. The sync process is responsible for recovering consistency: if a change affects a topic covered by a spec, the other side must be updated to match. Changes that fall outside the spec's scope do not require a sync (see [Spec-Driven Development](project.md#spec-driven-development)).
 
-## Experiments
+## Spec → Implementation
 
-- `specs/experiments.md` ↔ `results/experiments/exp{N}/`
-- **Spec → Output**: methodology changes require re-running experiments
-- **Output → Spec**: if experiment code evolves (e.g. new parameters, revised visualizations), update the spec to match
+When a spec changes, the implementation it controls must be updated to match. See [build.md](build.md) for the commands to regenerate implementation artifacts.
 
-## Article
+- `specs/experiments.md` → `results/experiments/exp{N}/`: methodology changes require re-running experiments ([build.md > Full Workflow](build.md#full-workflow), step 1)
+- `specs/article.md` → `results/article/`: outline or figure spec changes require updating `article.html` and regenerating figures ([build.md > Full Workflow](build.md#full-workflow), steps 2–7)
 
-- `specs/article.md` ↔ `results/article/`
-- **Spec → Output**: outline or figure spec changes require updating `article.html` and regenerating figures
-- **Output → Spec**: if article prose or figure content is revised directly in `article.html`, update the spec to reflect the new intent
+## Implementation → Spec
 
-### CSV Data in Article Text
+Required only for implementation changes that touch topics a spec covers. If the implementation evolves beyond the spec's scope, no update is needed — but if a change contradicts or modifies something a spec specifies, the spec must be updated to match.
 
-The figure generator exports numerical results alongside each figure:
+- `results/experiments/exp{N}/` → `specs/experiments.md` — never add experimental results or findings to experiment specs. Experiment specs define intent and methodology only.
+- `results/article/` → `specs/article.md`
 
-- `results/article/extrapolation_error_data.csv` — token prediction errors by surface and grid width
-- `results/article/off_center_extrapolation_data.csv` — off-center sampling errors by grid width
+## Implementation → Implementation
 
-Specific values from these CSVs (e.g. error percentages, token counts) are hardcoded in `results/article/article.html` — both in prose and in data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match.
+When one implementation artifact changes, other artifacts that depend on it may need updating.
 
-## Specs Cross-References
+- **CSV data in article text**: The figure generator exports numerical results alongside each figure (`results/article/extrapolation_error_data.csv`, `results/article/off_center_extrapolation_data.csv`). Specific values from these CSVs are hardcoded in `results/article/article.html` — both in prose and in data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match.
+
+## Spec → Spec
 
 Specs reference each other and external files (e.g. `AGENTS.md`, `README.md`). When renaming, moving, or restructuring any spec, review links in all markdown files across the project — not just within `specs/`.
 
-## Rules
-
-- **Never add experimental results or findings to specs.** Specs define intent and methodology only.
-- Changes to methodology or structure go through specs first; changes to presentation or content discovered during output editing get reflected back into specs.
+This includes `sync.md` itself: when specs are added or removed, when the mapping between specs and implementation artifacts changes, or when build steps are restructured, update this document to reflect the new relationships.

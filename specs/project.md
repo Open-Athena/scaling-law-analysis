@@ -6,15 +6,17 @@ Demonstrate whether flaws in Chinchilla Approach 2 for scaling law exponent infe
 
 ## Spec-Driven Development
 
-This project follows Spec-Driven Development (SDD). The `specs/` directory is a compressed, authoritative representation of project intent and design maintained collaboratively across human and agentic workflows. It serves as the primary entrypoint for development and as curated, persistent memory for agent execution. Adherence is mandatory for all agentic work.
+This project follows Spec-Driven Development (SDD). The `specs/` directory is an opinionated, operator-curated interface that captures project intent and design at a level of detail chosen by the operator. It serves as the primary entrypoint for development and as curated, persistent memory for agent execution. Specs are maintained collaboratively across operator and agentic workflows.
+
+**Key principle — asymmetric fidelity:**
+- **Spec → Implementation** is lossless. Everything stated in a spec must be faithfully reflected in the implementation. Adherence is mandatory for all agentic work.
+- **Implementation → Spec** is lossy by design. The implementation may contain details, decisions, and elaborations that are not captured in specs. This is expected and acceptable — specs are not intended to be a comprehensive mirror of the codebase. The operator decides what belongs in specs and what does not. However, if an implementation change affects something the spec *does* cover, the spec must be updated to match. Specs and implementation must not drift on covered topics.
 
 **Process:**
 1. **Consult specs** before starting any work. Start here, then consult the relevant spec below.
 2. **Align planning** to the requirements in specs.
-3. **Update specs first** when intent or methodology changes; seek approval before implementing.
+3. **Keep specs in sync.** Changes may originate in specs or implementation. When a change affects a topic covered by a spec, update the other side to match (see [sync.md](sync.md)). Seek operator approval before making spec changes.
 4. **Verify** all work against the success criteria defined in specs.
-
-**Never add experimental results or findings to specs.** Specs define what to build and test, not what was observed.
 
 ## Spec Index
 
@@ -23,7 +25,7 @@ This project follows Spec-Driven Development (SDD). The `specs/` directory is a 
 | [experiments.md](experiments.md) | Experiment definitions: hypotheses, methods, visualizations |
 | [article.md](article.md) | Article outline, editorial guidelines, figure specifications |
 | [build.md](build.md) | Build & deploy workflow: experiments → figures → article → deploy |
-| [sync.md](sync.md) | Spec ↔ output sync: which specs control which artifacts, update rules |
+| [sync.md](sync.md) | Spec ↔ implementation sync: which specs control which artifacts, update rules |
 
 ## Project Structure
 

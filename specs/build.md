@@ -8,7 +8,7 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 2. **Generate article figures** (outputs to `results/article/`):
    `uv run python -m scaling_law_analysis.article.figures`
 3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
-4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > CSV Data in Article Text](sync.md#csv-data-in-article-text))
+4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))
 5. **Edit article**: `results/article/article.html`
 6. **Build supplementary PDF** — skip if `scaling_parameter_errors.html` hasn't changed (see [Scaling Parameter Errors PDF](#scaling-parameter-errors-pdf))
 7. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
