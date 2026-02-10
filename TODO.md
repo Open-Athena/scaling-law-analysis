@@ -16,6 +16,8 @@ On article:
   - > Asymmetric curve shapes: The IsoFLOP curves are visibly steeper on one side of the minimum than the other, consistent with alpha != beta. This is the condition under which the parabolic approximation introduces systematic intercept bias.
 - High priority:
   - Make it clear that approach 2 only fits two params of the surface, and that just avoiding the others is an important part of its adoption
+  - Add "Why it doesn't matter" section on loss floor at high compute budgets
+  - Make connection to downstream performance per FLOP/$
 - Prior to final review:
   - Review figures.py for ways to use existing code utilities and then regen
 - SDD refactor 
