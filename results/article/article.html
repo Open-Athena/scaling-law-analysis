@@ -1363,22 +1363,35 @@
             <h3 id="drifting-bias">Drifting Bias</h3>
 
             <p>
-                <em>TODO: When the offset grows with compute budget (e.g., prior estimates become
-                progressively worse at higher compute), both exponents and intercepts are corrupted.
-                This is qualitatively different from constant bias and represents a more severe
-                failure mode. Exact presentation details are yet to be determined.</em>
+                When the offset varies with compute budget, a qualitatively different failure
+                mode emerges. To illustrate this, we apply a linear drift: the sampling center
+                starts at the true optimum for the lowest budget and drifts to 3× the true
+                optimum at the highest budget, interpolating linearly in log-compute space.
+            </p>
+
+            <p>
+                Because the offset now differs across compute budgets, it no longer cancels
+                in the slope of \(\log D^*\) vs \(\log C\). Both the exponent and the
+                intercept are affected.
             </p>
 
             <figure>
                 <img src="off_center_drifting_bias.png"
                     alt="Off-center sampling with drifting bias showing both exponent and intercept errors">
                 <figcaption>
-                    <strong>Figure 5 (placeholder):</strong> <em>TODO: Effect of a drifting offset
-                    in sampling centers on the symmetric surface. Unlike constant bias, the offset
-                    grows with compute budget, corrupting both the exponent and the intercept.
-                    Final figure details are yet to be determined.</em>
+                    <strong>Figure 5:</strong> Effect of a linear drift in sampling centers
+                    (centered at true optimum for lowest budget, drifting to 3× at highest budget)
+                    on the symmetric surface. Unlike the constant bias case, the exponent error
+                    (bottom left) is now non-zero: the slope of \(\log D^*\) vs \(\log C\) is
+                    distorted because the offset varies across compute budgets.
                 </figcaption>
             </figure>
+
+            <p>
+                Compare the bottom-left panels of Figures 4 and 5: constant bias produces a
+                flat line at zero (exponent preserved), while drifting bias produces
+                a non-zero exponent error that varies with grid width.
+            </p>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Message</div>

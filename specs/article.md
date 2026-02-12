@@ -7,7 +7,9 @@
 > - Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances
 > - Purpose: demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data
 > - Figures: use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project
+> - Implementation details: output paths, filenames, and other build artifacts should not be specified in this outline; those belong in code or `specs/build.md`
 > - Tone: soft, neutral; avoid strong language like "catastrophic", "disastrous", "corrupted" when referring to critiques of Approach 2; target a balanced, informative register
+> - Prose: avoid meta-commentary that tells the reader what is important or summarizes what they just read; let the content speak for itself and use callout boxes for key messages
 > - Grammar: avoid em dashes; use other grammatical devices instead
 > - References (see `specs/build.md` for regeneration steps):
 >   - Source of truth: `docs/references/references.yaml`
@@ -49,7 +51,7 @@
 ## The Happy Path — Symmetric Surfaces
 
 - Frame as establishing a baseline before examining failure modes
-- Use a concrete symmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
+- Use a concrete asymmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
 - Note that equal exponents (α = β) mean compute splits evenly; true scaling exponents are a = b = 0.5
 - Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs, fit parabolas, extract optimal D*
 - Figure (1 row × 2 columns): IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
@@ -115,9 +117,21 @@
 - Study on symmetric surfaces only (α = β) to isolate the effect from asymmetry bias
 - **Constant multiplicative bias**: same factor at every compute budget; corrupts intercepts only (same mechanism as asymmetry errors)
   - Define "3× offset": each IsoFLOP grid is centered at 3×D* instead of D*, so the grid midpoint sits at three times the true optimum
-  - Figure (1 row × 3 columns): IsoFLOP contours at L (±8×) grid with offset=3× on symmetric surface; D* exponent error and D* intercept error vs grid width (16 points from XS to XL), y-axes matched to show exponent is zero while intercept has systematic bias
+  - Figure (2 rows × 2 columns):
+    - (0,0): IsoFLOP contours at L (±8×) grid with offset=3× on symmetric surface; black diamonds at (off-center) sampling centers, red × at true D*, blue + at inferred D*
+    - (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width (XS through XL)
+    - (1,0): D* exponent error vs grid width (16 points from XS to XL); flat at zero (exponent perfectly preserved)
+    - (1,1): D* intercept error vs grid width (16 points from XS to XL); systematic bias that varies with grid width
+    - Bottom row y-axes matched to show exponent is zero while intercept has systematic bias
 - **Drifting bias**: offset grows with compute budget; corrupts both exponents and intercepts
-- Key message: constant bias preserves exponents; any compute-dependent bias pattern distorts them
+  - Define "linear drift to 3×": sampling center starts at the true optimum (lowest budget) and drifts to 3× (highest budget), interpolating linearly in log-compute space
+  - Figure (2 rows × 2 columns, same layout as constant bias):
+    - (0,0): IsoFLOP contours at L (±8×) grid with linear drift on symmetric surface; sampling centers (black diamonds) visibly shift away from true D* (red ×) at higher compute budgets, unlike the constant bias case where the gap is uniform
+    - (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width (XS through XL)
+    - (1,0): D* exponent error vs grid width (16 points from XS to XL); now non-zero, unlike the flat-at-zero line in the constant bias figure — this is the key visual contrast
+    - (1,1): D* intercept error vs grid width (16 points from XS to XL)
+    - Bottom row y-axes matched to show relative magnitude of exponent vs intercept errors
+- Key message: constant bias preserves exponents; any compute-dependent bias pattern distorts them; the distinction matters because exponent errors compound during extrapolation while intercept errors remain fixed
 
 ---
 

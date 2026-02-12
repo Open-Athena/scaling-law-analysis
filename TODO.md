@@ -18,6 +18,12 @@ On article:
   - Make it clear that approach 2 only fits two params of the surface, and that just avoiding the others is an important part of its adoption
   - Add "Why it doesn't matter" section on loss floor at high compute budgets
   - Make connection to downstream performance per FLOP/$
+  - Reference OpenAI OpenWebText2 (a=.73, b=.27) and Evo 
+  - Justify legitimacy of Chinchilla formula
+    - https://arxiv.org/pdf/2509.23963
+    - Reference this paper for sure as it also does perturbations to test robustness of the fit (in different interpretations of model parameters b/c paper is ambiguous)
+    - They focus on tokens/params as the metric to analyze robustness for
+  - Make sure to mention that we're using standard chinchilla params for simulations despite critiques of that fit from Epoch and Toronto/Stanford paper
 - Prior to final review:
   - Review figures.py for ways to use existing code utilities and then regen
 - SDD refactor 
@@ -25,5 +31,3 @@ On article:
   - Move build.md to specs/ and add sync.md
   - Add commands for build, sync, review, deploy (on top of global commit and push)
   - copy review as subagent for orthogonality
-
-

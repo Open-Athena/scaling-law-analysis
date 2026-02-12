@@ -400,6 +400,7 @@ def compute_extrapolation_errors(
     log_range: float,
     n_points: int = 15,
     center_scale: float = 1.0,
+    drift_rate: float = 0.0,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Compute D* errors at evaluation budgets.
 
@@ -410,6 +411,7 @@ def compute_extrapolation_errors(
         log_range: Sampling grid width in log10 space
         n_points: Points per IsoFLOP curve
         center_scale: Constant multiplicative offset for sampling centers
+        drift_rate: Rate at which sampling center drifts from optimal
 
     Returns:
         Tuple of (true_D, inferred_D, abs_errors) arrays at each eval budget
@@ -418,7 +420,7 @@ def compute_extrapolation_errors(
     result = fit_approach2(
         compute_budgets=training_budgets,
         surface=surface,
-        drift_rate=0.0,
+        drift_rate=drift_rate,
         center_scale=center_scale,
         n_points=n_points,
         log_range=log_range,
@@ -670,28 +672,40 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
 
 
 # =============================================================================
-# Section 4: Off-Center Sampling — Constant Multiplicative Bias
+# Section 4: Off-Center Sampling — Shared Infrastructure
 # =============================================================================
 
 # 16 grid widths from XS (±2×) to XL (±16×)
 OFF_CENTER_LOG_RANGES = np.linspace(np.log10(2), np.log10(16), 16)
-OFF_CENTER_SCALE = 3.0
+
+# Tick positions for error plot x-axes
+_TICK_LOG_RANGES = [np.log10(2), np.log10(4), np.log10(8), np.log10(16)]
+_TICK_LABELS = ["±2× (XS)", "±4× (S)", "±8× (L)", "±16× (XL)"]
 
 
-def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
-    """Create the constant multiplicative bias figure for Section 4.
+def _create_off_center_bias_figure(
+    output_dir: Path,
+    drift_rate: float,
+    center_scale: float,
+    title: str,
+    fig_filename: str,
+    csv_filename: str,
+) -> dict:
+    """Shared implementation for off-center bias figures (constant and drifting).
 
-    Shows that a constant multiplicative bias in sampling centers
-    preserves exponents perfectly but biases intercepts, on a
-    symmetric surface where asymmetry effects are absent.
-
-    Layout: 2 rows × 2 columns
-        (0,0): IsoFLOP contours at L (±8×) with center_scale=2
+    Layout: 2 rows × 2 columns (top row 2× height of bottom row)
+        (0,0): IsoFLOP contours at L (±8×) grid
         (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width
         (1,0): D* exponent error vs grid width (16 points, XS to XL)
         (1,1): D* intercept error vs grid width (16 points, XS to XL)
 
-    Also exports raw extrapolation data to CSV.
+    Args:
+        output_dir: Directory for output files
+        drift_rate: Rate at which sampling center drifts from optimal
+        center_scale: Constant multiplier applied to all sampling centers
+        title: Figure suptitle
+        fig_filename: Output filename for the figure PNG
+        csv_filename: Output filename for the CSV data
 
     Returns:
         Dict with error sweep data and extrapolation results.
@@ -700,7 +714,6 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
 
     surface = SYMMETRIC_SURFACE
     compute_budgets = COMPUTE_BUDGETS
-    center_scale = OFF_CENTER_SCALE
     log_ranges = OFF_CENTER_LOG_RANGES
 
     # --- Compute D* errors across grid widths (for exponent/intercept plots) ---
@@ -711,7 +724,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         result = fit_approach2(
             compute_budgets=compute_budgets,
             surface=surface,
-            drift_rate=0.0,
+            drift_rate=drift_rate,
             center_scale=center_scale,
             n_points=N_POINTS,
             log_range=lr,
@@ -736,6 +749,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
             eval_budgets=np.array([EVAL_BUDGET]),
             log_range=grid_log_range,
             center_scale=center_scale,
+            drift_rate=drift_rate,
         )
         rel_error = errors[0] / true_D[0] * 100
         extrap_data.append(
@@ -747,7 +761,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     result_display = fit_approach2(
         compute_budgets=compute_budgets,
         surface=surface,
-        drift_rate=0.0,
+        drift_rate=drift_rate,
         center_scale=center_scale,
         n_points=N_POINTS,
         log_range=log_range_display,
@@ -771,7 +785,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         center_offset = compute_center_offset(
             C=C,
             compute_budgets=compute_budgets,
-            drift_rate=0.0,
+            drift_rate=drift_rate,
             center_scale=center_scale,
         )
         N, D, L = isoflop_sample(
@@ -792,7 +806,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         ax_iso.plot(log_D_fine, L_fit, c=viridis_colors[i], lw=1.5, alpha=0.9)
 
         # Sampling center marker (black diamond)
-        N_center = surface.N_opt(C) / center_scale
+        N_center = surface.N_opt(C) * 10**center_offset
         D_center = C / (6 * N_center)
         L_center = float(surface.loss(N_center, D_center))
         ax_iso.scatter(
@@ -889,23 +903,19 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     ax_bar.set_ylabel("Relative Error in D* (%)")
     ax_bar.axhline(0, color="black", linewidth=0.8)
     ax_bar.grid(True, axis="y", alpha=0.3)
-    # Add margin above tallest bar for annotation clearance
-    y_top = max(rel_errors) * 1.15 if max(rel_errors) > 0 else 2.0
-    ax_bar.set_ylim(ax_bar.get_ylim()[0], max(ax_bar.get_ylim()[1], y_top))
+    # Add margin around tallest bar for annotation clearance
+    if rel_errors:
+        y_max_bar = max(rel_errors)
+        y_min_bar = min(rel_errors)
+        y_top = y_max_bar * 1.15 if y_max_bar > 0 else 2.0
+        y_bot = y_min_bar * 1.15 if y_min_bar < 0 else ax_bar.get_ylim()[0]
+        ax_bar.set_ylim(
+            min(ax_bar.get_ylim()[0], y_bot), max(ax_bar.get_ylim()[1], y_top)
+        )
     ax_bar.set_title(
         "Token Prediction Error at $10^{24}$ FLOPs\n"
         f"(Fitting: $10^{{17}}$-$10^{{21}}$ FLOPs)"
     )
-
-    # --- Shared y-axis range for error panels (driven by intercept errors) ---
-    all_errors = np.concatenate([b_errors, b_intercept_errors])
-    y_margin = max(0.5, 0.15 * (all_errors.max() - all_errors.min()))
-    y_min = all_errors.min() - y_margin
-    y_max = all_errors.max() + y_margin
-
-    # Tick positions for error plot x-axes (with XS/S/L/XL monickers)
-    tick_log_ranges = [np.log10(2), np.log10(4), np.log10(8), np.log10(16)]
-    tick_labels = ["±2× (XS)", "±4× (S)", "±8× (L)", "±16× (XL)"]
 
     # --- Panel (1,0): D* exponent error ---
     ax_exp = axes[1, 0]
@@ -916,9 +926,8 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     ax_exp.set_xlabel("Sampling grid width")
     ax_exp.set_ylabel("Relative error (%)")
     ax_exp.set_title("Exponent Error (b)")
-    ax_exp.set_xticks(tick_log_ranges)
-    ax_exp.set_xticklabels(tick_labels, fontsize=9)
-    ax_exp.set_ylim(y_min, y_max)
+    ax_exp.set_xticks(_TICK_LOG_RANGES)
+    ax_exp.set_xticklabels(_TICK_LABELS, fontsize=9)
     ax_exp.legend(fontsize=9)
     ax_exp.grid(True, alpha=0.3)
 
@@ -936,39 +945,33 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
     ax_int.set_xlabel("Sampling grid width")
     ax_int.set_ylabel("Relative error (%)")
     ax_int.set_title("Intercept Error (b₀)")
-    ax_int.set_xticks(tick_log_ranges)
-    ax_int.set_xticklabels(tick_labels, fontsize=9)
-    ax_int.set_ylim(y_min, y_max)
+    ax_int.set_xticks(_TICK_LOG_RANGES)
+    ax_int.set_xticklabels(_TICK_LABELS, fontsize=9)
     ax_int.legend(fontsize=9)
     ax_int.grid(True, alpha=0.3)
 
-    fig.suptitle(
-        "Off-Center Sampling: Constant Multiplicative Bias\n"
-        f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
-        f" center offset = {center_scale:.0f}×",
-        fontsize=13,
-        y=1.02,
-    )
+    fig.suptitle(title, fontsize=13, y=1.02)
     fig.tight_layout()
 
     # Save figure
-    fig_path = output_dir / "off_center_constant_bias.png"
+    fig_path = output_dir / fig_filename
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
     # Export extrapolation data to CSV
-    csv_path = output_dir / "off_center_extrapolation_data.csv"
+    csv_path = output_dir / csv_filename
     with open(csv_path, "w") as f:
         f.write(
-            "surface,alpha,beta,center_scale,grid_name,log_range,"
+            "surface,alpha,beta,drift_rate,center_scale,grid_name,log_range,"
             "training_range,eval_budget,"
             "true_D,inferred_D,abs_error,rel_error_pct\n"
         )
         for grid_name, grid_log_range, rel_error, true_D, inferred_D in extrap_data:
             abs_error = inferred_D - true_D
             f.write(
-                f"Symmetric,{surface.alpha},{surface.beta},{center_scale},"
+                f"Symmetric,{surface.alpha},{surface.beta},"
+                f"{drift_rate},{center_scale},"
                 f'"{grid_name}",{grid_log_range},'
                 f"1e17-1e21,{EVAL_BUDGET:.0e},"
                 f"{true_D:.15e},{inferred_D:.15e},"
@@ -982,6 +985,66 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
         "b_intercept_errors": b_intercept_errors,
         "extrapolation": extrap_data,
     }
+
+
+# =============================================================================
+# Section 4a: Off-Center Sampling — Constant Multiplicative Bias
+# =============================================================================
+
+OFF_CENTER_SCALE = 3.0
+
+
+def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
+    """Create the constant multiplicative bias figure for Section 4.
+
+    Shows that a constant multiplicative bias in sampling centers
+    preserves exponents perfectly but biases intercepts, on a
+    symmetric surface where asymmetry effects are absent.
+    """
+    surface = SYMMETRIC_SURFACE
+    return _create_off_center_bias_figure(
+        output_dir=output_dir,
+        drift_rate=0.0,
+        center_scale=OFF_CENTER_SCALE,
+        title=(
+            "Off-Center Sampling: Constant Multiplicative Bias\n"
+            f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
+            f" center offset = {OFF_CENTER_SCALE:.0f}×"
+        ),
+        fig_filename="off_center_constant_bias.png",
+        csv_filename="off_center_constant_bias_data.csv",
+    )
+
+
+# =============================================================================
+# Section 4b: Off-Center Sampling — Drifting Bias
+# =============================================================================
+
+# Linear drift to 3×: at max compute, sampling center has drifted to 3× the
+# true optimum. drift_rate is in log10 units.
+OFF_CENTER_DRIFT_RATE = np.log10(3)
+
+
+def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
+    """Create the drifting bias figure for Section 4.
+
+    Shows that a compute-dependent drift in sampling centers
+    corrupts both exponents and intercepts, on a symmetric surface
+    where asymmetry effects are absent.
+    """
+    surface = SYMMETRIC_SURFACE
+    return _create_off_center_bias_figure(
+        output_dir=output_dir,
+        drift_rate=OFF_CENTER_DRIFT_RATE,
+        center_scale=1.0,
+        title=(
+            "Off-Center Sampling: Drifting Bias\n"
+            f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
+            f" linear drift to {10**OFF_CENTER_DRIFT_RATE:.0f}× at max compute"
+        ),
+        fig_filename="off_center_drifting_bias.png",
+        csv_filename="off_center_drifting_bias_data.csv",
+    )
 
 
 def generate_all_figures(output_dir: Path) -> dict:
@@ -1002,8 +1065,11 @@ def generate_all_figures(output_dir: Path) -> dict:
     # Section 3b: Extrapolation Error ("Why It Matters")
     data["extrapolation"] = create_extrapolation_error_figure(output_dir)
 
-    # Section 4: Off-Center Sampling — Constant Multiplicative Bias
+    # Section 4a: Off-Center Sampling — Constant Multiplicative Bias
     data["off_center_constant"] = create_off_center_constant_bias_figure(output_dir)
+
+    # Section 4b: Off-Center Sampling — Drifting Bias
+    data["off_center_drifting"] = create_off_center_drifting_bias_figure(output_dir)
 
     return data
 
@@ -1035,10 +1101,14 @@ if __name__ == "__main__":
                 f"  {grid_name}: |error| = {abs_error:.2e} tokens ({rel_error_pct:.1f}%)"
             )
 
-    print("\n=== Off-Center Constant Bias Summary ===")
-    oc = data["off_center_constant"]
-    print(f"Exponent error (b): max |error| = {np.abs(oc['b_errors']).max():.2e}%")
-    print(
-        f"Intercept error (b₀): range [{oc['b_intercept_errors'].min():.2f}%, "
-        f"{oc['b_intercept_errors'].max():.2f}%]"
-    )
+    for label, key in [
+        ("Off-Center Constant Bias", "off_center_constant"),
+        ("Off-Center Drifting Bias", "off_center_drifting"),
+    ]:
+        print(f"\n=== {label} Summary ===")
+        oc = data[key]
+        print(f"Exponent error (b): max |error| = {np.abs(oc['b_errors']).max():.2e}%")
+        print(
+            f"Intercept error (b₀): range [{oc['b_intercept_errors'].min():.2f}%, "
+            f"{oc['b_intercept_errors'].max():.2f}%]"
+        )
