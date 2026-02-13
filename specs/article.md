@@ -138,9 +138,23 @@
 ## Robust Fits — Unbiased Estimation with Linear Separation
 
 - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
+  - TODO: write this part up:
+  - Typically, "unstable" means that results are sensitive to initialization, hyperparameters (e.g. Huber loss delta) or lack of optimization convergence
+  - The most common approaches are BFGS or L-BFGS (cite (Mis)fitting scaling laws section 6) or other gradient-based SGD optimizers
+  - Some studies forgo optimization entirely and use grid search instead due to instability (Goyal et al. (2024))
+  - Some studies "opt to use a linear method" by taking the log on both sides, but "it is generally not advised because the log transformation also changes the distribution of error"
+    - Some even still use a nonlinear optimizer even with a linear objective (Hashimoto, 2021)
+    - It can be easily shown in simulations like those we use that log transformations of loss values lead to universal biases in parameter estimates
+    - Similarly, use loss functions for fits other than MSE like MAE or Huber loss also induce biased parameter inference so we use MSE for all further fits
+  - Use the above as segueue into variable projection
 - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
 - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
 - Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space
+- TODO: generate results from 3 methods
+  - Variable Projection: grid search init + Variable projection w/ Nelder-Mead
+  - L-BFGS: grid search init + L-BFGS
+  - Grid search: grid search alone w/ higher resolution
+- TODO: come up with a good name for our method
 - Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`
 - Key result: all five loss surface parameters (E, A, B, α, β) recovered perfectly; extrapolation is exact
 - Key message: variable projection makes direct surface fitting robust and eliminates the biases introduced by the parabolic approximation

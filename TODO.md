@@ -21,8 +21,10 @@ On article:
   - Reference OpenAI OpenWebText2 (a=.73, b=.27) and Evo 
   - Justify legitimacy of Chinchilla formula
     - https://arxiv.org/pdf/2509.23963
-    - Reference this paper for sure as it also does perturbations to test robustness of the fit (in different interpretations of model parameters b/c paper is ambiguous)
-    - They focus on tokens/params as the metric to analyze robustness for
+      - Reference this paper for sure as it also does perturbations to test robustness of the fit (in different interpretations of model parameters b/c paper is ambiguous)
+      - They focus on tokens/params as the metric to analyze robustness for
+    - Balance with https://arxiv.org/pdf/2502.18969 and Kaplan form for surface (see 3.2) which is different
+      - This also explains many extensions for other things (epochs, num experts, sparsity, data modalities/mixtures, etc.)
   - Make sure to mention that we're using standard chinchilla params for simulations despite critiques of that fit from Epoch and Toronto/Stanford paper
 - Prior to final review:
   - Review figures.py for ways to use existing code utilities and then regen
