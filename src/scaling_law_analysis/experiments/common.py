@@ -1,6 +1,5 @@
 """Common configuration and utilities for scaling law experiments."""
 
-import shutil
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
@@ -14,6 +13,7 @@ from scaling_law_analysis.chinchilla import (
     isoflop_sample,
     compute_center_offset,
 )
+from scaling_law_analysis.config import prepare_output_dir
 
 
 # =============================================================================
@@ -46,21 +46,6 @@ TICK_POSITIONS = [0.3, 0.5, 1.0, 1.5, 2.0]
 # =============================================================================
 # Utilities
 # =============================================================================
-
-
-def prepare_output_dir(output_dir: Path) -> Path:
-    """Clear and recreate an output directory for experiment results.
-
-    Args:
-        output_dir: Path to the output directory
-
-    Returns:
-        The output directory path
-    """
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-    return output_dir
 
 
 def log_range_to_label(log_range: float) -> str:

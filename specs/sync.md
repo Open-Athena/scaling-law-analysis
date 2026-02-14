@@ -20,7 +20,7 @@ Required only for implementation changes that touch topics a spec covers. If the
 
 When one implementation artifact changes, other artifacts that depend on it may need updating.
 
-- **CSV data in article text**: The figure generator exports numerical results alongside each figure (`results/article/extrapolation_error_data.csv`, `results/article/off_center_extrapolation_data.csv`). Specific values from these CSVs are hardcoded in `results/article/article.html` — both in prose and in data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match.
+- **CSV data in article text**: The figure generator exports numerical results alongside each figure (e.g. `results/article/extrapolation_error/extrapolation_error_data.csv`, `results/article/off_center_constant_bias/off_center_constant_bias_data.csv`). Specific values from these CSVs are hardcoded in `results/article/article.html` — both in prose and in data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match.
 
 ## Spec → Spec
 

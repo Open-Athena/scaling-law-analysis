@@ -167,13 +167,13 @@
 
 ## IsoFLOP Curves in the Wild — Evidence from Published Studies
 
-- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/isoflop_curve_examples.png`
+- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
 - These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
 - Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
 - This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
 
 - **Putting It All Together**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
-- Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/combined_extrapolation_error.png`
+- Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/static/combined_extrapolation_error.png`
 - Show how each bias source dominates at different grid widths; note that the two sources can partially offset or reinforce depending on offset direction
 - TODO: add a configuration where bias sources reinforce rather than offset, to demonstrate the compounding case directly
 - Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error exceeds either alone

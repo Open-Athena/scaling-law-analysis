@@ -16,6 +16,7 @@ from scaling_law_analysis.chinchilla import (
     compute_center_offset,
     Approach2Result,
 )
+from scaling_law_analysis.config import prepare_output_dir
 
 
 # =============================================================================
@@ -233,8 +234,8 @@ def create_happy_path_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save
-    output_dir.mkdir(parents=True, exist_ok=True)
-    fig_path = output_dir / "happy_path.png"
+    figure_dir = prepare_output_dir(output_dir / "happy_path")
+    fig_path = figure_dir / "happy_path.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
@@ -370,7 +371,8 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save
-    fig_path = output_dir / "asymmetric.png"
+    figure_dir = prepare_output_dir(output_dir / "asymmetric")
+    fig_path = figure_dir / "asymmetric.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
@@ -643,13 +645,14 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save figure
-    fig_path = output_dir / "extrapolation_error.png"
+    figure_dir = prepare_output_dir(output_dir / "extrapolation_error")
+    fig_path = figure_dir / "extrapolation_error.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
     # Export raw data to CSV for transparency
-    csv_path = output_dir / "extrapolation_error_data.csv"
+    csv_path = figure_dir / "extrapolation_error_data.csv"
     with open(csv_path, "w") as f:
         f.write(
             "surface,alpha,beta,grid_name,log_range,training_range,eval_budget,"
@@ -690,6 +693,7 @@ def _create_off_center_bias_figure(
     drift_rate: float,
     center_scale: float,
     title: str,
+    figure_subdir: str,
     fig_filename: str,
     csv_filename: str,
 ) -> dict:
@@ -702,10 +706,11 @@ def _create_off_center_bias_figure(
         (1,1): D* intercept error vs grid width (16 points, XS to XL)
 
     Args:
-        output_dir: Directory for output files
+        output_dir: Base directory for output files
         drift_rate: Rate at which sampling center drifts from optimal
         center_scale: Constant multiplier applied to all sampling centers
         title: Figure suptitle
+        figure_subdir: Subdirectory name for this figure's outputs
         fig_filename: Output filename for the figure PNG
         csv_filename: Output filename for the CSV data
 
@@ -956,13 +961,14 @@ def _create_off_center_bias_figure(
     fig.tight_layout()
 
     # Save figure
-    fig_path = output_dir / fig_filename
+    figure_dir = prepare_output_dir(output_dir / figure_subdir)
+    fig_path = figure_dir / fig_filename
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
     # Export extrapolation data to CSV
-    csv_path = output_dir / csv_filename
+    csv_path = figure_dir / csv_filename
     with open(csv_path, "w") as f:
         f.write(
             "surface,alpha,beta,drift_rate,center_scale,grid_name,log_range,"
@@ -1013,6 +1019,7 @@ def create_off_center_constant_bias_figure(output_dir: Path) -> dict:
             f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
             f" center offset = {OFF_CENTER_SCALE:.0f}×"
         ),
+        figure_subdir="off_center_constant_bias",
         fig_filename="off_center_constant_bias.png",
         csv_filename="off_center_constant_bias_data.csv",
     )
@@ -1044,6 +1051,7 @@ def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
             f"Symmetric surface ($\\alpha = \\beta = {surface.alpha:.2f}$),"
             f" linear drift to {10**OFF_CENTER_DRIFT_RATE:.0f}× at max compute"
         ),
+        figure_subdir="off_center_drifting_bias",
         fig_filename="off_center_drifting_bias.png",
         csv_filename="off_center_drifting_bias_data.csv",
     )
@@ -1356,13 +1364,14 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     fig.suptitle("Optimizer Comparison: Parameter Recovery Accuracy", fontsize=12)
 
     # Save figure
-    fig_path = output_dir / "method_comparison.png"
+    figure_dir = prepare_output_dir(output_dir / "method_comparison")
+    fig_path = figure_dir / "method_comparison.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
     # --- Export CSV 1: Raw data ---
-    raw_csv_path = output_dir / "method_comparison_raw.csv"
+    raw_csv_path = figure_dir / "method_comparison_raw.csv"
     with open(raw_csv_path, "w") as f:
         f.write(
             "method,surface,log_range,parameter,relative_error_pct,"
@@ -1377,7 +1386,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     print(f"Saved: {raw_csv_path}")
 
     # --- Export CSV 2: Max error pivot (method × parameter) ---
-    max_err_csv_path = output_dir / "method_comparison_max_errors.csv"
+    max_err_csv_path = figure_dir / "method_comparison_max_errors.csv"
     with open(max_err_csv_path, "w") as f:
         f.write("method," + ",".join(f"max_{pk}_err_pct" for pk in param_keys) + "\n")
         for m_idx, mc in enumerate(METHOD_CONFIGS):
@@ -1400,7 +1409,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     print(f"Saved: {max_err_csv_path}")
 
     # --- Export CSV 3: Failure counts pivot ---
-    fail_csv_path = output_dir / "method_comparison_failures.csv"
+    fail_csv_path = figure_dir / "method_comparison_failures.csv"
     with open(fail_csv_path, "w") as f:
         f.write(
             "method,total_failures,total_fits,failure_rate,"
@@ -1422,6 +1431,10 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
 
 def generate_all_figures(output_dir: Path) -> dict:
     """Generate all article figures.
+
+    Each figure's outputs are placed in a dedicated subdirectory under
+    output_dir (e.g. output_dir/happy_path/, output_dir/asymmetric/).
+    Subdirectories are cleared before each figure is generated.
 
     Returns dict of data needed for the HTML article.
     """

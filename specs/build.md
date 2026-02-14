@@ -41,7 +41,7 @@ from playwright.async_api import async_playwright
 from pathlib import Path
 
 async def main():
-    html = Path('results/article/scaling_parameter_errors.html').resolve()
+    html = Path('results/article/static/scaling_parameter_errors.html').resolve()
     pdf = html.with_suffix('.pdf')
     async with async_playwright() as p:
         browser = await p.chromium.launch()
