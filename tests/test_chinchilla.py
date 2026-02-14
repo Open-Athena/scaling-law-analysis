@@ -9,8 +9,8 @@ from scaling_law_analysis.chinchilla import (
     FINE_BETA_GRID,
     FitError,
     LossSurface,
-    _a3_rss,
-    _a3_rss_grad,
+    _surface_rss,
+    _surface_rss_grad,
     fit_parabola,
     fit_approach2,
     fit_surface,
@@ -226,8 +226,8 @@ class TestFitSurface:
         assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)
 
 
-class TestA3RssGrad:
-    """Test analytical gradient of Approach 3 RSS against finite differences."""
+class TestSurfaceRssGrad:
+    """Test analytical gradient of surface RSS against finite differences."""
 
     def test_gradient_matches_finite_differences(self):
         """Analytical gradient should match central finite differences to high precision."""
@@ -239,10 +239,12 @@ class TestA3RssGrad:
 
         x = np.array([1.5, 50.0, 30.0, 0.35, 0.28])
 
-        analytic = _a3_rss_grad(x, log_N, log_D, L)
+        analytic = _surface_rss_grad(x, log_N, log_D, L)
 
-        # Optimal step for central differences: h ~ eps^(1/3) ≈ 6e-6
-        h = 1e-5
+        # Optimal step for central differences: h ~ eps^(1/3).
+        # Balances O(h²) truncation error against O(eps/h) roundoff error.
+        # See Press et al., Numerical Recipes (3rd ed.), §5.7 "Numerical Derivatives".
+        h = float(np.finfo(float).eps) ** (1 / 3)
         fd = np.zeros_like(x)
         for i in range(len(x)):
             x_fwd = x.copy()
@@ -250,7 +252,8 @@ class TestA3RssGrad:
             x_fwd[i] += h
             x_bwd[i] -= h
             fd[i] = (
-                _a3_rss(x_fwd, log_N, log_D, L) - _a3_rss(x_bwd, log_N, log_D, L)
+                _surface_rss(x_fwd, log_N, log_D, L)
+                - _surface_rss(x_bwd, log_N, log_D, L)
             ) / (2 * h)
 
         np.testing.assert_allclose(analytic, fd, rtol=1e-9)

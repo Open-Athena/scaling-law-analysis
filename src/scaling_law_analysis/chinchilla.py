@@ -790,19 +790,19 @@ _A3_A_GRID = np.logspace(1, 4, 8)  # 10 to 10000
 _A3_B_GRID = np.logspace(1, 4, 8)  # 10 to 10000
 
 
-def _a3_rss(
+def _surface_rss(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> float:
-    """RSS objective for Approach 3 (5-parameter Chinchilla surface)."""
+    """RSS objective for 5-parameter Chinchilla loss surface."""
     E, A, B, alpha, beta = x
     pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
     return float(np.sum((L - pred) ** 2))
 
 
-def _a3_rss_grad(
+def _surface_rss_grad(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> np.ndarray:
-    """Analytical gradient of RSS for Approach 3."""
+    """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
     E, A, B, alpha, beta = x
     term_N = np.exp(-alpha * log_N)  # N^(-alpha)
     term_D = np.exp(-beta * log_D)  # D^(-beta)
@@ -863,10 +863,10 @@ def fit_approach3(
     log_D = np.log(D)
 
     def rss(x: np.ndarray) -> float:
-        return _a3_rss(x, log_N, log_D, L)
+        return _surface_rss(x, log_N, log_D, L)
 
     def rss_grad(x: np.ndarray) -> np.ndarray:
-        return _a3_rss_grad(x, log_N, log_D, L)
+        return _surface_rss_grad(x, log_N, log_D, L)
 
     # Stage 1: Coarse 5D grid search for initialization
     best_rss = np.inf
