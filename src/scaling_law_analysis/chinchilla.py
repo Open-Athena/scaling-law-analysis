@@ -502,6 +502,7 @@ class SurfaceFitResult:
     beta: float
     residual_sum_squares: float
     n_points: int
+    method: str = "nelder-mead"
 
     def to_loss_surface(self) -> LossSurface:
         """Convert fit result to a LossSurface object."""
@@ -519,6 +520,12 @@ class SurfaceFitResult:
 # 32x32 gives ~56x speedup over 256x256 with identical accuracy.
 DEFAULT_ALPHA_GRID = np.linspace(0.05, 0.95, 32)
 DEFAULT_BETA_GRID = np.linspace(0.05, 0.95, 32)
+
+# Fine grid for grid-only search (no local refinement).
+# 256x256 = 65,536 evaluations — higher resolution to compensate for
+# the lack of a continuous optimizer.
+FINE_ALPHA_GRID = np.linspace(0.05, 0.95, 256)
+FINE_BETA_GRID = np.linspace(0.05, 0.95, 256)
 
 
 def _compute_rss_and_params(
@@ -627,7 +634,14 @@ def _grid_search(
 # - xatol=1e-10: stop when parameters change by less than this between iterations
 # - fatol=1e-15: stop when RSS changes by less than this between iterations;
 #   set near machine epsilon (~2e-16) because RSS→0 at the true optimum
-OPTIMIZER_OPTIONS = {"xatol": 1e-10, "fatol": 1e-15, "maxiter": 10000}
+NELDER_MEAD_OPTIONS = {"xatol": 1e-10, "fatol": 1e-15, "maxiter": 10000}
+
+# L-BFGS-B uses numerical finite-difference gradients.
+# Default step size is eps=1e-8 (scipy's default for L-BFGS-B).
+# Tolerances are set tight to match Nelder-Mead intent, though gradient
+# precision may limit actual convergence.
+LBFGSB_DEFAULT_EPS = 1e-8
+LBFGSB_OPTIONS = {"ftol": 1e-15, "gtol": 1e-15, "maxiter": 10000}
 
 
 def fit_surface(
@@ -636,20 +650,35 @@ def fit_surface(
     L: np.ndarray,
     alpha_grid: np.ndarray = DEFAULT_ALPHA_GRID,
     beta_grid: np.ndarray = DEFAULT_BETA_GRID,
+    method: str = "nelder-mead",
+    jac: str | None = None,
+    eps: float | None = None,
 ) -> SurfaceFitResult:
     """Fit the loss surface L(N, D) = E + A/N^α + B/D^β via variable projection.
 
-    Uses a 2D grid search over (α, β) to find a good starting point, then
-    refines (α, β) with local optimization. At each evaluation, (E, A, B)
-    are solved analytically via OLS, which eliminates parameter correlation
-    issues that plague joint optimization of all 5 parameters.
+    All methods search only over (α, β) and solve (E, A, B) via NNLS at each
+    candidate, so comparisons isolate the optimizer rather than the parameterization.
+
+    Methods:
+        - "nelder-mead": Coarse grid search for initialization, then Nelder-Mead
+          refinement. Gradient-free.
+        - "l-bfgs-b": Coarse grid search for initialization, then L-BFGS-B
+          refinement. Gradient scheme and step size configurable via jac and eps.
+        - "grid": Grid search only with no local refinement. The caller-provided
+          alpha_grid/beta_grid define the search resolution directly (use
+          FINE_ALPHA_GRID/FINE_BETA_GRID for higher resolution).
 
     Args:
         N: Array of parameter counts
         D: Array of token counts
         L: Array of loss values (same length as N and D)
-        alpha_grid: Grid of α values for initial search
-        beta_grid: Grid of β values for initial search
+        alpha_grid: Grid of α values (init grid for local methods, search grid for "grid")
+        beta_grid: Grid of β values (init grid for local methods, search grid for "grid")
+        method: Optimization method — "nelder-mead", "l-bfgs-b", or "grid"
+        jac: Jacobian scheme for L-BFGS-B (e.g. "3-point" for central differences).
+            If None, scipy uses forward differences. Ignored for other methods.
+        eps: Override finite-difference step size for L-BFGS-B.
+            If None, uses scipy default (1e-8). Ignored for other methods.
 
     Returns:
         SurfaceFitResult with fitted parameters
@@ -657,6 +686,10 @@ def fit_surface(
     Raises:
         ValueError: If any diagnostic check fails (grid edge, bounds, convergence, etc.)
     """
+    valid_methods = ("nelder-mead", "l-bfgs-b", "grid")
+    if method not in valid_methods:
+        raise ValueError(f"method must be one of {valid_methods}, got {method!r}")
+
     N, D, L = np.asarray(N), np.asarray(D), np.asarray(L)
     if not (len(N) == len(D) == len(L)):
         raise ValueError(
@@ -665,29 +698,54 @@ def fit_surface(
 
     log_N, log_D = np.log(N), np.log(D)
 
-    # Stage 1: Grid search for starting point
+    # Stage 1: Grid search (initialization for local methods, or final for "grid")
     best_i, best_j = _grid_search(alpha_grid, beta_grid, log_N, log_D, L)
     _check_at_grid_edge("α", best_i, alpha_grid)
     _check_at_grid_edge("β", best_j, beta_grid)
 
-    # Stage 2: Local refinement with Nelder-Mead
-    def objective(x):
-        rss, _ = _compute_rss_and_params(x[0], x[1], log_N, log_D, L)
-        return rss
+    if method == "grid":
+        # Grid search only — no local refinement
+        alpha = float(alpha_grid[best_i])
+        beta = float(beta_grid[best_j])
 
-    result = minimize(
-        objective,
-        x0=[alpha_grid[best_i], beta_grid[best_j]],
-        method="Nelder-Mead",
-        options=OPTIMIZER_OPTIONS,
-    )
-    if result is None or not result.success:
-        message = result.message if result else "Unknown error"
-        nit = result.nit if result else 0
-        raise ValueError(f"Optimization failed: {message} (iterations: {nit})")
+    else:
+        # Local refinement from best grid point
+        def objective(x):
+            rss, _ = _compute_rss_and_params(x[0], x[1], log_N, log_D, L)
+            return rss
 
-    # Extract final parameters
-    alpha, beta = float(result.x[0]), float(result.x[1])
+        x0 = [alpha_grid[best_i], beta_grid[best_j]]
+
+        if method == "nelder-mead":
+            result = minimize(
+                objective,
+                x0=x0,
+                method="Nelder-Mead",
+                options=NELDER_MEAD_OPTIONS,
+            )
+        else:  # l-bfgs-b
+            lbfgs_kwargs: dict = {
+                "method": "L-BFGS-B",
+                "bounds": [
+                    (alpha_grid[0], alpha_grid[-1]),
+                    (beta_grid[0], beta_grid[-1]),
+                ],
+                "options": dict(LBFGSB_OPTIONS),
+            }
+            if jac is not None:
+                lbfgs_kwargs["jac"] = jac
+            if eps is not None:
+                lbfgs_kwargs["options"]["eps"] = eps
+            result = minimize(objective, x0=x0, **lbfgs_kwargs)
+
+        if result is None or not result.success:
+            message = result.message if result else "Unknown error"
+            nit = result.nit if result else 0
+            raise ValueError(f"Optimization failed: {message} (iterations: {nit})")
+
+        alpha, beta = float(result.x[0]), float(result.x[1])
+
+    # Extract final parameters at optimized (α, β)
     rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
 
     # Diagnostic checks
@@ -706,4 +764,5 @@ def fit_surface(
         beta=beta,
         residual_sum_squares=rss,
         n_points=len(N),
+        method=method,
     )

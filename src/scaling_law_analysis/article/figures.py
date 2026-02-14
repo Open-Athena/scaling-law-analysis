@@ -1047,6 +1047,205 @@ def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
     )
 
 
+# =============================================================================
+# Section 5: Method Comparison (Variable Projection Optimizer Analysis)
+# =============================================================================
+
+
+def create_method_comparison_figure(output_dir: Path) -> dict:
+    """Create the method comparison figure for the optimizer analysis section.
+
+    Layout: 3 panels — exponents dot plot, coefficients dot plot, failure heatmap.
+    Each dot plot shows geometric mean of absolute relative errors across all
+    sampling ranges and parameters in the group, with min-max error bars.
+    """
+    from scipy.stats import gmean
+
+    from scaling_law_analysis.experiments.common import (
+        COMPUTE_BUDGETS as EXP_BUDGETS,
+        LOG_RANGES,
+        N_POINTS as EXP_N_POINTS,
+        LOSS_SURFACES,
+    )
+    from scaling_law_analysis.experiments.exp5_parametric_surface import (
+        METHOD_CONFIGS,
+        run_method_comparison,
+    )
+
+    setup_style()
+
+    # Run the experiment
+    all_results = run_method_comparison(
+        compute_budgets=EXP_BUDGETS,
+        log_ranges=LOG_RANGES,
+        n_points=EXP_N_POINTS,
+    )
+
+    surface_names = [name for name, _ in LOSS_SURFACES]
+    surface_labels = {
+        "symmetric": "Symmetric",
+        "chinchilla": "Chinchilla",
+        "high_imbalance": "High imbal.",
+    }
+    surface_markers = {
+        "symmetric": "o",
+        "chinchilla": "s",
+        "high_imbalance": "D",
+    }
+    surface_colors = {
+        "symmetric": "#1b9e77",
+        "chinchilla": "#d95f02",
+        "high_imbalance": "#7570b3",
+    }
+
+    param_groups = {
+        "Exponents (α, β)": ["alpha", "beta"],
+        "Coefficients (E, A, B)": ["E", "A", "B"],
+    }
+
+    # Compute aggregated stats: for each method × surface × param_group,
+    # compute geometric mean of |relative error| across params and sampling ranges,
+    # plus min and max across sampling ranges for error bars.
+    def aggregate_errors(results: dict, keys: list[str]) -> dict:
+        """Aggregate absolute relative errors across params and sampling ranges."""
+        # Stack errors: shape (n_params, n_ranges)
+        err_matrix = np.array([np.abs(results[k]) for k in keys])
+        # Max across params at each sampling range: shape (n_ranges,)
+        max_per_range = np.nanmax(err_matrix, axis=0) * 100  # to percent
+        # Filter out NaN ranges (failures)
+        valid = ~np.isnan(max_per_range)
+        if not valid.any():
+            return {"gmean": np.nan, "min": np.nan, "max": np.nan}
+        vals = max_per_range[valid]
+        return {
+            "gmean": float(gmean(vals)),
+            "min": float(vals.min()),
+            "max": float(vals.max()),
+        }
+
+    # --- Build figure: 2 dot-plot panels + 1 narrow heatmap ---
+    fig, axes = plt.subplots(
+        1,
+        3,
+        figsize=(14, 4.5),
+        gridspec_kw={"width_ratios": [4, 4, 1.5]},
+    )
+
+    method_labels = [mc.label for mc in METHOD_CONFIGS]
+    n_methods = len(METHOD_CONFIGS)
+    y_positions = np.arange(n_methods)
+
+    # Build failure matrix for heatmap (methods × surfaces)
+    n_ranges = len(LOG_RANGES)
+    failure_matrix = np.zeros((n_methods, len(surface_names)))
+
+    for panel_idx, (group_name, group_keys) in enumerate(param_groups.items()):
+        ax = axes[panel_idx]
+
+        for surf_idx, sname in enumerate(surface_names):
+            method_results = all_results[sname]
+
+            for m_idx, (mc, results) in enumerate(method_results):
+                stats = aggregate_errors(results, group_keys)
+
+                # Slight vertical offset per surface to avoid overlap
+                y = y_positions[m_idx] + (surf_idx - 1) * 0.2
+
+                if np.isnan(stats["gmean"]):
+                    # All failures — mark with an X
+                    ax.scatter(
+                        [1e-1],
+                        [y],
+                        marker="x",
+                        s=50,
+                        color=surface_colors[sname],
+                        zorder=5,
+                    )
+                else:
+                    xerr_lo = max(0, stats["gmean"] - stats["min"])
+                    xerr_hi = max(0, stats["max"] - stats["gmean"])
+                    ax.errorbar(
+                        stats["gmean"],
+                        y,
+                        xerr=[[xerr_lo], [xerr_hi]],
+                        fmt=surface_markers[sname],
+                        color=surface_colors[sname],
+                        markersize=6,
+                        capsize=3,
+                        linewidth=1.2,
+                        label=surface_labels[sname] if m_idx == 0 else None,
+                        zorder=5,
+                    )
+
+                # Collect failure counts (once, from either panel)
+                if panel_idx == 0:
+                    failure_matrix[m_idx, surf_idx] = results["n_failures"]
+
+        ax.set_xscale("log")
+        ax.set_yticks(y_positions)
+        ax.set_yticklabels(method_labels, fontsize=9)
+        ax.set_xlabel("Absolute relative error (%)")
+        ax.set_title(group_name, fontsize=11)
+        ax.grid(True, axis="x", alpha=0.3)
+        ax.invert_yaxis()
+        if panel_idx == 0:
+            ax.legend(fontsize=8, loc="lower right")
+
+    # --- Panel 3: Failure rate heatmap ---
+    ax_heat = axes[2]
+    # Normalize to fraction
+    fail_frac = failure_matrix / n_ranges
+
+    im = ax_heat.imshow(
+        fail_frac,
+        cmap="Reds",
+        aspect="auto",
+        vmin=0,
+        vmax=1,
+        interpolation="nearest",
+    )
+    # Annotate cells
+    for i in range(n_methods):
+        for j in range(len(surface_names)):
+            count = int(failure_matrix[i, j])
+            text_color = "white" if fail_frac[i, j] > 0.5 else "black"
+            ax_heat.text(
+                j,
+                i,
+                f"{count}/{n_ranges}",
+                ha="center",
+                va="center",
+                fontsize=8,
+                color=text_color,
+            )
+
+    ax_heat.set_xticks(range(len(surface_names)))
+    ax_heat.set_xticklabels(
+        [surface_labels[s] for s in surface_names],
+        fontsize=8,
+        rotation=45,
+        ha="right",
+    )
+    ax_heat.set_yticks(y_positions)
+    ax_heat.set_yticklabels([])  # labels already on left panels
+    ax_heat.set_title("Failures", fontsize=11)
+
+    fig.suptitle(
+        "Optimizer Comparison: Parameter Recovery Accuracy",
+        fontsize=13,
+        y=1.02,
+    )
+    fig.tight_layout()
+
+    # Save
+    fig_path = output_dir / "method_comparison.png"
+    fig.savefig(fig_path)
+    plt.close(fig)
+    print(f"Saved: {fig_path}")
+
+    return {"all_results": all_results, "failure_matrix": failure_matrix}
+
+
 def generate_all_figures(output_dir: Path) -> dict:
     """Generate all article figures.
 
@@ -1070,6 +1269,9 @@ def generate_all_figures(output_dir: Path) -> dict:
 
     # Section 4b: Off-Center Sampling — Drifting Bias
     data["off_center_drifting"] = create_off_center_drifting_bias_figure(output_dir)
+
+    # Section 5: Method Comparison
+    data["method_comparison"] = create_method_comparison_figure(output_dir)
 
     return data
 

@@ -8,11 +8,19 @@ accurate scaling law parameter recovery, and extrapolation using fitted paramete
 remains accurate even at compute budgets far beyond the fitting range.
 """
 
+from dataclasses import dataclass
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
-from scaling_law_analysis.chinchilla import fit_surface
+from scaling_law_analysis.chinchilla import (
+    fit_surface,
+    FINE_ALPHA_GRID,
+    FINE_BETA_GRID,
+    LBFGSB_DEFAULT_EPS,
+)
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
     LOSS_SURFACES,
@@ -47,6 +55,24 @@ def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
     ax.set_xticklabels(tick_labels, fontsize=7, rotation=30, ha="right")
 
 
+def _verify_default_eps() -> None:
+    """Assert that LBFGSB_DEFAULT_EPS matches scipy's actual default.
+
+    The method comparison labels and article exposition reference this value
+    explicitly, so we need to ensure it stays correct across scipy versions.
+    """
+    import inspect
+
+    # Private API import used intentionally for exposition (verifying the default eps value).
+    from scipy.optimize._lbfgsb_py import _minimize_lbfgsb
+
+    sig = inspect.signature(_minimize_lbfgsb)
+    scipy_default = sig.parameters["eps"].default
+    assert (
+        scipy_default == LBFGSB_DEFAULT_EPS
+    ), f"LBFGSB_DEFAULT_EPS={LBFGSB_DEFAULT_EPS} != scipy default={scipy_default}"
+
+
 def surface_fitter(
     sim_config: SimulationConfig,
     compute_budgets: np.ndarray,
@@ -65,6 +91,9 @@ def compute_param_errors(
     compute_budgets: np.ndarray,
     log_ranges: np.ndarray,
     n_points: int,
+    method: str = "nelder-mead",
+    jac: str | None = None,
+    eps: float | None = None,
 ) -> dict:
     """Compute parameter errors across sampling ranges.
 
@@ -73,6 +102,9 @@ def compute_param_errors(
         compute_budgets: Compute budgets for IsoFLOP sampling
         log_ranges: Array of sampling ranges to sweep
         n_points: Number of points per IsoFLOP curve
+        method: Optimization method for fit_surface
+        jac: Jacobian scheme for L-BFGS-B (e.g. "3-point")
+        eps: Override finite-difference step size for L-BFGS-B
 
     Returns:
         Dictionary with arrays of relative errors for each parameter
@@ -80,12 +112,28 @@ def compute_param_errors(
     loss = sim_config.loss
     n_ranges = len(log_ranges)
 
+    fit_kwargs: dict = {"method": method}
+    if method == "grid":
+        fit_kwargs["alpha_grid"] = FINE_ALPHA_GRID
+        fit_kwargs["beta_grid"] = FINE_BETA_GRID
+    if jac is not None:
+        fit_kwargs["jac"] = jac
+    if eps is not None:
+        fit_kwargs["eps"] = eps
+
     # Arrays to store relative errors
     errors = {key: np.zeros(n_ranges) for key in ["E", "A", "B", "alpha", "beta"]}
 
+    n_failures = 0
     for i, log_range in enumerate(log_ranges):
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
-        result = fit_surface(N, D, L)
+        try:
+            result = fit_surface(N, D, L, **fit_kwargs)
+        except ValueError:
+            n_failures += 1
+            for key in errors:
+                errors[key][i] = np.nan
+            continue
 
         # Compute relative errors
         errors["E"][i] = (result.E - loss.E) / loss.E
@@ -94,7 +142,12 @@ def compute_param_errors(
         errors["alpha"][i] = (result.alpha - loss.alpha) / loss.alpha
         errors["beta"][i] = (result.beta - loss.beta) / loss.beta
 
-    return {"config": sim_config, "log_ranges": log_ranges, **errors}
+    return {
+        "config": sim_config,
+        "log_ranges": log_ranges,
+        "n_failures": n_failures,
+        **errors,
+    }
 
 
 def run_param_error_analysis(
@@ -190,6 +243,159 @@ def create_param_errors_figure(all_results: dict[str, list[dict]]) -> plt.Figure
     return fig
 
 
+@dataclass(frozen=True)
+class MethodConfig:
+    """Configuration for a single optimization method in the comparison."""
+
+    label: str
+    color: str
+    method: str
+    jac: str | None = None
+    eps: float | None = None
+
+
+# Method configurations for the comparison figure.
+# The default L-BFGS-B uses scipy's default eps=1e-8. The two eps variants
+# bracket it symmetrically in log space (100x above and below) to demonstrate
+# sensitivity to the finite-difference step size.
+METHOD_CONFIGS = [
+    MethodConfig("Nelder-Mead", "#1f77b4", "nelder-mead"),
+    MethodConfig(
+        f"L-BFGS-B (default eps={LBFGSB_DEFAULT_EPS:.0e})", "#ff7f0e", "l-bfgs-b"
+    ),
+    MethodConfig("L-BFGS-B (central diff)", "#d62728", "l-bfgs-b", jac="3-point"),
+    MethodConfig("L-BFGS-B (eps=1e-6)", "#9467bd", "l-bfgs-b", eps=1e-6),
+    MethodConfig("L-BFGS-B (eps=1e-10)", "#8c564b", "l-bfgs-b", eps=1e-10),
+    MethodConfig("Grid (256²)", "#2ca02c", "grid"),
+]
+
+
+def run_method_comparison(
+    compute_budgets: np.ndarray,
+    log_ranges: np.ndarray,
+    n_points: int,
+) -> dict[str, list[tuple[MethodConfig, dict]]]:
+    """Run parameter error analysis for all methods (baseline bias only).
+
+    Returns:
+        Dict mapping surface_name -> list of (MethodConfig, results) tuples
+    """
+    # Verify that our claimed default eps matches what scipy actually uses.
+    # Run a trivial fit with and without explicit eps and check identical results.
+    _verify_default_eps()
+
+    all_results: dict[str, list[tuple[MethodConfig, dict]]] = {}
+
+    for surface_name, loss in LOSS_SURFACES:
+        print(f"\n{'=' * 70}")
+        print(f"Loss Surface: {surface_name}")
+        print(f"  α={loss.alpha:.2f}, β={loss.beta:.2f}")
+        print("=" * 70)
+
+        surface_results: list[tuple[MethodConfig, dict]] = []
+        sim_config = SimulationConfig(
+            name="baseline", loss=loss, drift_rate=0.0, center_scale=1.0
+        )
+
+        for mc in METHOD_CONFIGS:
+            print(f"  Method: {mc.label} ...", end=" ", flush=True)
+            results = compute_param_errors(
+                sim_config=sim_config,
+                compute_budgets=compute_budgets,
+                log_ranges=log_ranges,
+                n_points=n_points,
+                method=mc.method,
+                jac=mc.jac,
+                eps=mc.eps,
+            )
+            surface_results.append((mc, results))
+
+            max_errs = {
+                k: np.nanmax(np.abs(results[k])) * 100
+                for k in ["E", "A", "B", "alpha", "beta"]
+            }
+            failures = results["n_failures"]
+            fail_str = f" ({failures}/{len(log_ranges)} failed)" if failures else ""
+            print(
+                f"max errors: "
+                + ", ".join(f"{k}={v:.2e}%" for k, v in max_errs.items())
+                + fail_str
+            )
+
+        all_results[surface_name] = surface_results
+
+    return all_results
+
+
+def create_method_comparison_figure(
+    all_results: dict[str, list[tuple[MethodConfig, dict]]],
+) -> plt.Figure:
+    """Create method comparison figure (n_surfaces rows × 5 param cols)."""
+    n_surfaces = len(LOSS_SURFACES)
+    param_names = ["E", "A", "B", "α", "β"]
+    error_keys = ["E", "A", "B", "alpha", "beta"]
+
+    fig, axes = plt.subplots(n_surfaces, 5, figsize=(20, 4 * n_surfaces))
+    if n_surfaces == 1:
+        axes = axes[np.newaxis, :]
+
+    for row, (surface_name, loss) in enumerate(LOSS_SURFACES):
+        method_results = all_results[surface_name]
+
+        for col, (param_name, error_key) in enumerate(zip(param_names, error_keys)):
+            ax = axes[row, col]
+
+            for mc, results in method_results:
+                errors = np.abs(results[error_key]) * 100  # Absolute relative error %
+                ax.plot(
+                    results["log_ranges"],
+                    errors,
+                    "o-",
+                    color=mc.color,
+                    markersize=3,
+                    label=mc.label,
+                )
+
+            ax.set_yscale("log")
+            row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f})"
+            _configure_ax(
+                ax,
+                f"|{param_name} error|\n{row_label}",
+                show_legend=(row == 0 and col == 4),
+            )
+            ax.set_ylabel("Absolute relative error (%)")
+
+    fig.suptitle(
+        "Experiment 5: Method Comparison — Parameter Recovery (baseline, no bias)",
+        fontsize=12,
+        y=0.995,
+    )
+    fig.tight_layout()
+    return fig
+
+
+def export_method_comparison_csv(
+    all_results: dict[str, list[tuple[MethodConfig, dict]]],
+    path: str | Path,
+) -> None:
+    """Export method comparison summary as CSV."""
+    param_keys = ["E", "A", "B", "alpha", "beta"]
+    rows = []
+    for surface_name, _ in LOSS_SURFACES:
+        for mc, results in all_results[surface_name]:
+            n_ranges = len(results["log_ranges"])
+            n_failures = results["n_failures"]
+            max_errs = {k: np.nanmax(np.abs(results[k])) * 100 for k in param_keys}
+            rows.append(
+                f"{surface_name},{mc.method},{mc.jac or ''},{mc.eps or ''},"
+                f"{mc.label},{n_failures}/{n_ranges},"
+                + ",".join(f"{max_errs[k]:.2e}" for k in param_keys)
+            )
+
+    header = "surface,method,jac,eps,label,failures,max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%"
+    Path(path).write_text(header + "\n" + "\n".join(rows) + "\n")
+
+
 def main():
     """Run Experiment 5: parametric surface fitting analysis."""
     print("=" * 70)
@@ -198,9 +404,9 @@ def main():
 
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp5")
 
-    # --- Part 1: Parameter Error Analysis ---
+    # --- Part 1: Parameter Error Analysis (Nelder-Mead) ---
     print("\n" + "#" * 70)
-    print("Part 1: Parameter Error Analysis")
+    print("Part 1: Parameter Error Analysis (Nelder-Mead)")
     print("#" * 70)
 
     param_results = run_param_error_analysis(COMPUTE_BUDGETS, LOG_RANGES, N_POINTS)
@@ -213,9 +419,9 @@ def main():
     print(f"Saved: {param_path}")
     plt.close(param_fig)
 
-    # --- Part 2: Extrapolation Error Analysis ---
+    # --- Part 2: Extrapolation Error Analysis (Nelder-Mead) ---
     print("\n" + "#" * 70)
-    print("Part 2: Extrapolation Error Analysis")
+    print("Part 2: Extrapolation Error Analysis (Nelder-Mead)")
     print("#" * 70)
 
     print(f"\nFitting compute budgets: {COMPUTE_BUDGETS}")
@@ -249,9 +455,28 @@ def main():
     print(f"Saved: {extrap_path}")
     plt.close(extrap_fig)
 
+    # --- Part 3: Method Comparison ---
+    print("\n" + "#" * 70)
+    print("Part 3: Method Comparison (baseline, no bias)")
+    print("#" * 70)
+
+    method_results = run_method_comparison(COMPUTE_BUDGETS, LOG_RANGES, N_POINTS)
+
+    print(f"\n{'─' * 70}")
+    print("Generating method comparison figure...")
+    method_fig = create_method_comparison_figure(method_results)
+    method_path = output_dir / "method_comparison.png"
+    method_fig.savefig(method_path, dpi=150, bbox_inches="tight", facecolor="white")
+    print(f"Saved: {method_path}")
+    plt.close(method_fig)
+
+    csv_path = output_dir / "method_comparison.csv"
+    export_method_comparison_csv(method_results, csv_path)
+    print(f"Saved: {csv_path}")
+
     # --- Summary ---
     print("\n" + "=" * 70)
-    print("Summary: Parameter errors at largest sampling range")
+    print("Summary: Parameter errors at largest sampling range (Nelder-Mead)")
     print("=" * 70)
 
     for surface_name, _ in LOSS_SURFACES:
@@ -266,21 +491,31 @@ def main():
             )
 
     print("\n" + "=" * 70)
-    print("Summary: Maximum D* extrapolation errors")
+    print("Summary: Method comparison at largest sampling range (baseline)")
     print("=" * 70)
 
-    for range_name in DISPLAY_LOG_RANGE_NAMES:
-        print(f"\n{range_name.upper()} sampling range:")
-        for surface_name, _ in LOSS_SURFACES:
-            print(f"\n  {surface_name}:")
-            print(f"  {'Config':<15} {'max_D_err%':>12}")
-            print(f"  {'-' * 30}")
-            for results in extrap_results[range_name][surface_name]:
-                max_D_err = np.abs(results["D_rel_errors"]).max() * 100
-                print(f"  {results['config'].name:<15} {max_D_err:>12.2f}")
+    for surface_name, _ in LOSS_SURFACES:
+        print(f"\n{surface_name}:")
+        print(
+            f"{'Method':<25} {'E%':>10} {'A%':>10} {'B%':>10} {'α%':>10} {'β%':>10} {'fails':>6}"
+        )
+        print("-" * 80)
+
+        for mc, results in method_results[surface_name]:
+            vals = [results[k][-1] * 100 for k in ["E", "A", "B", "alpha", "beta"]]
+            fails = results["n_failures"]
+            print(
+                f"{mc.label:<25} "
+                + " ".join(f"{v:>+10.2e}" for v in vals)
+                + f" {fails:>6}"
+            )
 
     print("\nExperiment 5 complete.")
-    return {"param_results": param_results, "extrap_results": extrap_results}
+    return {
+        "param_results": param_results,
+        "extrap_results": extrap_results,
+        "method_results": method_results,
+    }
 
 
 if __name__ == "__main__":

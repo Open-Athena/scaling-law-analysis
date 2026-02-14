@@ -139,40 +139,50 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
 
 1. Generate synthetic loss data using the same procedure as Experiments 3 and 4.
 
-2. Fit all 5 parameters simultaneously:
-   - Input: Arrays of N, D, and L values (token counts, parameter counts, and loss) pooled across all compute budgets
-   - Use **variable projection** (also known as separable least squares):
-     - For fixed (α, β), the loss function L = E + A·N^(-α) + B·D^(-β) is linear in (E, A, B)
-     - Stage 1: Coarse 2D grid search over (α, β) to find a good starting point
-     - Stage 2: Local refinement of (α, β) using Nelder-Mead optimization
-     - At each (α, β) evaluation, solve for (E, A, B) using non-negative least squares (NNLS) to enforce physical constraints
-   - Diagnostic checks (raise errors if violated):
-     - Optimization fails to converge
-     - Final (α, β) at or near bounds
-     - Any of E, A, B at or near zero (hitting NNLS constraint boundary)
-     - Any parameter is NaN or Inf
-   - Return a result object containing all 5 fitted parameters (E, A, B, α, β)
+2. Fit all 5 parameters simultaneously via **variable projection**: for fixed (α, β), the loss L = E + A·N^(-α) + B·D^(-β) is linear in (E, A, B) and solved via NNLS.
+   - All methods search only over (α, β) and solve (E, A, B) via NNLS at each candidate, isolating the optimizer as the sole variable.
+   - Six optimization configurations:
+     - **Nelder-Mead**: coarse grid search init (32×32) + Nelder-Mead refinement (gradient-free)
+     - **L-BFGS-B (default eps=1e-8)**: same coarse grid init + L-BFGS-B refinement with default forward finite differences
+     - **L-BFGS-B (central diff)**: same, but with 3-point central finite differences
+     - **L-BFGS-B (eps=1e-6)**: forward diff with step size 100x above default
+     - **L-BFGS-B (eps=1e-10)**: forward diff with step size 100x below default
+     - **Grid**: fine grid search (256×256) with no local refinement
+   - Convergence failures (ABNORMAL) are recorded as NaN and shown as gaps in the figure
+   - Diagnostic checks: convergence failure, (α, β) at bounds, E/A/B near zero, non-finite values
 
 3. For each configuration (loss surface × sampling bias × sampling range):
    - Pool the sampled (N, D, L) data across all compute budgets
-   - Fit the surface
+   - Fit using all six method configurations
    - Compute relative errors for all 5 parameters compared to ground truth
 
 4. For extrapolation analysis, use the same setup as Experiment 4.
 
+5. L-BFGS-B sensitivity findings:
+   - **Precision ceiling from numerical gradients**: forward-diff L-BFGS-B converges reliably but plateaus at ~1e-5% error (vs ~1e-8% for Nelder-Mead). This ceiling comes from the ~1e-8 precision of forward finite-difference gradient estimates.
+   - **Central diff closes the precision gap but introduces failures**: 3-point central differences achieve Nelder-Mead-level precision (~1e-8%) but cause sporadic ABNORMAL line search failures (1/60 in our sweep). These are false negatives: the optimizer has already reached the true minimum (RSS ~1e-19) but the line search cannot verify progress because function values are near machine zero.
+   - **Custom eps values cause failures in both directions**: eps=1e-6 (100x above default) produces ABNORMAL failures in 20/60 trials with worse precision where it converges. eps=1e-10 (100x below default) is slightly more precise than default but introduces failures on the high_imbalance surface (3/20). There is no eps value that reliably improves on the default.
+   - **Forward diff "succeeds" by stopping early**: default L-BFGS-B reports success at RSS ~1e-14 because noisy gradients satisfy termination criteria prematurely. Central diff reaches RSS ~1e-19 (100,000x better) but fails the convergence check because the line search cannot distinguish progress at that scale.
+   - **Takeaway**: L-BFGS-B exposes multiple interacting settings — `eps` (FD step size), `jac` (FD scheme), `ftol` (objective tolerance), `gtol` (gradient tolerance), `maxcor` (Hessian corrections), `maxls` (line search steps) — where choices interact: tight `gtol` demands accurate gradients, which demands careful `eps`, which risks cancellation. Nelder-Mead has only `xatol`/`fatol` (simplex convergence) and `maxiter`, with no gradient-related settings and no interactions between them. On noise-free data, Nelder-Mead achieves machine-precision accuracy with defaults; L-BFGS-B cannot match this without coordinated tuning, and no single configuration avoids all failures.
+
 **Visualization**:
 
-Produce two figures:
+Produce three figures:
 
-1. **Parameter estimation errors** (one figure):
+1. **Parameter estimation errors** (one figure, Nelder-Mead only):
    - Grid with one row per loss surface (3 rows) and 5 columns (one per parameter: E, A, B, α, β)
    - Each panel shows relative error vs sampling range, with one curve per sampling bias configuration
-   - This reveals how parameter recovery accuracy depends on sampling range, which parameters are most sensitive to sampling biases, and how loss surface geometry affects parameter recovery
    - Follow the same style as the parameter errors figure from Experiment 3
 
-2. **Extrapolation errors** (one figure):
+2. **Extrapolation errors** (one figure, Nelder-Mead only):
    - Same layout and style as Experiment 4's extrapolation figure
-   - This allows direct comparison of extrapolation error when using surface fitting vs Approach 2
+   - Allows direct comparison of extrapolation error when using surface fitting vs Approach 2
+
+3. **Method comparison** (one figure + CSV):
+   - Grid with one row per loss surface (3 rows) and 5 columns (one per parameter: E, A, B, α, β)
+   - Each panel shows absolute relative error (log scale) vs sampling range, with one curve per method configuration; gaps indicate convergence failures
+   - Baseline (no bias) only, to isolate optimizer precision from sampling effects
+   - Accompanying CSV summarizes failure rate and max error per method per surface
 
 
 ## Experiment 6: Analytical Error

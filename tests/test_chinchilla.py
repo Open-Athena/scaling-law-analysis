@@ -4,6 +4,9 @@ import numpy as np
 import pytest
 
 from scaling_law_analysis.chinchilla import (
+    DEFAULT_LOSS_SURFACE,
+    FINE_ALPHA_GRID,
+    FINE_BETA_GRID,
     LossSurface,
     fit_parabola,
     fit_approach2,
@@ -144,47 +147,77 @@ class TestFitApproach2:
         assert result.b_intercept == pytest.approx(surface.b_intercept, rel=1e-10)
 
 
+def _generate_isoflop_data(
+    surface: LossSurface,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Generate IsoFLOP sample data from a loss surface for testing."""
+    compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
+    all_N, all_D, all_L = [], [], []
+    for C in compute_budgets:
+        N, D, L = isoflop_sample(
+            C=C, n_points=15, log_range=1.0, center_offset=0.0, surface=surface
+        )
+        all_N.extend(N)
+        all_D.extend(D)
+        all_L.extend(L)
+    return np.array(all_N), np.array(all_D), np.array(all_L)
+
+
 class TestFitSurface:
-    """Tests for fit_surface function."""
+    """Tests for fit_surface across optimization methods."""
 
-    def test_fit_surface_recovers_symmetric_surface_parameters(self):
-        """fit_surface should perfectly recover all 5 parameters on a symmetric surface."""
-        # Create symmetric surface
-        surface = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
-        compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
+    SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+    CHINCHILLA = DEFAULT_LOSS_SURFACE  # α=0.34, β=0.28
 
-        # Generate sample data from the surface using IsoFLOP sampling
-        all_N, all_D, all_L = [], [], []
-        for C in compute_budgets:
-            N, D, L = isoflop_sample(
-                C=C,
-                n_points=15,
-                log_range=1.0,
-                center_offset=0.0,
-                surface=surface,
+    @pytest.mark.parametrize(
+        "surface_name,surface",
+        [("symmetric", SYMMETRIC), ("chinchilla", CHINCHILLA)],
+    )
+    @pytest.mark.parametrize("method", ["nelder-mead", "l-bfgs-b", "grid"])
+    def test_method_recovers_parameters(self, surface_name, surface, method):
+        """Each method should recover surface parameters within its precision."""
+        N, D, L = _generate_isoflop_data(surface)
+
+        if method == "grid":
+            result = fit_surface(
+                N,
+                D,
+                L,
+                alpha_grid=FINE_ALPHA_GRID,
+                beta_grid=FINE_BETA_GRID,
+                method=method,
             )
-            all_N.extend(N)
-            all_D.extend(D)
-            all_L.extend(L)
+        else:
+            result = fit_surface(N, D, L, method=method)
 
-        N_arr = np.array(all_N)
-        D_arr = np.array(all_D)
-        L_arr = np.array(all_L)
+        assert result.method == method
 
-        # Fit the surface
-        result = fit_surface(N_arr, D_arr, L_arr)
+        if method == "grid":
+            # Grid step ~0.0035 over [0.05, 0.95] at 256 points.
+            # Exponent errors ≤0.4%; coefficient errors up to ~2% due to
+            # exponential amplification of exponent discretization.
+            exp_tol = 5e-3
+            coeff_tol = 2.5e-2
+        else:
+            exp_tol = 1e-6
+            coeff_tol = 1e-6
 
-        # All 5 parameters should be recovered exactly
-        assert result.alpha == pytest.approx(surface.alpha, rel=1e-6)
-        assert result.beta == pytest.approx(surface.beta, rel=1e-6)
-        assert result.A == pytest.approx(surface.A, rel=1e-6)
-        assert result.B == pytest.approx(surface.B, rel=1e-6)
-        assert result.E == pytest.approx(surface.E, rel=1e-6)
+        assert result.alpha == pytest.approx(surface.alpha, rel=exp_tol)
+        assert result.beta == pytest.approx(surface.beta, rel=exp_tol)
+        assert result.A == pytest.approx(surface.A, rel=coeff_tol)
+        assert result.B == pytest.approx(surface.B, rel=coeff_tol)
+        assert result.E == pytest.approx(surface.E, rel=coeff_tol)
 
-        # RSS should be essentially zero for noise-free data
+    def test_nelder_mead_rss_near_zero(self):
+        """Nelder-Mead should achieve near-zero RSS on noise-free data."""
+        N, D, L = _generate_isoflop_data(self.SYMMETRIC)
+        result = fit_surface(N, D, L, method="nelder-mead")
         assert result.residual_sum_squares < 1e-18
 
-        # Verify to_loss_surface() creates equivalent surface
-        fitted_surface = result.to_loss_surface()
-        assert fitted_surface.alpha == pytest.approx(surface.alpha, rel=1e-6)
-        assert fitted_surface.beta == pytest.approx(surface.beta, rel=1e-6)
+    def test_to_loss_surface_roundtrip(self):
+        """to_loss_surface() should produce an equivalent surface."""
+        N, D, L = _generate_isoflop_data(self.SYMMETRIC)
+        result = fit_surface(N, D, L, method="nelder-mead")
+        fitted = result.to_loss_surface()
+        assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
+        assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)

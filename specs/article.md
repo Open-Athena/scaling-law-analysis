@@ -137,27 +137,26 @@
 
 ## Robust Fits — Unbiased Estimation with Linear Separation
 
-- Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
-  - TODO: write this part up:
-  - Typically, "unstable" means that results are sensitive to initialization, hyperparameters (e.g. Huber loss delta) or lack of optimization convergence
-  - The most common approaches are BFGS or L-BFGS (cite (Mis)fitting scaling laws section 6) or other gradient-based SGD optimizers
-  - Some studies forgo optimization entirely and use grid search instead due to instability (Goyal et al. (2024))
-  - Some studies "opt to use a linear method" by taking the log on both sides, but "it is generally not advised because the log transformation also changes the distribution of error"
-    - Some even still use a nonlinear optimizer even with a linear objective (Hashimoto, 2021)
-    - It can be easily shown in simulations like those we use that log transformations of loss values lead to universal biases in parameter estimates
-    - Similarly, use loss functions for fits other than MSE like MAE or Huber loss also induce biased parameter inference so we use MSE for all further fits
-  - Use the above as segueue into variable projection
-- Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
-- This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
+- Overview
+  - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
+    - TODO: write this part up:
+    - Typically, "unstable" means that results are sensitive to initialization, hyperparameters (e.g. Huber loss delta) or lack of optimization convergence
+    - The most common approaches are BFGS or L-BFGS (cite (Mis)fitting scaling laws section 6) or other gradient-based SGD optimizers
+    - Some studies forgo optimization entirely and use grid search instead due to instability (Goyal et al. (2024))
+    - Some studies "opt to use a linear method" by taking the log on both sides, but "it is generally not advised because the log transformation also changes the distribution of error"
+      - Some even still use a nonlinear optimizer even with a linear objective (Hashimoto, 2021)
+      - It can be easily shown in simulations like those we use that log transformations of loss values lead to universal biases in parameter estimates
+      - Similarly, use loss functions for fits other than MSE like MAE or Huber loss also induce biased parameter inference so we use MSE for all further fits
+    - Use the above as segueue into variable projection
+  - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
+  - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
 - Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space
-- TODO: generate results from 3 methods
-  - Variable Projection: grid search init + Variable projection w/ Nelder-Mead
-  - L-BFGS: grid search init + L-BFGS
-  - Grid search: grid search alone w/ higher resolution
+- **Why Nelder-Mead over L-BFGS-B?** We use NNLS for the inner solve to guarantee non-negative coefficients (E, A, B ≥ 0). This prevents physically meaningless fits but makes the objective non-smooth — the active-set transitions in NNLS create kinks that rule out analytical gradients. Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output). Deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space. With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`) where tight tolerances demand gradient accuracy that finite differences cannot reliably deliver. Nelder-Mead avoids all of this — its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box. Nelder-Mead scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
+- We compare Nelder-Mead, L-BFGS-B (several configurations varying differencing scheme and step size), and a fine grid search on noise-free synthetic data — the best case for gradient methods. Even here, L-BFGS-B either sacrifices precision or introduces convergence failures depending on configuration, while Nelder-Mead achieves machine-precision recovery with no tuning
 - TODO: come up with a good name for our method
-- Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`
-- Key result: all five loss surface parameters (E, A, B, α, β) recovered perfectly; extrapolation is exact
-- Key message: variable projection makes direct surface fitting robust and eliminates the biases introduced by the parabolic approximation
+- Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`; method comparison at `results/experiments/exp5/method_comparison.png`
+- Key result: all five loss surface parameters (E, A, B, α, β) recovered with machine precision; extrapolation is exact
+- Key message: variable projection with Nelder-Mead makes direct surface fitting robust — it eliminates the biases from the parabolic approximation and avoids the fragile gradient tuning that makes L-BFGS-B impractical for this problem
 
 ---
 
