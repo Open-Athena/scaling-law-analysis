@@ -7,7 +7,10 @@ from scaling_law_analysis.chinchilla import (
     DEFAULT_LOSS_SURFACE,
     FINE_ALPHA_GRID,
     FINE_BETA_GRID,
+    FitError,
     LossSurface,
+    _a3_rss,
+    _a3_rss_grad,
     fit_parabola,
     fit_approach2,
     fit_surface,
@@ -47,17 +50,17 @@ class TestFitParabola:
             assert actual == pytest.approx(expected, rel=1e-10), f"coeffs[{i}] mismatch"
 
     def test_fit_parabola_rejects_non_positive_curvature(self):
-        """fit_parabola should raise ValueError for flat or downward-facing data."""
+        """fit_parabola should raise FitError for flat or downward-facing data."""
         log_x = np.array([2.0, 2.5, 3.0, 3.5, 4.0])
 
         # Flat curve (zero curvature)
         L_flat = np.array([2.0, 2.0, 2.0, 2.0, 2.0])
-        with pytest.raises(ValueError, match="non-positive curvature"):
+        with pytest.raises(FitError, match="non-positive curvature"):
             fit_parabola(log_x, L_flat)
 
         # Downward-facing parabola (negative curvature) - has maximum, not minimum
         L_inverted = -0.5 * (log_x - 3.0) ** 2 + 5.0
-        with pytest.raises(ValueError, match="non-positive curvature"):
+        with pytest.raises(FitError, match="non-positive curvature"):
             fit_parabola(log_x, L_inverted)
 
 
@@ -221,3 +224,33 @@ class TestFitSurface:
         fitted = result.to_loss_surface()
         assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
         assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)
+
+
+class TestA3RssGrad:
+    """Test analytical gradient of Approach 3 RSS against finite differences."""
+
+    def test_gradient_matches_finite_differences(self):
+        """Analytical gradient should match central finite differences to high precision."""
+        rng = np.random.default_rng(42)
+        # Moderate scales keep all gradient components well-conditioned
+        log_N = rng.uniform(1, 5, size=50)
+        log_D = rng.uniform(1, 5, size=50)
+        L = rng.uniform(2.0, 4.0, size=50)
+
+        x = np.array([1.5, 50.0, 30.0, 0.35, 0.28])
+
+        analytic = _a3_rss_grad(x, log_N, log_D, L)
+
+        # Optimal step for central differences: h ~ eps^(1/3) ≈ 6e-6
+        h = 1e-5
+        fd = np.zeros_like(x)
+        for i in range(len(x)):
+            x_fwd = x.copy()
+            x_bwd = x.copy()
+            x_fwd[i] += h
+            x_bwd[i] -= h
+            fd[i] = (
+                _a3_rss(x_fwd, log_N, log_D, L) - _a3_rss(x_bwd, log_N, log_D, L)
+            ) / (2 * h)
+
+        np.testing.assert_allclose(analytic, fd, rtol=1e-9)

@@ -16,7 +16,9 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
+    FitError,
     fit_surface,
+    fit_approach3,
     FINE_ALPHA_GRID,
     FINE_BETA_GRID,
     LBFGSB_DEFAULT_EPS,
@@ -94,6 +96,7 @@ def compute_param_errors(
     method: str = "nelder-mead",
     jac: str | None = None,
     eps: float | None = None,
+    use_grad: bool = True,
 ) -> dict:
     """Compute parameter errors across sampling ranges.
 
@@ -105,6 +108,7 @@ def compute_param_errors(
         method: Optimization method for fit_surface
         jac: Jacobian scheme for L-BFGS-B (e.g. "3-point")
         eps: Override finite-difference step size for L-BFGS-B
+        use_grad: For approach3, whether to use analytical gradients
 
     Returns:
         Dictionary with arrays of relative errors for each parameter
@@ -121,16 +125,22 @@ def compute_param_errors(
     if eps is not None:
         fit_kwargs["eps"] = eps
 
-    # Arrays to store relative errors
+    # Arrays to store relative errors and per-range failure flags
     errors = {key: np.zeros(n_ranges) for key in ["E", "A", "B", "alpha", "beta"]}
+    failed = np.zeros(n_ranges, dtype=bool)
 
-    n_failures = 0
     for i, log_range in enumerate(log_ranges):
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
         try:
-            result = fit_surface(N, D, L, **fit_kwargs)
-        except ValueError:
-            n_failures += 1
+            if method == "approach3":
+                a3_kwargs: dict = {"use_grad": use_grad}
+                if jac is not None:
+                    a3_kwargs["jac"] = jac
+                result = fit_approach3(N, D, L, **a3_kwargs)
+            else:
+                result = fit_surface(N, D, L, **fit_kwargs)
+        except FitError:
+            failed[i] = True
             for key in errors:
                 errors[key][i] = np.nan
             continue
@@ -145,7 +155,8 @@ def compute_param_errors(
     return {
         "config": sim_config,
         "log_ranges": log_ranges,
-        "n_failures": n_failures,
+        "failed": failed,
+        "n_failures": int(failed.sum()),
         **errors,
     }
 
@@ -252,6 +263,7 @@ class MethodConfig:
     method: str
     jac: str | None = None
     eps: float | None = None
+    use_grad: bool = True
 
 
 # Method configurations for the comparison figure.
@@ -259,14 +271,27 @@ class MethodConfig:
 # bracket it symmetrically in log space (100x above and below) to demonstrate
 # sensitivity to the finite-difference step size.
 METHOD_CONFIGS = [
-    MethodConfig("Nelder-Mead", "#1f77b4", "nelder-mead"),
+    # Approach 3 — 5D direct optimization (orange family)
+    MethodConfig("5D L-BFGS-B (analytical grad)", "#e65100", "approach3"),
+    MethodConfig("5D L-BFGS-B (finite diff)", "#ff9800", "approach3", use_grad=False),
     MethodConfig(
-        f"L-BFGS-B (default eps={LBFGSB_DEFAULT_EPS:.0e})", "#ff7f0e", "l-bfgs-b"
+        "5D L-BFGS-B (central diff)",
+        "#e6b800",
+        "approach3",
+        use_grad=False,
+        jac="3-point",
     ),
-    MethodConfig("L-BFGS-B (central diff)", "#d62728", "l-bfgs-b", jac="3-point"),
-    MethodConfig("L-BFGS-B (eps=1e-6)", "#9467bd", "l-bfgs-b", eps=1e-6),
-    MethodConfig("L-BFGS-B (eps=1e-10)", "#8c564b", "l-bfgs-b", eps=1e-10),
-    MethodConfig("Grid (256²)", "#2ca02c", "grid"),
+    # VPNLS — our method: variable projection + NNLS + Nelder-Mead (standalone, dark blue)
+    MethodConfig("2D Nelder-Mead (VPNLS)", "#1a237e", "nelder-mead"),
+    # Variable projection — 2D L-BFGS-B variants (blue family)
+    MethodConfig(
+        f"2D L-BFGS-B (default eps={LBFGSB_DEFAULT_EPS:.0e})", "#1976d2", "l-bfgs-b"
+    ),
+    MethodConfig("2D L-BFGS-B (central diff)", "#64b5f6", "l-bfgs-b", jac="3-point"),
+    MethodConfig("2D L-BFGS-B (eps=1e-6)", "#90caf9", "l-bfgs-b", eps=1e-6),
+    MethodConfig("2D L-BFGS-B (eps=1e-10)", "#42a5f5", "l-bfgs-b", eps=1e-10),
+    # Variable projection — 2D Grid (standalone, green)
+    MethodConfig("2D Grid (256²)", "#2e7d32", "grid"),
 ]
 
 
@@ -307,6 +332,7 @@ def run_method_comparison(
                 method=mc.method,
                 jac=mc.jac,
                 eps=mc.eps,
+                use_grad=mc.use_grad,
             )
             surface_results.append((mc, results))
 
@@ -335,12 +361,17 @@ def create_method_comparison_figure(
     param_names = ["E", "A", "B", "α", "β"]
     error_keys = ["E", "A", "B", "alpha", "beta"]
 
-    fig, axes = plt.subplots(n_surfaces, 5, figsize=(20, 4 * n_surfaces))
+    fig, axes = plt.subplots(
+        n_surfaces,
+        5,
+        figsize=(16, 3 * n_surfaces),
+    )
     if n_surfaces == 1:
         axes = axes[np.newaxis, :]
 
     for row, (surface_name, loss) in enumerate(LOSS_SURFACES):
         method_results = all_results[surface_name]
+        is_last_row = row == n_surfaces - 1
 
         for col, (param_name, error_key) in enumerate(zip(param_names, error_keys)):
             ax = axes[row, col]
@@ -358,19 +389,43 @@ def create_method_comparison_figure(
 
             ax.set_yscale("log")
             row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f})"
-            _configure_ax(
-                ax,
-                f"|{param_name} error|\n{row_label}",
-                show_legend=(row == 0 and col == 4),
-            )
-            ax.set_ylabel("Absolute relative error (%)")
+            ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
+            ax.set_title(f"|{param_name} error|\n{row_label}", fontsize=9)
+            ax.grid(True, alpha=0.3)
+
+            # x-axis: ticks on all rows, labels only on last row
+            tick_labels = [log_range_to_label(lr) for lr in TICK_POSITIONS]
+            ax.set_xticks(TICK_POSITIONS)
+            if is_last_row:
+                ax.set_xticklabels(tick_labels, fontsize=7, rotation=30, ha="right")
+                ax.set_xlabel("Sampling range")
+            else:
+                ax.set_xticklabels([])
+
+            # y-axis: label only on left-most column
+            if col == 0:
+                ax.set_ylabel("Absolute relative error (%)")
+            else:
+                ax.set_ylabel("")
+
+    # Legend below the plots in a horizontal layout
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    fig.legend(
+        handles,
+        labels,
+        loc="lower center",
+        ncol=3,
+        fontsize=8,
+        borderaxespad=0.3,
+        frameon=True,
+    )
 
     fig.suptitle(
         "Experiment 5: Method Comparison — Parameter Recovery (baseline, no bias)",
         fontsize=12,
         y=0.995,
     )
-    fig.tight_layout()
+    fig.tight_layout(rect=(0, 0.09, 1, 0.98))
     return fig
 
 
@@ -392,7 +447,10 @@ def export_method_comparison_csv(
                 + ",".join(f"{max_errs[k]:.2e}" for k in param_keys)
             )
 
-    header = "surface,method,jac,eps,label,failures,max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%"
+    header = (
+        "surface,method,jac,eps,label,failures,"
+        "max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%"
+    )
     Path(path).write_text(header + "\n" + "\n".join(rows) + "\n")
 
 

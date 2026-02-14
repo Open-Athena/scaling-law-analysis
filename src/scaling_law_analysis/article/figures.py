@@ -5,6 +5,8 @@ This module generates clean, publication-ready figures for the blog post.
 
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm, LinearSegmentedColormap
+from matplotlib.lines import Line2D
 from pathlib import Path
 
 from scaling_law_analysis.chinchilla import (
@@ -1053,11 +1055,11 @@ def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
 
 
 def create_method_comparison_figure(output_dir: Path) -> dict:
-    """Create the method comparison figure for the optimizer analysis section.
+    """Create the method comparison figure and companion CSVs.
 
-    Layout: 3 panels — exponents dot plot, coefficients dot plot, failure heatmap.
-    Each dot plot shows geometric mean of absolute relative errors across all
-    sampling ranges and parameters in the group, with min-max error bars.
+    Single horizontal dot-range plot: geometric mean of |relative error| pooled
+    across all surfaces, sampling ranges, and parameters, with min-max bars.
+    Methods with convergence failures are drawn with reduced opacity.
     """
     from scipy.stats import gmean
 
@@ -1069,6 +1071,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     )
     from scaling_law_analysis.experiments.exp5_parametric_surface import (
         METHOD_CONFIGS,
+        MethodConfig,
         run_method_comparison,
     )
 
@@ -1082,168 +1085,339 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     )
 
     surface_names = [name for name, _ in LOSS_SURFACES]
-    surface_labels = {
-        "symmetric": "Symmetric",
-        "chinchilla": "Chinchilla",
-        "high_imbalance": "High imbal.",
-    }
-    surface_markers = {
-        "symmetric": "o",
-        "chinchilla": "s",
-        "high_imbalance": "D",
-    }
-    surface_colors = {
-        "symmetric": "#1b9e77",
-        "chinchilla": "#d95f02",
-        "high_imbalance": "#7570b3",
-    }
+    param_keys = ["E", "A", "B", "alpha", "beta"]
+    n_surfaces = len(surface_names)
+    n_ranges = len(LOG_RANGES)
+    n_params = len(param_keys)
+    total_fits = n_surfaces * n_ranges  # 60 attempts per method
 
-    param_groups = {
-        "Exponents (α, β)": ["alpha", "beta"],
-        "Coefficients (E, A, B)": ["E", "A", "B"],
-    }
+    # --- Collect per-method aggregated stats and failure info ---
+    method_stats = []  # list of dicts per method
+    raw_rows = []  # for raw CSV
 
-    # Compute aggregated stats: for each method × surface × param_group,
-    # compute geometric mean of |relative error| across params and sampling ranges,
-    # plus min and max across sampling ranges for error bars.
-    def aggregate_errors(results: dict, keys: list[str]) -> dict:
-        """Aggregate absolute relative errors across params and sampling ranges."""
-        # Stack errors: shape (n_params, n_ranges)
-        err_matrix = np.array([np.abs(results[k]) for k in keys])
-        # Max across params at each sampling range: shape (n_ranges,)
-        max_per_range = np.nanmax(err_matrix, axis=0) * 100  # to percent
-        # Filter out NaN ranges (failures)
-        valid = ~np.isnan(max_per_range)
-        if not valid.any():
-            return {"gmean": np.nan, "min": np.nan, "max": np.nan}
-        vals = max_per_range[valid]
-        return {
-            "gmean": float(gmean(vals)),
-            "min": float(vals.min()),
-            "max": float(vals.max()),
-        }
+    for m_idx, mc in enumerate(METHOD_CONFIGS):
+        all_errors = []  # flat pool of |relative error| % values
+        total_failures = 0
+        surfaces_with_failures: set[str] = set()
 
-    # --- Build figure: 2 dot-plot panels + 1 narrow heatmap ---
-    fig, axes = plt.subplots(
-        1,
-        3,
-        figsize=(14, 4.5),
-        gridspec_kw={"width_ratios": [4, 4, 1.5]},
-    )
+        # Per-parameter max errors and success counts (across all surfaces/ranges)
+        param_max_errs: dict[str, float] = {pk: 0.0 for pk in param_keys}
+        param_n_succeeded: dict[str, int] = {pk: 0 for pk in param_keys}
 
-    method_labels = [mc.label for mc in METHOD_CONFIGS]
+        for sname in surface_names:
+            _, results = all_results[sname][m_idx]
+            n_fail = results["n_failures"]
+            total_failures += n_fail
+            if n_fail > 0:
+                surfaces_with_failures.add(sname)
+
+            for range_idx, log_range in enumerate(LOG_RANGES):
+                range_failed = results["failed"][range_idx]
+                for pk in param_keys:
+                    err_val = results[pk][range_idx]
+                    abs_err_pct = abs(err_val) * 100
+                    raw_rows.append(
+                        {
+                            "method": mc.label,
+                            "surface": sname,
+                            "log_range": float(log_range),
+                            "parameter": pk,
+                            "relative_error_pct": (
+                                float(err_val * 100) if not range_failed else ""
+                            ),
+                            "abs_relative_error_pct": (
+                                float(abs_err_pct) if not range_failed else ""
+                            ),
+                            "convergence_failure": range_failed,
+                        }
+                    )
+                    if not range_failed:
+                        all_errors.append(abs_err_pct)
+                        param_max_errs[pk] = max(param_max_errs[pk], abs_err_pct)
+                        param_n_succeeded[pk] += 1
+
+        if all_errors:
+            arr = np.array(all_errors)
+            stats = {
+                "gmean": float(gmean(arr)),
+                "min": float(arr.min()),
+                "max": float(arr.max()),
+            }
+        else:
+            stats = {"gmean": np.nan, "min": np.nan, "max": np.nan}
+
+        method_stats.append(
+            {
+                "mc": mc,
+                "stats": stats,
+                "total_failures": total_failures,
+                "n_surfaces_failed": len(surfaces_with_failures),
+                "param_max_errs": param_max_errs,
+                "param_n_succeeded": param_n_succeeded,
+            }
+        )
+
+    # --- Sort by gmean descending (worst at top) ---
+    def _sort_key(ms: dict) -> float:
+        g: float = ms["stats"]["gmean"]
+        return g if not np.isnan(g) else float("inf")
+
+    method_stats.sort(key=_sort_key, reverse=True)
+
+    # --- Build 1×2 figure: dot-range plot (left) + max-error heatmap (right) ---
     n_methods = len(METHOD_CONFIGS)
     y_positions = np.arange(n_methods)
 
-    # Build failure matrix for heatmap (methods × surfaces)
-    n_ranges = len(LOG_RANGES)
-    failure_matrix = np.zeros((n_methods, len(surface_names)))
+    fig_height = (0.5 * n_methods + 1.5) * 0.8
+    fig, (ax_dot, ax_heat) = plt.subplots(
+        1,
+        2,
+        figsize=(12, fig_height),
+        gridspec_kw={"width_ratios": [3, 1.5], "wspace": 0.02},
+        sharey=True,
+        layout="constrained",
+    )
 
-    for panel_idx, (group_name, group_keys) in enumerate(param_groups.items()):
-        ax = axes[panel_idx]
+    # ---- Left panel: dot-range plot ----
+    for m_idx, ms in enumerate(method_stats):
+        mc: MethodConfig = ms["mc"]  # type: ignore[assignment]
+        stats: dict[str, float] = ms["stats"]  # type: ignore[assignment]
+        n_fail: int = ms["total_failures"]  # type: ignore[assignment]
+        fillstyle = "full" if n_fail == 0 else "none"
+        y = y_positions[m_idx]
 
-        for surf_idx, sname in enumerate(surface_names):
-            method_results = all_results[sname]
+        if np.isnan(stats["gmean"]):
+            ax_dot.scatter(
+                [1e-1],
+                [y],
+                marker="x",
+                s=60,
+                color="black",
+                zorder=5,
+            )
+        else:
+            xerr_lo = max(0.0, stats["gmean"] - stats["min"])
+            xerr_hi = max(0.0, stats["max"] - stats["gmean"])
+            ax_dot.errorbar(
+                stats["gmean"],
+                y,
+                xerr=[[xerr_lo], [xerr_hi]],
+                fmt="o",
+                color="black",
+                markersize=7,
+                capsize=4,
+                linewidth=1.5,
+                fillstyle=fillstyle,
+                markeredgewidth=1.5,
+                zorder=5,
+            )
 
-            for m_idx, (mc, results) in enumerate(method_results):
-                stats = aggregate_errors(results, group_keys)
+        # Failure count annotation below the marker
+        if n_fail > 0:
+            ax_dot.annotate(
+                f"{n_fail}/{total_fits} fits failed",
+                xy=(stats["gmean"] if not np.isnan(stats["gmean"]) else 1e-1, y),
+                xytext=(0, -10),
+                textcoords="offset points",
+                fontsize=6.5,
+                color="#555555",
+                ha="center",
+                va="top",
+            )
 
-                # Slight vertical offset per surface to avoid overlap
-                y = y_positions[m_idx] + (surf_idx - 1) * 0.2
+        # "Chinchilla Approach 3" callout for the 5D analytical grad method
+        if mc.label == "5D L-BFGS-B (analytical grad)" and not np.isnan(stats["gmean"]):
+            ax_dot.annotate(
+                "(Chinchilla Approach 3)",
+                xy=(stats["gmean"], y),
+                xytext=(0, 7),
+                textcoords="offset points",
+                fontsize=7,
+                color="#333333",
+                ha="center",
+                va="bottom",
+            )
 
-                if np.isnan(stats["gmean"]):
-                    # All failures — mark with an X
-                    ax.scatter(
-                        [1e-1],
-                        [y],
-                        marker="x",
-                        s=50,
-                        color=surface_colors[sname],
-                        zorder=5,
-                    )
-                else:
-                    xerr_lo = max(0, stats["gmean"] - stats["min"])
-                    xerr_hi = max(0, stats["max"] - stats["gmean"])
-                    ax.errorbar(
-                        stats["gmean"],
-                        y,
-                        xerr=[[xerr_lo], [xerr_hi]],
-                        fmt=surface_markers[sname],
-                        color=surface_colors[sname],
-                        markersize=6,
-                        capsize=3,
-                        linewidth=1.2,
-                        label=surface_labels[sname] if m_idx == 0 else None,
-                        zorder=5,
-                    )
+    # Legend for marker shapes
+    legend_handles = [
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="black",
+            markerfacecolor="black",
+            markersize=7,
+            linestyle="None",
+            label=f"Converged on all fits ({n_ranges} grid widths, "
+            f"{n_surfaces} loss surfaces)",
+        ),
+        Line2D(
+            [0],
+            [0],
+            marker="o",
+            color="black",
+            markerfacecolor="none",
+            markersize=7,
+            markeredgewidth=1.5,
+            linestyle="None",
+            label="Failed to converge in at least one simulation",
+        ),
+    ]
+    ax_dot.legend(
+        handles=legend_handles,
+        fontsize=7,
+        loc="lower right",
+        framealpha=0.9,
+        edgecolor="#cccccc",
+    )
 
-                # Collect failure counts (once, from either panel)
-                if panel_idx == 0:
-                    failure_matrix[m_idx, surf_idx] = results["n_failures"]
+    ax_dot.set_xscale("log")
+    ax_dot.set_yticks(y_positions)
+    ax_dot.set_yticklabels(
+        [ms["mc"].label for ms in method_stats],  # type: ignore[union-attr]
+        fontsize=9,
+    )
+    ax_dot.set_xlabel("Absolute relative error (%)", fontsize=10)
+    ax_dot.set_title("Geometric Mean Error (min–max range)", fontsize=10)
+    ax_dot.grid(True, axis="x", alpha=0.3)
+    ax_dot.invert_yaxis()
 
-        ax.set_xscale("log")
-        ax.set_yticks(y_positions)
-        ax.set_yticklabels(method_labels, fontsize=9)
-        ax.set_xlabel("Absolute relative error (%)")
-        ax.set_title(group_name, fontsize=11)
-        ax.grid(True, axis="x", alpha=0.3)
-        ax.invert_yaxis()
-        if panel_idx == 0:
-            ax.legend(fontsize=8, loc="lower right")
+    # ---- Right panel: max-error heatmap ----
+    param_display = {"E": "E", "A": "A", "B": "B", "alpha": "\u03b1", "beta": "\u03b2"}
+    col_labels = [param_display[pk] for pk in param_keys]
 
-    # --- Panel 3: Failure rate heatmap ---
-    ax_heat = axes[2]
-    # Normalize to fraction
-    fail_frac = failure_matrix / n_ranges
+    # Build the data matrix (n_methods × n_params)
+    heat_data = np.full((n_methods, n_params), np.nan)
+    for m_idx, ms in enumerate(method_stats):
+        pme: dict[str, float] = ms["param_max_errs"]  # type: ignore[assignment]
+        for p_idx, pk in enumerate(param_keys):
+            val = pme[pk]
+            if val > 0:
+                heat_data[m_idx, p_idx] = val
+
+    # Determine color scale bounds from finite data
+    finite_vals = heat_data[np.isfinite(heat_data)]
+    vmin = max(finite_vals.min(), 1e-10) if len(finite_vals) > 0 else 1e-10
+    vmax = finite_vals.max() if len(finite_vals) > 0 else 1e2
+
+    # Custom colormap: white → black
+    cmap_wb = LinearSegmentedColormap.from_list("white_black", ["#ffffff", "#000000"])
 
     im = ax_heat.imshow(
-        fail_frac,
-        cmap="Reds",
+        heat_data,
         aspect="auto",
-        vmin=0,
-        vmax=1,
+        cmap=cmap_wb,
+        norm=LogNorm(vmin=vmin, vmax=vmax),
         interpolation="nearest",
     )
-    # Annotate cells
-    for i in range(n_methods):
-        for j in range(len(surface_names)):
-            count = int(failure_matrix[i, j])
-            text_color = "white" if fail_frac[i, j] > 0.5 else "black"
+
+    # Cell text: max error only (no fit count)
+    for m_idx, ms in enumerate(method_stats):
+        pme: dict[str, float] = ms["param_max_errs"]  # type: ignore[assignment]
+        for p_idx, pk in enumerate(param_keys):
+            val = pme[pk]
+            if val > 0:
+                # Format the error value compactly
+                if val >= 1.0:
+                    txt = f"{val:.1f}%"
+                elif val >= 0.01:
+                    txt = f"{val:.2f}%"
+                else:
+                    exp = int(np.floor(np.log10(val)))
+                    mantissa = val / 10**exp
+                    txt = f"{mantissa:.1f}e{exp}%"
+            else:
+                txt = "—"
+            # Choose text color for readability against background
+            cell_val = heat_data[m_idx, p_idx]
+            if np.isfinite(cell_val):
+                log_frac = (np.log10(cell_val) - np.log10(vmin)) / (
+                    np.log10(vmax) - np.log10(vmin)
+                )
+                text_color = "white" if log_frac > 0.5 else "black"
+            else:
+                text_color = "black"
             ax_heat.text(
-                j,
-                i,
-                f"{count}/{n_ranges}",
+                p_idx,
+                m_idx,
+                txt,
                 ha="center",
                 va="center",
-                fontsize=8,
+                fontsize=8.5,
                 color=text_color,
             )
 
-    ax_heat.set_xticks(range(len(surface_names)))
-    ax_heat.set_xticklabels(
-        [surface_labels[s] for s in surface_names],
-        fontsize=8,
-        rotation=45,
-        ha="right",
-    )
-    ax_heat.set_yticks(y_positions)
-    ax_heat.set_yticklabels([])  # labels already on left panels
-    ax_heat.set_title("Failures", fontsize=11)
+    ax_heat.set_xticks(np.arange(n_params))
+    ax_heat.set_xticklabels(col_labels, fontsize=10)
+    ax_heat.set_xlabel("Estimated parameter", fontsize=10)
+    ax_heat.set_title("Max Error by Parameter", fontsize=10)
+    ax_heat.tick_params(left=False)  # hide y-axis ticks (shared from left)
 
-    fig.suptitle(
-        "Optimizer Comparison: Parameter Recovery Accuracy",
-        fontsize=13,
-        y=1.02,
-    )
-    fig.tight_layout()
+    fig.suptitle("Optimizer Comparison: Parameter Recovery Accuracy", fontsize=12)
 
-    # Save
+    # Save figure
     fig_path = output_dir / "method_comparison.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
-    return {"all_results": all_results, "failure_matrix": failure_matrix}
+    # --- Export CSV 1: Raw data ---
+    raw_csv_path = output_dir / "method_comparison_raw.csv"
+    with open(raw_csv_path, "w") as f:
+        f.write(
+            "method,surface,log_range,parameter,relative_error_pct,"
+            "abs_relative_error_pct,convergence_failure\n"
+        )
+        for row in raw_rows:
+            f.write(
+                f'"{row["method"]}",{row["surface"]},{row["log_range"]:.6f},'
+                f'{row["parameter"]},{row["relative_error_pct"]},'
+                f'{row["abs_relative_error_pct"]},{row["convergence_failure"]}\n'
+            )
+    print(f"Saved: {raw_csv_path}")
+
+    # --- Export CSV 2: Max error pivot (method × parameter) ---
+    max_err_csv_path = output_dir / "method_comparison_max_errors.csv"
+    with open(max_err_csv_path, "w") as f:
+        f.write("method," + ",".join(f"max_{pk}_err_pct" for pk in param_keys) + "\n")
+        for m_idx, mc in enumerate(METHOD_CONFIGS):
+            max_errs = []
+            for pk in param_keys:
+                vals = []
+                for sname in surface_names:
+                    _, results = all_results[sname][m_idx]
+                    succeeded = ~results["failed"]
+                    if succeeded.any():
+                        vals.append(np.max(np.abs(results[pk][succeeded])) * 100)
+                max_errs.append(max(vals) if vals else "")
+            f.write(
+                f'"{mc.label}",'
+                + ",".join(
+                    f"{v:.6e}" if isinstance(v, float) else str(v) for v in max_errs
+                )
+                + "\n"
+            )
+    print(f"Saved: {max_err_csv_path}")
+
+    # --- Export CSV 3: Failure counts pivot ---
+    fail_csv_path = output_dir / "method_comparison_failures.csv"
+    with open(fail_csv_path, "w") as f:
+        f.write(
+            "method,total_failures,total_fits,failure_rate,"
+            "surfaces_with_failures,total_surfaces\n"
+        )
+        for ms in method_stats:
+            mc: MethodConfig = ms["mc"]  # type: ignore[assignment]
+            n_fail: int = ms["total_failures"]  # type: ignore[assignment]
+            n_surf_fail: int = ms["n_surfaces_failed"]  # type: ignore[assignment]
+            f.write(
+                f'"{mc.label}",{n_fail},{total_fits},'
+                f"{n_fail/total_fits:.4f},"
+                f"{n_surf_fail},{n_surfaces}\n"
+            )
+    print(f"Saved: {fail_csv_path}")
+
+    return {"all_results": all_results, "method_stats": method_stats}
 
 
 def generate_all_figures(output_dir: Path) -> dict:

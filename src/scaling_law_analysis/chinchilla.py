@@ -14,6 +14,16 @@ from typing import Union
 from scipy.optimize import minimize, nnls
 
 
+class FitError(Exception):
+    """A fitting or optimization procedure failed to produce a valid result.
+
+    This covers all runtime failure modes: optimizer non-convergence, solutions
+    at parameter bounds or grid edges, non-finite values, and degenerate fits
+    (e.g. non-positive curvature in parabola fitting). It does NOT cover
+    programmer errors like invalid arguments, which remain ValueError.
+    """
+
+
 # Chinchilla paper ground truth parameters;
 # see "D.2. Approach 3: Parametric fitting of the loss"
 CHINCHILLA_PARAMS = {
@@ -373,7 +383,7 @@ def fit_parabola(
 
     # Require positive curvature (upward-facing parabola) to have a minimum
     if a < min_curvature:
-        raise ValueError(
+        raise FitError(
             f"Parabola fit has non-positive curvature (a={a:.2e}). "
             f"A minimum requires positive curvature (upward-facing parabola). "
             f"This may indicate a flat loss surface, insufficient data, or inverted curvature."
@@ -567,7 +577,7 @@ def _compute_rss_and_params(
 def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> None:
     """Raise if index is at grid edge."""
     if idx == 0 or idx == len(grid) - 1:
-        raise ValueError(
+        raise FitError(
             f"Best {name}={grid[idx]:.4f} is at grid edge. "
             f"Consider expanding grid range [{grid[0]:.2f}, {grid[-1]:.2f}]."
         )
@@ -578,22 +588,22 @@ def _check_at_bounds(
 ) -> None:
     """Raise if value is at or near bounds."""
     if val - lo < tol:
-        raise ValueError(f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}.")
+        raise FitError(f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}.")
     if hi - val < tol:
-        raise ValueError(f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}.")
+        raise FitError(f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}.")
 
 
 def _check_positive(name: str, val: float, tol: float = 1e-6) -> None:
     """Raise if value is at or near zero."""
     if val < tol:
-        raise ValueError(f"Fitted {name}={val:.2e} is at or near zero.")
+        raise FitError(f"Fitted {name}={val:.2e} is at or near zero.")
 
 
 def _check_finite(**params: float) -> None:
     """Raise if any parameter is NaN or Inf."""
     bad = {k: v for k, v in params.items() if np.isnan(v) or np.isinf(v)}
     if bad:
-        raise ValueError(f"Optimization produced non-finite values: {bad}")
+        raise FitError(f"Optimization produced non-finite values: {bad}")
 
 
 def _grid_search(
@@ -741,7 +751,7 @@ def fit_surface(
         if result is None or not result.success:
             message = result.message if result else "Unknown error"
             nit = result.nit if result else 0
-            raise ValueError(f"Optimization failed: {message} (iterations: {nit})")
+            raise FitError(f"Optimization failed: {message} (iterations: {nit})")
 
         alpha, beta = float(result.x[0]), float(result.x[1])
 
@@ -765,4 +775,151 @@ def fit_surface(
         residual_sum_squares=rss,
         n_points=len(N),
         method=method,
+    )
+
+
+# =============================================================================
+# Approach 3: Direct nonlinear optimization over all 5 parameters
+# =============================================================================
+
+# Coarse 5D grid for initialization (8 values per parameter = 8^5 = 32768 points)
+_A3_ALPHA_GRID = np.linspace(0.05, 0.95, 8)
+_A3_BETA_GRID = np.linspace(0.05, 0.95, 8)
+_A3_E_GRID = np.linspace(0.1, 5.0, 8)
+_A3_A_GRID = np.logspace(1, 4, 8)  # 10 to 10000
+_A3_B_GRID = np.logspace(1, 4, 8)  # 10 to 10000
+
+
+def _a3_rss(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> float:
+    """RSS objective for Approach 3 (5-parameter Chinchilla surface)."""
+    E, A, B, alpha, beta = x
+    pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
+    return float(np.sum((L - pred) ** 2))
+
+
+def _a3_rss_grad(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> np.ndarray:
+    """Analytical gradient of RSS for Approach 3."""
+    E, A, B, alpha, beta = x
+    term_N = np.exp(-alpha * log_N)  # N^(-alpha)
+    term_D = np.exp(-beta * log_D)  # D^(-beta)
+    pred = E + A * term_N + B * term_D
+    resid = pred - L  # (pred - observed)
+    # d(RSS)/dx = 2 * sum(resid * d(pred)/dx)
+    grad_E = 2 * np.sum(resid)
+    grad_A = 2 * np.sum(resid * term_N)
+    grad_B = 2 * np.sum(resid * term_D)
+    grad_alpha = 2 * np.sum(resid * A * term_N * (-log_N))
+    grad_beta = 2 * np.sum(resid * B * term_D * (-log_D))
+    return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
+
+
+def fit_approach3(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    *,
+    use_grad: bool = True,
+    jac: str | None = None,
+) -> SurfaceFitResult:
+    """Fit the loss surface via direct L-BFGS-B over all 5 parameters.
+
+    This is the standard approach used in the Chinchilla paper and others:
+    optimize E, A, B, α, β jointly without exploiting linear structure.
+    Uses RSS (not Huber loss) for direct comparison with variable projection.
+
+    Initialization is via a coarse 5D grid search (8 values per parameter).
+
+    Args:
+        N: Array of parameter counts
+        D: Array of token counts
+        L: Array of loss values (same length as N and D)
+        use_grad: If True (default), use analytical gradients. If False,
+            L-BFGS-B uses finite-difference gradients (forward differences
+            unless jac is set).
+        jac: Finite-difference scheme when use_grad is False (e.g. "3-point"
+            for central differences). Ignored when use_grad is True.
+
+    Returns:
+        SurfaceFitResult with fitted parameters
+
+    Raises:
+        ValueError: If optimization fails or produces invalid results
+    """
+    N, D, L = (
+        np.asarray(N, dtype=float),
+        np.asarray(D, dtype=float),
+        np.asarray(L, dtype=float),
+    )
+    if not (len(N) == len(D) == len(L)):
+        raise ValueError(
+            f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
+        )
+
+    log_N = np.log(N)
+    log_D = np.log(D)
+
+    def rss(x: np.ndarray) -> float:
+        return _a3_rss(x, log_N, log_D, L)
+
+    def rss_grad(x: np.ndarray) -> np.ndarray:
+        return _a3_rss_grad(x, log_N, log_D, L)
+
+    # Stage 1: Coarse 5D grid search for initialization
+    best_rss = np.inf
+    best_x0 = None
+    for E_init in _A3_E_GRID:
+        for A_init in _A3_A_GRID:
+            for B_init in _A3_B_GRID:
+                for alpha_init in _A3_ALPHA_GRID:
+                    for beta_init in _A3_BETA_GRID:
+                        x = np.array([E_init, A_init, B_init, alpha_init, beta_init])
+                        r = rss(x)
+                        if r < best_rss:
+                            best_rss = r
+                            best_x0 = x
+
+    # Stage 2: L-BFGS-B refinement from best grid point
+    bounds = [
+        (1e-6, 10.0),  # E
+        (1e-6, 1e6),  # A
+        (1e-6, 1e6),  # B
+        (0.01, 0.99),  # alpha
+        (0.01, 0.99),  # beta
+    ]
+
+    result = minimize(
+        rss,
+        x0=best_x0,
+        jac=rss_grad if use_grad else jac,
+        method="L-BFGS-B",
+        bounds=bounds,
+        options=LBFGSB_OPTIONS,
+    )
+
+    if result is None or not result.success:
+        message = result.message if result else "Unknown error"
+        nit = result.nit if result else 0
+        raise FitError(f"Optimization failed: {message} (iterations: {nit})")
+
+    E, A, B, alpha, beta = result.x
+
+    # Diagnostic checks — all 5 parameters are bounded
+    param_names = ["E", "A", "B", "α", "β"]
+    for name, val, (lo, hi) in zip(param_names, result.x, bounds):
+        _check_at_bounds(name, val, lo, hi)
+    _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=result.fun)
+
+    return SurfaceFitResult(
+        E=float(E),
+        A=float(A),
+        B=float(B),
+        alpha=float(alpha),
+        beta=float(beta),
+        residual_sum_squares=float(result.fun),
+        n_points=len(N),
+        method="approach3",
     )

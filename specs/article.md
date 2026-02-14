@@ -30,7 +30,7 @@
 - We investigate this through noise-free synthetic simulations that isolate systematic biases inherent to the method itself
 - We show how these biases impact downstream decisions like dataset size selection for final training runs at large compute budgets
 - We show how extrapolation errors trace back to suboptimal isoflop experiment design, and that pathologies in these designs can be observed in real, high-profile scaling law studies even if they are difficult to quantify precisely
-- We propose an alternative fitting method that is simple, stable, and free of these biases while building on the same intuitive computational shortcut: optimizing exponential terms separately from linear terms
+- We propose VPNLS (Variable Projection with Non-negative Least Squares), an alternative fitting method that is simple, stable, and free of these biases while building on the same intuitive computational shortcut: optimizing exponential terms separately from linear terms
 
 ---
 
@@ -150,13 +150,18 @@
     - Use the above as segueue into variable projection
   - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
   - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
-- Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space
-- **Why Nelder-Mead over L-BFGS-B?** We use NNLS for the inner solve to guarantee non-negative coefficients (E, A, B ≥ 0). This prevents physically meaningless fits but makes the objective non-smooth — the active-set transitions in NNLS create kinks that rule out analytical gradients. Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output). Deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space. With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`) where tight tolerances demand gradient accuracy that finite differences cannot reliably deliver. Nelder-Mead avoids all of this — its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box. Nelder-Mead scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
-- We compare Nelder-Mead, L-BFGS-B (several configurations varying differencing scheme and step size), and a fine grid search on noise-free synthetic data — the best case for gradient methods. Even here, L-BFGS-B either sacrifices precision or introduces convergence failures depending on configuration, while Nelder-Mead achieves machine-precision recovery with no tuning
-- TODO: come up with a good name for our method
-- Figure (TODO: determine presentation/layout): parameter recovery accuracy across all five surface parameters; temporary research image at `results/experiments/exp5/surface_param_errors.png`; method comparison at `results/experiments/exp5/method_comparison.png`
+- Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space. We call this method **VPNLS** (Variable Projection with Non-negative Least Squares)
+- **Why Nelder-Mead over L-BFGS-B?** VPNLS uses NNLS for the inner solve to guarantee non-negative coefficients (E, A, B ≥ 0). This prevents physically meaningless fits but makes the objective non-smooth — the active-set transitions in NNLS create kinks that rule out analytical gradients. Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output). Deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space. With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`) where tight tolerances demand gradient accuracy that finite differences cannot reliably deliver. Nelder-Mead avoids all of this — its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box. Nelder-Mead scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
+- We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, high imbalance) and 20 sampling ranges (the best case for gradient methods):
+  - **5D direct (Approach 3)**: L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
+  - **2D variable projection**: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
+- Even here, L-BFGS-B either sacrifices precision or introduces convergence failures depending on configuration, while VPNLS achieves machine-precision recovery with no tuning
+- **Figure: Method Comparison** (1 × 2, shared y-axis; methods sorted by gmean error, worst at top)
+  - **Left — dot-range plot**: geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters; horizontal bars span min–max. Filled dot = converged on all 60 fits; open dot = at least one failure (annotated with count)
+  - **Right — max-error heatmap**: columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text shows max |relative error| (%) over successful fits only
+- **Companion CSVs**: raw per-(method, surface, grid width, parameter) errors, max-error pivot, and failure-count pivot
 - Key result: all five loss surface parameters (E, A, B, α, β) recovered with machine precision; extrapolation is exact
-- Key message: variable projection with Nelder-Mead makes direct surface fitting robust — it eliminates the biases from the parabolic approximation and avoids the fragile gradient tuning that makes L-BFGS-B impractical for this problem
+- Key message: VPNLS makes direct surface fitting robust — it eliminates the biases from the parabolic approximation and avoids the fragile gradient tuning that makes L-BFGS-B impractical for this problem
 
 ---
 
@@ -179,5 +184,5 @@
 
 - **These biases are structural, not statistical**: the errors documented here exist on noise-free data with perfect experimental conditions; real experiments, which contend with measurement noise and unknown optima, can only make them worse
 - **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
-- **A practical alternative exists**: variable projection recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
-- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider variable projection as a robust alternative
+- **A practical alternative exists**: VPNLS recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
+- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider VPNLS as a robust alternative
