@@ -831,15 +831,26 @@
 
             <ul>
                 <li><strong>Chinchilla:</strong> \(\alpha = 0.34\), \(\beta = 0.28\) (ratio ≈ 1.2)</li>
-                <li><strong>High Imbalance:</strong> \(\alpha = 0.46\), \(\beta = 0.15\) (ratio = 3.0)</li>
+                <li><strong>Asymmetric:</strong> \(\alpha = 0.46\), \(\beta = 0.15\) (ratio = 3.0)</li>
             </ul>
+
+            <p>
+                The Asymmetric surface is not a contrived stress test. An exponent ratio of 3.0 is
+                comparable to what has been observed in practice: DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>
+                reports compute-optimal allocation exponents of \(a = 0.73\), \(b = 0.27\) for
+                an OpenWebText2 variant, implying a loss surface exponent ratio of
+                \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
+                Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
+                of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
+                that drives the biases studied here.
+            </p>
 
             <figure>
                 <img src="asymmetric/asymmetric.png" alt="Approach 2 on asymmetric surfaces showing intercept errors">
                 <figcaption>
                     <strong>Figure 2:</strong> Approach 2 on asymmetric loss surfaces.
                     Note the visible gap between true (dashed) and inferred (solid) power-law
-                    lines in the High Imbalance case. The exponents match perfectly, but
+                    lines in the Asymmetric case. The exponents match perfectly, but
                     the intercepts differ.
                 </figcaption>
             </figure>
@@ -871,7 +882,7 @@
                 </tbody>
             </table>
 
-            <h4>High Imbalance Surface</h4>
+            <h4>Asymmetric Surface</h4>
 
             <table class="comparison-table">
                 <thead>
@@ -1197,12 +1208,12 @@
                                 <td title="-2.058374419307222e+11">−205.8B</td>
                                 <td title="-5.100244551712022%" class="error-medium">−5.10%</td>
                             </tr>
-                            <!-- High Imbalance Surface -->
+                            <!-- Asymmetric Surface -->
                             <tr class="surface-header">
-                                <td colspan="8">High Imbalance Surface (α/β = 3)</td>
+                                <td colspan="8">Asymmetric Surface (α/β = 3)</td>
                             </tr>
                             <tr>
-                                <td>High Imbalance</td>
+                                <td>Asymmetric</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
                                 <td>XS (±2×)</td>
@@ -1212,7 +1223,7 @@
                                 <td title="-1.674747716507073%" class="error-low">−1.67%</td>
                             </tr>
                             <tr>
-                                <td>High Imbalance</td>
+                                <td>Asymmetric</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
                                 <td>S (±4×)</td>
@@ -1222,7 +1233,7 @@
                                 <td title="-6.497778742083532%" class="error-medium">−6.50%</td>
                             </tr>
                             <tr>
-                                <td>High Imbalance</td>
+                                <td>Asymmetric</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
                                 <td>L (±8×)</td>
@@ -1232,7 +1243,7 @@
                                 <td title="-13.910418584294648%" class="error-high">−13.91%</td>
                             </tr>
                             <tr>
-                                <td>High Imbalance</td>
+                                <td>Asymmetric</td>
                                 <td>0.465</td>
                                 <td>0.155</td>
                                 <td>XL (±16×)</td>
@@ -1261,8 +1272,8 @@
                     \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
                     the model</li>
                 <li><strong>Wider grids amplify error:</strong> Moving from XS (±2x) to XL (±16x)
-                    grids increases error from 0.3% to 5.1% on Chinchilla, and from 1.7% to 23% on High Imbalance</li>
-                <li><strong>Asymmetry magnifies everything:</strong> The High Imbalance surface
+                    grids increases error from 0.3% to 5.1% on Chinchilla, and from 1.7% to 23% on the Asymmetric surface</li>
+                <li><strong>Asymmetry magnifies everything:</strong> The Asymmetric surface
                     (\(\alpha/\beta = 3\)) shows roughly 4–5x larger errors than Chinchilla at each grid width</li>
             </ul>
 
@@ -1541,7 +1552,7 @@
 
             <p>
                 Nelder-Mead avoids this entirely. Its few settings
-                (<code>xatol</code>, <code>fatol</code>, <code>maxiter</code>) are independent
+                (<code>xatol</code>, <code>fatol</code>) are independent
                 and work well out of the box. Nelder-Mead scales poorly to high dimensions,
                 but variable projection reduces the search to just two dimensions, which is
                 exactly the regime where simplex methods excel.
@@ -1603,9 +1614,8 @@
 
             <p>
                 Looking at the full set of methods, a clear hierarchy emerges. High-resolution
-                grid search (256&sup2;) is stable across all conditions, with zero convergence
-                failures, but provides the poorest overall precision among 2D methods. Accuracy
-                is limited by grid resolution.
+                grid search (256&sup2;) is stable across all conditions but provides the poorest
+                overall precision among 2D methods, limited by grid resolution.
             </p>
 
             <p>
@@ -1627,12 +1637,15 @@
                 Notably, these failures can be false positives. The optimizer has already
                 reached the true minimum, with residual sum of squares near machine zero, but
                 the line search cannot verify further progress because function values are too
-                small to distinguish. It reports failure despite having found the correct answer.
+                small to distinguish. In scipy, this surfaces as
+                <code>result.success = False</code> with an <code>ABNORMAL</code> status
+                from <code>scipy.optimize.minimize</code>, even though the returned parameters
+                are correct.
             </p>
 
             <p>
                 L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
-                to tune settings carefully and who understand that certain convergence warnings
+                to tune settings carefully and who understand that certain convergence errors
                 from scipy are not necessarily problematic. That said, VPNLS with Nelder-Mead
                 is simpler, requires less tuning, and recovers parameter estimates with precision
                 at least as high as any other method tested. It technically achieves the most
@@ -1826,7 +1839,7 @@
                     <strong>Figure 8 (research image):</strong> <em>TODO: Determine final
                     presentation and layout. Relative error in \(D^*\) when extrapolating beyond
                     the fitting range, with asymmetry and sampling biases acting simultaneously.
-                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and high imbalance
+                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and Asymmetric
                     surfaces; one curve per bias configuration (baseline, drift, constant offset).</em>
                 </figcaption>
             </figure>
@@ -1834,10 +1847,10 @@
             <p>
                 At narrow grids (XS), the parabolic approximation is tight and asymmetry bias is
                 negligible; errors are dominated by sampling biases, with drift creating errors that
-                grow with extrapolation distance (reaching roughly 25% on the high imbalance surface
+                grow with extrapolation distance (reaching roughly 25% on the Asymmetric surface
                 and 8% on the Chinchilla surface at 10<sup>25</sup> FLOPs). At wider grids (XL),
                 asymmetry bias dominates: the perfect-sampling baseline underestimates \(D^*\)
-                by about 5% on the Chinchilla surface and about 20% on the high imbalance surface.
+                by about 5% on the Chinchilla surface and about 20% on the Asymmetric surface.
                 In these particular configurations, the sampling biases happen to partially offset
                 the asymmetry error, but this is not guaranteed: the direction of each bias source
                 depends on the sign and magnitude of the offset, and the two can just as easily

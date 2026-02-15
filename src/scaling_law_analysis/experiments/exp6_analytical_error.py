@@ -18,7 +18,7 @@ from scaling_law_analysis.experiments.common import (
     N_POINTS,
     SYMMETRIC_LOSS_SURFACE,
     DEFAULT_LOSS_SURFACE,
-    HIGH_IMBALANCE_CONFIG,
+    ASYMMETRIC_CONFIG,
     prepare_output_dir,
 )
 
@@ -172,7 +172,7 @@ def run_validation() -> dict:
     surfaces = [
         ("symmetric", SYMMETRIC_LOSS_SURFACE),
         ("chinchilla", DEFAULT_LOSS_SURFACE),
-        ("high_imbalance", HIGH_IMBALANCE_CONFIG.loss),
+        ("asymmetric", ASYMMETRIC_CONFIG.loss),
     ]
 
     results = {}

@@ -66,9 +66,9 @@
 
 - **What Happens**
   - Asymmetric surfaces produce systematically wrong intercepts while exponents remain accurate
-  - Two test configurations: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and High Imbalance (α=0.465, β=0.155, ratio = 3.0)
-  - Figure (2 rows × 2 columns): Approach 2 on both asymmetric surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, High Imbalance; visible gap between true (dashed) and inferred (solid) power-law lines, especially for High Imbalance
-  - Tables for each surface showing b exponent with negligible error but b₀ intercept with meaningful error; error larger for High Imbalance than Chinchilla
+  - Two test configurations: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and Asymmetric (α=0.465, β=0.155, ratio = 3.0); note that the Asymmetric surface's ratio of 3.0 is comparable to real-world findings (DeepSeek [deepseek] reports allocation exponents a=0.73, b=0.27 on OpenWebText2, implying a loss surface ratio of ~2.7)
+  - Figure (2 rows × 2 columns): Approach 2 on both asymmetric surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, Asymmetric; visible gap between true (dashed) and inferred (solid) power-law lines, especially for the Asymmetric surface
+  - Tables for each surface showing b exponent with negligible error but b₀ intercept with meaningful error; error larger for the Asymmetric surface than Chinchilla
 
 - **Why This Is Surprising**
   - Acknowledge that a few percent may seem minor, then enumerate the ideal advantages given to Approach 2: perfect data (no noise, every point exactly on the true surface), perfect sampling (centered at true optimum), and standard parameters (from the Chinchilla paper, not contrived)
@@ -104,7 +104,7 @@
     - Symmetric surfaces are unaffected (zero error at all grid widths)
     - Asymmetric surfaces always underestimate (predicting fewer tokens than optimal → undertraining)
     - Wider grids amplify error
-    - More asymmetry magnifies everything (High Imbalance shows roughly 4–5x larger errors than Chinchilla at each grid width)
+    - More asymmetry magnifies everything (the Asymmetric surface shows roughly 4–5x larger errors than Chinchilla at each grid width)
   - Key result: highlight a concrete case using the Chinchilla surface with a practical grid width; show the absolute token shortfall at 10²⁴ FLOPs; emphasize these are ideal conditions, real experiments can only do worse
 
 ---
@@ -156,7 +156,7 @@
   - With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`, `maxcor`, `maxls`) where tight tolerances demand gradient accuracy that finite differences cannot reliably provide
   - Nelder-Mead avoids all of this; its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box; it scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
 - **Method Comparison**
-  - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, high imbalance) and 20 sampling ranges (the best case for gradient methods):
+  - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, Asymmetric) and 20 sampling ranges (the best case for gradient methods):
     - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
     - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
   - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) showing geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters, with horizontal bars spanning min to max, filled dots for methods that converged on all 60 fits and open dots for those with at least one failure (annotated with count); max-error heatmap (right) with columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text showing max |relative error| (%) over successful fits only
@@ -165,8 +165,8 @@
     - High-resolution grid search (256²) is stable across all conditions but provides the poorest overall precision, limited by grid resolution
     - 5D direct optimization (Approach 3) is more accurate on average than grid search but highly variable across conditions; 5D optimization without analytical gradients (finite-difference only) performs very poorly and serves as a negative control, demonstrating what high variability and instability look like for comparison to Approach 3 with analytical gradients, which is similarly variable
     - L-BFGS-B with 2D variable projection can match Nelder-Mead precision, though the optimizer fails to converge in a non-trivial fraction of the relatively small number of scenarios simulated here
-    - Central differences are key: switching from forward to 3-point central finite differences closes the precision gap with Nelder-Mead (~1e-8% vs ~1e-5% error), but introduces sporadic line search failures; these failures can be false positives where the optimizer has already reached the true minimum (RSS near machine zero) but the line search cannot verify further progress because function values are too small to distinguish, so it reports failure despite having found the correct answer
-    - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner knows which scipy convergence warnings are not necessarily problematic
+    - Central differences are key: switching from forward to 3-point central finite differences closes the precision gap with Nelder-Mead (~1e-8% vs ~1e-5% error), but introduces sporadic line search failures; these failures can be false positives where the optimizer has already reached the true minimum (RSS near machine zero) but the line search cannot verify further progress because function values are too small to distinguish; scipy reports this as `result.success = False` with status `ABNORMAL` (abnormal termination in line search), even though the returned parameters are correct
+    - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner understands that `result.success = False` from `scipy.optimize.minimize` does not always indicate a bad fit
     - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
 - Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
 

@@ -293,7 +293,7 @@ def format_comparison_table(data: dict) -> str:
 CHINCHILLA_SURFACE = LossSurface(alpha=0.34, beta=0.28, A=406.4, B=410.7, E=1.69)
 
 
-# High imbalance: ratio = 3 (α/β = 3, keeping α+β = 0.62)
+# Asymmetric surface: ratio = 3 (α/β = 3, keeping α+β = 0.62)
 def _exponents_from_ratio(ratio: float) -> tuple[float, float]:
     """Compute alpha and beta from ratio, keeping sum = 0.62."""
     exponent_sum = 0.62
@@ -302,16 +302,16 @@ def _exponents_from_ratio(ratio: float) -> tuple[float, float]:
     return alpha, beta
 
 
-HIGH_IMBALANCE_SURFACE = LossSurface.from_chinchilla(*_exponents_from_ratio(3))
+ASYMMETRIC_SURFACE = LossSurface.from_chinchilla(*_exponents_from_ratio(3))
 
 
 def create_asymmetric_figure(output_dir: Path) -> dict:
     """Create the Asymmetric Surfaces figure for Section 3.
 
-    Shows Chinchilla and High Imbalance surfaces side-by-side.
+    Shows Chinchilla and Asymmetric surfaces side-by-side.
     Layout: 2 rows x 2 columns
-        Row 1: IsoFLOP curves (Chinchilla, High Imbalance)
-        Row 2: Power-law fits (Chinchilla, High Imbalance)
+        Row 1: IsoFLOP curves (Chinchilla, Asymmetric)
+        Row 2: Power-law fits (Chinchilla, Asymmetric)
 
     Returns a dict with results for both surfaces.
     """
@@ -319,7 +319,7 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
 
     surfaces = [
         ("Chinchilla", CHINCHILLA_SURFACE),
-        ("High Imbalance", HIGH_IMBALANCE_SURFACE),
+        ("Asymmetric", ASYMMETRIC_SURFACE),
     ]
 
     compute_budgets = COMPUTE_BUDGETS
@@ -454,7 +454,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     surfaces = [
         ("Symmetric", SYMMETRIC_SURFACE),
         ("Chinchilla", CHINCHILLA_SURFACE),
-        ("High Imbalance", HIGH_IMBALANCE_SURFACE),
+        ("Asymmetric", ASYMMETRIC_SURFACE),
     ]
 
     # Extrapolate to a single budget
@@ -1176,7 +1176,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     n_methods = len(METHOD_CONFIGS)
     y_positions = np.arange(n_methods)
 
-    fig_height = (0.5 * n_methods + 1.5) * 0.8
+    fig_height = (0.5 * n_methods + 1.5) * 1.0
     fig, (ax_dot, ax_heat) = plt.subplots(
         1,
         2,
@@ -1227,7 +1227,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                 xy=(stats["gmean"] if not np.isnan(stats["gmean"]) else 1e-1, y),
                 xytext=(0, -10),
                 textcoords="offset points",
-                fontsize=6.5,
+                fontsize=9,
                 color="#555555",
                 ha="center",
                 va="top",
@@ -1240,7 +1240,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                 xy=(stats["gmean"], y),
                 xytext=(0, 7),
                 textcoords="offset points",
-                fontsize=7,
+                fontsize=9,
                 color="#333333",
                 ha="center",
                 va="bottom",
@@ -1273,7 +1273,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     ]
     ax_dot.legend(
         handles=legend_handles,
-        fontsize=7,
+        fontsize=8.5,
         loc="lower right",
         framealpha=0.9,
         edgecolor="#cccccc",
@@ -1283,10 +1283,10 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     ax_dot.set_yticks(y_positions)
     ax_dot.set_yticklabels(
         [ms["mc"].label for ms in method_stats],  # type: ignore[union-attr]
-        fontsize=9,
+        fontsize=10,
     )
-    ax_dot.set_xlabel("Absolute relative error (%)", fontsize=10)
-    ax_dot.set_title("Geometric Mean Error (min–max range)", fontsize=10)
+    ax_dot.set_xlabel("Absolute relative error (%)", fontsize=11)
+    ax_dot.set_title("Geometric Mean Error (min–max range)", fontsize=11)
     ax_dot.grid(True, axis="x", alpha=0.3)
     ax_dot.invert_yaxis()
 
@@ -1326,7 +1326,9 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
             val = pme[pk]
             if val > 0:
                 # Format the error value compactly
-                if val >= 1.0:
+                if val > 100:
+                    txt = ">100%"
+                elif val >= 1.0:
                     txt = f"{val:.1f}%"
                 elif val >= 0.01:
                     txt = f"{val:.2f}%"
@@ -1351,17 +1353,17 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                 txt,
                 ha="center",
                 va="center",
-                fontsize=8.5,
+                fontsize=9,
                 color=text_color,
             )
 
     ax_heat.set_xticks(np.arange(n_params))
-    ax_heat.set_xticklabels(col_labels, fontsize=10)
-    ax_heat.set_xlabel("Estimated parameter", fontsize=10)
-    ax_heat.set_title("Max Error by Parameter", fontsize=10)
+    ax_heat.set_xticklabels(col_labels, fontsize=11)
+    ax_heat.set_xlabel("Estimated parameter", fontsize=11)
+    ax_heat.set_title("Max Error by Parameter", fontsize=11)
     ax_heat.tick_params(left=False)  # hide y-axis ticks (shared from left)
 
-    fig.suptitle("Optimizer Comparison: Parameter Recovery Accuracy", fontsize=12)
+    fig.suptitle("Optimizer Comparison: Parameter Recovery Accuracy", fontsize=13)
 
     # Save figure
     figure_dir = prepare_output_dir(output_dir / "method_comparison")
@@ -1475,8 +1477,8 @@ if __name__ == "__main__":
     print("\n=== Asymmetric: Chinchilla ===")
     print(format_comparison_table(data["asymmetric"]["chinchilla"]))
 
-    print("\n=== Asymmetric: High Imbalance ===")
-    print(format_comparison_table(data["asymmetric"]["high_imbalance"]))
+    print("\n=== Asymmetric: Asymmetric ===")
+    print(format_comparison_table(data["asymmetric"]["asymmetric"]))
 
     print("\n=== Extrapolation Error Summary ===")
     for surface_name, surface_data in data["extrapolation"].items():

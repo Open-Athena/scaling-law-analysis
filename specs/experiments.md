@@ -82,7 +82,7 @@ Produce a single figure showing relative error in recovered exponents (a and b) 
 1. Generate synthetic loss data across three loss surface configurations:
    - **Symmetric**: α=β=0.31, A=B=400, E=1.69 (balanced)
    - **Chinchilla**: α=0.34, β=0.28, A=406.4, B=410.7, E=1.69 (paper defaults)
-   - **High imbalance**: α/β ratio = 3.0 (keeping α+β=0.62)
+   - **Asymmetric**: α/β ratio = 3.0 (keeping α+β=0.62)
 
 2. For each loss surface, test five sampling bias configurations:
    - **Baseline**: no drift, no center scaling
@@ -116,7 +116,7 @@ Produce the following figures:
 
 **Method**:
 
-1. Use the same three loss surface configurations as Experiment 3 (symmetric, chinchilla, high_imbalance).
+1. Use the same three loss surface configurations as Experiment 3 (symmetric, chinchilla, asymmetric).
 
 2. Use the same five sampling bias configurations as Experiment 3 (baseline, drift_0.2, drift_0.4, scale_1.5, scale_2.0).
 
@@ -129,7 +129,7 @@ Produce the following figures:
 
 **Visualization**:
 
-Produce a single figure organized as a grid with one row per sampling range (3 rows: narrow, medium, wide) and one column per loss surface (3 columns: symmetric, chinchilla, high_imbalance). Each panel shows the relative error in inferred D* as a function of extrapolation compute budget, with one curve per sampling bias configuration. This reveals how extrapolation error depends on the sampling range, loss surface geometry, and sampling biases.
+Produce a single figure organized as a grid with one row per sampling range (3 rows: narrow, medium, wide) and one column per loss surface (3 columns: symmetric, chinchilla, asymmetric). Each panel shows the relative error in inferred D* as a function of extrapolation compute budget, with one curve per sampling bias configuration. This reveals how extrapolation error depends on the sampling range, loss surface geometry, and sampling biases.
 
 ## Experiment 5: Parametric Surface Fitting
 
@@ -161,7 +161,7 @@ Produce a single figure organized as a grid with one row per sampling range (3 r
 5. L-BFGS-B sensitivity findings:
    - **Precision ceiling from numerical gradients**: forward-diff L-BFGS-B converges reliably but plateaus at ~1e-5% error (vs ~1e-8% for Nelder-Mead). This ceiling comes from the ~1e-8 precision of forward finite-difference gradient estimates.
    - **Central diff closes the precision gap but introduces failures**: 3-point central differences achieve Nelder-Mead-level precision (~1e-8%) but cause sporadic ABNORMAL line search failures (1/60 in our sweep). These are false negatives: the optimizer has already reached the true minimum (RSS ~1e-19) but the line search cannot verify progress because function values are near machine zero.
-   - **Custom eps values cause failures in both directions**: eps=1e-6 (100x above default) produces ABNORMAL failures in 20/60 trials with worse precision where it converges. eps=1e-10 (100x below default) is slightly more precise than default but introduces failures on the high_imbalance surface (3/20). There is no eps value that reliably improves on the default.
+   - **Custom eps values cause failures in both directions**: eps=1e-6 (100x above default) produces ABNORMAL failures in 20/60 trials with worse precision where it converges. eps=1e-10 (100x below default) is slightly more precise than default but introduces failures on the Asymmetric surface (3/20). There is no eps value that reliably improves on the default.
    - **Forward diff "succeeds" by stopping early**: default L-BFGS-B reports success at RSS ~1e-14 because noisy gradients satisfy termination criteria prematurely. Central diff reaches RSS ~1e-19 (100,000x better) but fails the convergence check because the line search cannot distinguish progress at that scale.
    - **Takeaway**: L-BFGS-B exposes multiple interacting settings — `eps` (FD step size), `jac` (FD scheme), `ftol` (objective tolerance), `gtol` (gradient tolerance), `maxcor` (Hessian corrections), `maxls` (line search steps) — where choices interact: tight `gtol` demands accurate gradients, which demands careful `eps`, which risks cancellation. Nelder-Mead has only `xatol`/`fatol` (simplex convergence) and `maxiter`, with no gradient-related settings and no interactions between them. On noise-free data, Nelder-Mead achieves machine-precision accuracy with defaults; L-BFGS-B cannot match this without coordinated tuning, and no single configuration avoids all failures.
 
@@ -225,7 +225,7 @@ Produce three figures:
 
 **Visualization**:
 
-Produce a single figure with one panel per loss surface configuration (symmetric, chinchilla, high imbalance). Each panel shows:
+Produce a single figure with one panel per loss surface configuration (symmetric, chinchilla, Asymmetric). Each panel shows:
 - Numerical intercept error from Approach 2 vs grid half-width W
 - Predicted intercept error from the derived formula vs grid half-width W
 - Maximum deviation between numerical and predicted values annotated
@@ -233,6 +233,6 @@ Produce a single figure with one panel per loss surface configuration (symmetric
 This validates that the derived closed-form expression exactly matches numerical results.
 
 **Validation**: 
-- Compare derived expressions against numerical Approach 2 results across multiple surface configurations (symmetric, chinchilla, high imbalance)
+- Compare derived expressions against numerical Approach 2 results across multiple surface configurations (symmetric, chinchilla, Asymmetric)
 - Target machine precision agreement (1e-10)
 - Sanity check: symmetric surfaces (α = β) should produce zero error

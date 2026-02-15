@@ -14,6 +14,10 @@ On article:
 - Replace references to scaling grid sizes with code blocks e.g. `Small` instead of "Small"
 - Revisit this, which is not really correct:
   - > Asymmetric curve shapes: The IsoFLOP curves are visibly steeper on one side of the minimum than the other, consistent with alpha != beta. This is the condition under which the parabolic approximation introduces systematic intercept bias.
+- On method comparisons:
+  - Add appendix and method comparison research figure
+  - Move isoflops in wild to above method comparison
+  - Update Motivation to mention VPNLS
 - High priority:
   - Make it clear that approach 2 only fits two params of the surface, and that just avoiding the others is an important part of its adoption
   - Add "Why it doesn't matter" section on loss floor at high compute budgets

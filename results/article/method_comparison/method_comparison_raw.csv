@@ -199,106 +199,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "5D L-BFGS-B (analytical grad)",chinchilla,2.000000,B,2.1446955501215605e-07,2.1446955501215605e-07,False
 "5D L-BFGS-B (analytical grad)",chinchilla,2.000000,alpha,6.306138617831306e-08,6.306138617831306e-08,False
 "5D L-BFGS-B (analytical grad)",chinchilla,2.000000,beta,4.755537233843857e-08,4.755537233843857e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.300000,E,1.7544449902565211,1.7544449902565211,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.300000,A,2.074962031230479,2.074962031230479,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.300000,B,1.9512663717710168,1.9512663717710168,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.300000,alpha,0.4490626907821359,0.4490626907821359,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.300000,beta,0.5518555138042042,0.5518555138042042,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.389474,E,2.2335361126350146,2.2335361126350146,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.389474,A,20.29771962614063,20.29771962614063,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.389474,B,-1.5065773182572924,1.5065773182572924,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.389474,alpha,4.156850023716598,4.156850023716598,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.389474,beta,-0.47407656806859105,0.47407656806859105,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.478947,E,3.384323130746779e-06,3.384323130746779e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.478947,A,1.0423452519312484e-05,1.0423452519312484e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.478947,B,2.537119538510402e-06,2.537119538510402e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.478947,alpha,2.3074729343512576e-06,2.3074729343512576e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.478947,beta,6.927000013017127e-07,6.927000013017127e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.568421,E,4.64609179531428e-07,4.64609179531428e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.568421,A,-2.6441920569119594e-07,2.6441920569119594e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.568421,B,8.638633877708238e-07,8.638633877708238e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.568421,alpha,-7.954451911966014e-08,7.954451911966014e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.568421,beta,2.483503367114376e-07,2.483503367114376e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.657895,E,3.114059784527412e-05,3.114059784527412e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.657895,A,5.840945700861192e-05,5.840945700861192e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.657895,B,2.6308589866595828e-05,2.6308589866595828e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.657895,alpha,1.3052600374495893e-05,1.3052600374495893e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.657895,beta,7.617077810789259e-06,7.617077810789259e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.747368,E,-1.5130355351254619e-06,1.5130355351254619e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.747368,A,-3.1964793856428784e-06,3.1964793856428784e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.747368,B,-1.2474738227501316e-06,1.2474738227501316e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.747368,alpha,-7.050592606763027e-07,7.050592606763027e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.747368,beta,-3.6260222423211895e-07,3.6260222423211895e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.836842,E,-5.904094216811573e-05,5.904094216811573e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.836842,A,7.113874857518424e-06,7.113874857518424e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.836842,B,-8.2846862417755e-05,8.2846862417755e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.836842,alpha,2.072060981576336e-06,2.072060981576336e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.836842,beta,-2.404068877662292e-05,2.404068877662292e-05,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.926316,E,-6.349991512229819e-06,6.349991512229819e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.926316,A,-7.757474257014862e-06,7.757474257014862e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.926316,B,-5.413177366678425e-06,5.413177366678425e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.926316,alpha,-1.7658507989182226e-06,1.7658507989182226e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,0.926316,beta,-1.630011430490739e-06,1.630011430490739e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.015789,E,-2.8079497307202376e-06,2.8079497307202376e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.015789,A,2.400019416799704e-06,2.400019416799704e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.015789,B,-4.029064947486763e-06,4.029064947486763e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.015789,alpha,6.116531773304461e-07,6.116531773304461e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.015789,beta,-1.213326303228074e-06,1.213326303228074e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.105263,E,6.1993362974306925e-06,6.1993362974306925e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.105263,A,5.039838768539084e-06,5.039838768539084e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.105263,B,5.812869741863305e-06,5.812869741863305e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.105263,alpha,1.1973159500892432e-06,1.1973159500892432e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.105263,beta,1.741121709174545e-06,1.741121709174545e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.194737,E,1.3060098696127515e-08,1.3060098696127515e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.194737,A,5.933773157868398e-09,5.933773157868398e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.194737,B,8.459081337353524e-09,8.459081337353524e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.194737,alpha,1.3732861920513925e-09,1.3732861920513925e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.194737,beta,2.85518920334528e-09,2.85518920334528e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.284211,E,-5.627876205823047e-07,5.627876205823047e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.284211,A,-1.0104075476564912e-06,1.0104075476564912e-06,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.284211,B,-9.313417715528928e-07,9.313417715528928e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.284211,alpha,-2.406378680548884e-07,2.406378680548884e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.284211,beta,-2.5280292196534275e-07,2.5280292196534275e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.373684,E,-2.1906049623838112e-07,2.1906049623838112e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.373684,A,8.893183652309216e-09,8.893183652309216e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.373684,B,-2.76255306377855e-07,2.76255306377855e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.373684,alpha,2.4483640921120715e-09,2.4483640921120715e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.373684,beta,-8.154373233996042e-08,8.154373233996042e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.463158,E,2.5272696493078452e-08,2.5272696493078452e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.463158,A,5.745051748414959e-07,5.745051748414959e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.463158,B,1.6074950693392947e-08,1.6074950693392947e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.463158,alpha,1.47044992669609e-07,1.47044992669609e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.463158,beta,-2.681188604469753e-09,2.681188604469753e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.552632,E,3.7404083775056506e-08,3.7404083775056506e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.552632,A,3.2289691480543736e-09,3.2289691480543736e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.552632,B,4.364104694859455e-08,4.364104694859455e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.552632,alpha,8.386123336975053e-10,8.386123336975053e-10,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.552632,beta,1.3059069954445316e-08,1.3059069954445316e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.642105,E,-2.4746569028012298e-08,2.4746569028012298e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.642105,A,2.1607073086119002e-09,2.1607073086119002e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.642105,B,-1.3252696399912007e-08,1.3252696399912007e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.642105,alpha,5.68374499198154e-10,5.68374499198154e-10,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.642105,beta,-3.047168252490542e-09,3.047168252490542e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.731579,E,6.388484744500134e-08,6.388484744500134e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.731579,A,4.998034532176046e-08,4.998034532176046e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.731579,B,3.395156233637175e-08,3.395156233637175e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.731579,alpha,1.2327761272971931e-08,1.2327761272971931e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.731579,beta,1.1630033853522961e-08,1.1630033853522961e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.821053,E,-6.568941051859408e-07,6.568941051859408e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.821053,A,-9.567207568604825e-08,9.567207568604825e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.821053,B,-5.475341077645353e-07,5.475341077645353e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.821053,alpha,-2.0190145851491557e-08,2.0190145851491557e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.821053,beta,-1.7960405564221653e-07,1.7960405564221653e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.910526,E,-1.0069619037351419e-07,1.0069619037351419e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.910526,A,-2.4101259920439408e-08,2.4101259920439408e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.910526,B,-8.530548753382175e-08,8.530548753382175e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.910526,alpha,-7.21514843092713e-09,7.21514843092713e-09,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,1.910526,beta,-2.683156564315016e-08,2.683156564315016e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,2.000000,E,-5.222267720168513e-07,5.222267720168513e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,2.000000,A,-4.980140884107978e-08,4.980140884107978e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,2.000000,B,-3.077463943393245e-07,3.077463943393245e-07,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,2.000000,alpha,-3.089141845550565e-08,3.089141845550565e-08,False
-"5D L-BFGS-B (analytical grad)",high_imbalance,2.000000,beta,-1.0217964467372095e-07,1.0217964467372095e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.300000,E,1.7544449902565211,1.7544449902565211,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.300000,A,2.074962031230479,2.074962031230479,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.300000,B,1.9512663717710168,1.9512663717710168,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.300000,alpha,0.4490626907821359,0.4490626907821359,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.300000,beta,0.5518555138042042,0.5518555138042042,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.389474,E,2.2335361126350146,2.2335361126350146,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.389474,A,20.29771962614063,20.29771962614063,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.389474,B,-1.5065773182572924,1.5065773182572924,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.389474,alpha,4.156850023716598,4.156850023716598,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.389474,beta,-0.47407656806859105,0.47407656806859105,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.478947,E,3.384323130746779e-06,3.384323130746779e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.478947,A,1.0423452519312484e-05,1.0423452519312484e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.478947,B,2.537119538510402e-06,2.537119538510402e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.478947,alpha,2.3074729343512576e-06,2.3074729343512576e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.478947,beta,6.927000013017127e-07,6.927000013017127e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.568421,E,4.64609179531428e-07,4.64609179531428e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.568421,A,-2.6441920569119594e-07,2.6441920569119594e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.568421,B,8.638633877708238e-07,8.638633877708238e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.568421,alpha,-7.954451911966014e-08,7.954451911966014e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.568421,beta,2.483503367114376e-07,2.483503367114376e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.657895,E,3.114059784527412e-05,3.114059784527412e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.657895,A,5.840945700861192e-05,5.840945700861192e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.657895,B,2.6308589866595828e-05,2.6308589866595828e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.657895,alpha,1.3052600374495893e-05,1.3052600374495893e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.657895,beta,7.617077810789259e-06,7.617077810789259e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.747368,E,-1.5130355351254619e-06,1.5130355351254619e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.747368,A,-3.1964793856428784e-06,3.1964793856428784e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.747368,B,-1.2474738227501316e-06,1.2474738227501316e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.747368,alpha,-7.050592606763027e-07,7.050592606763027e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.747368,beta,-3.6260222423211895e-07,3.6260222423211895e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.836842,E,-5.904094216811573e-05,5.904094216811573e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.836842,A,7.113874857518424e-06,7.113874857518424e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.836842,B,-8.2846862417755e-05,8.2846862417755e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.836842,alpha,2.072060981576336e-06,2.072060981576336e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.836842,beta,-2.404068877662292e-05,2.404068877662292e-05,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.926316,E,-6.349991512229819e-06,6.349991512229819e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.926316,A,-7.757474257014862e-06,7.757474257014862e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.926316,B,-5.413177366678425e-06,5.413177366678425e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.926316,alpha,-1.7658507989182226e-06,1.7658507989182226e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,0.926316,beta,-1.630011430490739e-06,1.630011430490739e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.015789,E,-2.8079497307202376e-06,2.8079497307202376e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.015789,A,2.400019416799704e-06,2.400019416799704e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.015789,B,-4.029064947486763e-06,4.029064947486763e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.015789,alpha,6.116531773304461e-07,6.116531773304461e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.015789,beta,-1.213326303228074e-06,1.213326303228074e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.105263,E,6.1993362974306925e-06,6.1993362974306925e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.105263,A,5.039838768539084e-06,5.039838768539084e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.105263,B,5.812869741863305e-06,5.812869741863305e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.105263,alpha,1.1973159500892432e-06,1.1973159500892432e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.105263,beta,1.741121709174545e-06,1.741121709174545e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.194737,E,1.3060098696127515e-08,1.3060098696127515e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.194737,A,5.933773157868398e-09,5.933773157868398e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.194737,B,8.459081337353524e-09,8.459081337353524e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.194737,alpha,1.3732861920513925e-09,1.3732861920513925e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.194737,beta,2.85518920334528e-09,2.85518920334528e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.284211,E,-5.627876205823047e-07,5.627876205823047e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.284211,A,-1.0104075476564912e-06,1.0104075476564912e-06,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.284211,B,-9.313417715528928e-07,9.313417715528928e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.284211,alpha,-2.406378680548884e-07,2.406378680548884e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.284211,beta,-2.5280292196534275e-07,2.5280292196534275e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.373684,E,-2.1906049623838112e-07,2.1906049623838112e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.373684,A,8.893183652309216e-09,8.893183652309216e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.373684,B,-2.76255306377855e-07,2.76255306377855e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.373684,alpha,2.4483640921120715e-09,2.4483640921120715e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.373684,beta,-8.154373233996042e-08,8.154373233996042e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.463158,E,2.5272696493078452e-08,2.5272696493078452e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.463158,A,5.745051748414959e-07,5.745051748414959e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.463158,B,1.6074950693392947e-08,1.6074950693392947e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.463158,alpha,1.47044992669609e-07,1.47044992669609e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.463158,beta,-2.681188604469753e-09,2.681188604469753e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.552632,E,3.7404083775056506e-08,3.7404083775056506e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.552632,A,3.2289691480543736e-09,3.2289691480543736e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.552632,B,4.364104694859455e-08,4.364104694859455e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.552632,alpha,8.386123336975053e-10,8.386123336975053e-10,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.552632,beta,1.3059069954445316e-08,1.3059069954445316e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.642105,E,-2.4746569028012298e-08,2.4746569028012298e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.642105,A,2.1607073086119002e-09,2.1607073086119002e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.642105,B,-1.3252696399912007e-08,1.3252696399912007e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.642105,alpha,5.68374499198154e-10,5.68374499198154e-10,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.642105,beta,-3.047168252490542e-09,3.047168252490542e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.731579,E,6.388484744500134e-08,6.388484744500134e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.731579,A,4.998034532176046e-08,4.998034532176046e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.731579,B,3.395156233637175e-08,3.395156233637175e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.731579,alpha,1.2327761272971931e-08,1.2327761272971931e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.731579,beta,1.1630033853522961e-08,1.1630033853522961e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.821053,E,-6.568941051859408e-07,6.568941051859408e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.821053,A,-9.567207568604825e-08,9.567207568604825e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.821053,B,-5.475341077645353e-07,5.475341077645353e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.821053,alpha,-2.0190145851491557e-08,2.0190145851491557e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.821053,beta,-1.7960405564221653e-07,1.7960405564221653e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.910526,E,-1.0069619037351419e-07,1.0069619037351419e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.910526,A,-2.4101259920439408e-08,2.4101259920439408e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.910526,B,-8.530548753382175e-08,8.530548753382175e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.910526,alpha,-7.21514843092713e-09,7.21514843092713e-09,False
+"5D L-BFGS-B (analytical grad)",asymmetric,1.910526,beta,-2.683156564315016e-08,2.683156564315016e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,2.000000,E,-5.222267720168513e-07,5.222267720168513e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,2.000000,A,-4.980140884107978e-08,4.980140884107978e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,2.000000,B,-3.077463943393245e-07,3.077463943393245e-07,False
+"5D L-BFGS-B (analytical grad)",asymmetric,2.000000,alpha,-3.089141845550565e-08,3.089141845550565e-08,False
+"5D L-BFGS-B (analytical grad)",asymmetric,2.000000,beta,-1.0217964467372095e-07,1.0217964467372095e-07,False
 "5D L-BFGS-B (finite diff)",symmetric,0.300000,E,0.8762840010893286,0.8762840010893286,False
 "5D L-BFGS-B (finite diff)",symmetric,0.300000,A,-11.38245021920467,11.38245021920467,False
 "5D L-BFGS-B (finite diff)",symmetric,0.300000,B,30.43829849509464,30.43829849509464,False
@@ -499,106 +499,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "5D L-BFGS-B (finite diff)",chinchilla,2.000000,B,39.66695108081901,39.66695108081901,False
 "5D L-BFGS-B (finite diff)",chinchilla,2.000000,alpha,1.5751624738222387,1.5751624738222387,False
 "5D L-BFGS-B (finite diff)",chinchilla,2.000000,beta,7.435070184046452,7.435070184046452,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.300000,E,19.717401577805713,19.717401577805713,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.300000,A,27.445415911960914,27.445415911960914,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.300000,B,26.112167268989968,26.112167268989968,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.300000,alpha,5.27440991263374,5.27440991263374,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.300000,beta,6.581145515556686,6.581145515556686,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.389474,E,2.20398350899689,2.20398350899689,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.389474,A,20.301033448970767,20.301033448970767,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.389474,B,-1.5503728497671474,1.5503728497671474,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.389474,alpha,4.157834604249735,4.157834604249735,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.389474,beta,-0.4867788647804923,0.4867788647804923,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.478947,E,33.7218987874879,33.7218987874879,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.478947,A,241.9023657557326,241.9023657557326,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.478947,B,26.105780040088355,26.105780040088355,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.478947,alpha,27.280700114492205,27.280700114492205,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.478947,beta,6.395399065291267,6.395399065291267,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.568421,E,,,True
-"5D L-BFGS-B (finite diff)",high_imbalance,0.568421,A,,,True
-"5D L-BFGS-B (finite diff)",high_imbalance,0.568421,B,,,True
-"5D L-BFGS-B (finite diff)",high_imbalance,0.568421,alpha,,,True
-"5D L-BFGS-B (finite diff)",high_imbalance,0.568421,beta,,,True
-"5D L-BFGS-B (finite diff)",high_imbalance,0.657895,E,45.63469072541191,45.63469072541191,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.657895,A,817.2223325899059,817.2223325899059,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.657895,B,26.098658672551917,26.098658672551917,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.657895,alpha,49.83040360142614,49.83040360142614,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.657895,beta,6.327777497131986,6.327777497131986,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.747368,E,34.234319970568855,34.234319970568855,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.747368,A,119.38722477429529,119.38722477429529,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.747368,B,34.000771430358306,34.000771430358306,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.747368,alpha,17.925312035760527,17.925312035760527,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.747368,beta,8.33352418777993,8.33352418777993,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.836842,E,62.5137020428999,62.5137020428999,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.836842,A,206.17043044696888,206.17043044696888,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.836842,B,99.1366570137257,99.1366570137257,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.836842,alpha,25.640884853891727,25.640884853891727,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.836842,beta,19.57060823792303,19.57060823792303,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.926316,E,-0.024841061396143563,0.024841061396143563,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.926316,A,-0.011231163257598603,0.011231163257598603,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.926316,B,-0.029504585541045625,0.029504585541045625,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.926316,alpha,-0.002527739774709907,0.002527739774709907,False
-"5D L-BFGS-B (finite diff)",high_imbalance,0.926316,beta,-0.008600720494169887,0.008600720494169887,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.015789,E,57.63633493461404,57.63633493461404,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.015789,A,817.2233266172434,817.2233266172434,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.015789,B,26.102906710520934,26.102906710520934,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.015789,alpha,52.7587058391284,52.7587058391284,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.015789,beta,6.994392108320531,6.994392108320531,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.105263,E,93.85088011325637,93.85088011325637,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.105263,A,2334.0970721745593,2334.0970721745593,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.105263,B,72.97739965179206,72.97739965179206,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.105263,alpha,77.36275503819591,77.36275503819591,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.105263,beta,16.53646190118999,16.53646190118999,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.194737,E,102.65830463990429,102.65830463990429,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.194737,A,2327.105318410356,2327.105318410356,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.194737,B,79.24952964803083,79.24952964803083,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.194737,alpha,78.90291595808759,78.90291595808759,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.194737,beta,18.01293802925004,18.01293802925004,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.284211,E,112.91514151268376,112.91514151268376,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.284211,A,2318.194394828198,2318.194394828198,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.284211,B,88.02669630194502,88.02669630194502,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.284211,alpha,80.56337871124008,80.56337871124008,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.284211,beta,19.909963630689344,19.909963630689344,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.373684,E,15.056518184294749,15.056518184294749,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.373684,A,3.8390988547314224,3.8390988547314224,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.373684,B,19.94629570030881,19.94629570030881,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.373684,alpha,0.9377024244863722,0.9377024244863722,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.373684,beta,5.37361666852041,5.37361666852041,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.463158,E,-0.009871270602672639,0.009871270602672639,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.463158,A,0.0003090670891358209,0.0003090670891358209,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.463158,B,-0.012308272216724741,0.012308272216724741,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.463158,alpha,0.00010545191023856626,0.00010545191023856626,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.463158,beta,-0.0036954976424315392,0.0036954976424315392,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.552632,E,4.448786795402308,4.448786795402308,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.552632,A,1.6618869450073288,1.6618869450073288,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.552632,B,4.640502128567565,4.640502128567565,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.552632,alpha,0.43938777320151734,0.43938777320151734,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.552632,beta,1.3679564358682144,1.3679564358682144,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.642105,E,-0.010003322915084266,0.010003322915084266,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.642105,A,-0.0017867706215728,0.0017867706215728,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.642105,B,-0.010159152077271947,0.010159152077271947,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.642105,alpha,-0.0005059746614758877,0.0005059746614758877,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.642105,beta,-0.0031035455800281072,0.0031035455800281072,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.731579,E,-0.009808648745728775,0.009808648745728775,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.731579,A,-0.001652417996729374,0.001652417996729374,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.731579,B,-0.0098260990714013,0.0098260990714013,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.731579,alpha,-0.00048141430127867366,0.00048141430127867366,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.731579,beta,-0.003015574353613534,0.003015574353613534,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.821053,E,-0.00521667274462713,0.00521667274462713,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.821053,A,-0.0003432075520369986,0.0003432075520369986,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.821053,B,-0.0048233410081106355,0.0048233410081106355,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.821053,alpha,-0.00013468083047851504,0.00013468083047851504,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.821053,beta,-0.0015112097535717776,0.0015112097535717776,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.910526,E,-0.008669478037313815,0.008669478037313815,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.910526,A,-0.0012376314104509977,0.0012376314104509977,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.910526,B,-0.008179849803112855,0.008179849803112855,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.910526,alpha,-0.00039228295295516707,0.00039228295295516707,False
-"5D L-BFGS-B (finite diff)",high_imbalance,1.910526,beta,-0.0025490523219626107,0.0025490523219626107,False
-"5D L-BFGS-B (finite diff)",high_imbalance,2.000000,E,-0.0074491632971288805,0.0074491632971288805,False
-"5D L-BFGS-B (finite diff)",high_imbalance,2.000000,A,-0.001388388255358989,0.001388388255358989,False
-"5D L-BFGS-B (finite diff)",high_imbalance,2.000000,B,-0.00659275440467242,0.00659275440467242,False
-"5D L-BFGS-B (finite diff)",high_imbalance,2.000000,alpha,-0.0004626878532042622,0.0004626878532042622,False
-"5D L-BFGS-B (finite diff)",high_imbalance,2.000000,beta,-0.002062484366663073,0.002062484366663073,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.300000,E,19.717401577805713,19.717401577805713,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.300000,A,27.445415911960914,27.445415911960914,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.300000,B,26.112167268989968,26.112167268989968,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.300000,alpha,5.27440991263374,5.27440991263374,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.300000,beta,6.581145515556686,6.581145515556686,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.389474,E,2.20398350899689,2.20398350899689,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.389474,A,20.301033448970767,20.301033448970767,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.389474,B,-1.5503728497671474,1.5503728497671474,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.389474,alpha,4.157834604249735,4.157834604249735,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.389474,beta,-0.4867788647804923,0.4867788647804923,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.478947,E,33.7218987874879,33.7218987874879,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.478947,A,241.9023657557326,241.9023657557326,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.478947,B,26.105780040088355,26.105780040088355,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.478947,alpha,27.280700114492205,27.280700114492205,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.478947,beta,6.395399065291267,6.395399065291267,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.568421,E,,,True
+"5D L-BFGS-B (finite diff)",asymmetric,0.568421,A,,,True
+"5D L-BFGS-B (finite diff)",asymmetric,0.568421,B,,,True
+"5D L-BFGS-B (finite diff)",asymmetric,0.568421,alpha,,,True
+"5D L-BFGS-B (finite diff)",asymmetric,0.568421,beta,,,True
+"5D L-BFGS-B (finite diff)",asymmetric,0.657895,E,45.63469072541191,45.63469072541191,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.657895,A,817.2223325899059,817.2223325899059,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.657895,B,26.098658672551917,26.098658672551917,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.657895,alpha,49.83040360142614,49.83040360142614,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.657895,beta,6.327777497131986,6.327777497131986,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.747368,E,34.234319970568855,34.234319970568855,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.747368,A,119.38722477429529,119.38722477429529,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.747368,B,34.000771430358306,34.000771430358306,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.747368,alpha,17.925312035760527,17.925312035760527,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.747368,beta,8.33352418777993,8.33352418777993,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.836842,E,62.5137020428999,62.5137020428999,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.836842,A,206.17043044696888,206.17043044696888,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.836842,B,99.1366570137257,99.1366570137257,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.836842,alpha,25.640884853891727,25.640884853891727,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.836842,beta,19.57060823792303,19.57060823792303,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.926316,E,-0.024841061396143563,0.024841061396143563,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.926316,A,-0.011231163257598603,0.011231163257598603,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.926316,B,-0.029504585541045625,0.029504585541045625,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.926316,alpha,-0.002527739774709907,0.002527739774709907,False
+"5D L-BFGS-B (finite diff)",asymmetric,0.926316,beta,-0.008600720494169887,0.008600720494169887,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.015789,E,57.63633493461404,57.63633493461404,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.015789,A,817.2233266172434,817.2233266172434,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.015789,B,26.102906710520934,26.102906710520934,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.015789,alpha,52.7587058391284,52.7587058391284,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.015789,beta,6.994392108320531,6.994392108320531,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.105263,E,93.85088011325637,93.85088011325637,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.105263,A,2334.0970721745593,2334.0970721745593,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.105263,B,72.97739965179206,72.97739965179206,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.105263,alpha,77.36275503819591,77.36275503819591,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.105263,beta,16.53646190118999,16.53646190118999,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.194737,E,102.65830463990429,102.65830463990429,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.194737,A,2327.105318410356,2327.105318410356,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.194737,B,79.24952964803083,79.24952964803083,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.194737,alpha,78.90291595808759,78.90291595808759,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.194737,beta,18.01293802925004,18.01293802925004,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.284211,E,112.91514151268376,112.91514151268376,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.284211,A,2318.194394828198,2318.194394828198,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.284211,B,88.02669630194502,88.02669630194502,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.284211,alpha,80.56337871124008,80.56337871124008,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.284211,beta,19.909963630689344,19.909963630689344,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.373684,E,15.056518184294749,15.056518184294749,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.373684,A,3.8390988547314224,3.8390988547314224,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.373684,B,19.94629570030881,19.94629570030881,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.373684,alpha,0.9377024244863722,0.9377024244863722,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.373684,beta,5.37361666852041,5.37361666852041,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.463158,E,-0.009871270602672639,0.009871270602672639,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.463158,A,0.0003090670891358209,0.0003090670891358209,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.463158,B,-0.012308272216724741,0.012308272216724741,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.463158,alpha,0.00010545191023856626,0.00010545191023856626,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.463158,beta,-0.0036954976424315392,0.0036954976424315392,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.552632,E,4.448786795402308,4.448786795402308,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.552632,A,1.6618869450073288,1.6618869450073288,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.552632,B,4.640502128567565,4.640502128567565,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.552632,alpha,0.43938777320151734,0.43938777320151734,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.552632,beta,1.3679564358682144,1.3679564358682144,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.642105,E,-0.010003322915084266,0.010003322915084266,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.642105,A,-0.0017867706215728,0.0017867706215728,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.642105,B,-0.010159152077271947,0.010159152077271947,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.642105,alpha,-0.0005059746614758877,0.0005059746614758877,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.642105,beta,-0.0031035455800281072,0.0031035455800281072,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.731579,E,-0.009808648745728775,0.009808648745728775,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.731579,A,-0.001652417996729374,0.001652417996729374,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.731579,B,-0.0098260990714013,0.0098260990714013,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.731579,alpha,-0.00048141430127867366,0.00048141430127867366,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.731579,beta,-0.003015574353613534,0.003015574353613534,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.821053,E,-0.00521667274462713,0.00521667274462713,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.821053,A,-0.0003432075520369986,0.0003432075520369986,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.821053,B,-0.0048233410081106355,0.0048233410081106355,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.821053,alpha,-0.00013468083047851504,0.00013468083047851504,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.821053,beta,-0.0015112097535717776,0.0015112097535717776,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.910526,E,-0.008669478037313815,0.008669478037313815,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.910526,A,-0.0012376314104509977,0.0012376314104509977,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.910526,B,-0.008179849803112855,0.008179849803112855,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.910526,alpha,-0.00039228295295516707,0.00039228295295516707,False
+"5D L-BFGS-B (finite diff)",asymmetric,1.910526,beta,-0.0025490523219626107,0.0025490523219626107,False
+"5D L-BFGS-B (finite diff)",asymmetric,2.000000,E,-0.0074491632971288805,0.0074491632971288805,False
+"5D L-BFGS-B (finite diff)",asymmetric,2.000000,A,-0.001388388255358989,0.001388388255358989,False
+"5D L-BFGS-B (finite diff)",asymmetric,2.000000,B,-0.00659275440467242,0.00659275440467242,False
+"5D L-BFGS-B (finite diff)",asymmetric,2.000000,alpha,-0.0004626878532042622,0.0004626878532042622,False
+"5D L-BFGS-B (finite diff)",asymmetric,2.000000,beta,-0.002062484366663073,0.002062484366663073,False
 "5D L-BFGS-B (central diff)",symmetric,0.300000,E,0.8785790778269141,0.8785790778269141,False
 "5D L-BFGS-B (central diff)",symmetric,0.300000,A,-11.357357043916721,11.357357043916721,False
 "5D L-BFGS-B (central diff)",symmetric,0.300000,B,30.43839107544153,30.43839107544153,False
@@ -799,106 +799,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "5D L-BFGS-B (central diff)",chinchilla,2.000000,B,0.00020319641327641463,0.00020319641327641463,False
 "5D L-BFGS-B (central diff)",chinchilla,2.000000,alpha,2.9047991201945047e-05,2.9047991201945047e-05,False
 "5D L-BFGS-B (central diff)",chinchilla,2.000000,beta,4.627573623897492e-05,4.627573623897492e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.300000,E,1.4271197806510507,1.4271197806510507,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.300000,A,20.284318759491015,20.284318759491015,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.300000,B,-2.4914075544461003,2.4914075544461003,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.300000,alpha,4.14149302962511,4.14149302962511,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.300000,beta,-0.7662645163502765,0.7662645163502765,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.389474,E,,,True
-"5D L-BFGS-B (central diff)",high_imbalance,0.389474,A,,,True
-"5D L-BFGS-B (central diff)",high_imbalance,0.389474,B,,,True
-"5D L-BFGS-B (central diff)",high_imbalance,0.389474,alpha,,,True
-"5D L-BFGS-B (central diff)",high_imbalance,0.389474,beta,,,True
-"5D L-BFGS-B (central diff)",high_imbalance,0.478947,E,15.673943928500996,15.673943928500996,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.478947,A,226.27523922788293,226.27523922788293,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.478947,B,-2.215853462321884,2.215853462321884,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.478947,alpha,26.398711874016247,26.398711874016247,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.478947,beta,-0.8875498036608852,0.8875498036608852,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.568421,E,15.352980711791364,15.352980711791364,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.568421,A,211.38480005298263,211.38480005298263,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.568421,B,-2.9351071882894515,2.9351071882894515,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.568421,alpha,25.56929948293325,25.56929948293325,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.568421,beta,-1.0584314478769947,1.0584314478769947,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.657895,E,0.2650750268185939,0.2650750268185939,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.657895,A,0.8060724123767165,0.8060724123767165,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.657895,B,0.1328217685507418,0.1328217685507418,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.657895,alpha,0.1838722670785583,0.1838722670785583,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.657895,beta,0.037450621790713706,0.037450621790713706,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.747368,E,0.0028592308099191985,0.0028592308099191985,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.747368,A,0.0012226131640809498,0.0012226131640809498,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.747368,B,0.003513774540154864,0.003513774540154864,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.747368,alpha,0.0002656247689306266,0.0002656247689306266,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.747368,beta,0.001019267590383496,0.001019267590383496,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.836842,E,0.002824582612590212,0.002824582612590212,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.836842,A,0.0010975975341907533,0.0010975975341907533,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.836842,B,0.003457253655378555,0.003457253655378555,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.836842,alpha,0.00023980174235813264,0.00023980174235813264,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.836842,beta,0.001006041048836901,0.001006041048836901,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.926316,E,0.0014340143713906914,0.0014340143713906914,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.926316,A,0.00019231476019026167,0.00019231476019026167,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.926316,B,0.0018746157640620747,0.0018746157640620747,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.926316,alpha,3.5715806536885157e-05,3.5715806536885157e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,0.926316,beta,0.0005460310862062041,0.0005460310862062041,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.015789,E,0.0021512909165845827,0.0021512909165845827,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.015789,A,0.0008801195931771345,0.0008801195931771345,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.015789,B,0.0025044039098831117,0.0025044039098831117,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.015789,alpha,0.0002023181389923732,0.0002023181389923732,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.015789,beta,0.0007347011018025044,0.0007347011018025044,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.105263,E,93.85658474472112,93.85658474472112,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.105263,A,2334.1183219772793,2334.1183219772793,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.105263,B,72.99735270473417,72.99735270473417,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.105263,alpha,77.36266857225007,77.36266857225007,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.105263,beta,16.539725863898077,16.539725863898077,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.194737,E,102.65066550523056,102.65066550523056,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.194737,A,2327.1653549985567,2327.1653549985567,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.194737,B,79.22046937896855,79.22046937896855,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.194737,alpha,78.90362983286975,78.90362983286975,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.194737,beta,18.008366309496502,18.008366309496502,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.284211,E,0.0014689734231125287,0.0014689734231125287,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.284211,A,0.00042902113941213377,0.00042902113941213377,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.284211,B,0.001669155211987832,0.001669155211987832,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.284211,alpha,0.00010461694936870734,0.00010461694936870734,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.284211,beta,0.0004957238840208241,0.0004957238840208241,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.373684,E,0.0012868539920842291,0.0012868539920842291,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.373684,A,0.0002867438320661929,0.0002867438320661929,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.373684,B,0.0014434168130010101,0.0014434168130010101,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.373684,alpha,7.081183609612163e-05,7.081183609612163e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.373684,beta,0.0004319800230605734,0.0004319800230605734,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.463158,E,0.00115243660325387,0.00115243660325387,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.463158,A,0.0001873156391151565,0.0001873156391151565,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.463158,B,0.0012200654817917302,0.0012200654817917302,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.463158,alpha,4.778198379376034e-05,4.778198379376034e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.463158,beta,0.00037123497546641,0.00037123497546641,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.552632,E,0.0008092406688212014,0.0008092406688212014,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.552632,A,4.3420076647010314e-05,4.3420076647010314e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.552632,B,0.0010406609457553374,0.0010406609457553374,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.552632,alpha,8.540880010401002e-06,8.540880010401002e-06,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.552632,beta,0.0003072977380622693,0.0003072977380622693,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.642105,E,0.000997294786227595,0.000997294786227595,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.642105,A,0.00015809888584996097,0.00015809888584996097,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.642105,B,0.0010426041258355097,0.0010426041258355097,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.642105,alpha,4.4685290581270624e-05,4.4685290581270624e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.642105,beta,0.00031720044338468694,0.00031720044338468694,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.731579,E,0.0008666485219144327,0.0008666485219144327,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.731579,A,9.91270831088145e-05,9.91270831088145e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.731579,B,0.00090752689059647,0.00090752689059647,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.731579,alpha,2.862981107862347e-05,2.862981107862347e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.731579,beta,0.0002774436895637242,0.0002774436895637242,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.821053,E,0.0007356066661652641,0.0007356066661652641,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.821053,A,0.00011701364445022725,0.00011701364445022725,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.821053,B,0.0007024599452329615,0.0007024599452329615,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.821053,alpha,3.5778431364550466e-05,3.5778431364550466e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.821053,beta,0.0002177519790108069,0.0002177519790108069,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.910526,E,0.0007282410664900481,0.0007282410664900481,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.910526,A,0.00011186619876793241,0.00011186619876793241,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.910526,B,0.0006766096701089065,0.0006766096701089065,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.910526,alpha,3.405601820860105e-05,3.405601820860105e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,1.910526,beta,0.00021146167465814177,0.00021146167465814177,False
-"5D L-BFGS-B (central diff)",high_imbalance,2.000000,E,0.0006477983803026027,0.0006477983803026027,False
-"5D L-BFGS-B (central diff)",high_imbalance,2.000000,A,6.259863697915609e-05,6.259863697915609e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,2.000000,B,0.000639626983215329,0.000639626983215329,False
-"5D L-BFGS-B (central diff)",high_imbalance,2.000000,alpha,2.1018441885403307e-05,2.1018441885403307e-05,False
-"5D L-BFGS-B (central diff)",high_imbalance,2.000000,beta,0.000198437952539466,0.000198437952539466,False
+"5D L-BFGS-B (central diff)",asymmetric,0.300000,E,1.4271197806510507,1.4271197806510507,False
+"5D L-BFGS-B (central diff)",asymmetric,0.300000,A,20.284318759491015,20.284318759491015,False
+"5D L-BFGS-B (central diff)",asymmetric,0.300000,B,-2.4914075544461003,2.4914075544461003,False
+"5D L-BFGS-B (central diff)",asymmetric,0.300000,alpha,4.14149302962511,4.14149302962511,False
+"5D L-BFGS-B (central diff)",asymmetric,0.300000,beta,-0.7662645163502765,0.7662645163502765,False
+"5D L-BFGS-B (central diff)",asymmetric,0.389474,E,,,True
+"5D L-BFGS-B (central diff)",asymmetric,0.389474,A,,,True
+"5D L-BFGS-B (central diff)",asymmetric,0.389474,B,,,True
+"5D L-BFGS-B (central diff)",asymmetric,0.389474,alpha,,,True
+"5D L-BFGS-B (central diff)",asymmetric,0.389474,beta,,,True
+"5D L-BFGS-B (central diff)",asymmetric,0.478947,E,15.673943928500996,15.673943928500996,False
+"5D L-BFGS-B (central diff)",asymmetric,0.478947,A,226.27523922788293,226.27523922788293,False
+"5D L-BFGS-B (central diff)",asymmetric,0.478947,B,-2.215853462321884,2.215853462321884,False
+"5D L-BFGS-B (central diff)",asymmetric,0.478947,alpha,26.398711874016247,26.398711874016247,False
+"5D L-BFGS-B (central diff)",asymmetric,0.478947,beta,-0.8875498036608852,0.8875498036608852,False
+"5D L-BFGS-B (central diff)",asymmetric,0.568421,E,15.352980711791364,15.352980711791364,False
+"5D L-BFGS-B (central diff)",asymmetric,0.568421,A,211.38480005298263,211.38480005298263,False
+"5D L-BFGS-B (central diff)",asymmetric,0.568421,B,-2.9351071882894515,2.9351071882894515,False
+"5D L-BFGS-B (central diff)",asymmetric,0.568421,alpha,25.56929948293325,25.56929948293325,False
+"5D L-BFGS-B (central diff)",asymmetric,0.568421,beta,-1.0584314478769947,1.0584314478769947,False
+"5D L-BFGS-B (central diff)",asymmetric,0.657895,E,0.2650750268185939,0.2650750268185939,False
+"5D L-BFGS-B (central diff)",asymmetric,0.657895,A,0.8060724123767165,0.8060724123767165,False
+"5D L-BFGS-B (central diff)",asymmetric,0.657895,B,0.1328217685507418,0.1328217685507418,False
+"5D L-BFGS-B (central diff)",asymmetric,0.657895,alpha,0.1838722670785583,0.1838722670785583,False
+"5D L-BFGS-B (central diff)",asymmetric,0.657895,beta,0.037450621790713706,0.037450621790713706,False
+"5D L-BFGS-B (central diff)",asymmetric,0.747368,E,0.0028592308099191985,0.0028592308099191985,False
+"5D L-BFGS-B (central diff)",asymmetric,0.747368,A,0.0012226131640809498,0.0012226131640809498,False
+"5D L-BFGS-B (central diff)",asymmetric,0.747368,B,0.003513774540154864,0.003513774540154864,False
+"5D L-BFGS-B (central diff)",asymmetric,0.747368,alpha,0.0002656247689306266,0.0002656247689306266,False
+"5D L-BFGS-B (central diff)",asymmetric,0.747368,beta,0.001019267590383496,0.001019267590383496,False
+"5D L-BFGS-B (central diff)",asymmetric,0.836842,E,0.002824582612590212,0.002824582612590212,False
+"5D L-BFGS-B (central diff)",asymmetric,0.836842,A,0.0010975975341907533,0.0010975975341907533,False
+"5D L-BFGS-B (central diff)",asymmetric,0.836842,B,0.003457253655378555,0.003457253655378555,False
+"5D L-BFGS-B (central diff)",asymmetric,0.836842,alpha,0.00023980174235813264,0.00023980174235813264,False
+"5D L-BFGS-B (central diff)",asymmetric,0.836842,beta,0.001006041048836901,0.001006041048836901,False
+"5D L-BFGS-B (central diff)",asymmetric,0.926316,E,0.0014340143713906914,0.0014340143713906914,False
+"5D L-BFGS-B (central diff)",asymmetric,0.926316,A,0.00019231476019026167,0.00019231476019026167,False
+"5D L-BFGS-B (central diff)",asymmetric,0.926316,B,0.0018746157640620747,0.0018746157640620747,False
+"5D L-BFGS-B (central diff)",asymmetric,0.926316,alpha,3.5715806536885157e-05,3.5715806536885157e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,0.926316,beta,0.0005460310862062041,0.0005460310862062041,False
+"5D L-BFGS-B (central diff)",asymmetric,1.015789,E,0.0021512909165845827,0.0021512909165845827,False
+"5D L-BFGS-B (central diff)",asymmetric,1.015789,A,0.0008801195931771345,0.0008801195931771345,False
+"5D L-BFGS-B (central diff)",asymmetric,1.015789,B,0.0025044039098831117,0.0025044039098831117,False
+"5D L-BFGS-B (central diff)",asymmetric,1.015789,alpha,0.0002023181389923732,0.0002023181389923732,False
+"5D L-BFGS-B (central diff)",asymmetric,1.015789,beta,0.0007347011018025044,0.0007347011018025044,False
+"5D L-BFGS-B (central diff)",asymmetric,1.105263,E,93.85658474472112,93.85658474472112,False
+"5D L-BFGS-B (central diff)",asymmetric,1.105263,A,2334.1183219772793,2334.1183219772793,False
+"5D L-BFGS-B (central diff)",asymmetric,1.105263,B,72.99735270473417,72.99735270473417,False
+"5D L-BFGS-B (central diff)",asymmetric,1.105263,alpha,77.36266857225007,77.36266857225007,False
+"5D L-BFGS-B (central diff)",asymmetric,1.105263,beta,16.539725863898077,16.539725863898077,False
+"5D L-BFGS-B (central diff)",asymmetric,1.194737,E,102.65066550523056,102.65066550523056,False
+"5D L-BFGS-B (central diff)",asymmetric,1.194737,A,2327.1653549985567,2327.1653549985567,False
+"5D L-BFGS-B (central diff)",asymmetric,1.194737,B,79.22046937896855,79.22046937896855,False
+"5D L-BFGS-B (central diff)",asymmetric,1.194737,alpha,78.90362983286975,78.90362983286975,False
+"5D L-BFGS-B (central diff)",asymmetric,1.194737,beta,18.008366309496502,18.008366309496502,False
+"5D L-BFGS-B (central diff)",asymmetric,1.284211,E,0.0014689734231125287,0.0014689734231125287,False
+"5D L-BFGS-B (central diff)",asymmetric,1.284211,A,0.00042902113941213377,0.00042902113941213377,False
+"5D L-BFGS-B (central diff)",asymmetric,1.284211,B,0.001669155211987832,0.001669155211987832,False
+"5D L-BFGS-B (central diff)",asymmetric,1.284211,alpha,0.00010461694936870734,0.00010461694936870734,False
+"5D L-BFGS-B (central diff)",asymmetric,1.284211,beta,0.0004957238840208241,0.0004957238840208241,False
+"5D L-BFGS-B (central diff)",asymmetric,1.373684,E,0.0012868539920842291,0.0012868539920842291,False
+"5D L-BFGS-B (central diff)",asymmetric,1.373684,A,0.0002867438320661929,0.0002867438320661929,False
+"5D L-BFGS-B (central diff)",asymmetric,1.373684,B,0.0014434168130010101,0.0014434168130010101,False
+"5D L-BFGS-B (central diff)",asymmetric,1.373684,alpha,7.081183609612163e-05,7.081183609612163e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.373684,beta,0.0004319800230605734,0.0004319800230605734,False
+"5D L-BFGS-B (central diff)",asymmetric,1.463158,E,0.00115243660325387,0.00115243660325387,False
+"5D L-BFGS-B (central diff)",asymmetric,1.463158,A,0.0001873156391151565,0.0001873156391151565,False
+"5D L-BFGS-B (central diff)",asymmetric,1.463158,B,0.0012200654817917302,0.0012200654817917302,False
+"5D L-BFGS-B (central diff)",asymmetric,1.463158,alpha,4.778198379376034e-05,4.778198379376034e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.463158,beta,0.00037123497546641,0.00037123497546641,False
+"5D L-BFGS-B (central diff)",asymmetric,1.552632,E,0.0008092406688212014,0.0008092406688212014,False
+"5D L-BFGS-B (central diff)",asymmetric,1.552632,A,4.3420076647010314e-05,4.3420076647010314e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.552632,B,0.0010406609457553374,0.0010406609457553374,False
+"5D L-BFGS-B (central diff)",asymmetric,1.552632,alpha,8.540880010401002e-06,8.540880010401002e-06,False
+"5D L-BFGS-B (central diff)",asymmetric,1.552632,beta,0.0003072977380622693,0.0003072977380622693,False
+"5D L-BFGS-B (central diff)",asymmetric,1.642105,E,0.000997294786227595,0.000997294786227595,False
+"5D L-BFGS-B (central diff)",asymmetric,1.642105,A,0.00015809888584996097,0.00015809888584996097,False
+"5D L-BFGS-B (central diff)",asymmetric,1.642105,B,0.0010426041258355097,0.0010426041258355097,False
+"5D L-BFGS-B (central diff)",asymmetric,1.642105,alpha,4.4685290581270624e-05,4.4685290581270624e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.642105,beta,0.00031720044338468694,0.00031720044338468694,False
+"5D L-BFGS-B (central diff)",asymmetric,1.731579,E,0.0008666485219144327,0.0008666485219144327,False
+"5D L-BFGS-B (central diff)",asymmetric,1.731579,A,9.91270831088145e-05,9.91270831088145e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.731579,B,0.00090752689059647,0.00090752689059647,False
+"5D L-BFGS-B (central diff)",asymmetric,1.731579,alpha,2.862981107862347e-05,2.862981107862347e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.731579,beta,0.0002774436895637242,0.0002774436895637242,False
+"5D L-BFGS-B (central diff)",asymmetric,1.821053,E,0.0007356066661652641,0.0007356066661652641,False
+"5D L-BFGS-B (central diff)",asymmetric,1.821053,A,0.00011701364445022725,0.00011701364445022725,False
+"5D L-BFGS-B (central diff)",asymmetric,1.821053,B,0.0007024599452329615,0.0007024599452329615,False
+"5D L-BFGS-B (central diff)",asymmetric,1.821053,alpha,3.5778431364550466e-05,3.5778431364550466e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.821053,beta,0.0002177519790108069,0.0002177519790108069,False
+"5D L-BFGS-B (central diff)",asymmetric,1.910526,E,0.0007282410664900481,0.0007282410664900481,False
+"5D L-BFGS-B (central diff)",asymmetric,1.910526,A,0.00011186619876793241,0.00011186619876793241,False
+"5D L-BFGS-B (central diff)",asymmetric,1.910526,B,0.0006766096701089065,0.0006766096701089065,False
+"5D L-BFGS-B (central diff)",asymmetric,1.910526,alpha,3.405601820860105e-05,3.405601820860105e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,1.910526,beta,0.00021146167465814177,0.00021146167465814177,False
+"5D L-BFGS-B (central diff)",asymmetric,2.000000,E,0.0006477983803026027,0.0006477983803026027,False
+"5D L-BFGS-B (central diff)",asymmetric,2.000000,A,6.259863697915609e-05,6.259863697915609e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,2.000000,B,0.000639626983215329,0.000639626983215329,False
+"5D L-BFGS-B (central diff)",asymmetric,2.000000,alpha,2.1018441885403307e-05,2.1018441885403307e-05,False
+"5D L-BFGS-B (central diff)",asymmetric,2.000000,beta,0.000198437952539466,0.000198437952539466,False
 "2D Nelder-Mead (VPNLS)",symmetric,0.300000,E,3.5064784737868218e-09,3.5064784737868218e-09,False
 "2D Nelder-Mead (VPNLS)",symmetric,0.300000,A,4.981080792276771e-08,4.981080792276771e-08,False
 "2D Nelder-Mead (VPNLS)",symmetric,0.300000,B,-9.302425496571232e-10,9.302425496571232e-10,False
@@ -1099,106 +1099,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D Nelder-Mead (VPNLS)",chinchilla,2.000000,B,4.452636209040891e-08,4.452636209040891e-08,False
 "2D Nelder-Mead (VPNLS)",chinchilla,2.000000,alpha,2.3102924801990223e-09,2.3102924801990223e-09,False
 "2D Nelder-Mead (VPNLS)",chinchilla,2.000000,beta,1.0018593097983949e-08,1.0018593097983949e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.300000,E,9.411117513168097e-09,9.411117513168097e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.300000,A,2.9160366160236506e-09,2.9160366160236506e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.300000,B,1.2271465774117756e-08,1.2271465774117756e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.300000,alpha,5.687206977757254e-10,5.687206977757254e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.300000,beta,3.5406265732904693e-09,3.5406265732904693e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.389474,E,-1.0899893742355384e-08,1.0899893742355384e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.389474,A,-3.263989953207841e-08,3.263989953207841e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.389474,B,-6.450738436501917e-09,6.450738436501917e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.389474,alpha,-7.336759634710533e-09,7.336759634710533e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.389474,beta,-1.7933146007602506e-09,1.7933146007602506e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.478947,E,1.9220995603819903e-08,1.9220995603819903e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.478947,A,-8.746697154836468e-09,8.746697154836468e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.478947,B,2.880397346388749e-08,2.880397346388749e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.478947,alpha,-2.184895036698338e-09,2.184895036698338e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.478947,beta,8.358887059225782e-09,8.358887059225782e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.568421,E,2.2577863313329725e-09,2.2577863313329725e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.568421,A,-3.44656586735004e-08,3.44656586735004e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.568421,B,1.269622050541051e-08,1.269622050541051e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.568421,alpha,-7.98326757150193e-09,7.98326757150193e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.568421,beta,3.745229932635099e-09,3.745229932635099e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.657895,E,3.0900068828451857e-09,3.0900068828451857e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.657895,A,1.916174305841296e-08,1.916174305841296e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.657895,B,-1.3391490119010176e-09,1.3391490119010176e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.657895,alpha,4.43943567689843e-09,4.43943567689843e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.657895,beta,-4.190912849730188e-10,4.190912849730188e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.747368,E,4.702347649989748e-08,4.702347649989748e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.747368,A,2.733771214651803e-09,2.733771214651803e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.747368,B,6.277357012574636e-08,6.277357012574636e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.747368,alpha,2.7337749746146327e-10,2.7337749746146327e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.747368,beta,1.8254842082399136e-08,1.8254842082399136e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.836842,E,2.491929082542913e-08,2.491929082542913e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.836842,A,2.213100044430998e-08,2.213100044430998e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.836842,B,2.6353962596328496e-08,2.6353962596328496e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.836842,alpha,5.0869702715405565e-09,5.0869702715405565e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.836842,beta,7.666036264567772e-09,7.666036264567772e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.926316,E,-1.0028532902199875e-08,1.0028532902199875e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.926316,A,-3.1133423048711446e-08,3.1133423048711446e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.926316,B,-2.755002729749588e-09,2.755002729749588e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.926316,alpha,-7.438064501237082e-09,7.438064501237082e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,0.926316,beta,-8.035507743069238e-10,8.035507743069238e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.015789,E,2.840227724278956e-08,2.840227724278956e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.015789,A,-1.4754951416404128e-08,1.4754951416404128e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.015789,B,4.263742220258681e-08,4.263742220258681e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.015789,alpha,-3.770735217496515e-09,3.770735217496515e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.015789,beta,1.2481861422578103e-08,1.2481861422578103e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.105263,E,-4.94056997811266e-08,4.94056997811266e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.105263,A,-4.917355761425302e-08,4.917355761425302e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.105263,B,-4.479143760977151e-08,4.479143760977151e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.105263,alpha,-1.195335348026958e-08,1.195335348026958e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.105263,beta,-1.3253538051984496e-08,1.3253538051984496e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.194737,E,2.7973021663647213e-09,2.7973021663647213e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.194737,A,2.8270369422511796e-08,2.8270369422511796e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.194737,B,-8.375304075516544e-09,8.375304075516544e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.194737,alpha,7.118284456499081e-09,7.118284456499081e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.194737,beta,-2.386424391431774e-09,2.386424391431774e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.284211,E,4.1712353492367e-08,4.1712353492367e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.284211,A,-1.6161266550740025e-08,1.6161266550740025e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.284211,B,5.973422573612913e-08,5.973422573612913e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.284211,alpha,-4.28467297484208e-09,4.28467297484208e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.284211,beta,1.7622337281176397e-08,1.7622337281176397e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.373684,E,-4.3904393598667734e-10,4.3904393598667734e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.373684,A,2.856019532856859e-08,2.856019532856859e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.373684,B,-1.4847772282559362e-08,1.4847772282559362e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.373684,alpha,7.47046391294496e-09,7.47046391294496e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.373684,beta,-4.240998233599165e-09,4.240998233599165e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.463158,E,2.79979458420817e-08,2.79979458420817e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.463158,A,3.3551296474246285e-08,3.3551296474246285e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.463158,B,1.537839390230264e-08,1.537839390230264e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.463158,alpha,8.90916969827534e-09,8.90916969827534e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.463158,beta,4.874004425865282e-09,4.874004425865282e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.552632,E,-3.6700425735922485e-08,3.6700425735922485e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.552632,A,-2.7257216606275915e-08,2.7257216606275915e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.552632,B,-2.6931559274171017e-08,2.6931559274171017e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.552632,alpha,-7.403062631256426e-09,7.403062631256426e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.552632,beta,-8.383258245298602e-09,8.383258245298602e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.642105,E,1.273760846962545e-09,1.273760846962545e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.642105,A,-1.7099294858437178e-08,1.7099294858437178e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.642105,B,1.2719251294060228e-08,1.2719251294060228e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.642105,alpha,-4.760648267474657e-09,4.760648267474657e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.642105,beta,3.617393123396405e-09,3.617393123396405e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.731579,E,-1.0064322813668265e-08,1.0064322813668265e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.731579,A,-3.3414181308131004e-08,3.3414181308131004e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.731579,B,1.2795111722298866e-08,1.2795111722298866e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.731579,alpha,-9.529294915879408e-09,9.529294915879408e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.731579,beta,3.3439380297020384e-09,3.3439380297020384e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.821053,E,1.5040355548772237e-08,1.5040355548772237e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.821053,A,2.624459529838568e-08,2.624459529838568e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.821053,B,-4.277110873357696e-09,4.277110873357696e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.821053,alpha,7.683531230617108e-09,7.683531230617108e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.821053,beta,-7.881688133689721e-10,7.881688133689721e-10,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.910526,E,-1.1901157245759043e-08,1.1901157245759043e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.910526,A,-2.8119714780644236e-08,2.8119714780644236e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.910526,B,1.1664485463881395e-08,1.1664485463881395e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.910526,alpha,-8.437838241735013e-09,8.437838241735013e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,1.910526,beta,2.9256525517630214e-09,2.9256525517630214e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,2.000000,E,-5.2478468644938554e-08,5.2478468644938554e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,2.000000,A,1.1886596693809732e-08,1.1886596693809732e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,2.000000,B,-6.579277641591329e-08,6.579277641591329e-08,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,2.000000,alpha,3.477409519237754e-09,3.477409519237754e-09,False
-"2D Nelder-Mead (VPNLS)",high_imbalance,2.000000,beta,-2.0071381832561625e-08,2.0071381832561625e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.300000,E,9.411117513168097e-09,9.411117513168097e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.300000,A,2.9160366160236506e-09,2.9160366160236506e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.300000,B,1.2271465774117756e-08,1.2271465774117756e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.300000,alpha,5.687206977757254e-10,5.687206977757254e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.300000,beta,3.5406265732904693e-09,3.5406265732904693e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.389474,E,-1.0899893742355384e-08,1.0899893742355384e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.389474,A,-3.263989953207841e-08,3.263989953207841e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.389474,B,-6.450738436501917e-09,6.450738436501917e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.389474,alpha,-7.336759634710533e-09,7.336759634710533e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.389474,beta,-1.7933146007602506e-09,1.7933146007602506e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.478947,E,1.9220995603819903e-08,1.9220995603819903e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.478947,A,-8.746697154836468e-09,8.746697154836468e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.478947,B,2.880397346388749e-08,2.880397346388749e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.478947,alpha,-2.184895036698338e-09,2.184895036698338e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.478947,beta,8.358887059225782e-09,8.358887059225782e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.568421,E,2.2577863313329725e-09,2.2577863313329725e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.568421,A,-3.44656586735004e-08,3.44656586735004e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.568421,B,1.269622050541051e-08,1.269622050541051e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.568421,alpha,-7.98326757150193e-09,7.98326757150193e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.568421,beta,3.745229932635099e-09,3.745229932635099e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.657895,E,3.0900068828451857e-09,3.0900068828451857e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.657895,A,1.916174305841296e-08,1.916174305841296e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.657895,B,-1.3391490119010176e-09,1.3391490119010176e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.657895,alpha,4.43943567689843e-09,4.43943567689843e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.657895,beta,-4.190912849730188e-10,4.190912849730188e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.747368,E,4.702347649989748e-08,4.702347649989748e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.747368,A,2.733771214651803e-09,2.733771214651803e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.747368,B,6.277357012574636e-08,6.277357012574636e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.747368,alpha,2.7337749746146327e-10,2.7337749746146327e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.747368,beta,1.8254842082399136e-08,1.8254842082399136e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.836842,E,2.491929082542913e-08,2.491929082542913e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.836842,A,2.213100044430998e-08,2.213100044430998e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.836842,B,2.6353962596328496e-08,2.6353962596328496e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.836842,alpha,5.0869702715405565e-09,5.0869702715405565e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.836842,beta,7.666036264567772e-09,7.666036264567772e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.926316,E,-1.0028532902199875e-08,1.0028532902199875e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.926316,A,-3.1133423048711446e-08,3.1133423048711446e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.926316,B,-2.755002729749588e-09,2.755002729749588e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.926316,alpha,-7.438064501237082e-09,7.438064501237082e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,0.926316,beta,-8.035507743069238e-10,8.035507743069238e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.015789,E,2.840227724278956e-08,2.840227724278956e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.015789,A,-1.4754951416404128e-08,1.4754951416404128e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.015789,B,4.263742220258681e-08,4.263742220258681e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.015789,alpha,-3.770735217496515e-09,3.770735217496515e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.015789,beta,1.2481861422578103e-08,1.2481861422578103e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.105263,E,-4.94056997811266e-08,4.94056997811266e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.105263,A,-4.917355761425302e-08,4.917355761425302e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.105263,B,-4.479143760977151e-08,4.479143760977151e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.105263,alpha,-1.195335348026958e-08,1.195335348026958e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.105263,beta,-1.3253538051984496e-08,1.3253538051984496e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.194737,E,2.7973021663647213e-09,2.7973021663647213e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.194737,A,2.8270369422511796e-08,2.8270369422511796e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.194737,B,-8.375304075516544e-09,8.375304075516544e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.194737,alpha,7.118284456499081e-09,7.118284456499081e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.194737,beta,-2.386424391431774e-09,2.386424391431774e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.284211,E,4.1712353492367e-08,4.1712353492367e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.284211,A,-1.6161266550740025e-08,1.6161266550740025e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.284211,B,5.973422573612913e-08,5.973422573612913e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.284211,alpha,-4.28467297484208e-09,4.28467297484208e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.284211,beta,1.7622337281176397e-08,1.7622337281176397e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.373684,E,-4.3904393598667734e-10,4.3904393598667734e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.373684,A,2.856019532856859e-08,2.856019532856859e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.373684,B,-1.4847772282559362e-08,1.4847772282559362e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.373684,alpha,7.47046391294496e-09,7.47046391294496e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.373684,beta,-4.240998233599165e-09,4.240998233599165e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.463158,E,2.79979458420817e-08,2.79979458420817e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.463158,A,3.3551296474246285e-08,3.3551296474246285e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.463158,B,1.537839390230264e-08,1.537839390230264e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.463158,alpha,8.90916969827534e-09,8.90916969827534e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.463158,beta,4.874004425865282e-09,4.874004425865282e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.552632,E,-3.6700425735922485e-08,3.6700425735922485e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.552632,A,-2.7257216606275915e-08,2.7257216606275915e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.552632,B,-2.6931559274171017e-08,2.6931559274171017e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.552632,alpha,-7.403062631256426e-09,7.403062631256426e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.552632,beta,-8.383258245298602e-09,8.383258245298602e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.642105,E,1.273760846962545e-09,1.273760846962545e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.642105,A,-1.7099294858437178e-08,1.7099294858437178e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.642105,B,1.2719251294060228e-08,1.2719251294060228e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.642105,alpha,-4.760648267474657e-09,4.760648267474657e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.642105,beta,3.617393123396405e-09,3.617393123396405e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.731579,E,-1.0064322813668265e-08,1.0064322813668265e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.731579,A,-3.3414181308131004e-08,3.3414181308131004e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.731579,B,1.2795111722298866e-08,1.2795111722298866e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.731579,alpha,-9.529294915879408e-09,9.529294915879408e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.731579,beta,3.3439380297020384e-09,3.3439380297020384e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.821053,E,1.5040355548772237e-08,1.5040355548772237e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.821053,A,2.624459529838568e-08,2.624459529838568e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.821053,B,-4.277110873357696e-09,4.277110873357696e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.821053,alpha,7.683531230617108e-09,7.683531230617108e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.821053,beta,-7.881688133689721e-10,7.881688133689721e-10,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.910526,E,-1.1901157245759043e-08,1.1901157245759043e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.910526,A,-2.8119714780644236e-08,2.8119714780644236e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.910526,B,1.1664485463881395e-08,1.1664485463881395e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.910526,alpha,-8.437838241735013e-09,8.437838241735013e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,1.910526,beta,2.9256525517630214e-09,2.9256525517630214e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,2.000000,E,-5.2478468644938554e-08,5.2478468644938554e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,2.000000,A,1.1886596693809732e-08,1.1886596693809732e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,2.000000,B,-6.579277641591329e-08,6.579277641591329e-08,False
+"2D Nelder-Mead (VPNLS)",asymmetric,2.000000,alpha,3.477409519237754e-09,3.477409519237754e-09,False
+"2D Nelder-Mead (VPNLS)",asymmetric,2.000000,beta,-2.0071381832561625e-08,2.0071381832561625e-08,False
 "2D L-BFGS-B (default eps=1e-08)",symmetric,0.300000,E,-8.241099058922692e-07,8.241099058922692e-07,False
 "2D L-BFGS-B (default eps=1e-08)",symmetric,0.300000,A,-5.750043754915168e-06,5.750043754915168e-06,False
 "2D L-BFGS-B (default eps=1e-08)",symmetric,0.300000,B,-5.738143400435547e-06,5.738143400435547e-06,False
@@ -1399,106 +1399,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D L-BFGS-B (default eps=1e-08)",chinchilla,2.000000,B,-1.0724698105593875e-05,1.0724698105593875e-05,False
 "2D L-BFGS-B (default eps=1e-08)",chinchilla,2.000000,alpha,-1.708066743599801e-06,1.708066743599801e-06,False
 "2D L-BFGS-B (default eps=1e-08)",chinchilla,2.000000,beta,-2.4517457905151977e-06,2.4517457905151977e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.300000,E,-7.5959873499657086e-06,7.5959873499657086e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.300000,A,4.226627041360217e-06,4.226627041360217e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.300000,B,-1.1604717605443092e-05,1.1604717605443092e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.300000,alpha,1.0341227038370514e-06,1.0341227038370514e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.300000,beta,-3.364570324857557e-06,3.364570324857557e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.389474,E,-8.467665346021707e-06,8.467665346021707e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.389474,A,-2.3714957836504914e-06,2.3714957836504914e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.389474,B,-1.1064538582106869e-05,1.1064538582106869e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.389474,alpha,-4.591922182996659e-07,4.591922182996659e-07,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.389474,beta,-3.1955838333908744e-06,3.1955838333908744e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.478947,E,-8.219999434573865e-06,8.219999434573865e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.478947,A,-4.9423535640283544e-06,4.9423535640283544e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.478947,B,-9.973646274851032e-06,9.973646274851032e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.478947,alpha,-1.057203667500673e-06,1.057203667500673e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.478947,beta,-2.877755148873236e-06,2.877755148873236e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.568421,E,-1.0065294620129999e-05,1.0065294620129999e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.568421,A,-7.579540844478904e-06,7.579540844478904e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.568421,B,-1.167323950263276e-05,1.167323950263276e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.568421,alpha,-1.6617028422317203e-06,1.6617028422317203e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.568421,beta,-3.370075437352453e-06,3.370075437352453e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.657895,E,-1.0797441100324508e-05,1.0797441100324508e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.657895,A,-8.50992315285681e-06,8.50992315285681e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.657895,B,-1.2241459203180921e-05,1.2241459203180921e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.657895,alpha,-1.8922574260193232e-06,1.8922574260193232e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.657895,beta,-3.540761304226554e-06,3.540761304226554e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.747368,E,-1.1135524980742362e-05,1.1135524980742362e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.747368,A,-9.1207308652273e-06,9.1207308652273e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.747368,B,-1.2297664002078338e-05,1.2297664002078338e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.747368,alpha,-2.0590341259964277e-06,2.0590341259964277e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.747368,beta,-3.5659648173382063e-06,3.5659648173382063e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.836842,E,-1.16111289288145e-05,1.16111289288145e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.836842,A,-8.733655968158233e-06,8.733655968158233e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.836842,B,-1.2783846926206754e-05,1.2783846926206754e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.836842,alpha,-1.9946119905088326e-06,1.9946119905088326e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.836842,beta,-3.7200447023897064e-06,3.7200447023897064e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.926316,E,-1.1846862255164807e-05,1.1846862255164807e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.926316,A,-8.376922910366468e-06,8.376922910366468e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.926316,B,-1.2890983566809636e-05,1.2890983566809636e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.926316,alpha,-1.941335216835102e-06,1.941335216835102e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,0.926316,beta,-3.766136703573222e-06,3.766136703573222e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.015789,E,-1.1990495526122294e-05,1.1990495526122294e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.015789,A,-7.93678673788891e-06,7.93678673788891e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.015789,B,-1.2860189506220273e-05,1.2860189506220273e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.015789,alpha,-1.8700052736882893e-06,1.8700052736882893e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.015789,beta,-3.7742252155123057e-06,3.7742252155123057e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.105263,E,-1.2023684165335884e-05,1.2023684165335884e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.105263,A,-7.439708341946502e-06,7.439708341946502e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.105263,B,-1.2668511311003956e-05,1.2668511311003956e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.105263,alpha,-1.785743070738419e-06,1.785743070738419e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.105263,beta,-3.737109868873928e-06,3.737109868873928e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.194737,E,-1.222949493153004e-05,1.222949493153004e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.194737,A,-7.0080231661517985e-06,7.0080231661517985e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.194737,B,-1.263989559762854e-05,1.263989559762854e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.194737,alpha,-1.716701989642514e-06,1.716701989642514e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.194737,beta,-3.7499922522060513e-06,3.7499922522060513e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.284211,E,-1.2383252319679713e-05,1.2383252319679713e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.284211,A,-6.588103892695257e-06,6.588103892695257e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.284211,B,-1.250456246213426e-05,1.250456246213426e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.284211,alpha,-1.6505156262036158e-06,1.6505156262036158e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.284211,beta,-3.7334103729671787e-06,3.7334103729671787e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.373684,E,-1.2584298718143812e-05,1.2584298718143812e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.373684,A,-6.2146628840451295e-06,6.2146628840451295e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.373684,B,-1.2375005238055936e-05,1.2375005238055936e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.373684,alpha,-1.5954379633430051e-06,1.5954379633430051e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.373684,beta,-3.7205424404411987e-06,3.7205424404411987e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.463158,E,-1.2843772725184357e-05,1.2843772725184357e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.463158,A,-5.888856226801446e-06,5.888856226801446e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.463158,B,-1.2260973201476322e-05,1.2260973201476322e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.463158,alpha,-1.5519829865695556e-06,1.5519829865695556e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.463158,beta,-3.714372017845384e-06,3.714372017845384e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.552632,E,-1.3169550827903596e-05,1.3169550827903596e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.552632,A,-5.607684815188583e-06,5.607684815188583e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.552632,B,-1.2168804871099718e-05,1.2168804871099718e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.552632,alpha,-1.5196939883321587e-06,1.5196939883321587e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.552632,beta,-3.716909432568165e-06,3.716909432568165e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.642105,E,-1.3567652024881816e-05,1.3567652024881816e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.642105,A,-5.366207915470142e-06,5.366207915470142e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.642105,B,-1.2102819087263303e-05,1.2102819087263303e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.642105,alpha,-1.4976321616536148e-06,1.4976321616536148e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.642105,beta,-3.7295884122980833e-06,3.7295884122980833e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.731579,E,-1.404317695660756e-05,1.404317695660756e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.731579,A,-5.15879807114009e-06,5.15879807114009e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.731579,B,-1.2066246983802789e-05,1.2066246983802789e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.731579,alpha,-1.484658310269721e-06,1.484658310269721e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.731579,beta,-3.753534848529869e-06,3.753534848529869e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.821053,E,-1.4600882817062108e-05,1.4600882817062108e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.821053,A,-4.979827476015848e-06,4.979827476015848e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.821053,B,-1.2061769211647073e-05,1.2061769211647073e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.821053,alpha,-1.479591192695922e-06,1.479591192695922e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.821053,beta,-3.789724466140762e-06,3.789724466140762e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.910526,E,-1.5240872824139913e-05,1.5240872824139913e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.910526,A,-4.825107508644235e-06,4.825107508644235e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.910526,B,-1.2085894640947941e-05,1.2085894640947941e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.910526,alpha,-1.4816057580324554e-06,1.4816057580324554e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,1.910526,beta,-3.837275192937696e-06,3.837275192937696e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,2.000000,E,-1.5980080007441423e-05,1.5980080007441423e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,2.000000,A,-4.687539511405524e-06,4.687539511405524e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,2.000000,B,-1.215570144576687e-05,1.215570144576687e-05,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,2.000000,alpha,-1.4889872608488462e-06,1.4889872608488462e-06,False
-"2D L-BFGS-B (default eps=1e-08)",high_imbalance,2.000000,beta,-3.901576445432309e-06,3.901576445432309e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.300000,E,-7.5959873499657086e-06,7.5959873499657086e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.300000,A,4.226627041360217e-06,4.226627041360217e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.300000,B,-1.1604717605443092e-05,1.1604717605443092e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.300000,alpha,1.0341227038370514e-06,1.0341227038370514e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.300000,beta,-3.364570324857557e-06,3.364570324857557e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.389474,E,-8.467665346021707e-06,8.467665346021707e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.389474,A,-2.3714957836504914e-06,2.3714957836504914e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.389474,B,-1.1064538582106869e-05,1.1064538582106869e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.389474,alpha,-4.591922182996659e-07,4.591922182996659e-07,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.389474,beta,-3.1955838333908744e-06,3.1955838333908744e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.478947,E,-8.219999434573865e-06,8.219999434573865e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.478947,A,-4.9423535640283544e-06,4.9423535640283544e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.478947,B,-9.973646274851032e-06,9.973646274851032e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.478947,alpha,-1.057203667500673e-06,1.057203667500673e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.478947,beta,-2.877755148873236e-06,2.877755148873236e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.568421,E,-1.0065294620129999e-05,1.0065294620129999e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.568421,A,-7.579540844478904e-06,7.579540844478904e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.568421,B,-1.167323950263276e-05,1.167323950263276e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.568421,alpha,-1.6617028422317203e-06,1.6617028422317203e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.568421,beta,-3.370075437352453e-06,3.370075437352453e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.657895,E,-1.0797441100324508e-05,1.0797441100324508e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.657895,A,-8.50992315285681e-06,8.50992315285681e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.657895,B,-1.2241459203180921e-05,1.2241459203180921e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.657895,alpha,-1.8922574260193232e-06,1.8922574260193232e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.657895,beta,-3.540761304226554e-06,3.540761304226554e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.747368,E,-1.1135524980742362e-05,1.1135524980742362e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.747368,A,-9.1207308652273e-06,9.1207308652273e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.747368,B,-1.2297664002078338e-05,1.2297664002078338e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.747368,alpha,-2.0590341259964277e-06,2.0590341259964277e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.747368,beta,-3.5659648173382063e-06,3.5659648173382063e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.836842,E,-1.16111289288145e-05,1.16111289288145e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.836842,A,-8.733655968158233e-06,8.733655968158233e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.836842,B,-1.2783846926206754e-05,1.2783846926206754e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.836842,alpha,-1.9946119905088326e-06,1.9946119905088326e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.836842,beta,-3.7200447023897064e-06,3.7200447023897064e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.926316,E,-1.1846862255164807e-05,1.1846862255164807e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.926316,A,-8.376922910366468e-06,8.376922910366468e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.926316,B,-1.2890983566809636e-05,1.2890983566809636e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.926316,alpha,-1.941335216835102e-06,1.941335216835102e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,0.926316,beta,-3.766136703573222e-06,3.766136703573222e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.015789,E,-1.1990495526122294e-05,1.1990495526122294e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.015789,A,-7.93678673788891e-06,7.93678673788891e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.015789,B,-1.2860189506220273e-05,1.2860189506220273e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.015789,alpha,-1.8700052736882893e-06,1.8700052736882893e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.015789,beta,-3.7742252155123057e-06,3.7742252155123057e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.105263,E,-1.2023684165335884e-05,1.2023684165335884e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.105263,A,-7.439708341946502e-06,7.439708341946502e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.105263,B,-1.2668511311003956e-05,1.2668511311003956e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.105263,alpha,-1.785743070738419e-06,1.785743070738419e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.105263,beta,-3.737109868873928e-06,3.737109868873928e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.194737,E,-1.222949493153004e-05,1.222949493153004e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.194737,A,-7.0080231661517985e-06,7.0080231661517985e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.194737,B,-1.263989559762854e-05,1.263989559762854e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.194737,alpha,-1.716701989642514e-06,1.716701989642514e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.194737,beta,-3.7499922522060513e-06,3.7499922522060513e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.284211,E,-1.2383252319679713e-05,1.2383252319679713e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.284211,A,-6.588103892695257e-06,6.588103892695257e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.284211,B,-1.250456246213426e-05,1.250456246213426e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.284211,alpha,-1.6505156262036158e-06,1.6505156262036158e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.284211,beta,-3.7334103729671787e-06,3.7334103729671787e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.373684,E,-1.2584298718143812e-05,1.2584298718143812e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.373684,A,-6.2146628840451295e-06,6.2146628840451295e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.373684,B,-1.2375005238055936e-05,1.2375005238055936e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.373684,alpha,-1.5954379633430051e-06,1.5954379633430051e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.373684,beta,-3.7205424404411987e-06,3.7205424404411987e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.463158,E,-1.2843772725184357e-05,1.2843772725184357e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.463158,A,-5.888856226801446e-06,5.888856226801446e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.463158,B,-1.2260973201476322e-05,1.2260973201476322e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.463158,alpha,-1.5519829865695556e-06,1.5519829865695556e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.463158,beta,-3.714372017845384e-06,3.714372017845384e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.552632,E,-1.3169550827903596e-05,1.3169550827903596e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.552632,A,-5.607684815188583e-06,5.607684815188583e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.552632,B,-1.2168804871099718e-05,1.2168804871099718e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.552632,alpha,-1.5196939883321587e-06,1.5196939883321587e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.552632,beta,-3.716909432568165e-06,3.716909432568165e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.642105,E,-1.3567652024881816e-05,1.3567652024881816e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.642105,A,-5.366207915470142e-06,5.366207915470142e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.642105,B,-1.2102819087263303e-05,1.2102819087263303e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.642105,alpha,-1.4976321616536148e-06,1.4976321616536148e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.642105,beta,-3.7295884122980833e-06,3.7295884122980833e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.731579,E,-1.404317695660756e-05,1.404317695660756e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.731579,A,-5.15879807114009e-06,5.15879807114009e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.731579,B,-1.2066246983802789e-05,1.2066246983802789e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.731579,alpha,-1.484658310269721e-06,1.484658310269721e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.731579,beta,-3.753534848529869e-06,3.753534848529869e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.821053,E,-1.4600882817062108e-05,1.4600882817062108e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.821053,A,-4.979827476015848e-06,4.979827476015848e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.821053,B,-1.2061769211647073e-05,1.2061769211647073e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.821053,alpha,-1.479591192695922e-06,1.479591192695922e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.821053,beta,-3.789724466140762e-06,3.789724466140762e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.910526,E,-1.5240872824139913e-05,1.5240872824139913e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.910526,A,-4.825107508644235e-06,4.825107508644235e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.910526,B,-1.2085894640947941e-05,1.2085894640947941e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.910526,alpha,-1.4816057580324554e-06,1.4816057580324554e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,1.910526,beta,-3.837275192937696e-06,3.837275192937696e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,2.000000,E,-1.5980080007441423e-05,1.5980080007441423e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,2.000000,A,-4.687539511405524e-06,4.687539511405524e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,2.000000,B,-1.215570144576687e-05,1.215570144576687e-05,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,2.000000,alpha,-1.4889872608488462e-06,1.4889872608488462e-06,False
+"2D L-BFGS-B (default eps=1e-08)",asymmetric,2.000000,beta,-3.901576445432309e-06,3.901576445432309e-06,False
 "2D L-BFGS-B (central diff)",symmetric,0.300000,E,3.4924857220563385e-09,3.4924857220563385e-09,False
 "2D L-BFGS-B (central diff)",symmetric,0.300000,A,2.4344871007997426e-08,2.4344871007997426e-08,False
 "2D L-BFGS-B (central diff)",symmetric,0.300000,B,2.434053669730929e-08,2.434053669730929e-08,False
@@ -1699,106 +1699,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D L-BFGS-B (central diff)",chinchilla,2.000000,B,6.169095697179155e-08,6.169095697179155e-08,False
 "2D L-BFGS-B (central diff)",chinchilla,2.000000,alpha,1.0947582709644955e-08,1.0947582709644955e-08,False
 "2D L-BFGS-B (central diff)",chinchilla,2.000000,beta,1.4140692585127923e-08,1.4140692585127923e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.300000,E,2.7856218318216237e-08,2.7856218318216237e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.300000,A,-2.5145254207784563e-08,2.5145254207784563e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.300000,B,4.504905303593567e-08,4.504905303593567e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.300000,alpha,-5.980938564003512e-09,5.980938564003512e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.300000,beta,1.308150720363653e-08,1.308150720363653e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.389474,E,2.7780644320137613e-08,2.7780644320137613e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.389474,A,-1.2896070912811267e-09,1.2896070912811267e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.389474,B,3.868916441716016e-08,3.868916441716016e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.389474,alpha,-5.614027761187875e-10,5.614027761187875e-10,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.389474,beta,1.1195327818913279e-08,1.1195327818913279e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.478947,E,2.455270700755852e-08,2.455270700755852e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.478947,A,3.3879041304646495e-09,3.3879041304646495e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.478947,B,3.286248561372738e-08,3.286248561372738e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.478947,alpha,5.488083106243839e-10,5.488083106243839e-10,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.478947,beta,9.508845324038732e-09,9.508845324038732e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.568421,E,2.944114380295627e-08,2.944114380295627e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.568421,A,1.6242713211179614e-08,1.6242713211179614e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.568421,B,3.579618456478496e-08,3.579618456478496e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.568421,alpha,3.4909948289369306e-09,3.4909948289369306e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.568421,beta,1.0347457657736238e-08,1.0347457657736238e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.657895,E,2.9344797466393236e-08,2.9344797466393236e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.657895,A,1.836462041055926e-08,1.836462041055926e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.657895,B,3.464847898353471e-08,3.464847898353471e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.657895,alpha,4.032640410370185e-09,4.032640410370185e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.657895,beta,1.0030900841134245e-08,1.0030900841134245e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.747368,E,2.8793535603148293e-08,2.8793535603148293e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.747368,A,1.8567964313954542e-08,1.8567964313954542e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.747368,B,3.331863086704992e-08,3.331863086704992e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.747368,alpha,4.1435910855407895e-09,4.1435910855407895e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.747368,beta,9.66875325323071e-09,9.66875325323071e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.836842,E,2.817068077823255e-08,2.817068077823255e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.836842,A,1.8086473701044978e-08,1.8086473701044978e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.836842,B,3.200738454139759e-08,3.200738454139759e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.836842,alpha,4.1007221513318755e-09,4.1007221513318755e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.836842,beta,9.31661557937178e-09,9.31661557937178e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.926316,E,2.7897053503548013e-08,2.7897053503548013e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.926316,A,1.7564476557372403e-08,1.7564476557372403e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.926316,B,3.1089018003371986e-08,3.1089018003371986e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.926316,alpha,4.0504994818200684e-09,4.0504994818200684e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,0.926316,beta,9.08285991221925e-09,9.08285991221925e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.015789,E,2.8144876304618778e-08,2.8144876304618778e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.015789,A,1.724417284381125e-08,1.724417284381125e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.015789,B,3.068912102232856e-08,3.068912102232856e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.015789,alpha,4.050774053105728e-09,4.050774053105728e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.015789,beta,9.005394996017179e-09,9.005394996017179e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.105263,E,2.898530856489301e-08,2.898530856489301e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.105263,A,1.7130094368361267e-08,1.7130094368361267e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.105263,B,3.0854198075348494e-08,3.0854198075348494e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.105263,alpha,4.105222732840302e-09,4.105222732840302e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.105263,beta,9.099978834986051e-09,9.099978834986051e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.194737,E,2.541973206548768e-08,2.541973206548768e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.194737,A,3.514333181420074e-09,3.514333181420074e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.194737,B,3.094193375398464e-08,3.094193375398464e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.194737,alpha,7.808568606530268e-10,7.808568606530268e-10,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.194737,beta,9.139069429546644e-09,9.139069429546644e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.284211,E,3.303515252277922e-08,3.303515252277922e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.284211,A,1.7833699521504497e-08,1.7833699521504497e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.284211,B,3.324034833062997e-08,3.324034833062997e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.284211,alpha,4.46945945009125e-09,4.46945945009125e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.284211,beta,9.925787790254412e-09,9.925787790254412e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.373684,E,3.6284374584469465e-08,3.6284374584469465e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.373684,A,1.842017701974113e-08,1.842017701974113e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.373684,B,3.542993412653448e-08,3.542993412653448e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.373684,alpha,4.731257202027054e-09,4.731257202027054e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.373684,beta,1.0655884776706297e-08,1.0655884776706297e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.463158,E,4.0397691766402584e-08,4.0397691766402584e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.463158,A,1.9153756446166524e-08,1.9153756446166524e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.463158,B,3.8218694124022446e-08,3.8218694124022446e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.463158,alpha,5.049938961622415e-09,5.049938961622415e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.463158,beta,1.1584622150451196e-08,1.1584622150451196e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.552632,E,3.4895807479646864e-08,3.4895807479646864e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.552632,A,2.9688937222921035e-09,2.9688937222921035e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.552632,B,3.938024032345162e-08,3.938024032345162e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.552632,alpha,7.879002110243047e-10,7.879002110243047e-10,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.552632,beta,1.1867890183137411e-08,1.1867890183137411e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.642105,E,,,True
-"2D L-BFGS-B (central diff)",high_imbalance,1.642105,A,,,True
-"2D L-BFGS-B (central diff)",high_imbalance,1.642105,B,,,True
-"2D L-BFGS-B (central diff)",high_imbalance,1.642105,alpha,,,True
-"2D L-BFGS-B (central diff)",high_imbalance,1.642105,beta,,,True
-"2D L-BFGS-B (central diff)",high_imbalance,1.731579,E,5.778413907785106e-08,5.778413907785106e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.731579,A,2.1766525589813198e-08,2.1766525589813198e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.731579,B,4.926037945108898e-08,4.926037945108898e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.731579,alpha,6.262648703090656e-09,6.262648703090656e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.731579,beta,1.5335331570917512e-08,1.5335331570917512e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.821053,E,6.521091359209444e-08,6.521091359209444e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.821053,A,2.266069047193272e-08,2.266069047193272e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.821053,B,5.35386529363737e-08,5.35386529363737e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.821053,alpha,6.7306136769111525e-09,6.7306136769111525e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.821053,beta,1.6832521040093466e-08,1.6832521040093466e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.910526,E,7.359433246901219e-08,7.359433246901219e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.910526,A,2.2917464951127283e-08,2.2917464951127283e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.910526,B,5.8690989140893335e-08,5.8690989140893335e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.910526,alpha,7.0401390810238516e-09,7.0401390810238516e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,1.910526,beta,1.862220055578922e-08,1.862220055578922e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,2.000000,E,8.26983846294168e-08,8.26983846294168e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,2.000000,A,2.3456092711193927e-08,2.3456092711193927e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,2.000000,B,6.366764637886798e-08,6.366764637886798e-08,False
-"2D L-BFGS-B (central diff)",high_imbalance,2.000000,alpha,7.459564626692457e-09,7.459564626692457e-09,False
-"2D L-BFGS-B (central diff)",high_imbalance,2.000000,beta,2.0404448739949172e-08,2.0404448739949172e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.300000,E,2.7856218318216237e-08,2.7856218318216237e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.300000,A,-2.5145254207784563e-08,2.5145254207784563e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.300000,B,4.504905303593567e-08,4.504905303593567e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.300000,alpha,-5.980938564003512e-09,5.980938564003512e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.300000,beta,1.308150720363653e-08,1.308150720363653e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.389474,E,2.7780644320137613e-08,2.7780644320137613e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.389474,A,-1.2896070912811267e-09,1.2896070912811267e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.389474,B,3.868916441716016e-08,3.868916441716016e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.389474,alpha,-5.614027761187875e-10,5.614027761187875e-10,False
+"2D L-BFGS-B (central diff)",asymmetric,0.389474,beta,1.1195327818913279e-08,1.1195327818913279e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.478947,E,2.455270700755852e-08,2.455270700755852e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.478947,A,3.3879041304646495e-09,3.3879041304646495e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.478947,B,3.286248561372738e-08,3.286248561372738e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.478947,alpha,5.488083106243839e-10,5.488083106243839e-10,False
+"2D L-BFGS-B (central diff)",asymmetric,0.478947,beta,9.508845324038732e-09,9.508845324038732e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.568421,E,2.944114380295627e-08,2.944114380295627e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.568421,A,1.6242713211179614e-08,1.6242713211179614e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.568421,B,3.579618456478496e-08,3.579618456478496e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.568421,alpha,3.4909948289369306e-09,3.4909948289369306e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.568421,beta,1.0347457657736238e-08,1.0347457657736238e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.657895,E,2.9344797466393236e-08,2.9344797466393236e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.657895,A,1.836462041055926e-08,1.836462041055926e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.657895,B,3.464847898353471e-08,3.464847898353471e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.657895,alpha,4.032640410370185e-09,4.032640410370185e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.657895,beta,1.0030900841134245e-08,1.0030900841134245e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.747368,E,2.8793535603148293e-08,2.8793535603148293e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.747368,A,1.8567964313954542e-08,1.8567964313954542e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.747368,B,3.331863086704992e-08,3.331863086704992e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.747368,alpha,4.1435910855407895e-09,4.1435910855407895e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.747368,beta,9.66875325323071e-09,9.66875325323071e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.836842,E,2.817068077823255e-08,2.817068077823255e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.836842,A,1.8086473701044978e-08,1.8086473701044978e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.836842,B,3.200738454139759e-08,3.200738454139759e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.836842,alpha,4.1007221513318755e-09,4.1007221513318755e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.836842,beta,9.31661557937178e-09,9.31661557937178e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.926316,E,2.7897053503548013e-08,2.7897053503548013e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.926316,A,1.7564476557372403e-08,1.7564476557372403e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.926316,B,3.1089018003371986e-08,3.1089018003371986e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,0.926316,alpha,4.0504994818200684e-09,4.0504994818200684e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,0.926316,beta,9.08285991221925e-09,9.08285991221925e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.015789,E,2.8144876304618778e-08,2.8144876304618778e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.015789,A,1.724417284381125e-08,1.724417284381125e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.015789,B,3.068912102232856e-08,3.068912102232856e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.015789,alpha,4.050774053105728e-09,4.050774053105728e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.015789,beta,9.005394996017179e-09,9.005394996017179e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.105263,E,2.898530856489301e-08,2.898530856489301e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.105263,A,1.7130094368361267e-08,1.7130094368361267e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.105263,B,3.0854198075348494e-08,3.0854198075348494e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.105263,alpha,4.105222732840302e-09,4.105222732840302e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.105263,beta,9.099978834986051e-09,9.099978834986051e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.194737,E,2.541973206548768e-08,2.541973206548768e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.194737,A,3.514333181420074e-09,3.514333181420074e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.194737,B,3.094193375398464e-08,3.094193375398464e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.194737,alpha,7.808568606530268e-10,7.808568606530268e-10,False
+"2D L-BFGS-B (central diff)",asymmetric,1.194737,beta,9.139069429546644e-09,9.139069429546644e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.284211,E,3.303515252277922e-08,3.303515252277922e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.284211,A,1.7833699521504497e-08,1.7833699521504497e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.284211,B,3.324034833062997e-08,3.324034833062997e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.284211,alpha,4.46945945009125e-09,4.46945945009125e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.284211,beta,9.925787790254412e-09,9.925787790254412e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.373684,E,3.6284374584469465e-08,3.6284374584469465e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.373684,A,1.842017701974113e-08,1.842017701974113e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.373684,B,3.542993412653448e-08,3.542993412653448e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.373684,alpha,4.731257202027054e-09,4.731257202027054e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.373684,beta,1.0655884776706297e-08,1.0655884776706297e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.463158,E,4.0397691766402584e-08,4.0397691766402584e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.463158,A,1.9153756446166524e-08,1.9153756446166524e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.463158,B,3.8218694124022446e-08,3.8218694124022446e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.463158,alpha,5.049938961622415e-09,5.049938961622415e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.463158,beta,1.1584622150451196e-08,1.1584622150451196e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.552632,E,3.4895807479646864e-08,3.4895807479646864e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.552632,A,2.9688937222921035e-09,2.9688937222921035e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.552632,B,3.938024032345162e-08,3.938024032345162e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.552632,alpha,7.879002110243047e-10,7.879002110243047e-10,False
+"2D L-BFGS-B (central diff)",asymmetric,1.552632,beta,1.1867890183137411e-08,1.1867890183137411e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.642105,E,,,True
+"2D L-BFGS-B (central diff)",asymmetric,1.642105,A,,,True
+"2D L-BFGS-B (central diff)",asymmetric,1.642105,B,,,True
+"2D L-BFGS-B (central diff)",asymmetric,1.642105,alpha,,,True
+"2D L-BFGS-B (central diff)",asymmetric,1.642105,beta,,,True
+"2D L-BFGS-B (central diff)",asymmetric,1.731579,E,5.778413907785106e-08,5.778413907785106e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.731579,A,2.1766525589813198e-08,2.1766525589813198e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.731579,B,4.926037945108898e-08,4.926037945108898e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.731579,alpha,6.262648703090656e-09,6.262648703090656e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.731579,beta,1.5335331570917512e-08,1.5335331570917512e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.821053,E,6.521091359209444e-08,6.521091359209444e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.821053,A,2.266069047193272e-08,2.266069047193272e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.821053,B,5.35386529363737e-08,5.35386529363737e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.821053,alpha,6.7306136769111525e-09,6.7306136769111525e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.821053,beta,1.6832521040093466e-08,1.6832521040093466e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.910526,E,7.359433246901219e-08,7.359433246901219e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.910526,A,2.2917464951127283e-08,2.2917464951127283e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.910526,B,5.8690989140893335e-08,5.8690989140893335e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,1.910526,alpha,7.0401390810238516e-09,7.0401390810238516e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,1.910526,beta,1.862220055578922e-08,1.862220055578922e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,2.000000,E,8.26983846294168e-08,8.26983846294168e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,2.000000,A,2.3456092711193927e-08,2.3456092711193927e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,2.000000,B,6.366764637886798e-08,6.366764637886798e-08,False
+"2D L-BFGS-B (central diff)",asymmetric,2.000000,alpha,7.459564626692457e-09,7.459564626692457e-09,False
+"2D L-BFGS-B (central diff)",asymmetric,2.000000,beta,2.0404448739949172e-08,2.0404448739949172e-08,False
 "2D L-BFGS-B (eps=1e-6)",symmetric,0.300000,E,,,True
 "2D L-BFGS-B (eps=1e-6)",symmetric,0.300000,A,,,True
 "2D L-BFGS-B (eps=1e-6)",symmetric,0.300000,B,,,True
@@ -1999,106 +1999,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D L-BFGS-B (eps=1e-6)",chinchilla,2.000000,B,-0.0009983763982515056,0.0009983763982515056,False
 "2D L-BFGS-B (eps=1e-6)",chinchilla,2.000000,alpha,-0.000193155603782766,0.000193155603782766,False
 "2D L-BFGS-B (eps=1e-6)",chinchilla,2.000000,beta,-0.0002293834186087703,0.0002293834186087703,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.300000,E,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.300000,A,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.300000,B,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.300000,alpha,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.300000,beta,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.389474,E,-0.0006303711452760684,0.0006303711452760684,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.389474,A,0.000611014402384677,0.000611014402384677,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.389474,B,-0.0010310826991741025,0.0010310826991741025,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.389474,alpha,0.00014537201295785547,0.00014537201295785547,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.389474,beta,-0.0002996482638182737,0.0002996482638182737,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.478947,E,-0.0009312873916215507,0.0009312873916215507,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.478947,A,-0.0005740403179361212,0.0005740403179361212,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.478947,B,-0.0011261504860511525,0.0011261504860511525,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.478947,alpha,-0.00012300952715208732,0.00012300952715208732,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.478947,beta,-0.00032490354007566705,0.00032490354007566705,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.568421,E,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.568421,A,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.568421,B,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.568421,alpha,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.568421,beta,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.657895,E,-0.001078356506732601,0.001078356506732601,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.657895,A,-0.0008671861557170217,0.0008671861557170217,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.657895,B,-0.0012175537768530603,0.0012175537768530603,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.657895,alpha,-0.00019301218554129042,0.00019301218554129042,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.657895,beta,-0.00035213884430260097,0.00035213884430260097,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.747368,E,-0.001129381224464333,0.001129381224464333,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.747368,A,-0.0008809844682008764,0.0008809844682008764,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.747368,B,-0.0012605815347854058,0.0012605815347854058,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.747368,alpha,-0.0001984627591776911,0.0001984627591776911,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.747368,beta,-0.0003655988281290395,0.0003655988281290395,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.836842,E,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.836842,A,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.836842,B,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.836842,alpha,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.836842,beta,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.926316,E,-0.0011846893501702052,0.0011846893501702052,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.926316,A,-0.0008376882657421134,0.0008376882657421134,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.926316,B,-0.0012890884836835948,0.0012890884836835948,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.926316,alpha,-0.00019413342184700314,0.00019413342184700314,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,0.926316,beta,-0.0003766133530305122,0.0003766133530305122,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.015789,E,-0.0011990535111945405,0.0011990535111945405,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.015789,A,-0.0007936756299245179,0.0007936756299245179,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.015789,B,-0.0012860100632012385,0.0012860100632012385,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.015789,alpha,-0.00018700056465083435,0.00018700056465083435,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.015789,beta,-0.00037742247665882534,0.00037742247665882534,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.105263,E,-0.001210585033098898,0.001210585033098898,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.105263,A,-0.0007465010185226704,0.0007465010185226704,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.105263,B,-0.0012764906504720054,0.0012764906504720054,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.105263,alpha,-0.0001791617116790854,0.0001791617116790854,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.105263,beta,-0.0003765515664152615,0.0003765515664152615,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.194737,E,-0.0012085290654213988,0.0012085290654213988,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.194737,A,-0.0007086584954547598,0.0007086584954547598,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.194737,B,-0.0012422606294443636,0.0012422606294443636,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.194737,alpha,-0.00017371205486008335,0.00017371205486008335,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.194737,beta,-0.00036861458978377744,0.00036861458978377744,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.284211,E,-0.0011990176122315798,0.0011990176122315798,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.284211,A,-0.0006589609127826896,0.0006589609127826896,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.284211,B,-0.0012010773149611664,0.0012010773149611664,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.284211,alpha,-0.00016521934111158123,0.00016521934111158123,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.284211,beta,-0.00035871707335726773,0.00035871707335726773,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.373684,E,-0.0011674420367833883,0.0011674420367833883,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.373684,A,-0.0005999969871630704,0.0005999969871630704,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.373684,B,-0.001136259082989855,0.001136259082989855,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.373684,alpha,-0.00015414553619193832,0.00015414553619193832,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.373684,beta,-0.0003417999172225427,0.0003417999172225427,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.463158,E,-0.0011095459040170522,0.0011095459040170522,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.463158,A,-0.0005320166652349659,0.0005320166652349659,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.463158,B,-0.0010464281063574028,0.0010464281063574028,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.463158,alpha,-0.00014028629106644776,0.00014028629106644776,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.463158,beta,-0.00031725150469040823,0.00031725150469040823,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.552632,E,-0.0010354103780674776,0.0010354103780674776,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.552632,A,-0.00046249156398228095,0.00046249156398228095,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.552632,B,-0.0009437539267678994,0.0009437539267678994,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.552632,alpha,-0.00012536675307192155,0.00012536675307192155,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.552632,beta,-0.0002885589764804159,0.0002885589764804159,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.642105,E,-0.0009720609051154065,0.0009720609051154065,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.642105,A,-0.00040383257056113845,0.00040383257056113845,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.642105,B,-0.0008543608850659817,0.0008543608850659817,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.642105,alpha,-0.00011269147213954421,0.00011269147213954421,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.642105,beta,-0.000263612361688585,0.000263612361688585,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.731579,E,-0.0009564034916956938,0.0009564034916956938,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.731579,A,-0.0003676942882032869,0.0003676942882032869,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.731579,B,-0.0008099569367382748,0.0008099569367382748,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.731579,alpha,-0.00010577157599002213,0.00010577157599002213,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.731579,beta,-0.0002523105273993618,0.0002523105273993618,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.821053,E,-0.0010203182190787984,0.0010203182190787984,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.821053,A,-0.0003592774524429925,0.0003592774524429925,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.821053,B,-0.0008339511744179861,0.0008339511744179861,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.821053,alpha,-0.0001066865761445196,0.0001066865761445196,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.821053,beta,-0.0002623198240525235,0.0002623198240525235,False
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.910526,E,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.910526,A,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.910526,B,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.910526,alpha,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,1.910526,beta,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,2.000000,E,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,2.000000,A,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,2.000000,B,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,2.000000,alpha,,,True
-"2D L-BFGS-B (eps=1e-6)",high_imbalance,2.000000,beta,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.300000,E,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.300000,A,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.300000,B,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.300000,alpha,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.300000,beta,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.389474,E,-0.0006303711452760684,0.0006303711452760684,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.389474,A,0.000611014402384677,0.000611014402384677,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.389474,B,-0.0010310826991741025,0.0010310826991741025,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.389474,alpha,0.00014537201295785547,0.00014537201295785547,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.389474,beta,-0.0002996482638182737,0.0002996482638182737,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.478947,E,-0.0009312873916215507,0.0009312873916215507,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.478947,A,-0.0005740403179361212,0.0005740403179361212,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.478947,B,-0.0011261504860511525,0.0011261504860511525,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.478947,alpha,-0.00012300952715208732,0.00012300952715208732,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.478947,beta,-0.00032490354007566705,0.00032490354007566705,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.568421,E,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.568421,A,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.568421,B,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.568421,alpha,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.568421,beta,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.657895,E,-0.001078356506732601,0.001078356506732601,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.657895,A,-0.0008671861557170217,0.0008671861557170217,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.657895,B,-0.0012175537768530603,0.0012175537768530603,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.657895,alpha,-0.00019301218554129042,0.00019301218554129042,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.657895,beta,-0.00035213884430260097,0.00035213884430260097,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.747368,E,-0.001129381224464333,0.001129381224464333,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.747368,A,-0.0008809844682008764,0.0008809844682008764,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.747368,B,-0.0012605815347854058,0.0012605815347854058,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.747368,alpha,-0.0001984627591776911,0.0001984627591776911,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.747368,beta,-0.0003655988281290395,0.0003655988281290395,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.836842,E,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.836842,A,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.836842,B,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.836842,alpha,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.836842,beta,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.926316,E,-0.0011846893501702052,0.0011846893501702052,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.926316,A,-0.0008376882657421134,0.0008376882657421134,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.926316,B,-0.0012890884836835948,0.0012890884836835948,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.926316,alpha,-0.00019413342184700314,0.00019413342184700314,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,0.926316,beta,-0.0003766133530305122,0.0003766133530305122,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.015789,E,-0.0011990535111945405,0.0011990535111945405,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.015789,A,-0.0007936756299245179,0.0007936756299245179,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.015789,B,-0.0012860100632012385,0.0012860100632012385,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.015789,alpha,-0.00018700056465083435,0.00018700056465083435,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.015789,beta,-0.00037742247665882534,0.00037742247665882534,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.105263,E,-0.001210585033098898,0.001210585033098898,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.105263,A,-0.0007465010185226704,0.0007465010185226704,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.105263,B,-0.0012764906504720054,0.0012764906504720054,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.105263,alpha,-0.0001791617116790854,0.0001791617116790854,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.105263,beta,-0.0003765515664152615,0.0003765515664152615,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.194737,E,-0.0012085290654213988,0.0012085290654213988,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.194737,A,-0.0007086584954547598,0.0007086584954547598,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.194737,B,-0.0012422606294443636,0.0012422606294443636,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.194737,alpha,-0.00017371205486008335,0.00017371205486008335,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.194737,beta,-0.00036861458978377744,0.00036861458978377744,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.284211,E,-0.0011990176122315798,0.0011990176122315798,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.284211,A,-0.0006589609127826896,0.0006589609127826896,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.284211,B,-0.0012010773149611664,0.0012010773149611664,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.284211,alpha,-0.00016521934111158123,0.00016521934111158123,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.284211,beta,-0.00035871707335726773,0.00035871707335726773,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.373684,E,-0.0011674420367833883,0.0011674420367833883,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.373684,A,-0.0005999969871630704,0.0005999969871630704,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.373684,B,-0.001136259082989855,0.001136259082989855,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.373684,alpha,-0.00015414553619193832,0.00015414553619193832,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.373684,beta,-0.0003417999172225427,0.0003417999172225427,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.463158,E,-0.0011095459040170522,0.0011095459040170522,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.463158,A,-0.0005320166652349659,0.0005320166652349659,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.463158,B,-0.0010464281063574028,0.0010464281063574028,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.463158,alpha,-0.00014028629106644776,0.00014028629106644776,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.463158,beta,-0.00031725150469040823,0.00031725150469040823,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.552632,E,-0.0010354103780674776,0.0010354103780674776,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.552632,A,-0.00046249156398228095,0.00046249156398228095,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.552632,B,-0.0009437539267678994,0.0009437539267678994,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.552632,alpha,-0.00012536675307192155,0.00012536675307192155,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.552632,beta,-0.0002885589764804159,0.0002885589764804159,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.642105,E,-0.0009720609051154065,0.0009720609051154065,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.642105,A,-0.00040383257056113845,0.00040383257056113845,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.642105,B,-0.0008543608850659817,0.0008543608850659817,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.642105,alpha,-0.00011269147213954421,0.00011269147213954421,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.642105,beta,-0.000263612361688585,0.000263612361688585,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.731579,E,-0.0009564034916956938,0.0009564034916956938,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.731579,A,-0.0003676942882032869,0.0003676942882032869,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.731579,B,-0.0008099569367382748,0.0008099569367382748,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.731579,alpha,-0.00010577157599002213,0.00010577157599002213,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.731579,beta,-0.0002523105273993618,0.0002523105273993618,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.821053,E,-0.0010203182190787984,0.0010203182190787984,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.821053,A,-0.0003592774524429925,0.0003592774524429925,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.821053,B,-0.0008339511744179861,0.0008339511744179861,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.821053,alpha,-0.0001066865761445196,0.0001066865761445196,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.821053,beta,-0.0002623198240525235,0.0002623198240525235,False
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.910526,E,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.910526,A,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.910526,B,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.910526,alpha,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,1.910526,beta,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,2.000000,E,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,2.000000,A,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,2.000000,B,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,2.000000,alpha,,,True
+"2D L-BFGS-B (eps=1e-6)",asymmetric,2.000000,beta,,,True
 "2D L-BFGS-B (eps=1e-10)",symmetric,0.300000,E,-8.232178909622353e-09,8.232178909622353e-09,False
 "2D L-BFGS-B (eps=1e-10)",symmetric,0.300000,A,-5.533902651677636e-07,5.533902651677636e-07,False
 "2D L-BFGS-B (eps=1e-10)",symmetric,0.300000,B,4.386325400673741e-07,4.386325400673741e-07,False
@@ -2299,106 +2299,106 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D L-BFGS-B (eps=1e-10)",chinchilla,2.000000,B,-9.601884571644804e-08,9.601884571644804e-08,False
 "2D L-BFGS-B (eps=1e-10)",chinchilla,2.000000,alpha,-1.9368052913105268e-08,1.9368052913105268e-08,False
 "2D L-BFGS-B (eps=1e-10)",chinchilla,2.000000,beta,-2.2087391439638637e-08,2.2087391439638637e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.300000,E,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.300000,A,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.300000,B,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.300000,alpha,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.300000,beta,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.389474,E,-8.56713122534166e-08,8.56713122534166e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.389474,A,-2.502716144561877e-08,2.502716144561877e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.389474,B,-1.116726679205111e-07,1.116726679205111e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.389474,alpha,-4.881555136220932e-09,4.881555136220932e-09,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.389474,beta,-3.225008074212515e-08,3.225008074212515e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.478947,E,-9.810743933223673e-08,9.810743933223673e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.478947,A,-6.548866785693449e-08,6.548866785693449e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.478947,B,-1.1728206285915308e-07,1.1728206285915308e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.478947,alpha,-1.410898876822215e-08,1.410898876822215e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.478947,beta,-3.382475303432615e-08,3.382475303432615e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.568421,E,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.568421,A,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.568421,B,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.568421,alpha,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.568421,beta,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.657895,E,-1.0788904286727917e-07,1.0788904286727917e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.657895,A,-8.500168198357342e-08,8.500168198357342e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.657895,B,-1.2232599934209543e-07,1.2232599934209543e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.657895,alpha,-1.890058002580249e-08,1.890058002580249e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.657895,beta,-3.538205570823867e-08,3.538205570823867e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.747368,E,-1.1286433983327804e-07,1.1286433983327804e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.747368,A,-8.800957163396195e-08,8.800957163396195e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.747368,B,-1.2598681516918236e-07,1.2598681516918236e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.747368,alpha,-1.9825849444830684e-08,1.9825849444830684e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.747368,beta,-3.653897972718999e-08,3.653897972718999e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.836842,E,-9.565974573938979e-08,9.565974573938979e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.836842,A,-1.1322313865122394e-07,1.1322313865122394e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.836842,B,-9.213616477995308e-08,9.213616477995308e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.836842,alpha,-2.625583143970812e-08,2.625583143970812e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.836842,beta,-2.6776520069316327e-08,2.6776520069316327e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.926316,E,-1.1847946686854554e-07,1.1847946686854554e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.926316,A,-8.377740845762173e-08,8.377740845762173e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.926316,B,-1.2892160752907607e-07,1.2892160752907607e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.926316,alpha,-1.9415245993949152e-08,1.9415245993949152e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,0.926316,beta,-3.7664799594628834e-08,3.7664799594628834e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.015789,E,-1.1990867207768962e-07,1.1990867207768962e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.015789,A,-7.937023916494625e-08,7.937023916494625e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.015789,B,-1.286054462880151e-07,1.286054462880151e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.015789,alpha,-1.8700632440432094e-08,1.8700632440432094e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.015789,beta,-3.7743303106563623e-08,3.7743303106563623e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.105263,E,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.105263,A,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.105263,B,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.105263,alpha,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.105263,beta,,,True
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.194737,E,-1.223104720726074e-07,1.223104720726074e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.194737,A,-7.009803411394359e-08,7.009803411394359e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.194737,B,-1.264109193914207e-07,1.264109193914207e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.194737,alpha,-1.7171449447535757e-08,1.7171449447535757e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.194737,beta,-3.750351284006756e-08,3.750351284006756e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.284211,E,-1.238708544021995e-07,1.238708544021995e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.284211,A,-6.594707981799357e-08,6.594707981799357e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.284211,B,-1.250633691242851e-07,1.250633691242851e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.284211,alpha,-1.6521980916012022e-08,1.6521980916012022e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.284211,beta,-3.733964750299749e-08,3.733964750299749e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.373684,E,-1.2587850551527435e-07,1.2587850551527435e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.373684,A,-6.225620194344822e-08,6.225620194344822e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.373684,B,-1.2373860051467196e-07,1.2373860051467196e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.373684,alpha,-1.5982961668615518e-08,1.5982961668615518e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.373684,beta,-3.720269612086308e-08,3.720269612086308e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.463158,E,-1.284529353364708e-07,1.284529353364708e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.463158,A,-5.8998601280037536e-08,5.8998601280037536e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.463158,B,-1.2256800255095377e-07,1.2256800255095377e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.463158,alpha,-1.5549150975154725e-08,1.5549150975154725e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.463158,beta,-3.713214323833045e-08,3.713214323833045e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.552632,E,-1.3169665226860698e-07,1.3169665226860698e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.552632,A,-5.614031724188698e-08,5.614031724188698e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.552632,B,-1.2165131072772782e-07,1.2165131072772782e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.552632,alpha,-1.5214221758177485e-08,1.5214221758177485e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.552632,beta,-3.7158716963629545e-08,3.7158716963629545e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.642105,E,-1.3567868722021995e-07,1.3567868722021995e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.642105,A,-5.362986345477742e-08,5.362986345477742e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.642105,B,-1.2105194275748986e-07,1.2105194275748986e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.642105,alpha,-1.4967346358723203e-08,1.4967346358723203e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.642105,beta,-3.7302634099902324e-08,3.7302634099902324e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.731579,E,-1.404571528118767e-07,1.404571528118767e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.731579,A,-5.14100747974283e-08,5.14100747974283e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.731579,B,-1.208193926908477e-07,1.208193926908477e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.731579,alpha,-1.4795930311297477e-08,1.4795930311297477e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.731579,beta,-3.758015404241266e-08,3.758015404241266e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.821053,E,-1.460915543699504e-07,1.460915543699504e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.821053,A,-4.9429394960311843e-08,4.9429394960311843e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.821053,B,-1.210001650048825e-07,1.210001650048825e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.821053,alpha,-1.468845355978457e-08,1.468845355978457e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.821053,beta,-3.800696316808912e-08,3.800696316808912e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.910526,E,-1.479845568899734e-07,1.479845568899734e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.910526,A,-4.8731454567168266e-08,4.8731454567168266e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.910526,B,-1.1572034286631691e-07,1.1572034286631691e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.910526,alpha,-1.4948377064248697e-08,1.4948377064248697e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,1.910526,beta,-3.680133259063811e-08,3.680133259063811e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,2.000000,E,-1.5837472030731864e-07,1.5837472030731864e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,2.000000,A,-4.704283856598501e-08,4.704283856598501e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,2.000000,B,-1.199165830076552e-07,1.199165830076552e-07,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,2.000000,alpha,-1.4936654064139213e-08,1.4936654064139213e-08,False
-"2D L-BFGS-B (eps=1e-10)",high_imbalance,2.000000,beta,-3.851170278736508e-08,3.851170278736508e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.300000,E,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.300000,A,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.300000,B,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.300000,alpha,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.300000,beta,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.389474,E,-8.56713122534166e-08,8.56713122534166e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.389474,A,-2.502716144561877e-08,2.502716144561877e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.389474,B,-1.116726679205111e-07,1.116726679205111e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.389474,alpha,-4.881555136220932e-09,4.881555136220932e-09,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.389474,beta,-3.225008074212515e-08,3.225008074212515e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.478947,E,-9.810743933223673e-08,9.810743933223673e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.478947,A,-6.548866785693449e-08,6.548866785693449e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.478947,B,-1.1728206285915308e-07,1.1728206285915308e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.478947,alpha,-1.410898876822215e-08,1.410898876822215e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.478947,beta,-3.382475303432615e-08,3.382475303432615e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.568421,E,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.568421,A,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.568421,B,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.568421,alpha,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.568421,beta,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.657895,E,-1.0788904286727917e-07,1.0788904286727917e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.657895,A,-8.500168198357342e-08,8.500168198357342e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.657895,B,-1.2232599934209543e-07,1.2232599934209543e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.657895,alpha,-1.890058002580249e-08,1.890058002580249e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.657895,beta,-3.538205570823867e-08,3.538205570823867e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.747368,E,-1.1286433983327804e-07,1.1286433983327804e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.747368,A,-8.800957163396195e-08,8.800957163396195e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.747368,B,-1.2598681516918236e-07,1.2598681516918236e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.747368,alpha,-1.9825849444830684e-08,1.9825849444830684e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.747368,beta,-3.653897972718999e-08,3.653897972718999e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.836842,E,-9.565974573938979e-08,9.565974573938979e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.836842,A,-1.1322313865122394e-07,1.1322313865122394e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.836842,B,-9.213616477995308e-08,9.213616477995308e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.836842,alpha,-2.625583143970812e-08,2.625583143970812e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.836842,beta,-2.6776520069316327e-08,2.6776520069316327e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.926316,E,-1.1847946686854554e-07,1.1847946686854554e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.926316,A,-8.377740845762173e-08,8.377740845762173e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.926316,B,-1.2892160752907607e-07,1.2892160752907607e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.926316,alpha,-1.9415245993949152e-08,1.9415245993949152e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,0.926316,beta,-3.7664799594628834e-08,3.7664799594628834e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.015789,E,-1.1990867207768962e-07,1.1990867207768962e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.015789,A,-7.937023916494625e-08,7.937023916494625e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.015789,B,-1.286054462880151e-07,1.286054462880151e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.015789,alpha,-1.8700632440432094e-08,1.8700632440432094e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.015789,beta,-3.7743303106563623e-08,3.7743303106563623e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.105263,E,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.105263,A,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.105263,B,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.105263,alpha,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.105263,beta,,,True
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.194737,E,-1.223104720726074e-07,1.223104720726074e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.194737,A,-7.009803411394359e-08,7.009803411394359e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.194737,B,-1.264109193914207e-07,1.264109193914207e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.194737,alpha,-1.7171449447535757e-08,1.7171449447535757e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.194737,beta,-3.750351284006756e-08,3.750351284006756e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.284211,E,-1.238708544021995e-07,1.238708544021995e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.284211,A,-6.594707981799357e-08,6.594707981799357e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.284211,B,-1.250633691242851e-07,1.250633691242851e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.284211,alpha,-1.6521980916012022e-08,1.6521980916012022e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.284211,beta,-3.733964750299749e-08,3.733964750299749e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.373684,E,-1.2587850551527435e-07,1.2587850551527435e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.373684,A,-6.225620194344822e-08,6.225620194344822e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.373684,B,-1.2373860051467196e-07,1.2373860051467196e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.373684,alpha,-1.5982961668615518e-08,1.5982961668615518e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.373684,beta,-3.720269612086308e-08,3.720269612086308e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.463158,E,-1.284529353364708e-07,1.284529353364708e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.463158,A,-5.8998601280037536e-08,5.8998601280037536e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.463158,B,-1.2256800255095377e-07,1.2256800255095377e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.463158,alpha,-1.5549150975154725e-08,1.5549150975154725e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.463158,beta,-3.713214323833045e-08,3.713214323833045e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.552632,E,-1.3169665226860698e-07,1.3169665226860698e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.552632,A,-5.614031724188698e-08,5.614031724188698e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.552632,B,-1.2165131072772782e-07,1.2165131072772782e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.552632,alpha,-1.5214221758177485e-08,1.5214221758177485e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.552632,beta,-3.7158716963629545e-08,3.7158716963629545e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.642105,E,-1.3567868722021995e-07,1.3567868722021995e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.642105,A,-5.362986345477742e-08,5.362986345477742e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.642105,B,-1.2105194275748986e-07,1.2105194275748986e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.642105,alpha,-1.4967346358723203e-08,1.4967346358723203e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.642105,beta,-3.7302634099902324e-08,3.7302634099902324e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.731579,E,-1.404571528118767e-07,1.404571528118767e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.731579,A,-5.14100747974283e-08,5.14100747974283e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.731579,B,-1.208193926908477e-07,1.208193926908477e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.731579,alpha,-1.4795930311297477e-08,1.4795930311297477e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.731579,beta,-3.758015404241266e-08,3.758015404241266e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.821053,E,-1.460915543699504e-07,1.460915543699504e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.821053,A,-4.9429394960311843e-08,4.9429394960311843e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.821053,B,-1.210001650048825e-07,1.210001650048825e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.821053,alpha,-1.468845355978457e-08,1.468845355978457e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.821053,beta,-3.800696316808912e-08,3.800696316808912e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.910526,E,-1.479845568899734e-07,1.479845568899734e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.910526,A,-4.8731454567168266e-08,4.8731454567168266e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.910526,B,-1.1572034286631691e-07,1.1572034286631691e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.910526,alpha,-1.4948377064248697e-08,1.4948377064248697e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,1.910526,beta,-3.680133259063811e-08,3.680133259063811e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,2.000000,E,-1.5837472030731864e-07,1.5837472030731864e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,2.000000,A,-4.704283856598501e-08,4.704283856598501e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,2.000000,B,-1.199165830076552e-07,1.199165830076552e-07,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,2.000000,alpha,-1.4936654064139213e-08,1.4936654064139213e-08,False
+"2D L-BFGS-B (eps=1e-10)",asymmetric,2.000000,beta,-3.851170278736508e-08,3.851170278736508e-08,False
 "2D Grid (256²)",symmetric,0.300000,E,0.2877281815547636,0.2877281815547636,False
 "2D Grid (256²)",symmetric,0.300000,A,2.0341308301873795,2.0341308301873795,False
 "2D Grid (256²)",symmetric,0.300000,B,2.0341308301872942,2.0341308301872942,False
@@ -2599,103 +2599,103 @@ method,surface,log_range,parameter,relative_error_pct,abs_relative_error_pct,con
 "2D Grid (256²)",chinchilla,2.000000,B,-0.9107564211371004,0.9107564211371004,False
 "2D Grid (256²)",chinchilla,2.000000,alpha,-0.1730103806228596,0.1730103806228596,False
 "2D Grid (256²)",chinchilla,2.000000,beta,-0.21008403361345251,0.21008403361345251,False
-"2D Grid (256²)",high_imbalance,0.300000,E,1.0451768814022715,1.0451768814022715,False
-"2D Grid (256²)",high_imbalance,0.300000,A,-1.8860619209421516,1.8860619209421516,False
-"2D Grid (256²)",high_imbalance,0.300000,B,1.9743513958814327,1.9743513958814327,False
-"2D Grid (256²)",high_imbalance,0.300000,alpha,-0.44275774826059777,0.44275774826059777,False
-"2D Grid (256²)",high_imbalance,0.300000,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.389474,E,1.0420313511536001,1.0420313511536001,False
-"2D Grid (256²)",high_imbalance,0.389474,A,-1.8787393974944067,1.8787393974944067,False
-"2D Grid (256²)",high_imbalance,0.389474,B,1.9737078955236433,1.9737078955236433,False
-"2D Grid (256²)",high_imbalance,0.389474,alpha,-0.44275774826059777,0.44275774826059777,False
-"2D Grid (256²)",high_imbalance,0.389474,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.478947,E,1.7117785410336726,1.7117785410336726,False
-"2D Grid (256²)",high_imbalance,0.478947,A,1.4596217474712974,1.4596217474712974,False
-"2D Grid (256²)",high_imbalance,0.478947,B,1.9973447821654184,1.9973447821654184,False
-"2D Grid (256²)",high_imbalance,0.478947,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.478947,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.568421,E,1.7233233657778328,1.7233233657778328,False
-"2D Grid (256²)",high_imbalance,0.568421,A,1.4463083718366563,1.4463083718366563,False
-"2D Grid (256²)",high_imbalance,0.568421,B,1.9937599264117547,1.9937599264117547,False
-"2D Grid (256²)",high_imbalance,0.568421,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.568421,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.657895,E,1.7380016476993776,1.7380016476993776,False
-"2D Grid (256²)",high_imbalance,0.657895,A,1.430755042755157,1.430755042755157,False
-"2D Grid (256²)",high_imbalance,0.657895,B,1.9892468269608228,1.9892468269608228,False
-"2D Grid (256²)",high_imbalance,0.657895,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.657895,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.747368,E,1.75629066529038,1.75629066529038,False
-"2D Grid (256²)",high_imbalance,0.747368,A,1.4129958239628762,1.4129958239628762,False
-"2D Grid (256²)",high_imbalance,0.747368,B,1.9836840323690856,1.9836840323690856,False
-"2D Grid (256²)",high_imbalance,0.747368,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.747368,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.836842,E,1.7786837582903934,1.7786837582903934,False
-"2D Grid (256²)",high_imbalance,0.836842,A,1.3930892508720756,1.3930892508720756,False
-"2D Grid (256²)",high_imbalance,0.836842,B,1.9769493582891051,1.9769493582891051,False
-"2D Grid (256²)",high_imbalance,0.836842,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.836842,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,0.926316,E,1.8056686309879166,1.8056686309879166,False
-"2D Grid (256²)",high_imbalance,0.926316,A,1.3711209886360187,1.3711209886360187,False
-"2D Grid (256²)",high_imbalance,0.926316,B,1.9689271095629155,1.9689271095629155,False
-"2D Grid (256²)",high_imbalance,0.926316,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,0.926316,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.015789,E,1.837704756023293,1.837704756023293,False
-"2D Grid (256²)",high_imbalance,1.015789,A,1.347205708651129,1.347205708651129,False
-"2D Grid (256²)",high_imbalance,1.015789,B,1.9595151891166647,1.9595151891166647,False
-"2D Grid (256²)",high_imbalance,1.015789,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.015789,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.105263,E,1.8752015178306332,1.8752015178306332,False
-"2D Grid (256²)",high_imbalance,1.105263,A,1.321487336690264,1.321487336690264,False
-"2D Grid (256²)",high_imbalance,1.105263,B,1.948631697909703,1.948631697909703,False
-"2D Grid (256²)",high_imbalance,1.105263,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.105263,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.194737,E,1.9184989807828763,1.9184989807828763,False
-"2D Grid (256²)",high_imbalance,1.194737,A,1.2941372480108837,1.2941372480108837,False
-"2D Grid (256²)",high_imbalance,1.194737,B,1.9362204931687004,1.9362204931687004,False
-"2D Grid (256²)",high_imbalance,1.194737,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.194737,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.284211,E,1.9678531607073513,1.9678531607073513,False
-"2D Grid (256²)",high_imbalance,1.284211,A,1.2653503039979124,1.2653503039979124,False
-"2D Grid (256²)",high_imbalance,1.284211,B,1.9222551741090659,1.9222551741090659,False
-"2D Grid (256²)",high_imbalance,1.284211,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.284211,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.373684,E,2.0234273723784244,2.0234273723784244,False
-"2D Grid (256²)",high_imbalance,1.373684,A,1.2353389268998765,1.2353389268998765,False
-"2D Grid (256²)",high_imbalance,1.373684,B,1.9067410753998342,1.9067410753998342,False
-"2D Grid (256²)",high_imbalance,1.373684,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.373684,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.463158,E,2.0852906383322245,2.0852906383322245,False
-"2D Grid (256²)",high_imbalance,1.463158,A,1.2043256815621393,1.2043256815621393,False
-"2D Grid (256²)",high_imbalance,1.463158,B,1.8897150460995265,1.8897150460995265,False
-"2D Grid (256²)",high_imbalance,1.463158,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.463158,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.552632,E,2.153423364546843,2.153423364546843,False
-"2D Grid (256²)",high_imbalance,1.552632,A,1.1725350368717695,1.1725350368717695,False
-"2D Grid (256²)",high_imbalance,1.552632,B,1.871243040018337,1.871243040018337,False
-"2D Grid (256²)",high_imbalance,1.552632,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.552632,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.642105,E,2.227729657118247,2.227729657118247,False
-"2D Grid (256²)",high_imbalance,1.642105,A,1.1401850791828938,1.1401850791828938,False
-"2D Grid (256²)",high_imbalance,1.642105,B,1.8514157953575736,1.8514157953575736,False
-"2D Grid (256²)",high_imbalance,1.642105,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.642105,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.731579,E,2.3080549277136773,2.3080549277136773,False
-"2D Grid (256²)",high_imbalance,1.731579,A,1.107479929157513,1.107479929157513,False
-"2D Grid (256²)",high_imbalance,1.731579,B,1.830343088918994,1.830343088918994,False
-"2D Grid (256²)",high_imbalance,1.731579,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.731579,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.821053,E,2.394206944422454,2.394206944422454,False
-"2D Grid (256²)",high_imbalance,1.821053,A,1.0746034820803905,1.0746034820803905,False
-"2D Grid (256²)",high_imbalance,1.821053,B,1.808147176348874,1.808147176348874,False
-"2D Grid (256²)",high_imbalance,1.821053,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.821053,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,1.910526,E,2.4859782988937678,2.4859782988937678,False
-"2D Grid (256²)",high_imbalance,1.910526,A,1.0417148826420368,1.0417148826420368,False
-"2D Grid (256²)",high_imbalance,1.910526,B,1.784956058279663,1.784956058279663,False
-"2D Grid (256²)",high_imbalance,1.910526,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,1.910526,beta,0.5692599620493374,0.5692599620493374,False
-"2D Grid (256²)",high_imbalance,2.000000,E,2.58316837838512,2.58316837838512,False
-"2D Grid (256²)",high_imbalance,2.000000,A,1.0089459040688473,1.0089459040688473,False
-"2D Grid (256²)",high_imbalance,2.000000,B,1.7608971489127365,1.7608971489127365,False
-"2D Grid (256²)",high_imbalance,2.000000,alpha,0.3162555344718522,0.3162555344718522,False
-"2D Grid (256²)",high_imbalance,2.000000,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.300000,E,1.0451768814022715,1.0451768814022715,False
+"2D Grid (256²)",asymmetric,0.300000,A,-1.8860619209421516,1.8860619209421516,False
+"2D Grid (256²)",asymmetric,0.300000,B,1.9743513958814327,1.9743513958814327,False
+"2D Grid (256²)",asymmetric,0.300000,alpha,-0.44275774826059777,0.44275774826059777,False
+"2D Grid (256²)",asymmetric,0.300000,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.389474,E,1.0420313511536001,1.0420313511536001,False
+"2D Grid (256²)",asymmetric,0.389474,A,-1.8787393974944067,1.8787393974944067,False
+"2D Grid (256²)",asymmetric,0.389474,B,1.9737078955236433,1.9737078955236433,False
+"2D Grid (256²)",asymmetric,0.389474,alpha,-0.44275774826059777,0.44275774826059777,False
+"2D Grid (256²)",asymmetric,0.389474,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.478947,E,1.7117785410336726,1.7117785410336726,False
+"2D Grid (256²)",asymmetric,0.478947,A,1.4596217474712974,1.4596217474712974,False
+"2D Grid (256²)",asymmetric,0.478947,B,1.9973447821654184,1.9973447821654184,False
+"2D Grid (256²)",asymmetric,0.478947,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.478947,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.568421,E,1.7233233657778328,1.7233233657778328,False
+"2D Grid (256²)",asymmetric,0.568421,A,1.4463083718366563,1.4463083718366563,False
+"2D Grid (256²)",asymmetric,0.568421,B,1.9937599264117547,1.9937599264117547,False
+"2D Grid (256²)",asymmetric,0.568421,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.568421,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.657895,E,1.7380016476993776,1.7380016476993776,False
+"2D Grid (256²)",asymmetric,0.657895,A,1.430755042755157,1.430755042755157,False
+"2D Grid (256²)",asymmetric,0.657895,B,1.9892468269608228,1.9892468269608228,False
+"2D Grid (256²)",asymmetric,0.657895,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.657895,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.747368,E,1.75629066529038,1.75629066529038,False
+"2D Grid (256²)",asymmetric,0.747368,A,1.4129958239628762,1.4129958239628762,False
+"2D Grid (256²)",asymmetric,0.747368,B,1.9836840323690856,1.9836840323690856,False
+"2D Grid (256²)",asymmetric,0.747368,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.747368,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.836842,E,1.7786837582903934,1.7786837582903934,False
+"2D Grid (256²)",asymmetric,0.836842,A,1.3930892508720756,1.3930892508720756,False
+"2D Grid (256²)",asymmetric,0.836842,B,1.9769493582891051,1.9769493582891051,False
+"2D Grid (256²)",asymmetric,0.836842,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.836842,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,0.926316,E,1.8056686309879166,1.8056686309879166,False
+"2D Grid (256²)",asymmetric,0.926316,A,1.3711209886360187,1.3711209886360187,False
+"2D Grid (256²)",asymmetric,0.926316,B,1.9689271095629155,1.9689271095629155,False
+"2D Grid (256²)",asymmetric,0.926316,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,0.926316,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.015789,E,1.837704756023293,1.837704756023293,False
+"2D Grid (256²)",asymmetric,1.015789,A,1.347205708651129,1.347205708651129,False
+"2D Grid (256²)",asymmetric,1.015789,B,1.9595151891166647,1.9595151891166647,False
+"2D Grid (256²)",asymmetric,1.015789,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.015789,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.105263,E,1.8752015178306332,1.8752015178306332,False
+"2D Grid (256²)",asymmetric,1.105263,A,1.321487336690264,1.321487336690264,False
+"2D Grid (256²)",asymmetric,1.105263,B,1.948631697909703,1.948631697909703,False
+"2D Grid (256²)",asymmetric,1.105263,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.105263,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.194737,E,1.9184989807828763,1.9184989807828763,False
+"2D Grid (256²)",asymmetric,1.194737,A,1.2941372480108837,1.2941372480108837,False
+"2D Grid (256²)",asymmetric,1.194737,B,1.9362204931687004,1.9362204931687004,False
+"2D Grid (256²)",asymmetric,1.194737,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.194737,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.284211,E,1.9678531607073513,1.9678531607073513,False
+"2D Grid (256²)",asymmetric,1.284211,A,1.2653503039979124,1.2653503039979124,False
+"2D Grid (256²)",asymmetric,1.284211,B,1.9222551741090659,1.9222551741090659,False
+"2D Grid (256²)",asymmetric,1.284211,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.284211,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.373684,E,2.0234273723784244,2.0234273723784244,False
+"2D Grid (256²)",asymmetric,1.373684,A,1.2353389268998765,1.2353389268998765,False
+"2D Grid (256²)",asymmetric,1.373684,B,1.9067410753998342,1.9067410753998342,False
+"2D Grid (256²)",asymmetric,1.373684,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.373684,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.463158,E,2.0852906383322245,2.0852906383322245,False
+"2D Grid (256²)",asymmetric,1.463158,A,1.2043256815621393,1.2043256815621393,False
+"2D Grid (256²)",asymmetric,1.463158,B,1.8897150460995265,1.8897150460995265,False
+"2D Grid (256²)",asymmetric,1.463158,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.463158,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.552632,E,2.153423364546843,2.153423364546843,False
+"2D Grid (256²)",asymmetric,1.552632,A,1.1725350368717695,1.1725350368717695,False
+"2D Grid (256²)",asymmetric,1.552632,B,1.871243040018337,1.871243040018337,False
+"2D Grid (256²)",asymmetric,1.552632,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.552632,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.642105,E,2.227729657118247,2.227729657118247,False
+"2D Grid (256²)",asymmetric,1.642105,A,1.1401850791828938,1.1401850791828938,False
+"2D Grid (256²)",asymmetric,1.642105,B,1.8514157953575736,1.8514157953575736,False
+"2D Grid (256²)",asymmetric,1.642105,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.642105,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.731579,E,2.3080549277136773,2.3080549277136773,False
+"2D Grid (256²)",asymmetric,1.731579,A,1.107479929157513,1.107479929157513,False
+"2D Grid (256²)",asymmetric,1.731579,B,1.830343088918994,1.830343088918994,False
+"2D Grid (256²)",asymmetric,1.731579,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.731579,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.821053,E,2.394206944422454,2.394206944422454,False
+"2D Grid (256²)",asymmetric,1.821053,A,1.0746034820803905,1.0746034820803905,False
+"2D Grid (256²)",asymmetric,1.821053,B,1.808147176348874,1.808147176348874,False
+"2D Grid (256²)",asymmetric,1.821053,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.821053,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,1.910526,E,2.4859782988937678,2.4859782988937678,False
+"2D Grid (256²)",asymmetric,1.910526,A,1.0417148826420368,1.0417148826420368,False
+"2D Grid (256²)",asymmetric,1.910526,B,1.784956058279663,1.784956058279663,False
+"2D Grid (256²)",asymmetric,1.910526,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,1.910526,beta,0.5692599620493374,0.5692599620493374,False
+"2D Grid (256²)",asymmetric,2.000000,E,2.58316837838512,2.58316837838512,False
+"2D Grid (256²)",asymmetric,2.000000,A,1.0089459040688473,1.0089459040688473,False
+"2D Grid (256²)",asymmetric,2.000000,B,1.7608971489127365,1.7608971489127365,False
+"2D Grid (256²)",asymmetric,2.000000,alpha,0.3162555344718522,0.3162555344718522,False
+"2D Grid (256²)",asymmetric,2.000000,beta,0.5692599620493374,0.5692599620493374,False

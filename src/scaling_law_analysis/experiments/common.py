@@ -120,10 +120,17 @@ MODERATE_IMBALANCE_CONFIG = SimulationConfig(
     loss=LossSurface.from_chinchilla(*exponents_from_ratio(2)),
 )
 
-# High imbalance: ratio = 3
+# High imbalance: ratio = 3 (used by Experiment 2 in the imbalance series)
 HIGH_IMBALANCE_CONFIG = SimulationConfig(
     name="high_imbalance",
     loss=LossSurface.from_chinchilla(*exponents_from_ratio(3)),
+)
+
+# Asymmetric surface: same loss surface as HIGH_IMBALANCE_CONFIG,
+# but named "asymmetric" for use in experiments 3-6 and the article.
+ASYMMETRIC_CONFIG = SimulationConfig(
+    name="asymmetric",
+    loss=HIGH_IMBALANCE_CONFIG.loss,
 )
 
 # Extreme imbalance: ratio = 9
@@ -153,7 +160,7 @@ SYMMETRIC_LOSS_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69
 LOSS_SURFACES: list[tuple[str, LossSurface]] = [
     ("symmetric", SYMMETRIC_LOSS_SURFACE),
     ("chinchilla", DEFAULT_LOSS_SURFACE),
-    ("high_imbalance", HIGH_IMBALANCE_CONFIG.loss),
+    ("asymmetric", ASYMMETRIC_CONFIG.loss),
 ]
 
 # Sampling bias configurations shared by Experiments 3 & 4

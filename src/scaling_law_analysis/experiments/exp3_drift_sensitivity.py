@@ -120,7 +120,7 @@ def create_param_errors_figure(
 ) -> plt.Figure:
     """Create parameter estimation errors figure (3 rows × 4 cols).
 
-    Rows: one per loss surface (symmetric, chinchilla, high_imbalance)
+    Rows: one per loss surface (symmetric, chinchilla, asymmetric)
     Cols: N* exponent, D* exponent, N* intercept, D* intercept
     """
     n_surfaces = len(LOSS_SURFACES)
