@@ -2,7 +2,7 @@
 
 > **Editorial Guidelines**
 >
-> - Format: single self-contained HTML file (see `specs/build.md` for the full build workflow)
+> - Format: the article is authored as an HTML file with relative image references and external dependencies (MathJax, Google Fonts); a separate build step inlines local images as base64 data URIs to produce a self-contained standalone HTML for deployment (see `specs/build.md` for the full build workflow)
 > - Length: target a ~20 minute read
 > - Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances
 > - Purpose: demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data
@@ -33,7 +33,7 @@
 
 ---
 
-## Preliminaries — Loss Surface, Notation, and Fitting Methods
+## Preliminaries: Loss Surface, Notation, and Fitting Methods
 
 - Introduce the Chinchilla loss surface: L(N, D) = E + A/N^α + B/D^β; define each term (N = parameters, D = tokens, E = irreducible loss, A/B/α/β = scaling coefficients)
 - State the compute-optimal allocation: N* ∝ C^a where a = β/(α+β), D* ∝ C^b where b = α/(α+β); recovering a and b from empirical runs is the goal
@@ -47,7 +47,7 @@
 
 ---
 
-## The Happy Path — Symmetric Surfaces
+## The Happy Path: Symmetric Surfaces
 
 - Frame as establishing a baseline before examining failure modes
 - Use a concrete asymmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
@@ -55,12 +55,12 @@
 - Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs, fit parabolas, extract optimal D*
 - Figure (1 row × 2 columns): IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
 - Table: show perfect recovery of b (D* exponent) and b₀ (D* intercept) with machine-precision relative errors (~10⁻¹⁰ %)
-- Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabolic approximation is exact when α = β
+- Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabola vertex shift is zero when α = β, so the inferred optima coincide with the true optima
 - Close by noting this baseline is precisely correct under ideal conditions that are unrealistic in practice; the following sections perturb these conditions in controlled ways
 
 ---
 
-## Asymmetric Surfaces — Intercept and Extrapolation Errors
+## Asymmetric Surfaces: Intercept and Extrapolation Errors
 
 - Frame as repeating the exact same procedure as the Happy Path; only change is α ≠ β
 
@@ -109,7 +109,7 @@
 
 ---
 
-## Off-Center Sampling — Exponent and Extrapolation Errors
+## Off-Center Sampling: Exponent and Extrapolation Errors
 
 - In practice you don't know N* before running the experiment; sampling centers are guesses based on prior estimates or heuristics
 - Distinct from asymmetry errors: this is about where you place the grid, not the shape of the surface
@@ -134,7 +134,7 @@
 
 ---
 
-## IsoFLOP Curves in the Wild — Evidence from Published Studies
+## IsoFLOP Curves in the Wild: Evidence from Published Studies
 
 - Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
 - These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
@@ -149,7 +149,7 @@
 
 ---
 
-## Robust Fits — Unbiased Estimation with Linear Separation
+## Robust Fits: Unbiased Estimation with Linear Separation
 
 - Opening segue: the previous sections established the biases and showed they arise in practice; now address what to do about them
 - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
@@ -194,6 +194,14 @@
 - **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
 - **A practical alternative exists**: VPNLS recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
 - **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider VPNLS as a robust alternative
+
+### Limitations
+
+- Bullet list with bold labels per item
+- **Irreducible loss dominance at large scale**: at sufficiently large compute budgets the Chinchilla surface reaches E asymptotically, making extrapolations irrelevant and all training configurations equally effective; study assumes practitioners are still in a regime where scaling law extrapolations inform model quality
+- **No quantification of downstream cost**: no connection from token extrapolation error → under/over-training → model performance → cost in FLOPs/$; justified because alternatives to Approach 2 follow from theory and simulation and are easy to implement at no extra computational cost
+- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist, e.g. the Kaplan loss model [kaplan_scaling]; future models may incorporate non-embedding parameters, epochs, num experts, sparsity, data modalities/mixtures, etc.
+- **Qualitative characterization of published study errors**: likely errors in published studies are not quantified; the qualitative characterization is compelling but difficult to quantify because real pathologies don't follow the convenient theoretical model used in simulations
 
 ---
 

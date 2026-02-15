@@ -545,15 +545,15 @@
             <ol>
                 <li><a href="#motivation">Motivation</a></li>
                 <li>
-                    <a href="#approaches">Preliminaries — Loss Surface, Notation, and Fitting Methods</a>
+                    <a href="#approaches">Preliminaries: Loss Surface, Notation, and Fitting Methods</a>
                     <ol>
                         <li><a href="#approach-2">Approach 2: IsoFLOP Parabolic Fitting</a></li>
                         <li><a href="#approach-3">Approach 3: Direct Surface Fitting</a></li>
                     </ol>
                 </li>
-                <li><a href="#happy-path">The Happy Path — Symmetric Surfaces</a></li>
+                <li><a href="#happy-path">The Happy Path: Symmetric Surfaces</a></li>
                 <li>
-                    <a href="#asymmetric">Asymmetric Surfaces — Intercept and Extrapolation Errors</a>
+                    <a href="#asymmetric">Asymmetric Surfaces: Intercept and Extrapolation Errors</a>
                     <ol>
                         <li><a href="#what-happens">What Happens</a></li>
                         <li><a href="#why-surprising">Why This Is Surprising</a></li>
@@ -562,27 +562,32 @@
                     </ol>
                 </li>
                 <li>
-                    <a href="#off-center">Off-Center Sampling — Exponent and Extrapolation Errors</a>
+                    <a href="#off-center">Off-Center Sampling: Exponent and Extrapolation Errors</a>
                     <ol>
                         <li><a href="#constant-bias">Constant Multiplicative Bias</a></li>
                         <li><a href="#drifting-bias">Drifting Bias</a></li>
                     </ol>
                 </li>
                 <li>
-                    <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
+                    <a href="#in-the-wild">IsoFLOP Curves in the Wild: Evidence from Published Studies</a>
                     <ol>
                         <li><a href="#putting-it-together">Compounding Errors</a></li>
                     </ol>
                 </li>
                 <li>
-                    <a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a>
+                    <a href="#robust-fits">Robust Fits: Unbiased Estimation with Linear Separation</a>
                     <ol>
                         <li><a href="#approach-3-problems">Problems with Direct Surface Fitting</a></li>
                         <li><a href="#vpnls">Variable Projection (VPNLS)</a></li>
                         <li><a href="#method-comparison">Method Comparison</a></li>
                     </ol>
                 </li>
-                <li><a href="#conclusion">Conclusion</a></li>
+                <li>
+                    <a href="#conclusion">Conclusion</a>
+                    <ol>
+                        <li><a href="#limitations">Limitations</a></li>
+                    </ol>
+                </li>
                 <li>
                     <a href="#appendix">Appendix</a>
                     <ol>
@@ -648,7 +653,7 @@
 
         <!-- Section 1: Approaches to Fitting Scaling Laws -->
         <section id="approaches">
-            <h2>Preliminaries — Loss Surface, Notation, and Fitting Methods</h2>
+            <h2>Preliminaries: Loss Surface, Notation, and Fitting Methods</h2>
 
             <p>
                 Neural scaling laws describe how model performance improves with compute.
@@ -701,7 +706,7 @@
                     </li>
                     <li>
                         <strong>Fit parabolas:</strong> For each budget, fit
-                        \(L = a(\log N)^2 + b(\log N) + c\) and extract the minimum \(N^*\)
+                        \(L = p(\log N)^2 + q(\log N) + r\) and extract the minimum \(N^*\)
                     </li>
                     <li>
                         <strong>Fit power laws:</strong> Regress \(\log N^*\) against \(\log C\)
@@ -728,7 +733,7 @@
 
         <!-- Section 2: The Happy Path -->
         <section id="happy-path">
-            <h2>The Happy Path — Symmetric Surfaces</h2>
+            <h2>The Happy Path: Symmetric Surfaces</h2>
 
             <p>
                 Before examining failure modes, let's establish that Approach 2 works
@@ -801,7 +806,8 @@
                 <p>
                     On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling, 
                     Approach 2 recovers both exponents and intercepts with machine-precision 
-                    accuracy. The parabolic approximation is exact when \(\alpha = \beta\).
+                    accuracy. When \(\alpha = \beta\), the parabola vertex shift is zero,
+                    so the inferred optima coincide with the true optima.
                 </p>
             </div>
 
@@ -814,7 +820,7 @@
 
         <!-- Section 3: Asymmetric Surfaces -->
         <section id="asymmetric">
-            <h2>Asymmetric Surfaces — Intercept and Extrapolation Errors</h2>
+            <h2>Asymmetric Surfaces: Intercept and Extrapolation Errors</h2>
 
             <p>
                 We repeat the exact same procedure as before: perfect sampling centers, no noise,
@@ -1301,7 +1307,7 @@
 
         <!-- Section 4: Off-Center Sampling -->
         <section id="off-center">
-            <h2>Off-Center Sampling — Exponent and Extrapolation Errors</h2>
+            <h2>Off-Center Sampling: Exponent and Extrapolation Errors</h2>
 
             <p>
                 The previous sections assumed perfectly centered sampling: at every compute budget,
@@ -1429,7 +1435,7 @@
 
         <!-- Section 5: IsoFLOP Curves in the Wild -->
         <section id="in-the-wild">
-            <h2>IsoFLOP Curves in the Wild — Evidence from Published Studies</h2>
+            <h2>IsoFLOP Curves in the Wild: Evidence from Published Studies</h2>
 
             <p>
                 The previous sections used synthetic, noise-free simulations to isolate Approach 2's
@@ -1444,7 +1450,7 @@
                 <img src="static/isoflop_curve_examples.png"
                     alt="IsoFLOP curves from Chinchilla, Llama 3, and DeepSeek scaling law papers">
                 <figcaption>
-                    <strong>Figure 7:</strong> IsoFLOP curves from three published scaling law studies.
+                    <strong>Figure 6:</strong> IsoFLOP curves from three published scaling law studies.
                     Left: Chinchilla (training loss vs parameters). Center: Llama 3 (validation loss vs
                     training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each panel shows
                     curves at multiple compute budgets, fit using Approach 2.
@@ -1464,7 +1470,7 @@
                 <li><strong>Off-center sampling:</strong> At some compute budgets, the sampling grid
                     does not appear centered at the curve minimum. The degree of off-centering also
                     appears to vary across compute budgets, which is the drifting-bias pattern that
-                    corrupts both exponents and intercepts.</li>
+                    distorts both exponents and intercepts.</li>
             </ul>
 
             <p>
@@ -1491,7 +1497,7 @@
                 <img src="static/combined_extrapolation_error.png"
                     alt="Combined extrapolation error across grid widths, surfaces, and sampling biases">
                 <figcaption>
-                    <strong>Figure 8 (research image):</strong> <em>TODO: Determine final
+                    <strong>Figure 7 (research image):</strong> <em>TODO: Determine final
                     presentation and layout. Relative error in \(D^*\) when extrapolating beyond
                     the fitting range, with asymmetry and sampling biases acting simultaneously.
                     Rows = XS and XL grids; columns = symmetric, Chinchilla, and Asymmetric
@@ -1533,7 +1539,7 @@
 
         <!-- Section 6: Robust Fits -->
         <section id="robust-fits">
-            <h2>Robust Fits — Unbiased Estimation with Linear Separation</h2>
+            <h2>Robust Fits: Unbiased Estimation with Linear Separation</h2>
 
             <p>
                 The previous sections showed that Approach 2's parabolic approximation introduces
@@ -1692,7 +1698,7 @@
                 <img src="method_comparison/method_comparison.png"
                     alt="Method comparison showing geometric mean error and max error across nine optimizer configurations">
                 <figcaption>
-                    <strong>Figure 6:</strong> Comparison of nine fitting methods on noise-free
+                    <strong>Figure 8:</strong> Comparison of nine fitting methods on noise-free
                     synthetic data across three loss surfaces and 20 sampling ranges (60 fits
                     total per method). Left: geometric mean of |relative error| (%) pooled across
                     all surfaces, grid widths, and parameters, with horizontal bars spanning the
@@ -1917,6 +1923,59 @@
                 variable projection as a robust alternative.
             </p>
 
+            <h3 id="limitations">Limitations</h3>
+
+            <p>
+                Several limitations scope the conclusions of this study. We highlight
+                the most important ones here.
+            </p>
+
+            <ul>
+                <li>
+                    <strong>Irreducible loss dominance at large scale.</strong>
+                    At sufficiently large compute budgets, scaling properties are dominated
+                    entirely by the irreducible loss \(E\). When token counts and model sizes
+                    at fixed compute budgets are large enough, the Chinchilla surface reaches
+                    \(E\) asymptotically and all training configurations become equally
+                    effective, meaning that extrapolations are irrelevant and compute-optimal
+                    training is no longer informed by scaling laws. We assume this study is
+                    only relevant to practitioners working in a regime where downstream model
+                    quality can still effectively be informed by scaling law extrapolations
+                    per the Chinchilla model.
+                </li>
+                <li>
+                    <strong>No quantification of downstream cost.</strong>
+                    We do not connect token extrapolation error to under- or over-training,
+                    model performance, or the ultimate cost of Approach 2's errors in FLOPs
+                    or dollars. We avoid this because it is difficult to do well, alternatives
+                    to Approach 2 can be justified by theory and simulation alone, and those
+                    alternatives are easy to implement at effectively no extra computational
+                    cost.
+                </li>
+                <li>
+                    <strong>Assumed correctness of the Chinchilla loss surface.</strong>
+                    We assume the Chinchilla loss surface model
+                    \(L(N, D) = E + A/N^\alpha + B/D^\beta\) is correct in practice. While
+                    there is substantial evidence legitimizing this
+                    model<sup><a href="#ref-chinchilla_robustness">[15]</a></sup>,
+                    alternatives also exist, notably the original Kaplan scaling
+                    law<sup><a href="#ref-kaplan_scaling">[16]</a></sup> that predates
+                    Chinchilla. Better models may emerge, or models that incorporate other
+                    important aspects of training such as non-embedding parameters, epochs,
+                    number of experts, sparsity, and data modalities or mixtures may become
+                    more canonical.
+                </li>
+                <li>
+                    <strong>Qualitative characterization of published study errors.</strong>
+                    Likely errors in published studies are characterized qualitatively rather
+                    than quantified. We believe the qualitative characterization is compelling
+                    enough on its own to justify that real IsoFLOP sampling pathologies occur
+                    in practice, but they are difficult to quantify precisely because they do
+                    not follow the convenient theoretical model we use for those pathologies
+                    in our simulations.
+                </li>
+            </ul>
+
         </section>
 
         <!-- Appendix -->
@@ -1957,6 +2016,8 @@
             <li id="ref-biosignal_scaling">"Scaling Laws for Compute Optimal Biosignal Transformers," <em>Other</em>. <a href="https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content">https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content</a></li>
             <li id="ref-misfitting">"(Mis)fitting: A Survey of Scaling Laws," <em>ICLR 2025</em>. <a href="https://arxiv.org/abs/2502.18969">https://arxiv.org/abs/2502.18969</a></li>
             <li id="ref-data_filtering_scaling">"Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic," <em>CVPR 2024</em>. <a href="https://arxiv.org/abs/2404.07177">https://arxiv.org/abs/2404.07177</a></li>
+            <li id="ref-chinchilla_robustness">"Evaluating the Robustness of Chinchilla Compute-Optimal Scaling," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2509.23963">https://arxiv.org/abs/2509.23963</a></li>
+            <li id="ref-kaplan_scaling">"Scaling Laws for Neural Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2001.08361">https://arxiv.org/abs/2001.08361</a></li>
             </ol>
         </section>
 

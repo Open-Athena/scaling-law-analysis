@@ -70,3 +70,13 @@
   title: "Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic"
   venue: CVPR 2024
   url: https://arxiv.org/abs/2404.07177
+
+- key: chinchilla_robustness
+  title: Evaluating the Robustness of Chinchilla Compute-Optimal Scaling
+  venue: ArXiv
+  url: https://arxiv.org/abs/2509.23963
+
+- key: kaplan_scaling
+  title: Scaling Laws for Neural Language Models
+  venue: ArXiv
+  url: https://arxiv.org/abs/2001.08361
