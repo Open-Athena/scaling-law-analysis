@@ -8,7 +8,6 @@ Hypothesis: Greater asymmetry between α and β leads to larger recovery errors.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 from scaling_law_analysis import config
 from scaling_law_analysis.experiments.common import (

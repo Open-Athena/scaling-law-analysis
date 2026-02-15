@@ -694,7 +694,8 @@ def fit_surface(
         SurfaceFitResult with fitted parameters
 
     Raises:
-        ValueError: If any diagnostic check fails (grid edge, bounds, convergence, etc.)
+        ValueError: If arguments are invalid (unknown method, mismatched lengths)
+        FitError: If any diagnostic check fails (grid edge, bounds, convergence, etc.)
     """
     valid_methods = ("nelder-mead", "l-bfgs-b", "grid")
     if method not in valid_methods:

@@ -9,7 +9,6 @@ expansion underlying the validity of parabolic fits.
 
 import numpy as np
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
@@ -26,19 +25,8 @@ from scaling_law_analysis.experiments.common import (
     LOG_RANGES,
     N_POINTS,
     TICK_POSITIONS,
+    log_range_to_label,
 )
-
-
-def log_range_to_label(log_range: float) -> str:
-    """Convert log_range to human-readable N sampling range.
-
-    log_range=1.0 means N spans 10^-1 to 10^1 around optimal = 0.1x to 10x.
-    """
-    factor = 10**log_range
-    if factor >= 10:
-        return f"±{factor:.0f}x"
-    else:
-        return f"±{factor:.1f}x"
 
 
 def run_experiment(
