@@ -60,3 +60,13 @@
   title: Scaling Laws for Compute Optimal Biosignal Transformers
   venue: Other
   url: https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content
+
+- key: misfitting
+  title: "(Mis)fitting: A Survey of Scaling Laws"
+  venue: ICLR 2025
+  url: https://arxiv.org/abs/2502.18969
+
+- key: data_filtering_scaling
+  title: "Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic"
+  venue: CVPR 2024
+  url: https://arxiv.org/abs/2404.07177

@@ -568,7 +568,14 @@
                         <li><a href="#drifting-bias">Drifting Bias</a></li>
                     </ol>
                 </li>
-                <li><a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a></li>
+                <li>
+                    <a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a>
+                    <ol>
+                        <li><a href="#approach-3-problems">Problems with Direct Surface Fitting</a></li>
+                        <li><a href="#vpnls">Variable Projection (VPNLS)</a></li>
+                        <li><a href="#method-comparison">Method Comparison</a></li>
+                    </ol>
+                </li>
                 <li>
                     <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
                     <ol>
@@ -1411,49 +1418,342 @@
             <p>
                 The previous sections showed that Approach 2's parabolic approximation introduces
                 systematic biases in intercepts (from asymmetry) and potentially exponents (from
-                off-center sampling). The natural alternative, Approach 3, fits all five surface
-                parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear least squares,
-                but is notoriously unstable: highly sensitive to initialization and prone to
-                converging to spurious local minima.
+                off-center sampling). The natural alternative is Approach 3, which fits all five
+                surface parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear
+                least squares. This avoids the parabolic approximation entirely but brings its
+                own set of problems.
+            </p>
+
+            <h3 id="approach-3-problems">Problems with Direct Surface Fitting</h3>
+
+            <p>
+                A recent survey of over 50 scaling law
+                papers<sup><a href="#ref-misfitting">[13]</a></sup> documents the landscape of
+                fitting practices and their failure modes. The problems described below apply to
+                scaling law fitting in general, not just Chinchilla forms, but they are directly
+                relevant because Approach 3 involves the same kind of nonlinear optimization.
+                Over half of the papers surveyed do not fully specify their fitting procedure
+                (optimizer, loss function, or initialization), which compounds reproducibility
+                challenges.
             </p>
 
             <p>
-                Variable projection offers a middle path. It exploits the partially linear structure
-                of the loss surface: for any fixed values of the exponential terms \((\alpha, \beta)\),
-                the remaining parameters \((E, A, B)\) enter the model linearly and can be solved
-                exactly via ordinary least squares. This is the same computational shortcut that
-                motivates Approach 2, optimizing exponential terms separately from linear terms, but
+                The most common optimizers for scaling law fits are BFGS and L-BFGS. Some
+                studies use SGD-family optimizers like Adam and Adagrad, though these are noted
+                as sometimes poorly suited for curve fitting due to limited data efficiency. At
+                least one study<sup><a href="#ref-data_filtering_scaling">[14]</a></sup>
+                forgoes optimization entirely in favor of pure grid search
+                because fitted solutions are too unstable.
+            </p>
+
+            <p>
+                In practice, this instability takes several forms. Results are sensitive to
+                initialization: different starting points for the optimizer can lead to
+                substantially different fitted parameters. Results are also sensitive to
+                optimizer hyperparameters such as convergence tolerance and gradient estimation
+                method. And the optimizer frequently converges to local minima rather than the
+                global optimum.
+            </p>
+
+            <p>
+                Initialization is the most studied source of variability. Common mitigations
+                include grid search over thousands of starting points (running the optimizer
+                from each and keeping the best fit), random sampling of starting points,
+                evaluating a coarse grid without optimization and seeding the optimizer from
+                the single best candidate, or initializing from previously published parameter
+                values. None of these reliably solve the problem. The survey's own experiments
+                show that full-grid optimization over 4500 starting points sometimes yields the
+                <em>worst</em> fit among all strategies tested, evidence of "the difficulty of
+                optimizing over this space, and the presence of many local minima."
+            </p>
+
+            <p>
+                A simpler alternative is to log-linearize the power law and fit with linear
+                regression. However, the log transformation changes the error distribution and
+                exaggerates errors at small loss values, biasing parameter estimates. This bias
+                is easily observed in simulations like ours. The survey also finds that the
+                choice of loss function (whether Log-Huber, Huber, MSE, or MAE) affects fitted
+                parameters unpredictably across datasets, and non-MSE objectives can introduce
+                systematic bias in parameter estimates. Our goal is to identify a fitting method
+                that is simple, stable, and efficient rather than to address outliers or other
+                statistical concerns, so we use MSE for all fits in this article.
+            </p>
+
+            <p>
+                The survey's experimental analysis varies optimizer, loss function, and
+                initialization strategy across three datasets. The overarching finding is that
+                none of these choices reliably eliminates instability, and results shift
+                unpredictably between datasets. A key contributor is the high dimensionality of
+                the joint five-parameter optimization, which creates a complex loss landscape
+                with many local minima and interacting sensitivities. Reducing the dimensionality
+                of the nonlinear search is one way to make the problem more tractable.
+            </p>
+
+            <h3 id="vpnls">Variable Projection (VPNLS)</h3>
+
+            <p>
+                The Chinchilla loss surface has a partially linear structure that can be
+                exploited. For any fixed values of \(\alpha\) and \(\beta\), the remaining
+                parameters \((E, A, B)\) enter the model linearly and can be solved exactly
+                via least squares. This is the same computational shortcut that motivates
+                Approach 2 (optimizing exponential terms separately from linear terms), but
                 applied here without the parabolic approximation.
             </p>
 
             <p>
-                The algorithm is straightforward: search over \((\alpha, \beta)\) and, at each
-                candidate, solve for \((E, A, B)\) analytically via non-negative least squares.
-                A coarse grid search identifies a good starting region, and a local optimizer
-                (Nelder-Mead) refines it. Crucially, the linear separation is maintained throughout:
-                the optimizer only ever navigates the two-dimensional \((\alpha, \beta)\) surface,
-                never the full five-parameter space.
+                The algorithm searches over \((\alpha, \beta)\) and, at each candidate pair,
+                solves for \((E, A, B)\) via non-negative least squares (NNLS). A coarse
+                32&times;32 grid search identifies a good starting region, and a Nelder-Mead
+                simplex optimizer refines it. The linear separation is maintained throughout:
+                the optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
+                surface, never the full five-parameter space. We call this method VPNLS
+                (Variable Projection with Non-negative Least Squares).
+            </p>
+
+            <div class="math-block" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88em; line-height: 1.8;">
+<pre style="margin: 0; white-space: pre; overflow-x: auto;"><b>function</b> VPNLS(data):
+
+    <b>function</b> objective(α, β):
+        X ← [1, N^(-α), D^(-β)]         <span style="color: var(--text-muted);">// design matrix, one row per observation</span>
+        (E, A, B) ← NNLS(X, L)          <span style="color: var(--text-muted);">// linear solve with E, A, B ≥ 0</span>
+        <b>return</b> ‖L − X·[E, A, B]‖²
+
+    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse 32×32 grid search</span>
+    (α*, β*) ← NelderMead(objective,    <span style="color: var(--text-muted);">// refine in 2D only</span>
+                           start=(α₀, β₀))
+    (E*, A*, B*) ← NNLS(X(α*, β*), L)  <span style="color: var(--text-muted);">// recover linear params at solution</span>
+
+    <b>return</b> (E*, A*, B*, α*, β*)</pre>
+            </div>
+
+            <p>
+                The choice of Nelder-Mead over L-BFGS-B is deliberate. VPNLS uses NNLS for
+                the inner solve to guarantee that \(E\), \(A\), and \(B\) remain non-negative,
+                preventing physically meaningless fits. However, NNLS has no closed-form
+                gradient with respect to the outer parameters \((\alpha, \beta)\). Switching to
+                ordinary least squares would restore differentiability but cannot enforce
+                non-negativity. With NNLS, L-BFGS-B must rely on finite-difference gradients,
+                which creates a set of interacting tuning parameters
+                (<code>eps</code>, <code>jac</code>, <code>ftol</code>, <code>gtol</code>,
+                <code>maxcor</code>, <code>maxls</code>) where tight tolerances demand gradient
+                accuracy that finite differences cannot reliably provide.
+            </p>
+
+            <p>
+                Nelder-Mead avoids this entirely. Its few settings
+                (<code>xatol</code>, <code>fatol</code>, <code>maxiter</code>) are independent
+                and work well out of the box. Nelder-Mead scales poorly to high dimensions,
+                but variable projection reduces the search to just two dimensions, which is
+                exactly the regime where simplex methods excel.
+            </p>
+
+            <h3 id="method-comparison">Method Comparison</h3>
+
+            <p>
+                To validate this choice, we compare nine method configurations on noise-free
+                synthetic data across three loss surfaces (symmetric, Chinchilla, and high
+                imbalance) and 20 sampling ranges. This is the best case for gradient-based
+                methods since the data contains no noise that could obscure gradient information.
+            </p>
+
+            <p>
+                The configurations fall into two groups. The first uses 5D direct optimization
+                (Approach 3), fitting all five parameters jointly with L-BFGS-B using either
+                analytical gradients, forward finite differences, or central finite differences.
+                The second uses 2D variable projection over \((\alpha, \beta)\) only, comparing
+                VPNLS (Nelder-Mead), L-BFGS-B with four finite-difference configurations
+                (default \(\varepsilon\), central differences,
+                \(\varepsilon = 10^{-6}\), and \(\varepsilon = 10^{-10}\)), and a fine
+                256&sup2; grid search with no local refinement.
             </p>
 
             <figure>
-                <img src="../../results/experiments/exp5/surface_param_errors.png"
-                    alt="Parameter recovery accuracy for variable projection across all five surface parameters">
+                <img src="method_comparison/method_comparison.png"
+                    alt="Method comparison showing geometric mean error and max error across nine optimizer configurations">
                 <figcaption>
-                    <strong>Figure 6 (research image):</strong> <em>TODO: Determine final
-                    presentation and layout for article. Parameter recovery to machine precision
-                    across all five loss surface parameters, with no systematic deviations based
-                    on sampling grid centers, drift, or scaling exponent imbalance in the
-                    underlying loss surface.</em>
+                    <strong>Figure 6:</strong> Comparison of nine fitting methods on noise-free
+                    synthetic data across three loss surfaces and 20 sampling ranges (60 fits
+                    total per method). Left: geometric mean of |relative error| (%) pooled across
+                    all surfaces, grid widths, and parameters, with horizontal bars spanning the
+                    min-to-max range. Filled dots indicate convergence on all 60 fits; open dots
+                    indicate at least one failure (count annotated). Right: maximum |relative
+                    error| (%) per parameter over successful fits, on a log-scale colormap.
+                    Methods are sorted by geometric mean error, with the worst at top.
                 </figcaption>
             </figure>
+
+            <p>
+                In the left panel, each dot shows the typical (geometric mean) parameter
+                recovery error for one method, and the horizontal bar shows the range from best
+                to worst case across 60 scenarios. The right panel breaks this down by parameter,
+                showing the worst-case error for each.
+            </p>
+
+            <p>
+                Consider the best Approach 3 configuration (5D L-BFGS-B with analytical
+                gradients). Even with exact gradients on noise-free data, the worst-case errors
+                reach about 5% for the scaling exponent \(\alpha\) and about 2% for the
+                irreducible loss \(E\). While a few percent may appear modest, the preceding
+                sections show that errors of this magnitude in scaling parameters translate into
+                meaningful distortions when extrapolating compute-optimal predictions to higher
+                budgets. VPNLS recovers all five parameters with errors on the order of
+                10<sup>&minus;8</sup>%, effectively eliminating parameter estimation as a
+                source of extrapolation error.
+            </p>
+
+            <p>
+                Looking at the full set of methods, a clear hierarchy emerges. High-resolution
+                grid search (256&sup2;) is stable across all conditions, with zero convergence
+                failures, but provides the poorest overall precision among 2D methods. Accuracy
+                is limited by grid resolution.
+            </p>
+
+            <p>
+                5D direct optimization (Approach 3) is more accurate on average than grid search
+                but highly variable across conditions. The 5D configurations that rely on
+                finite-difference gradients rather than analytical gradients perform particularly
+                poorly and serve as a useful negative control. They demonstrate what high
+                variability and instability look like, and Approach 3 with analytical gradients
+                exhibits a similar pattern at somewhat lower magnitude.
+            </p>
+
+            <p>
+                L-BFGS-B with 2D variable projection can match VPNLS precision, but the
+                optimizer fails to converge in a non-trivial fraction of scenarios even in this
+                relatively small test suite. The choice of finite-difference scheme matters
+                considerably. Switching from forward to 3-point central differences closes the
+                precision gap with Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
+                10<sup>&minus;8</sup>% error), but introduces sporadic line search failures.
+                Notably, these failures can be false positives. The optimizer has already
+                reached the true minimum, with residual sum of squares near machine zero, but
+                the line search cannot verify further progress because function values are too
+                small to distinguish. It reports failure despite having found the correct answer.
+            </p>
+
+            <p>
+                L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
+                to tune settings carefully and who understand that certain convergence warnings
+                from scipy are not necessarily problematic. That said, VPNLS with Nelder-Mead
+                is simpler, requires less tuning, and recovers parameter estimates with precision
+                at least as high as any other method tested. It technically achieves the most
+                precise estimates, though the margin over a well-configured L-BFGS-B with
+                3-point central differences is small.
+            </p>
+
+            <details class="data-table-container">
+                <summary>📊 View method comparison data</summary>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Failures</th>
+                                <th>Max E err%</th>
+                                <th>Max A err%</th>
+                                <th>Max B err%</th>
+                                <th>Max α err%</th>
+                                <th>Max β err%</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D Nelder-Mead (VPNLS)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>5.2×10⁻⁸</td>
+                                <td>6.3×10⁻⁸</td>
+                                <td>7.9×10⁻⁸</td>
+                                <td>1.2×10⁻⁸</td>
+                                <td>2.0×10⁻⁸</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (central diff)</td>
+                                <td class="error-low">1/60</td>
+                                <td>8.3×10⁻⁸</td>
+                                <td>5.3×10⁻⁸</td>
+                                <td>6.4×10⁻⁸</td>
+                                <td>1.2×10⁻⁸</td>
+                                <td>2.0×10⁻⁸</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (default ε)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>1.6×10⁻⁵</td>
+                                <td>1.0×10⁻⁵</td>
+                                <td>1.3×10⁻⁵</td>
+                                <td>2.1×10⁻⁶</td>
+                                <td>3.9×10⁻⁶</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (ε=10⁻¹⁰)</td>
+                                <td class="error-low">3/60</td>
+                                <td>1.6×10⁻⁷</td>
+                                <td>8.9×10⁻⁷</td>
+                                <td>8.6×10⁻⁷</td>
+                                <td>1.8×10⁻⁷</td>
+                                <td>1.7×10⁻⁷</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (ε=10⁻⁶)</td>
+                                <td class="error-high">20/60</td>
+                                <td>1.2×10⁻³</td>
+                                <td>1.1×10⁻³</td>
+                                <td>1.3×10⁻³</td>
+                                <td>2.2×10⁻⁴</td>
+                                <td>3.8×10⁻⁴</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D Grid (256²)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>2.58</td>
+                                <td>2.03</td>
+                                <td>2.03</td>
+                                <td>0.44</td>
+                                <td>0.57</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (analytical)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>2.23</td>
+                                <td>29.8</td>
+                                <td>6.14</td>
+                                <td>5.03</td>
+                                <td>1.33</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (central diff)</td>
+                                <td class="error-low">1/60</td>
+                                <td>103</td>
+                                <td>2,334</td>
+                                <td>343</td>
+                                <td>78.9</td>
+                                <td>28.8</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (finite diff)</td>
+                                <td class="error-low">2/60</td>
+                                <td>113</td>
+                                <td>2,334</td>
+                                <td>832</td>
+                                <td>80.6</td>
+                                <td>44.0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+                        Maximum |relative error| (%) across 60 fits (3 surfaces × 20 sampling
+                        ranges), computed over successful (converged) fits only. Failure counts
+                        show convergence failures out of 60 total fits.
+                    </p>
+                </div>
+            </details>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    All five loss surface parameters \((E, A, B, \alpha, \beta)\) are recovered
-                    perfectly. Because the fitted surface is exact, extrapolation to higher compute
-                    budgets is also exact. Variable projection makes direct surface fitting robust
-                    and eliminates the biases introduced by the parabolic approximation.
+                    VPNLS eliminates the biases inherent in the parabolic approximation and
+                    avoids the fragile gradient tuning that complicates L-BFGS-B. All five loss
+                    surface parameters \((E, A, B, \alpha, \beta)\) are recovered with machine
+                    precision, and extrapolation to higher compute budgets is exact.
                 </p>
             </div>
 
@@ -1611,6 +1911,8 @@
             <li id="ref-dit_scaling">"Scaling Laws For Diffusion Transformers," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2410.08184">https://arxiv.org/abs/2410.08184</a></li>
             <li id="ref-dlm_scaling">"Scaling Behavior of Discrete Diffusion Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2512.10858">https://arxiv.org/abs/2512.10858</a></li>
             <li id="ref-biosignal_scaling">"Scaling Laws for Compute Optimal Biosignal Transformers," <em>Other</em>. <a href="https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content">https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content</a></li>
+            <li id="ref-misfitting">"(Mis)fitting: A Survey of Scaling Laws," <em>ICLR 2025</em>. <a href="https://arxiv.org/abs/2502.18969">https://arxiv.org/abs/2502.18969</a></li>
+            <li id="ref-data_filtering_scaling">"Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic," <em>CVPR 2024</em>. <a href="https://arxiv.org/abs/2404.07177">https://arxiv.org/abs/2404.07177</a></li>
             </ol>
         </section>
 

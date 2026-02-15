@@ -15,7 +15,6 @@
 >   - Source of truth: `docs/references/references.yaml`
 >   - Inline citation format: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list
 >   - In this outline, cite as `[KEY]` (e.g. `[chinchilla]`); these map to keys in the YAML
->   - All inline citations belong in the Motivation section unless explicitly noted otherwise
 
 ---
 
@@ -137,31 +136,39 @@
 
 ## Robust Fits — Unbiased Estimation with Linear Separation
 
-- Overview
-  - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
-    - TODO: write this part up:
-    - Typically, "unstable" means that results are sensitive to initialization, hyperparameters (e.g. Huber loss delta) or lack of optimization convergence
-    - The most common approaches are BFGS or L-BFGS (cite (Mis)fitting scaling laws section 6) or other gradient-based SGD optimizers
-    - Some studies forgo optimization entirely and use grid search instead due to instability (Goyal et al. (2024))
-    - Some studies "opt to use a linear method" by taking the log on both sides, but "it is generally not advised because the log transformation also changes the distribution of error"
-      - Some even still use a nonlinear optimizer even with a linear objective (Hashimoto, 2021)
-      - It can be easily shown in simulations like those we use that log transformations of loss values lead to universal biases in parameter estimates
-      - Similarly, use loss functions for fits other than MSE like MAE or Huber loss also induce biased parameter inference so we use MSE for all further fits
-    - Use the above as segueue into variable projection
-  - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
-  - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
-- Algorithm: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space. We call this method **VPNLS** (Variable Projection with Non-negative Least Squares)
-- **Why Nelder-Mead over L-BFGS-B?** VPNLS uses NNLS for the inner solve to guarantee non-negative coefficients (E, A, B ≥ 0). This prevents physically meaningless fits but makes the objective non-smooth — the active-set transitions in NNLS create kinks that rule out analytical gradients. Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output). Deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space. With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`) where tight tolerances demand gradient accuracy that finite differences cannot reliably deliver. Nelder-Mead avoids all of this — its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box. Nelder-Mead scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
-- We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, high imbalance) and 20 sampling ranges (the best case for gradient methods):
-  - **5D direct (Approach 3)**: L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
-  - **2D variable projection**: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
-- Even here, L-BFGS-B either sacrifices precision or introduces convergence failures depending on configuration, while VPNLS achieves machine-precision recovery with no tuning
-- **Figure: Method Comparison** (1 × 2, shared y-axis; methods sorted by gmean error, worst at top)
-  - **Left — dot-range plot**: geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters; horizontal bars span min–max. Filled dot = converged on all 60 fits; open dot = at least one failure (annotated with count)
-  - **Right — max-error heatmap**: columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text shows max |relative error| (%) over successful fits only
-- **Companion CSVs**: raw per-(method, surface, grid width, parameter) errors, max-error pivot, and failure-count pivot
-- Key result: all five loss surface parameters (E, A, B, α, β) recovered with machine precision; extrapolation is exact
-- Key message: VPNLS makes direct surface fitting robust — it eliminates the biases from the parabolic approximation and avoids the fragile gradient tuning that makes L-BFGS-B impractical for this problem
+- Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
+  - The following summary of fitting practices and failure modes draws from [misfitting], a survey of over 50 scaling law papers; the problems documented apply to scaling law fitting in general (not just Chinchilla forms), but they are directly relevant because Approach 3 involves the same kind of nonlinear optimization
+  - Over half of surveyed papers do not fully specify their fitting procedure (optimizer, loss, initialization), compounding reproducibility issues
+  - The most common optimizers for scaling law fits are BFGS or L-BFGS; some studies use SGD-family optimizers (Adam, Adagrad), though these are noted as sometimes ill-suited for curve fitting due to poor data efficiency; at least one study [data_filtering_scaling] forgoes optimization entirely in favor of pure grid search due to instability of fitted solutions
+  - "Unstable" in practice means: sensitivity to initialization, sensitivity to optimizer hyperparameters (e.g. convergence tolerance, gradient estimation method), and convergence to local minima rather than the global optimum
+  - Initialization is a major source of variability; common mitigations include (a) grid search over initializations, running the optimizer from each of thousands of starting points and keeping the best fit, (b) random sampling of starting points, (c) evaluating a coarse grid without optimization and seeding the optimizer from the best candidate only, or (d) initializing from previously published parameter values
+    - These mitigations do not reliably solve the problem; the survey's own experiments show that full-grid optimization over 4500 starting points sometimes yields the worst fit among all strategies tested, evidence of "the difficulty of optimizing over this space, and the presence of many local minima"
+  - A simpler alternative is log-linearization: take the log of both sides of the power law and fit with linear regression; however, this changes the error distribution and exaggerates errors at small loss values, biasing parameter estimates in a way that is easily observed in simulations like ours
+      - The survey also finds that loss function choice (Log-Huber, Huber, MSE, MAE) affects fitted parameters unpredictably across datasets, and non-MSE objectives can introduce systematic bias in parameter estimates; our goal is to identify a method that is simple, stable, and efficient rather than to address outliers or other statistical concerns, so we use MSE for all fits
+  - The survey's experimental analysis varies optimizer, loss function, and initialization strategy across three datasets; the overarching finding is that none of these choices reliably eliminates instability, and results shift unpredictably between datasets
+  - Segue: a key contributor to these problems is the high dimensionality of the joint 5-parameter optimization, which creates a complex loss landscape with many local minima and interacting sensitivities; variable projection reduces the nonlinear search to 2 dimensions (α, β), which shrinks the space enough to make simple grid-seeded optimization practical and greatly reduces (though does not eliminate) the risk of converging to poor local minima
+- Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
+- This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
+- **Algorithm**: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space; we call this method VPNLS (Variable Projection with Non-negative Least Squares)
+- **Why Nelder-Mead over L-BFGS-B?**
+  - VPNLS uses NNLS for the inner solve to guarantee non-negative coefficients (E, A, B ≥ 0); this prevents physically meaningless fits but makes the objective non-smooth, as NNLS has no closed-form gradient with respect to the outer parameters
+  - Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output); deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space
+  - With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`, `maxcor`, `maxls`) where tight tolerances demand gradient accuracy that finite differences cannot reliably provide
+  - Nelder-Mead avoids all of this; its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box; it scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
+- **Method Comparison**
+  - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, high imbalance) and 20 sampling ranges (the best case for gradient methods):
+    - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
+    - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
+  - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) showing geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters, with horizontal bars spanning min to max, filled dots for methods that converged on all 60 fits and open dots for those with at least one failure (annotated with count); max-error heatmap (right) with columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text showing max |relative error| (%) over successful fits only
+  - Companion CSVs: raw per-(method, surface, grid width, parameter) errors, max-error pivot, and failure-count pivot
+  - Key observations from the figure:
+    - High-resolution grid search (256²) is stable across all conditions but provides the poorest overall precision, limited by grid resolution
+    - 5D direct optimization (Approach 3) is more accurate on average than grid search but highly variable across conditions; 5D optimization without analytical gradients (finite-difference only) performs very poorly and serves as a negative control, demonstrating what high variability and instability look like for comparison to Approach 3 with analytical gradients, which is similarly variable
+    - L-BFGS-B with 2D variable projection can match Nelder-Mead precision, though the optimizer fails to converge in a non-trivial fraction of the relatively small number of scenarios simulated here
+    - Central differences are key: switching from forward to 3-point central finite differences closes the precision gap with Nelder-Mead (~1e-8% vs ~1e-5% error), but introduces sporadic line search failures; these failures can be false positives where the optimizer has already reached the true minimum (RSS near machine zero) but the line search cannot verify further progress because function values are too small to distinguish, so it reports failure despite having found the correct answer
+    - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner knows which scipy convergence warnings are not necessarily problematic
+    - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
+- Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
 
 ---
 
