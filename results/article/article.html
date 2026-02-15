@@ -569,17 +569,17 @@
                     </ol>
                 </li>
                 <li>
+                    <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
+                    <ol>
+                        <li><a href="#putting-it-together">Compounding Errors</a></li>
+                    </ol>
+                </li>
+                <li>
                     <a href="#robust-fits">Robust Fits — Unbiased Estimation with Linear Separation</a>
                     <ol>
                         <li><a href="#approach-3-problems">Problems with Direct Surface Fitting</a></li>
                         <li><a href="#vpnls">Variable Projection (VPNLS)</a></li>
                         <li><a href="#method-comparison">Method Comparison</a></li>
-                    </ol>
-                </li>
-                <li>
-                    <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
-                    <ol>
-                        <li><a href="#putting-it-together">Compounding Errors</a></li>
                     </ol>
                 </li>
                 <li><a href="#conclusion">Conclusion</a></li>
@@ -613,17 +613,16 @@
                 and high-profile practitioner <a href="https://x.com/karpathy/status/2009037707918626874">tutorials</a> from researchers like Andrej Karpathy.
             </p>
 
-            <p><em>TODO: pad this list out further later.</em></p>
-
             <p>
                 The method's appeal lies in its stability and data efficiency relative to
                 nonlinear optimization over all loss surface parameters. Rather than fitting
-                every parameter of the loss surface simultaneously, Approach 2 relies on
-                second-order Taylor approximations that reduce each IsoFLOP curve to a simple
-                parabola. This lets practitioners estimate scaling exponents, the most
-                actionable quantities for compute allocation planning, through a sequence of
-                straightforward polynomial and linear fits, without ever touching a nonlinear
-                optimizer.
+                all five parameters of the loss surface simultaneously, Approach 2 targets
+                only the two scaling exponents, relying on second-order Taylor approximations
+                that reduce each IsoFLOP curve to a simple parabola. This sacrifices recovery
+                of the full loss surface but makes estimation far more stable and
+                data-efficient, letting practitioners extract the most actionable quantities
+                for compute allocation planning through a sequence of straightforward
+                polynomial and linear fits, without ever touching a nonlinear optimizer.
             </p>
 
             <p>
@@ -1428,14 +1427,119 @@
 
         </section>
 
-        <!-- Section 5: Robust Fits -->
+        <!-- Section 5: IsoFLOP Curves in the Wild -->
+        <section id="in-the-wild">
+            <h2>IsoFLOP Curves in the Wild — Evidence from Published Studies</h2>
+
+            <p>
+                The previous sections used synthetic, noise-free simulations to isolate Approach 2's
+                biases under controlled conditions. A natural question is whether the conditions that
+                trigger these biases, asymmetric loss surfaces and imperfectly centered sampling,
+                actually arise in practice. To get a sense of this, we can look at IsoFLOP curves
+                published in three of the most prominent scaling law
+                studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>.
+            </p>
+
+            <figure>
+                <img src="static/isoflop_curve_examples.png"
+                    alt="IsoFLOP curves from Chinchilla, Llama 3, and DeepSeek scaling law papers">
+                <figcaption>
+                    <strong>Figure 7:</strong> IsoFLOP curves from three published scaling law studies.
+                    Left: Chinchilla (training loss vs parameters). Center: Llama 3 (validation loss vs
+                    training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each panel shows
+                    curves at multiple compute budgets, fit using Approach 2.
+                </figcaption>
+            </figure>
+
+            <p>
+                Several features relevant to the biases studied in this article are visible across
+                all three panels:
+            </p>
+
+            <ul>
+                <li><strong>Asymmetric curve shapes:</strong> The IsoFLOP curves are visibly steeper on
+                    one side of the minimum than the other, consistent with \(\alpha \neq \beta\). This
+                    is the condition under which the parabolic approximation introduces systematic
+                    intercept bias.</li>
+                <li><strong>Off-center sampling:</strong> At some compute budgets, the sampling grid
+                    does not appear centered at the curve minimum. The degree of off-centering also
+                    appears to vary across compute budgets, which is the drifting-bias pattern that
+                    corrupts both exponents and intercepts.</li>
+            </ul>
+
+            <p>
+                To be clear, this is not a criticism of these studies. These are among the most careful
+                and influential scaling law analyses published. The point is a more general one: the
+                conditions under which Approach 2's biases activate, asymmetric surfaces and imperfect
+                sampling centers, appear to be the norm rather than the exception. The idealized
+                conditions of the Happy Path (symmetric surface, perfectly centered grids) are the
+                special case.
+            </p>
+
+            <h3 id="putting-it-together">Compounding Errors</h3>
+
+            <p>
+                Given evidence that both surface asymmetry and off-center sampling are present in
+                real studies, we can simulate what happens when these biases act simultaneously.
+                Using the same three loss surfaces and five sampling bias configurations from earlier
+                sections, we fit Approach 2 on compute budgets from 10<sup>17</sup> to 10<sup>21</sup>
+                FLOPs and extrapolate \(D^*\) predictions out to 10<sup>25</sup> FLOPs. Results are
+                shown at two grid widths that bracket the realistic range: XS (±2×) and XL (±16×).
+            </p>
+
+            <figure>
+                <img src="static/combined_extrapolation_error.png"
+                    alt="Combined extrapolation error across grid widths, surfaces, and sampling biases">
+                <figcaption>
+                    <strong>Figure 8 (research image):</strong> <em>TODO: Determine final
+                    presentation and layout. Relative error in \(D^*\) when extrapolating beyond
+                    the fitting range, with asymmetry and sampling biases acting simultaneously.
+                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and Asymmetric
+                    surfaces; one curve per bias configuration (baseline, drift, constant offset).</em>
+                </figcaption>
+            </figure>
+
+            <p>
+                At narrow grids (XS), the parabolic approximation is tight and asymmetry bias is
+                negligible; errors are dominated by sampling biases, with drift creating errors that
+                grow with extrapolation distance (reaching roughly 25% on the Asymmetric surface
+                and 8% on the Chinchilla surface at 10<sup>25</sup> FLOPs). At wider grids (XL),
+                asymmetry bias dominates: the perfect-sampling baseline underestimates \(D^*\)
+                by about 5% on the Chinchilla surface and about 20% on the Asymmetric surface.
+                In these particular configurations, the sampling biases happen to partially offset
+                the asymmetry error, but this is not guaranteed: the direction of each bias source
+                depends on the sign and magnitude of the offset, and the two can just as easily
+                compound as cancel.
+            </p>
+
+            <p>
+                <em>TODO: Add a configuration where the bias sources reinforce rather than offset
+                each other (e.g. an offset direction that pushes in the same direction as asymmetry
+                error), to demonstrate the compounding case directly.</em>
+            </p>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Key Result</div>
+                <p>
+                    Multiple bias sources act simultaneously in any real experiment. Even individually,
+                    asymmetry and sampling biases each produce meaningful errors; when they happen to
+                    align, the combined error can exceed either one alone. At practical grid widths
+                    with Chinchilla-like asymmetry, errors of 5% or more in \(D^*\) are typical, and
+                    on more asymmetric surfaces the errors reach 20% or more.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- Section 6: Robust Fits -->
         <section id="robust-fits">
             <h2>Robust Fits — Unbiased Estimation with Linear Separation</h2>
 
             <p>
                 The previous sections showed that Approach 2's parabolic approximation introduces
                 systematic biases in intercepts (from asymmetry) and potentially exponents (from
-                off-center sampling). The natural alternative is Approach 3, which fits all five
+                off-center sampling), and that the conditions driving these biases are visible
+                in published scaling law studies. The natural alternative is Approach 3, which fits all five
                 surface parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear
                 least squares. This avoids the parabolic approximation entirely but brings its
                 own set of problems.
@@ -1778,110 +1882,6 @@
                     avoids the fragile gradient tuning that complicates L-BFGS-B. All five loss
                     surface parameters \((E, A, B, \alpha, \beta)\) are recovered with machine
                     precision, and extrapolation to higher compute budgets is exact.
-                </p>
-            </div>
-
-        </section>
-
-        <!-- Section 6: IsoFLOP Curves in the Wild -->
-        <section id="in-the-wild">
-            <h2>IsoFLOP Curves in the Wild — Evidence from Published Studies</h2>
-
-            <p>
-                The previous sections used synthetic, noise-free simulations to isolate Approach 2's
-                biases under controlled conditions. A natural question is whether the conditions that
-                trigger these biases, asymmetric loss surfaces and imperfectly centered sampling,
-                actually arise in practice. To get a sense of this, we can look at IsoFLOP curves
-                published in three of the most prominent scaling law
-                studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>.
-            </p>
-
-            <figure>
-                <img src="static/isoflop_curve_examples.png"
-                    alt="IsoFLOP curves from Chinchilla, Llama 3, and DeepSeek scaling law papers">
-                <figcaption>
-                    <strong>Figure 7:</strong> IsoFLOP curves from three published scaling law studies.
-                    Left: Chinchilla (training loss vs parameters). Center: Llama 3 (validation loss vs
-                    training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each panel shows
-                    curves at multiple compute budgets, fit using Approach 2.
-                </figcaption>
-            </figure>
-
-            <p>
-                Several features relevant to the biases studied in this article are visible across
-                all three panels:
-            </p>
-
-            <ul>
-                <li><strong>Asymmetric curve shapes:</strong> The IsoFLOP curves are visibly steeper on
-                    one side of the minimum than the other, consistent with \(\alpha \neq \beta\). This
-                    is the condition under which the parabolic approximation introduces systematic
-                    intercept bias.</li>
-                <li><strong>Off-center sampling:</strong> At some compute budgets, the sampling grid
-                    does not appear centered at the curve minimum. The degree of off-centering also
-                    appears to vary across compute budgets, which is the drifting-bias pattern that
-                    corrupts both exponents and intercepts.</li>
-            </ul>
-
-            <p>
-                To be clear, this is not a criticism of these studies. These are among the most careful
-                and influential scaling law analyses published. The point is a more general one: the
-                conditions under which Approach 2's biases activate, asymmetric surfaces and imperfect
-                sampling centers, appear to be the norm rather than the exception. The idealized
-                conditions of the Happy Path (symmetric surface, perfectly centered grids) are the
-                special case.
-            </p>
-
-            <h3 id="putting-it-together">Compounding Errors</h3>
-
-            <p>
-                Given evidence that both surface asymmetry and off-center sampling are present in
-                real studies, we can simulate what happens when these biases act simultaneously.
-                Using the same three loss surfaces and five sampling bias configurations from earlier
-                sections, we fit Approach 2 on compute budgets from 10<sup>17</sup> to 10<sup>21</sup>
-                FLOPs and extrapolate \(D^*\) predictions out to 10<sup>25</sup> FLOPs. Results are
-                shown at two grid widths that bracket the realistic range: XS (±2×) and XL (±16×).
-            </p>
-
-            <figure>
-                <img src="static/combined_extrapolation_error.png"
-                    alt="Combined extrapolation error across grid widths, surfaces, and sampling biases">
-                <figcaption>
-                    <strong>Figure 8 (research image):</strong> <em>TODO: Determine final
-                    presentation and layout. Relative error in \(D^*\) when extrapolating beyond
-                    the fitting range, with asymmetry and sampling biases acting simultaneously.
-                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and Asymmetric
-                    surfaces; one curve per bias configuration (baseline, drift, constant offset).</em>
-                </figcaption>
-            </figure>
-
-            <p>
-                At narrow grids (XS), the parabolic approximation is tight and asymmetry bias is
-                negligible; errors are dominated by sampling biases, with drift creating errors that
-                grow with extrapolation distance (reaching roughly 25% on the Asymmetric surface
-                and 8% on the Chinchilla surface at 10<sup>25</sup> FLOPs). At wider grids (XL),
-                asymmetry bias dominates: the perfect-sampling baseline underestimates \(D^*\)
-                by about 5% on the Chinchilla surface and about 20% on the Asymmetric surface.
-                In these particular configurations, the sampling biases happen to partially offset
-                the asymmetry error, but this is not guaranteed: the direction of each bias source
-                depends on the sign and magnitude of the offset, and the two can just as easily
-                compound as cancel.
-            </p>
-
-            <p>
-                <em>TODO: Add a configuration where the bias sources reinforce rather than offset
-                each other (e.g. an offset direction that pushes in the same direction as asymmetry
-                error), to demonstrate the compounding case directly.</em>
-            </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
-                <p>
-                    Multiple bias sources act simultaneously in any real experiment. Even individually,
-                    asymmetry and sampling biases each produce meaningful errors; when they happen to
-                    align, the combined error can exceed either one alone. At practical grid widths
-                    with Chinchilla-like asymmetry, errors of 5% or more in \(D^*\) are typical, and
-                    on more asymmetric surfaces the errors reach 20% or more.
                 </p>
             </div>
 

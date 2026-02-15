@@ -134,8 +134,24 @@
 
 ---
 
+## IsoFLOP Curves in the Wild — Evidence from Published Studies
+
+- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
+- These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
+- Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
+- This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
+
+- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
+- Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/static/combined_extrapolation_error.png`
+- Show how each bias source dominates at different grid widths; note that the two sources can partially offset or reinforce depending on offset direction
+- TODO: add a configuration where bias sources reinforce rather than offset, to demonstrate the compounding case directly
+- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error exceeds either alone
+
+---
+
 ## Robust Fits — Unbiased Estimation with Linear Separation
 
+- Opening segue: the previous sections established the biases and showed they arise in practice; now address what to do about them
 - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
   - The following summary of fitting practices and failure modes draws from [misfitting], a survey of over 50 scaling law papers; the problems documented apply to scaling law fitting in general (not just Chinchilla forms), but they are directly relevant because Approach 3 involves the same kind of nonlinear optimization
   - Over half of surveyed papers do not fully specify their fitting procedure (optimizer, loss, initialization), compounding reproducibility issues
@@ -169,21 +185,6 @@
     - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner understands that `result.success = False` from `scipy.optimize.minimize` does not always indicate a bad fit
     - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
 - Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
-
----
-
-## IsoFLOP Curves in the Wild — Evidence from Published Studies
-
-- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
-- These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
-- Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
-- This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
-
-- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
-- Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/static/combined_extrapolation_error.png`
-- Show how each bias source dominates at different grid widths; note that the two sources can partially offset or reinforce depending on offset direction
-- TODO: add a configuration where bias sources reinforce rather than offset, to demonstrate the compounding case directly
-- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error exceeds either alone
 
 ---
 
