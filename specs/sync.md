@@ -25,6 +25,7 @@ When one implementation artifact changes, other artifacts that depend on it may 
   - `results/article/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
   - `results/article/method_comparison/method_comparison_max_errors.csv` → "Method Comparison" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
   - `results/article/method_comparison/method_comparison_failures.csv` → "Method Comparison" (collapsible data table failure counts)
+- **Appendix figures from experiments**: `results/experiments/exp5/method_comparison.png` → `results/article/appendix/method_comparison_detailed.png` (copied by the figure generator; re-run step 2 after re-running experiments)
 
 ## Spec → Spec
 

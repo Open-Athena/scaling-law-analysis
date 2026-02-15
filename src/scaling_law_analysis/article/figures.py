@@ -1181,7 +1181,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
         1,
         2,
         figsize=(12, fig_height),
-        gridspec_kw={"width_ratios": [3, 1.5], "wspace": 0.02},
+        gridspec_kw={"width_ratios": [3, 2], "wspace": 0.02},
         sharey=True,
         layout="constrained",
     )
@@ -1462,7 +1462,23 @@ def generate_all_figures(output_dir: Path) -> dict:
     # Section 5: Method Comparison
     data["method_comparison"] = create_method_comparison_figure(output_dir)
 
+    # Appendix figures (copied from experiment outputs)
+    copy_appendix_figures(output_dir)
+
     return data
+
+
+def copy_appendix_figures(output_dir: Path) -> None:
+    """Copy experiment figures used in the appendix."""
+    import shutil
+
+    from scaling_law_analysis import config
+
+    appendix_dir = prepare_output_dir(output_dir / "appendix")
+    src = config.RESULTS_DIR / "experiments" / "exp5" / "method_comparison.png"
+    dst = appendix_dir / "method_comparison_detailed.png"
+    shutil.copy2(src, dst)
+    print(f"Copied: {src} → {dst}")
 
 
 if __name__ == "__main__":

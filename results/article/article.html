@@ -579,10 +579,16 @@
                 <li>
                     <a href="#in-the-wild">IsoFLOP Curves in the Wild — Evidence from Published Studies</a>
                     <ol>
-                        <li><a href="#putting-it-together">Putting It All Together</a></li>
+                        <li><a href="#putting-it-together">Compounding Errors</a></li>
                     </ol>
                 </li>
                 <li><a href="#conclusion">Conclusion</a></li>
+                <li>
+                    <a href="#appendix">Appendix</a>
+                    <ol>
+                        <li><a href="#appendix-method-comparison">Detailed Method Comparison</a></li>
+                    </ol>
+                </li>
             </ol>
         </nav>
 
@@ -1610,6 +1616,9 @@
                 budgets. VPNLS recovers all five parameters with errors on the order of
                 10<sup>&minus;8</sup>%, effectively eliminating parameter estimation as a
                 source of extrapolation error.
+                <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
+                surface and sampling range, also revealing that Approach 3's errors can vary
+                systematically with sampling range on certain surfaces.
             </p>
 
             <p>
@@ -1624,7 +1633,9 @@
                 finite-difference gradients rather than analytical gradients perform particularly
                 poorly and serve as a useful negative control. They demonstrate what high
                 variability and instability look like, and Approach 3 with analytical gradients
-                exhibits a similar pattern at somewhat lower magnitude.
+                exhibits a similar pattern at somewhat lower magnitude. The full
+                per-parameter breakdown (<a href="#appendix-method-comparison">Figure
+                A1</a>) shows these instability patterns in detail.
             </p>
 
             <p>
@@ -1821,7 +1832,7 @@
                 special case.
             </p>
 
-            <h3 id="putting-it-together">Putting It All Together</h3>
+            <h3 id="putting-it-together">Compounding Errors</h3>
 
             <p>
                 Given evidence that both surface asymmetry and off-center sampling are present in
@@ -1906,6 +1917,26 @@
                 variable projection as a robust alternative.
             </p>
 
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+            <h2>Appendix</h2>
+
+            <h3 id="appendix-method-comparison">A. Detailed Method Comparison</h3>
+
+            <figure>
+                <img src="appendix/method_comparison_detailed.png"
+                    alt="Detailed method comparison showing per-parameter error across surfaces and sampling ranges">
+                <figcaption>
+                    <strong>Figure A1:</strong> Per-parameter recovery error for nine fitting
+                    methods across three loss surfaces and 20 sampling ranges (baseline, no
+                    bias). Each panel shows absolute relative error (%) on a log scale versus
+                    sampling range, with one curve per method. Rows correspond to loss surfaces
+                    (symmetric, Chinchilla, high imbalance); columns correspond to parameters
+                    (E, A, B, &alpha;, &beta;). Gaps indicate convergence failures.
+                </figcaption>
+            </figure>
         </section>
 
         <!-- References -->

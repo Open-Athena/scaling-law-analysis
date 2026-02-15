@@ -5,7 +5,7 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 ## Full Workflow
 
 1. **Run experiments**: `uv run python -m scaling_law_analysis.experiments.run_all`
-2. **Generate article figures** (outputs to `results/article/`):
+2. **Generate article figures** (outputs to `results/article/`; includes copying appendix figures from experiment results):
    `uv run python -m scaling_law_analysis.article.figures`
 3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
 4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))

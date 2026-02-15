@@ -179,7 +179,7 @@
 - Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
 - This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
 
-- **Putting It All Together**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
+- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
 - Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/static/combined_extrapolation_error.png`
 - Show how each bias source dominates at different grid widths; note that the two sources can partially offset or reinforce depending on offset direction
 - TODO: add a configuration where bias sources reinforce rather than offset, to demonstrate the compounding case directly
@@ -193,3 +193,12 @@
 - **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
 - **A practical alternative exists**: VPNLS recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
 - **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider VPNLS as a robust alternative
+
+---
+
+## Appendix
+
+### A. Detailed Method Comparison
+
+- Full per-parameter, per-surface, per-sampling-range error breakdown from Experiment 5's method comparison (see `specs/experiments.md`, Experiment 5 > Visualization > item 3)
+- Figure (3 rows × 5 columns): rows = loss surfaces, columns = parameters (E, A, B, α, β); each panel shows absolute relative error vs sampling range for all nine method configurations; baseline (no bias) only
