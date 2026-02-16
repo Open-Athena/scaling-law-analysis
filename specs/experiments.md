@@ -236,3 +236,22 @@ This validates that the derived closed-form expression exactly matches numerical
 - Compare derived expressions against numerical Approach 2 results across multiple surface configurations (symmetric, chinchilla, Asymmetric)
 - Target machine precision agreement (1e-10)
 - Sanity check: symmetric surfaces (α = β) should produce zero error
+
+
+## Experiment 7: Data Efficiency
+
+**Hypothesis**: VPNLS and Approach 3 recover the scaling exponents a and b more accurately than Approach 2 when given fewer data points per isoflop curve, especially under sampling drift. Variable projection (VPNLS) may be more data-efficient than full 5D optimization (Approach 3) because it searches a lower-dimensional space.
+
+**Method**:
+
+1. Use the Asymmetric surface (α/β ratio = 3) with a drifting sampling bias (drift_rate = log₁₀(3)), matching the "Compounding Errors" section of the article.
+
+2. Sweep the number of points per isoflop curve from 3 to 50, using 5 compute budgets (10¹⁷–10²¹ FLOPs).
+
+3. At each sample size, fit Approach 2, Approach 3, and VPNLS, then compute the absolute relative error in recovered exponents a = β/(α+β) and b = α/(α+β).
+
+4. Repeat across three grid widths (narrow ±2×, medium ±16×, wide ±100×) to understand interaction between sample density and sampling range.
+
+**Visualization**:
+
+Produce a single figure with 2 rows (exponent a, exponent b) × 3 columns (narrow, medium, wide grid width). Each panel shows absolute relative error (log scale) vs points per isoflop curve, with one curve per fitting method.
