@@ -765,7 +765,10 @@
 
             <p>
                 We sample five IsoFLOP contours spanning \(10^{17}\) to \(10^{21}\) FLOPs,
-                fit parabolas to each, and extract the optimal token count \(D^*\).
+                with 15 model sizes per curve, fit parabolas to each, and extract
+                the optimal token count \(D^*\). All simulations throughout this
+                article use these same five compute budgets and 15 points per
+                IsoFLOP curve.
             </p>
 
             <figure>
@@ -1503,14 +1506,17 @@
 
             <figure>
                 <img src="compounding_errors/compounding_errors.png"
-                    alt="Compounding errors: D* prediction error across three bias configurations, three surfaces, and four grid widths">
+                    alt="Compounding errors: D* prediction error under drift and constant offset sampling biases across three surfaces and four grid widths">
                 <figcaption>
                     <strong>Figure 7:</strong> Relative error in \(D^*\) at 10<sup>24</sup> FLOPs
-                    under three sampling configurations. Left: baseline (no sampling bias),
-                    reproducing Figure 3 for reference. Center: linear drift to 3× at the highest
-                    compute budget. Right: constant 3× center offset at every budget. Bars are
-                    grouped by sampling grid width (XS through XL). Negative values indicate
-                    underestimation; positive values indicate overestimation.
+                    with off-center sampling on all three loss surfaces. Left: constant 3×
+                    center offset at every budget. Right: linear drift to 3× at the highest
+                    compute budget. Bars are grouped by sampling grid width (XS through XL).
+                    Negative values indicate underestimation; positive values indicate
+                    overestimation. On the symmetric surface, the constant offset results
+                    correspond to Figure 4 and the drift results correspond to Figure 5;
+                    the asymmetric surfaces reveal how these sampling biases interact with
+                    the inherent asymmetry bias.
                 </figcaption>
             </figure>
 
@@ -1529,38 +1535,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Baseline -->
-                            <tr class="surface-header">
-                                <td colspan="6">Baseline (no sampling bias)</td>
-                            </tr>
-                            <tr><td>Baseline</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904640633e+11">408.2B</td><td title="0.000000000049053%" class="error-zero">≈0%</td></tr>
-                            <tr><td>Baseline</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904638362e+11">408.2B</td><td title="-0.000000000006578%" class="error-zero">≈0%</td></tr>
-                            <tr><td>Baseline</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904638746e+11">408.2B</td><td title="0.000000000002826%" class="error-zero">≈0%</td></tr>
-                            <tr><td>Baseline</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904640399e+11">408.2B</td><td title="0.000000000043327%" class="error-zero">≈0%</td></tr>
-                            <tr><td>Baseline</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.022640080071175e+12">4.02T</td><td title="-0.326937803732719%" class="error-low">−0.33%</td></tr>
-                            <tr><td>Baseline</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.983323492914587e+12">3.98T</td><td title="-1.301125043704300%" class="error-low">−1.30%</td></tr>
-                            <tr><td>Baseline</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.918678311395280e+12">3.92T</td><td title="-2.902904738135434%" class="error-medium">−2.90%</td></tr>
-                            <tr><td>Baseline</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.829997307632958e+12">3.83T</td><td title="-5.100244551712022%" class="error-medium">−5.10%</td></tr>
-                            <tr><td>Baseline</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.434797634319416e+16">44.3Q</td><td title="-1.674747716507073%" class="error-low">−1.67%</td></tr>
-                            <tr><td>Baseline</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.217262808974590e+16">42.2Q</td><td title="-6.497778742083532%" class="error-medium">−6.50%</td></tr>
-                            <tr><td>Baseline</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="3.882927967488314e+16">38.8Q</td><td title="-13.910418584294648%" class="error-high">−13.91%</td></tr>
-                            <tr><td>Baseline</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="3.467711572211202e+16">34.7Q</td><td title="-23.116308048545221%" class="error-high">−23.12%</td></tr>
-                            <!-- Drift to 3× -->
-                            <tr class="surface-header">
-                                <td colspan="6">Drift to 3× (sampling center drifts from true optimum to 3× at highest budget)</td>
-                            </tr>
-                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.330329296629141e+11">433.0B</td><td title="+6.070971949665736%" class="error-medium">+6.07%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.293594960061901e+11">429.4B</td><td title="+5.171168143371758%" class="error-medium">+5.17%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.233449170507438e+11">423.3B</td><td title="+3.697903197519233%" class="error-low">+3.70%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.151438757202593e+11">415.1B</td><td title="+1.689066535602950%" class="error-low">+1.69%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.504566829000340e+12">4.50T</td><td title="+11.614253519357661%" class="error-high">+11.61%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.432623377869933e+12">4.43T</td><td title="+9.831637143942757%" class="error-high">+9.83%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.315883700538125e+12">4.32T</td><td title="+6.939058914756627%" class="error-medium">+6.94%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.158830754490464e+12">4.16T</td><td title="+3.047597648542992%" class="error-medium">+3.05%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="6.069765266782697e+16">60.7Q</td><td title="+34.574618814502173%" class="error-high">+34.57%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.865168157587590e+16">58.7Q</td><td title="+30.038433843534605%" class="error-high">+30.04%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.546299036327943e+16">55.5Q</td><td title="+22.968689206115091%" class="error-high">+22.97%</td></tr>
-                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.141644796779622e+16">51.4Q</td><td title="+13.996976521128124%" class="error-high">+14.00%</td></tr>
                             <!-- Offset 3× -->
                             <tr class="surface-header">
                                 <td colspan="6">Offset 3× (sampling center at 3× true optimum at every budget)</td>
@@ -1577,6 +1551,22 @@
                             <tr><td>Offset 3×</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.160438683341485e+16">51.6Q</td><td title="+14.413661517819328%" class="error-high">+14.41%</td></tr>
                             <tr><td>Offset 3×</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.824225048547561e+16">48.2Q</td><td title="+6.959366375593294%" class="error-medium">+6.96%</td></tr>
                             <tr><td>Offset 3×</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.400977998376982e+16">44.0Q</td><td title="-2.424573190039884%" class="error-medium">−2.42%</td></tr>
+                            <!-- Drift to 3× -->
+                            <tr class="surface-header">
+                                <td colspan="6">Drift to 3× (sampling center drifts from true optimum to 3× at highest budget)</td>
+                            </tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.330329296629141e+11">433.0B</td><td title="+6.070971949665736%" class="error-medium">+6.07%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.293594960061901e+11">429.4B</td><td title="+5.171168143371758%" class="error-medium">+5.17%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.233449170507438e+11">423.3B</td><td title="+3.697903197519233%" class="error-low">+3.70%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.151438757202593e+11">415.1B</td><td title="+1.689066535602950%" class="error-low">+1.69%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.504566829000340e+12">4.50T</td><td title="+11.614253519357661%" class="error-high">+11.61%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.432623377869933e+12">4.43T</td><td title="+9.831637143942757%" class="error-high">+9.83%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.315883700538125e+12">4.32T</td><td title="+6.939058914756627%" class="error-medium">+6.94%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.158830754490464e+12">4.16T</td><td title="+3.047597648542992%" class="error-medium">+3.05%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="6.069765266782697e+16">60.7Q</td><td title="+34.574618814502173%" class="error-high">+34.57%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.865168157587590e+16">58.7Q</td><td title="+30.038433843534605%" class="error-high">+30.04%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.546299036327943e+16">55.5Q</td><td title="+22.968689206115091%" class="error-high">+22.97%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.141644796779622e+16">51.4Q</td><td title="+13.996976521128124%" class="error-high">+14.00%</td></tr>
                         </tbody>
                     </table>
                     <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
@@ -1587,30 +1577,37 @@
             </details>
 
             <p>
-                The baseline panel (left) reproduces Figure 3 for reference: asymmetry
-                bias alone produces errors up to −5% on the Chinchilla surface and −23%
-                on the Asymmetric surface at the widest grid. When off-center sampling is
-                introduced (center and right panels), the two bias sources interact.
-            </p>
-
-            <p>
-                Off-center sampling pushes errors positive (overestimating \(D^*\)), while
-                asymmetry bias pushes errors negative (underestimating). The net error depends
-                on which source dominates. At narrow grids, asymmetry bias is negligible and
-                the sampling bias determines the error: drift to 3× produces +6% on the symmetric
-                surface and +12% on the Chinchilla surface. At wider grids, asymmetry bias
-                grows and begins to offset the sampling bias. On the Chinchilla surface with
-                a constant 3× offset, this cancellation is nearly perfect at XL (+0.24%), but
-                this is coincidental rather than reliable.
+                Comparing with the baseline in Figure 3, where asymmetry bias alone produces
+                errors up to −5% on Chinchilla and −23% on the Asymmetric surface, the two
+                bias sources interact in opposite directions. Off-center sampling pushes
+                errors positive (overestimating \(D^*\)), while asymmetry bias pushes errors
+                negative (underestimating). The net error depends on which source dominates.
+                With narrow grids, asymmetry bias is negligible and the sampling bias determines
+                the error: drift to 3× produces +6% on the symmetric surface and +12% on
+                Chinchilla. With wider grids, asymmetry bias grows and begins to offset the
+                sampling bias. On Chinchilla with a constant 3× offset, this cancellation
+                is nearly perfect with the XL grid (+0.24%), but this is only coincidental.
             </p>
 
             <p>
                 On the Asymmetric surface, the drift configuration produces the largest errors
-                in the figure: +35% at XS and still +14% at XL. Even the constant offset
-                configuration reaches +19% at XS before the asymmetry bias partially offsets
-                it at wider grids. These configurations use a 3× offset, which is modest
-                relative to the uncertainty in real experiments where the true optimum is
-                unknown.
+                in the figure: +35% with the XS grid and still +14% with XL. Even the
+                constant offset configuration reaches +19% with XS before the asymmetry
+                bias partially offsets it with wider grids.
+            </p>
+
+            <p>
+                These 3× perturbations are representative of realistic conditions. The IsoFLOP curves they
+                produce on the symmetric surface (top-left panels of Figures 4 and 5) show
+                sampling centers that are visibly displaced from the curve minima, with the
+                displacement either uniform across budgets (constant offset) or growing toward
+                higher budgets (drift). Both patterns are qualitatively similar to what is
+                observed in the published studies shown in Figure 6, where sampling grids
+                are not perfectly centered and the degree of off-centering varies across
+                compute budgets. A 3× factor means the sampling center sits at three times
+                the true optimal token count, which is likely within the range of uncertainty
+                practitioners face when choosing sampling centers before the optimum is
+                known.
             </p>
 
             <p>
@@ -1630,10 +1627,11 @@
                     asymmetry and off-center sampling each produce meaningful errors on their
                     own. When they happen to act in the same direction, the combined error
                     exceeds either one alone: on the Asymmetric surface with drift to 3×,
-                    errors reach 35% even at the narrowest grid. When they oppose, partial
-                    cancellation can occur, but this depends on the specific combination of
-                    surface geometry, offset magnitude, and grid width, making it unreliable
-                    in practice.
+                    errors reach 35% even when using the narrowest grid, where the parabolic
+                    approximation is most accurate. When they oppose, partial cancellation
+                    can occur, but this depends on the specific combination of surface
+                    geometry, offset magnitude, and grid width, making it unreliable in
+                    practice.
                 </p>
             </div>
 
@@ -2028,10 +2026,11 @@
 
             <p>
                 Because VPNLS recovers the full loss surface rather than just scaling
-                exponents, it provides a more precise foundation for extending the
-                Chinchilla model to other settings. Analytical extensions to
-                the loss model have already been proposed for additional training
-                configuration choices such as data
+                exponents, it may provide a more precise foundation for extending the
+                Chinchilla model to other settings. A number of
+                <strong><em>analytical</em></strong> extensions to the Chinchilla loss surface have been
+                proposed that add or modify terms in the original functional form to
+                account for additional training configuration choices such as data
                 repetition<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
                 overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
                 precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
@@ -2041,8 +2040,11 @@
                 non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
                 and downstream task
                 performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
-                among others. Studying how the biases and fitting methods examined here
-                apply to these richer models is a natural direction for future work.
+                among others. These extensions prescribe explicit functional forms for
+                the loss surface rather than inferring them automatically, and in most cases they retain
+                the partially linear structure that variable projection exploits. Studying
+                how the biases and fitting methods examined here apply to these richer
+                models is a natural direction for future work.
             </p>
 
             <p>
@@ -2140,18 +2142,21 @@
                     FLOPs) to higher compute budgets (10<sup>22</sup>&ndash;10<sup>25</sup> FLOPs),
                     with asymmetry and sampling biases acting simultaneously. Columns correspond
                     to loss surfaces (symmetric, Chinchilla, Asymmetric); rows correspond to
-                    sampling ranges (narrow ±2×, medium ±14×, wide ±100×). Each curve represents
-                    a different sampling bias configuration: baseline (no bias), two linear
-                    drift rates (drift_0.2 and drift_0.4, where the value is the log<sub>10</sub>
-                    offset at the highest compute budget), and two constant center offsets
-                    (scale_1.5 and scale_2.0, where the value is the multiplicative factor
-                    applied at every budget). On symmetric surfaces, errors are
-                    driven entirely by off-center sampling; on asymmetric surfaces, the inherent
-                    surface bias adds a constant offset visible as the non-zero baseline curve.
-                    Drift-based biases produce errors that grow with extrapolation distance (steeper
-                    curves), while constant offsets and surface asymmetry produce flat or slowly
-                    varying errors. At wider sampling ranges, surface asymmetry dominates and can
-                    either reinforce or partially offset the sampling biases.
+                    sampling ranges (narrow ±2×, medium ±16×, wide ±100×). The wide row uses
+                    an extreme grid width not employed in the main text, included here to
+                    further illustrate how far results can deviate with a misconfigured
+                    experiment. Each curve represents a different sampling bias configuration:
+                    baseline (no bias), two linear drift rates (drift_0.2 and drift_0.4,
+                    where the value is the log<sub>10</sub> offset at the highest compute
+                    budget), and two constant center offsets (scale_1.5 and scale_2.0, where
+                    the value is the multiplicative factor applied at every budget). On
+                    symmetric surfaces, errors are driven entirely by off-center sampling;
+                    on asymmetric surfaces, the inherent surface bias adds a constant offset
+                    visible as the non-zero baseline curve. Drift-based biases produce errors
+                    that grow with extrapolation distance (steeper curves), while constant
+                    offsets and surface asymmetry produce flat or slowly varying errors. With
+                    wider sampling ranges, surface asymmetry dominates and can either reinforce
+                    or partially offset the sampling biases.
                 </figcaption>
             </figure>
         </section>

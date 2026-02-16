@@ -3,14 +3,14 @@
 > **Editorial Guidelines**
 >
 > - Format: the article is authored as an HTML file with relative image references and external dependencies (MathJax, Google Fonts); a separate build step inlines local images as base64 data URIs to produce a self-contained standalone HTML for deployment (see `specs/build.md` for the full build workflow)
-> - Length: target a ~20 minute read
+> - Length: target a ~30 minute read
 > - Audience: ML practitioners familiar with scaling laws but not Approach 2/3 nuances
 > - Purpose: demonstrate systematic biases in Chinchilla Approach 2 using noise-free synthetic data
 > - Figures: use custom code extractions to generate figures or new data, not direct experiment outputs from other parts of this project
 > - Implementation details: output paths, filenames, and other build artifacts should not be specified in this outline; those belong in code or `specs/build.md`
 > - Tone: soft, neutral; avoid strong language like "catastrophic", "disastrous", "corrupted" when referring to critiques of Approach 2; target a balanced, informative register
 > - Prose: avoid meta-commentary that tells the reader what is important or summarizes what they just read; let the content speak for itself and use callout boxes for key messages
-> - Grammar: avoid em dashes; use other grammatical devices instead
+> - **Syntax (IMPORTANT):** favor direct, integrated sentences. Do not use em dashes or explanatory colons to append elaborations, asides, or restatements onto a clause. Instead, weave the information into the sentence itself, or use a separate sentence. If you find yourself reaching for "—" or "general statement: specific restatement", restructure.
 > - References (see `specs/build.md` for regeneration steps):
 >   - Source of truth: `docs/references/references.yaml`
 >   - Inline citation format: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list
@@ -53,7 +53,7 @@
 - Frame as establishing a baseline before examining failure modes
 - Use a concrete asymmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
 - Note that equal exponents (α = β) mean compute splits evenly; true scaling exponents are a = b = 0.5
-- Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs, fit parabolas, extract optimal D*
+- Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs with 15 model sizes per curve, fit parabolas, extract optimal D*; note that this same configuration (five budgets, 15 points per curve) is used in all simulations throughout the article
 - Figure (1 row × 2 columns): IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
 - Table: show perfect recovery of b (D* exponent) and b₀ (D* intercept) with machine-precision relative errors (~10⁻¹⁰ %)
 - Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabola vertex shift is zero when α = β, so the inferred optima coincide with the true optima
@@ -143,11 +143,12 @@
 - This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
 
 - **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis using the same 3× drift and 3× center offset from the main-text off-center figures
-- Figure (1×3 bar chart grid): one subplot per sampling configuration (baseline, drift to 3×, offset 3×); loss surface on x-axis, bars grouped/colored by grid width (XS through XL); baseline panel reproduces Figure 3 for reference
+- Figure (1×2 bar chart grid): one subplot per sampling configuration (offset by 3×, drift to 3×); loss surface on x-axis, bars grouped/colored by grid width (XS through XL); on the symmetric surface, constant offset results correspond to the constant bias figure and drift results correspond to the drifting bias figure
 - Collapsible raw data table with full-precision values for all config/surface/grid combinations
-- Describe interaction: off-center sampling pushes errors positive, asymmetry pushes negative; net error depends on which dominates; partial cancellation at wider grids is coincidental, not reliable
-- Cross-reference to Appendix B (Figure A2) for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
-- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone (35% on Asymmetric surface with drift to 3×)
+- Describe interaction: off-center sampling pushes errors positive, asymmetry pushes negative; net error depends on which dominates; partial cancellation with wider grids is only coincidental
+- Argue that 3× perturbations are representative of realistic conditions: IsoFLOP curves they produce are qualitatively similar to published studies; 3× offset is likely within the range of uncertainty practitioners face
+- Cross-reference to appendix for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
+- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone, even with the narrowest grid where the parabolic approximation is most accurate
 
 ---
 
@@ -218,5 +219,5 @@
 ### B. Combined Extrapolation Error by Compute Budget
 
 - Detailed view of D* extrapolation error as a function of compute budget, from Experiment 4
-- Figure (3 rows × 3 columns): rows = sampling ranges (narrow ±2×, medium ±14×, wide ±100×), columns = loss surfaces (symmetric, Chinchilla, Asymmetric); each panel shows relative D* error vs extrapolation compute budget (10²²–10²⁵ FLOPs) with one curve per bias configuration (baseline, two drift rates, two constant offsets)
+- Figure (3 rows × 3 columns): rows = sampling ranges (narrow ±2×, medium ±16×, wide ±100×), columns = loss surfaces (symmetric, Chinchilla, Asymmetric); each panel shows relative D* error vs extrapolation compute budget (10²²–10²⁵ FLOPs) with one curve per bias configuration (baseline, two drift rates, two constant offsets)
 - Shows how drift-based biases produce errors that grow with extrapolation distance while surface asymmetry and constant offsets produce flat or slowly varying errors; also reveals how these patterns change across sampling ranges and bias magnitudes

@@ -17,6 +17,7 @@ from scaling_law_analysis.chinchilla import (
     Approach2Result,
 )
 from scaling_law_analysis.config import prepare_output_dir
+from scaling_law_analysis.experiments.common import N_POINTS
 
 
 # =============================================================================
@@ -26,7 +27,6 @@ from scaling_law_analysis.config import prepare_output_dir
 SYMMETRIC_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
 COMPUTE_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
 LOG_RANGE = np.log10(16)  # Extra Large (XL) ±16× sampling grid
-N_POINTS = 15
 
 
 # =============================================================================
@@ -1064,16 +1064,15 @@ def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
 # Sampling bias configurations for the compounding errors figure.
 # Uses the same 3× magnitudes as the main-text off-center figures (Figures 4–5).
 COMPOUNDING_CONFIGS = [
-    {"label": "Baseline", "drift_rate": 0.0, "center_scale": 1.0},
+    {
+        "label": f"Offset by {OFF_CENTER_SCALE:.0f}×",
+        "drift_rate": 0.0,
+        "center_scale": OFF_CENTER_SCALE,
+    },
     {
         "label": f"Drift to {OFF_CENTER_SCALE:.0f}×",
         "drift_rate": OFF_CENTER_DRIFT_RATE,
         "center_scale": 1.0,
-    },
-    {
-        "label": f"Offset {OFF_CENTER_SCALE:.0f}×",
-        "drift_rate": 0.0,
-        "center_scale": OFF_CENTER_SCALE,
     },
 ]
 
@@ -1100,7 +1099,10 @@ def create_compounding_errors_figure(output_dir: Path) -> dict:
     EVAL_BUDGET = 1e24
     colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]
 
-    fig, axes = plt.subplots(1, 3, figsize=(16, 5.5), sharey=True)
+    n_configs = len(COMPOUNDING_CONFIGS)
+    fig, axes = plt.subplots(1, n_configs, figsize=(6 * n_configs, 4.5), sharey=True)
+    if n_configs == 1:
+        axes = [axes]
 
     x_positions = np.arange(len(surfaces))
     n_grids = len(GRID_WIDTHS)
@@ -1152,7 +1154,7 @@ def create_compounding_errors_figure(output_dir: Path) -> dict:
                 linewidth=0.5,
             )
 
-        if ax_idx == 1:
+        if n_configs <= 2 or ax_idx == n_configs // 2:
             ax.set_xlabel("Loss Surface")
         ax.set_xticks(x_positions)
         ax.set_xticklabels(
@@ -1231,7 +1233,6 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     from scaling_law_analysis.experiments.common import (
         COMPUTE_BUDGETS as EXP_BUDGETS,
         LOG_RANGES,
-        N_POINTS as EXP_N_POINTS,
         LOSS_SURFACES,
     )
     from scaling_law_analysis.experiments.exp5_parametric_surface import (
@@ -1246,7 +1247,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     all_results = run_method_comparison(
         compute_budgets=EXP_BUDGETS,
         log_ranges=LOG_RANGES,
-        n_points=EXP_N_POINTS,
+        n_points=N_POINTS,
     )
 
     surface_names = [name for name, _ in LOSS_SURFACES]
