@@ -1,0 +1,160 @@
+\documentclass[11pt]{article}
+
+% --- Core packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{natbib}
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+
+% --- Hyperref setup ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    citecolor=blue!60!black,
+    urlcolor=blue!60!black,
+}
+
+% --- Title ---
+\title{Problems with Chinchilla Approach~2:\\
+Systematic Biases in IsoFLOP Parabola Fits}
+
+\author{
+    Eric Czech \\
+    Open Athena AI Foundation
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Chinchilla Approach~2 is arguably the most widely adopted method for fitting
+neural scaling laws, used by leading AI labs and academic groups to plan
+compute-optimal training configurations. The method fits parabolas to IsoFLOP
+loss curves and extracts scaling exponents through a sequence of simple
+polynomial and linear regressions. We show that this parabolic approximation
+introduces systematic biases in compute-optimal allocation estimates, even on
+noise-free synthetic data under ideal experimental conditions. Two independent
+bias sources are identified: surface asymmetry ($\alpha \neq \beta$), which
+shifts intercept estimates, and off-center sampling, which distorts intercepts
+or exponents depending on whether the offset is constant or varies with compute
+budget. These biases compound in practice and grow with sampling grid width. We
+show that exploiting the partially linear structure of the Chinchilla loss
+surface, by separating linear coefficients from nonlinear exponents, eliminates
+these biases entirely. Our realization of this approach, Variable Projection
+with Non-negative Least Squares (VPNLS), recovers all five surface parameters
+with machine precision across all conditions tested, while offering comparable
+data efficiency to Approach~2, high stability with full parametric inference,
+and no dependence on specialized IsoFLOP experiment designs.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:introduction}
+
+Chinchilla Approach~2 is arguably the most widely adopted method for fitting
+scaling laws in practice today. Introduced in the original Chinchilla
+paper~\citep{chinchilla}, it has since been used by leading AI labs including
+DeepMind~\citep{chinchilla,sovit} (its creators),
+Meta~\citep{llama3,optibert}, DeepSeek~\citep{deepseek},
+Microsoft~\citep{ehr_scaling}, Amazon~\citep{il_scaling},
+Waymo~\citep{waymo_scaling}, and Arc Institute~\citep{evo}, among others. It
+is also a workhorse method for academic scaling law
+studies~\citep{dit_scaling,dlm_scaling,biosignal_scaling} and high-profile
+practitioner
+tutorials\footnote{\url{https://github.com/karpathy/nanochat/discussions/420}}
+from researchers like Andrej Karpathy.
+
+The method's appeal lies in its stability and data efficiency relative to
+nonlinear optimization over all loss surface parameters. Rather than fitting
+all five parameters of the loss surface simultaneously, Approach~2 targets only
+the two scaling exponents, relying on second-order Taylor approximations that
+reduce each IsoFLOP curve to a simple parabola. This sacrifices recovery of the
+full loss surface but makes estimation far more stable and data-efficient,
+letting practitioners extract the most actionable quantities for compute
+allocation planning through a sequence of straightforward polynomial and linear
+fits, without ever touching a nonlinear optimizer.
+
+Despite this broad adoption, the sensitivity of the method's core
+approximations and its behavior on loss surfaces that are less symmetric than
+the original Chinchilla form (where parameter and token scaling exponents are
+roughly equal) have not, to our knowledge, been studied in detail. Here we
+revisit the basics of how to apply a simple model like Chinchilla with high
+precision and stability, to validation loss alone, before considering more
+advanced extensions. We investigate through noise-free synthetic simulations
+that isolate systematic biases inherent to the method itself by eliminating all
+sources of statistical noise.
+
+We show how these biases affect downstream decisions like dataset size selection
+for final training runs at large compute budgets. We show how extrapolation
+errors trace back to suboptimal IsoFLOP experiment design, and that pathologies
+in these designs can be observed in real, high-profile scaling law studies even
+if they are difficult to quantify precisely. Finally, we propose an alternative
+fitting method that is simple, stable, and free of these biases while building
+on the same intuitive computational shortcut: optimizing exponential terms
+separately from linear terms. We call this approach Variable Projection with
+Non-negative Least Squares (VPNLS).
+
+This investigation is also motivated by a broader landscape of
+\emph{analytical} extensions to the Chinchilla loss surface. A growing body of
+work adds or modifies terms in the original functional form to account for
+additional training configuration choices such as data
+repetition~\citep{data_constrained,data_filtering_scaling},
+overfitting~\citep{mupt}, precision~\citep{precision_scaling}, MoE
+sparsity~\citep{moe_scaling}, data quality~\citep{quality_scaling}, data
+mixtures~\citep{optimal_data_mixtures,redundancy_scaling,data_filtering_scaling},
+non-embedding parameters~\citep{reconciling_scaling}, and downstream task
+performance~\citep{ai2_task_scaling}, to name a few. These extensions prescribe
+explicit functional forms rather than inferring scaling law structure
+automatically, and they build directly on the Chinchilla model as a foundation.
+A fitting method that recovers the base surface with higher precision may
+therefore offer a stronger starting point for these richer settings as well.
+
+\section{Preliminaries}
+\label{sec:preliminaries}
+
+Placeholder for the preliminaries section covering the loss surface, notation,
+and fitting methods (Approach~2 and Approach~3).
+
+\section{The Happy Path: Symmetric Surfaces}
+\label{sec:happy_path}
+
+Placeholder for the symmetric surface baseline analysis.
+
+\section{Asymmetric Surfaces: Intercept and Extrapolation Errors}
+\label{sec:asymmetric}
+
+Placeholder for the asymmetric surface analysis showing intercept and
+extrapolation errors.
+
+\section{Off-Center Sampling: Exponent and Extrapolation Errors}
+\label{sec:off_center}
+
+Placeholder for off-center sampling analysis.
+
+\section{IsoFLOP Curves in the Wild}
+\label{sec:wild}
+
+Placeholder for the analysis of published IsoFLOP curves.
+
+\section{Robust Fits: Unbiased Estimation with Linear Separation}
+\label{sec:vpnls}
+
+Placeholder for the VPNLS method description and comparison.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Placeholder for the conclusion.
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

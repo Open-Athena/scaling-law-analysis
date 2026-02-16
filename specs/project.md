@@ -25,6 +25,7 @@ This project follows Spec-Driven Development (SDD). The `specs/` directory is an
 | [experiments.md](experiments.md) | Experiment definitions: hypotheses, methods, visualizations |
 | [article.md](article.md) | Article outline, editorial guidelines, figure specifications |
 | [build.md](build.md) | Build & deploy workflow: experiments → figures → article → deploy |
+| [paper.md](paper.md) | arXiv preprint: LaTeX conversion of the main article, build setup, section overrides |
 | [sync.md](sync.md) | Spec ↔ implementation sync: which specs control which artifacts, update rules |
 
 ## Project Structure
@@ -41,8 +42,10 @@ This project follows Spec-Driven Development (SDD). The `specs/` directory is an
 | `  experiments/run_all.py` | Runs all experiments sequentially |
 | `  article/figures.py` | Generates article figures and CSV data to `results/article/` |
 | `  article/standalone.py` | Inlines images into self-contained HTML |
+| `  paper/build.py` | Compiles LaTeX paper to PDF via Tectonic |
 | `docs/` | Supplementary documentation |
 | `  references/` | `references.yaml` — source of truth for citations |
 | `results/` | All generated outputs (git-tracked) |
 | `  experiments/` | Per-experiment figures (`exp{N}/`) |
 | `  article/` | Article HTML, figures, CSVs, and supplementary PDF |
+| `  paper/` | LaTeX source (paper.tex, references.bib) and compiled PDF |
