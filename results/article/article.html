@@ -616,6 +616,19 @@
                 a workhorse method for academic scaling law
                 studies<sup><a href="#ref-dit_scaling">[10]</a>,<a href="#ref-dlm_scaling">[11]</a>,<a href="#ref-biosignal_scaling">[12]</a></sup>
                 and high-profile practitioner <a href="https://x.com/karpathy/status/2009037707918626874">tutorials</a> from researchers like Andrej Karpathy.
+                Its influence extends well beyond the original formulation. A growing body
+                of work has proposed analytical extensions to the Chinchilla loss model itself
+                to account for
+                epochs<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
+                precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
+                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
+                data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
+                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
+                and downstream task
+                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
+                among other concerns.
             </p>
 
             <p>
@@ -631,12 +644,15 @@
             </p>
 
             <p>
-                To our knowledge, the sensitivity of these approximations and the method's
-                behavior on loss surfaces that are less symmetric than the original Chinchilla
-                form (where parameter and token scaling exponents are roughly equal) have not
-                been studied in detail. This article investigates that gap through noise-free
-                synthetic simulations that isolate systematic biases inherent to the method
-                itself by eliminating all sources of statistical noise.
+                Despite this broad adoption, the sensitivity of the method's core
+                approximations and its behavior on loss surfaces that are less symmetric than
+                the original Chinchilla form (where parameter and token scaling exponents are
+                roughly equal) have not, to our knowledge, been studied in detail. Here we
+                revisit the basics of how to apply a simple model like Chinchilla with high
+                precision and stability, to validation loss alone, before considering more
+                advanced extensions. We investigate through noise-free synthetic simulations
+                that isolate systematic biases inherent to the method itself by eliminating
+                all sources of statistical noise.
             </p>
 
             <p>
@@ -1958,12 +1974,12 @@
                     \(L(N, D) = E + A/N^\alpha + B/D^\beta\) is correct in practice. While
                     there is substantial evidence legitimizing this
                     model<sup><a href="#ref-chinchilla_robustness">[15]</a></sup>,
-                    alternatives also exist, notably the original Kaplan scaling
-                    law<sup><a href="#ref-kaplan_scaling">[16]</a></sup> that predates
-                    Chinchilla. Better models may emerge, or models that incorporate other
-                    important aspects of training such as non-embedding parameters, epochs,
-                    number of experts, sparsity, and data modalities or mixtures may become
-                    more canonical.
+                    alternatives exist, including the Kaplan loss
+                    model<sup><a href="#ref-kaplan_scaling">[16]</a></sup>,
+                    refined analytical surfaces like
+                    Farseer<sup><a href="#ref-farseer">[26]</a></sup> and
+                    MuPT<sup><a href="#ref-mupt">[18]</a></sup>, and agent-discovered
+                    functional forms<sup><a href="#ref-sld_agent">[27]</a></sup>.
                 </li>
                 <li>
                     <strong>Qualitative characterization of published study errors.</strong>
@@ -2018,6 +2034,17 @@
             <li id="ref-data_filtering_scaling">"Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic," <em>CVPR 2024</em>. <a href="https://arxiv.org/abs/2404.07177">https://arxiv.org/abs/2404.07177</a></li>
             <li id="ref-chinchilla_robustness">"Evaluating the Robustness of Chinchilla Compute-Optimal Scaling," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2509.23963">https://arxiv.org/abs/2509.23963</a></li>
             <li id="ref-kaplan_scaling">"Scaling Laws for Neural Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2001.08361">https://arxiv.org/abs/2001.08361</a></li>
+            <li id="ref-data_constrained">"Scaling Data-Constrained Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2305.16264">https://arxiv.org/abs/2305.16264</a></li>
+            <li id="ref-mupt">"MuPT: A Generative Symbolic Music Pretrained Transformer," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2404.06393">https://arxiv.org/abs/2404.06393</a></li>
+            <li id="ref-precision_scaling">"Scaling Laws for Precision," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2411.04330">https://arxiv.org/abs/2411.04330</a></li>
+            <li id="ref-reconciling_scaling">"Reconciling Kaplan and Chinchilla Scaling Laws," <em>TMLR</em>. <a href="https://arxiv.org/abs/2406.12907">https://arxiv.org/abs/2406.12907</a></li>
+            <li id="ref-quality_scaling">"Scaling Laws Revisited: Modeling the Role of Data Quality in Language Model Pretraining," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.03313">https://arxiv.org/abs/2510.03313</a></li>
+            <li id="ref-optimal_data_mixtures">"Scaling Laws for Optimal Data Mixtures," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2507.09404">https://arxiv.org/abs/2507.09404</a></li>
+            <li id="ref-redundancy_scaling">"Scaling Laws are Redundancy Laws," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2509.20721">https://arxiv.org/abs/2509.20721</a></li>
+            <li id="ref-moe_scaling">"Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2507.17702">https://arxiv.org/abs/2507.17702</a></li>
+            <li id="ref-ai2_task_scaling">"Establishing Task Scaling Laws via Compute-Efficient Model Ladders," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2412.04403">https://arxiv.org/abs/2412.04403</a></li>
+            <li id="ref-farseer">"Predictable Scale: Part II, Farseer: A Refined Scaling Law in Large Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2506.10972">https://arxiv.org/abs/2506.10972</a></li>
+            <li id="ref-sld_agent">"Can Language Models Discover Scaling Laws?," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2507.21184">https://arxiv.org/abs/2507.21184</a></li>
             </ol>
         </section>
 

@@ -22,9 +22,10 @@
 
 - Chinchilla Approach 2 is arguably the most widely adopted method for fitting scaling laws in practice today
 - Used by top AI labs including DeepMind [chinchilla] [sovit] (its creators), Meta [llama3] [optibert], DeepSeek [deepseek], Microsoft [ehr_scaling], Amazon [il_scaling], Waymo [waymo_scaling], and Arc Institute [evo], among others
-  - TODO: Continue to pad this list out later
 - Also a workhorse method for academic studies [dit_scaling] [dlm_scaling] [biosignal_scaling] and high-profile practitioner tutorials (e.g. Andrej Karpathy)
 - Its appeal lies in stability and data efficiency relative to nonlinear optimization over all loss surface parameters; this owes to its reliance on 2nd-order Taylor approximations fit as parabolas and the fact that it estimates only the more actionable scaling exponents rather than the full set of surface parameters
+- Many extensions have since been formulated to support other aspects of training like epochs [data_constrained] [data_filtering_scaling], overfitting [mupt], precision [precision_scaling], MoE sparsity [moe_scaling], data quality [quality_scaling], optimizing data mixtures [optimal_data_mixtures] [redundancy_scaling] [data_filtering_scaling], non-embedding parameters [reconciling_scaling] etc. or to focus on scaling directly for downstream task performance [ai2_task_scaling]
+  - We revisit basics here on how to best apply a simple model like Chinchilla with high precision and stability, to validation loss alone, before considering more advanced extensions
 - To our knowledge, the sensitivity of these approximations and the method's behavior on loss surfaces that are less symmetric than the original Chinchilla form (where token and parameter scaling exponents are roughly equal) have not been studied in detail
 - We investigate this through noise-free synthetic simulations that isolate systematic biases inherent to the method itself
 - We show how these biases impact downstream decisions like dataset size selection for final training runs at large compute budgets
@@ -200,8 +201,9 @@
 - Bullet list with bold labels per item
 - **Irreducible loss dominance at large scale**: at sufficiently large compute budgets the Chinchilla surface reaches E asymptotically, making extrapolations irrelevant and all training configurations equally effective; study assumes practitioners are still in a regime where scaling law extrapolations inform model quality
 - **No quantification of downstream cost**: no connection from token extrapolation error → under/over-training → model performance → cost in FLOPs/$; justified because alternatives to Approach 2 follow from theory and simulation and are easy to implement at no extra computational cost
-- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist, e.g. the Kaplan loss model [kaplan_scaling]; future models may incorporate non-embedding parameters, epochs, num experts, sparsity, data modalities/mixtures, etc.
+- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist, including the Kaplan loss model [kaplan_scaling], refined analytical surfaces like Farseer [farseer] and MuPT [mupt], and agent-discovered functional forms [sld_agent]
 - **Qualitative characterization of published study errors**: likely errors in published studies are not quantified; the qualitative characterization is compelling but difficult to quantify because real pathologies don't follow the convenient theoretical model used in simulations
+- TODO: add limitation for ignoring scaling laws about downstream evals
 
 ---
 

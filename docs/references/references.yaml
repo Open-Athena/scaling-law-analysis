@@ -80,3 +80,58 @@
   title: Scaling Laws for Neural Language Models
   venue: ArXiv
   url: https://arxiv.org/abs/2001.08361
+
+- key: data_constrained
+  title: Scaling Data-Constrained Language Models
+  venue: ArXiv
+  url: https://arxiv.org/abs/2305.16264
+
+- key: mupt
+  title: "MuPT: A Generative Symbolic Music Pretrained Transformer"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2404.06393
+
+- key: precision_scaling
+  title: Scaling Laws for Precision
+  venue: ArXiv
+  url: https://arxiv.org/abs/2411.04330
+
+- key: reconciling_scaling
+  title: Reconciling Kaplan and Chinchilla Scaling Laws
+  venue: TMLR
+  url: https://arxiv.org/abs/2406.12907
+
+- key: quality_scaling
+  title: "Scaling Laws Revisited: Modeling the Role of Data Quality in Language Model Pretraining"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2510.03313
+
+- key: optimal_data_mixtures
+  title: Scaling Laws for Optimal Data Mixtures
+  venue: ArXiv
+  url: https://arxiv.org/abs/2507.09404
+
+- key: redundancy_scaling
+  title: Scaling Laws are Redundancy Laws
+  venue: ArXiv
+  url: https://arxiv.org/abs/2509.20721
+
+- key: moe_scaling
+  title: "Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2507.17702
+
+- key: ai2_task_scaling
+  title: Establishing Task Scaling Laws via Compute-Efficient Model Ladders
+  venue: ArXiv
+  url: https://arxiv.org/abs/2412.04403
+
+- key: farseer
+  title: "Predictable Scale: Part II, Farseer: A Refined Scaling Law in Large Language Models"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2506.10972
+
+- key: sld_agent
+  title: Can Language Models Discover Scaling Laws?
+  venue: ArXiv
+  url: https://arxiv.org/abs/2507.21184
