@@ -616,19 +616,6 @@
                 a workhorse method for academic scaling law
                 studies<sup><a href="#ref-dit_scaling">[10]</a>,<a href="#ref-dlm_scaling">[11]</a>,<a href="#ref-biosignal_scaling">[12]</a></sup>
                 and high-profile practitioner <a href="https://x.com/karpathy/status/2009037707918626874">tutorials</a> from researchers like Andrej Karpathy.
-                Its influence extends well beyond the original formulation. A growing body
-                of work has proposed analytical extensions to the Chinchilla loss model itself
-                to account for
-                epochs<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
-                overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
-                precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
-                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
-                data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
-                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
-                non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
-                and downstream task
-                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
-                among other concerns.
             </p>
 
             <p>
@@ -1914,29 +1901,59 @@
             <h2>Conclusion</h2>
 
             <p>
-                The biases documented in this article are structural, not statistical. They exist
-                on noise-free data with perfect experimental conditions. Real experiments, which
-                contend with measurement noise and unknown optima, can only make them worse.
+                The biases documented in this article are structural, not statistical. They
+                exist on noise-free data with perfect experimental conditions. Real
+                experiments, which contend with measurement noise and unknown optima, can
+                only make them worse.
             </p>
 
             <p>
                 Two independent sources of error compound in practice. Surface asymmetry
                 (\(\alpha \neq \beta\)) biases intercepts, and off-center sampling biases
-                intercepts or exponents depending on whether the offset is constant or varies
-                with compute budget. Both act simultaneously in any real experiment.
+                intercepts or exponents depending on whether the offset is constant or
+                varies with compute budget. Both act simultaneously in any real experiment,
+                and IsoFLOP curves from published scaling law studies exhibit exactly the
+                conditions that trigger them: parabola vertices that clearly do not
+                coincide with the true loss minimum, with the degree of misalignment
+                varying across compute budgets. At practical grid widths
+                with Chinchilla-like asymmetry, token count errors of 5% or more are
+                typical; on more asymmetric surfaces, the errors reach 20% or more.
             </p>
 
             <p>
-                A practical alternative exists. Variable projection recovers all five surface
-                parameters with machine precision, uses the same intuitive linear separation
-                that makes Approach 2 appealing, and is straightforward to implement.
+                A practical alternative exists. VPNLS (Variable Projection with
+                Non-negative Least Squares) recovers all five surface parameters with
+                machine precision, uses the same intuitive linear separation that makes
+                Approach 2 appealing, and is straightforward to implement.
             </p>
 
             <p>
-                For practitioners using Approach 2: be aware that intercept estimates carry a
-                systematic bias that grows with exponent asymmetry and sampling grid width.
-                When precision matters for extrapolation to large compute budgets, consider
-                variable projection as a robust alternative.
+                Because VPNLS recovers the full loss surface rather than just scaling
+                exponents, it provides a more precise foundation for extending the
+                Chinchilla model to other settings. Analytical extensions to
+                the loss model have already been proposed for additional training
+                configuration choices such as data
+                repetition<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
+                precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
+                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
+                data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
+                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
+                and downstream task
+                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
+                among others. Studying how the biases and fitting methods examined here
+                apply to these richer models is a natural direction for future work.
+            </p>
+
+            <p>
+                Practitioners using Approach 2 should be aware that intercept estimates
+                carry a systematic bias that grows with exponent asymmetry and sampling
+                grid width. When precision matters for extrapolation to large compute
+                budgets, VPNLS offers one robust alternative, though the underlying
+                principle is more general: any method that exploits the linear
+                separability of the Chinchilla loss surface can avoid the parabolic
+                approximation while retaining much of Approach 2's simplicity.
             </p>
 
             <h3 id="limitations">Limitations</h3>
