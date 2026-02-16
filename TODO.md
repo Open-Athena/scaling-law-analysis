@@ -8,6 +8,7 @@ On article:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
   - Add limitation on the possibility of sampling grid errors canceling out
+  - Add limitation on not exploring data efficiency (yet)
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Update editorial guidelines to match longer length now

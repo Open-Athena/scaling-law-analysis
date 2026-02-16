@@ -654,6 +654,28 @@
                 optimizing exponential terms separately from linear terms. We call this
                 approach Variable Projection with Non-negative Least Squares (VPNLS).
             </p>
+
+            <p>
+                This investigation is also motivated by a broader landscape of
+                <strong><em>analytical</em></strong> extensions to the Chinchilla loss
+                surface. A growing body of work adds or modifies terms in the original
+                functional form to account for additional training configuration choices
+                such as data
+                repetition<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
+                precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
+                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
+                data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
+                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
+                and downstream task
+                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
+                to name a few. These extensions prescribe explicit functional forms rather
+                than inferring scaling law structure automatically, and they build directly
+                on the Chinchilla model as a foundation. A fitting method that recovers the
+                base surface with higher precision may therefore offer a stronger starting
+                point for these richer settings as well.
+            </p>
         </section>
 
         <!-- Section 1: Approaches to Fitting Scaling Laws -->
@@ -2026,25 +2048,11 @@
 
             <p>
                 Because VPNLS recovers the full loss surface rather than just scaling
-                exponents, it may provide a more precise foundation for extending the
-                Chinchilla model to other settings. A number of
-                <strong><em>analytical</em></strong> extensions to the Chinchilla loss surface have been
-                proposed that add or modify terms in the original functional form to
-                account for additional training configuration choices such as data
-                repetition<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
-                overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
-                precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
-                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
-                data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
-                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
-                non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
-                and downstream task
-                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
-                among others. These extensions prescribe explicit functional forms for
-                the loss surface rather than inferring them automatically, and in most cases they retain
-                the partially linear structure that variable projection exploits. Studying
-                how the biases and fitting methods examined here apply to these richer
-                models is a natural direction for future work.
+                exponents, it may also provide a more precise foundation for the
+                analytical extensions to the Chinchilla model discussed in the
+                introduction. These extensions build on the same functional form
+                and in most cases retain the partially linear structure that variable
+                projection exploits, making them a natural direction for future work.
             </p>
 
             <p>
