@@ -1874,8 +1874,15 @@
                 L-BFGS-B with 2D variable projection can match VPNLS precision, but the
                 optimizer fails to converge in a non-trivial fraction of scenarios even in this
                 relatively small test suite. The choice of finite-difference scheme matters
-                considerably. Switching from forward to 3-point central differences closes the
-                precision gap with Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
+                considerably. By default, scipy's L-BFGS-B approximates gradients with forward
+                differences: each partial derivative is estimated as
+                \((f(x + h) - f(x)) / h\). Passing
+                <code>jac='3-point'</code> to <code>scipy.optimize.minimize</code> switches to
+                3-point central differences, where each partial is estimated as
+                \((f(x + h) - f(x - h)) / 2h\). The central formula is generally more
+                accurate for smooth objectives because it samples symmetrically around the
+                point of interest. In our tests, this closes the precision gap with
+                Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
                 10<sup>&minus;8</sup>% error), but introduces sporadic line search failures.
                 Notably, these failures can be false positives. The optimizer has already
                 reached the true minimum, with residual sum of squares near machine zero, but
