@@ -142,11 +142,12 @@
 - Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
 - This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
 
-- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis (XS through XL grids, all three surfaces, all five bias configs)
-- Figure (TODO: determine presentation/layout): D* extrapolation error across grid widths and surfaces with combined biases; temporary research image at `results/article/static/combined_extrapolation_error.png`
-- Show how each bias source dominates at different grid widths; note that the two sources can partially offset or reinforce depending on offset direction
-- TODO: add a configuration where bias sources reinforce rather than offset, to demonstrate the compounding case directly
-- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error exceeds either alone
+- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis using the same 3× drift and 3× center offset from the main-text off-center figures
+- Figure (1×3 bar chart grid): one subplot per sampling configuration (baseline, drift to 3×, offset 3×); loss surface on x-axis, bars grouped/colored by grid width (XS through XL); baseline panel reproduces Figure 3 for reference
+- Collapsible raw data table with full-precision values for all config/surface/grid combinations
+- Describe interaction: off-center sampling pushes errors positive, asymmetry pushes negative; net error depends on which dominates; partial cancellation at wider grids is coincidental, not reliable
+- Cross-reference to Appendix B (Figure A2) for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
+- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone (35% on Asymmetric surface with drift to 3×)
 
 ---
 
@@ -213,3 +214,9 @@
 
 - Full per-parameter, per-surface, per-sampling-range error breakdown from Experiment 5's method comparison (see `specs/experiments.md`, Experiment 5 > Visualization > item 3)
 - Figure (3 rows × 5 columns): rows = loss surfaces, columns = parameters (E, A, B, α, β); each panel shows absolute relative error vs sampling range for all nine method configurations; baseline (no bias) only
+
+### B. Combined Extrapolation Error by Compute Budget
+
+- Detailed view of D* extrapolation error as a function of compute budget, from Experiment 4
+- Figure (3 rows × 3 columns): rows = sampling ranges (narrow ±2×, medium ±14×, wide ±100×), columns = loss surfaces (symmetric, Chinchilla, Asymmetric); each panel shows relative D* error vs extrapolation compute budget (10²²–10²⁵ FLOPs) with one curve per bias configuration (baseline, two drift rates, two constant offsets)
+- Shows how drift-based biases produce errors that grow with extrapolation distance while surface asymmetry and constant offsets produce flat or slowly varying errors; also reveals how these patterns change across sampling ranges and bias magnitudes

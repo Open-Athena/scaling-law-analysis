@@ -397,8 +397,14 @@ def create_extrapolation_figure(
     n_ranges = len(log_range_names)
     n_surfaces = len(loss_surfaces)
     fig, axes = plt.subplots(
-        n_ranges, n_surfaces, figsize=(5 * n_surfaces, 4 * n_ranges)
+        n_ranges,
+        n_surfaces,
+        figsize=(4.5 * n_surfaces, 2.8 * n_ranges),
+        gridspec_kw={"hspace": 0.35, "wspace": 0.15},
     )
+
+    is_bottom_row = n_ranges - 1
+    bottom_mid_col = n_surfaces // 2
 
     for row, (range_name, log_range) in enumerate(zip(log_range_names, log_ranges)):
         range_label = log_range_to_label(log_range)
@@ -419,30 +425,41 @@ def create_extrapolation_figure(
                     D_rel_errors,
                     "o-",
                     color=colors[i],
-                    markersize=4,
+                    markersize=3,
+                    linewidth=1.2,
                     label=label,
                 )
 
             ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
-            ax.set_xlabel("Compute budget (FLOPs)")
             ax.set_xscale("log")
             ax.grid(True, alpha=0.3)
 
-            # Title with loss surface and sampling range info
+            # X-axis: label only on bottom-middle subplot,
+            # tick labels only on bottom row
+            if row == is_bottom_row and col == bottom_mid_col:
+                ax.set_xlabel("Compute budget (FLOPs)", fontsize=9)
+            elif row != is_bottom_row:
+                ax.tick_params(axis="x", labelbottom=False)
+
+            # Y-axis: label only on left-most subplot per row
+            if col == 0:
+                ax.set_ylabel("Relative error in D* (%)", fontsize=9)
+
+            # Compact subplot title
             ratio = loss.alpha / loss.beta
             ax.set_title(
                 f"{surface_name} / {range_name} ({range_label})\n"
                 f"α={loss.alpha:.2f}, β={loss.beta:.2f}, ratio={ratio:.2f}",
-                fontsize=9,
+                fontsize=8,
+                pad=4,
             )
 
-            ax.set_ylabel("Relative error in D* (%)")
+            ax.tick_params(labelsize=8)
 
             # Show legend only in top-right panel
             if row == 0 and col == n_surfaces - 1:
                 ax.legend(fontsize=7, loc="best")
 
-    fig.suptitle(f"{title}\n{subtitle}", fontsize=12, y=1.01)
-    fig.tight_layout()
+    fig.suptitle(f"{title}\n{subtitle}", fontsize=11, y=1.02)
 
     return fig

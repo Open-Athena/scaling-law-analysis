@@ -4,18 +4,14 @@ On article:
 
 - Primary:
   - Add more appendix figures
-  - Update Motivation to mention VPNLS
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
-  - Reference OpenAI OpenWebText2 (a=.73, b=.27) and Evo (first done, not second)
-  - Pad out list of Approach 2 uses in first paragraph
-  - Validate:
-    - > The survey's own experiments show that full-grid optimization over 4500 starting points sometimes yields the worst fit among all strategies tested, evidence of "the difficulty of optimizing over this space, and the presence of many local minima."
-  - Validate the intercept error proof in greater detail manually
-  - Update conclusion after making most other changes
+  - Add limitation on the possibility of sampling grid errors canceling out
 - Secondary:
+  - Validate the intercept error proof in greater detail manually
   - Update editorial guidelines to match longer length now
+  - Pad out list of Approach 2 uses in first paragraph
   - Justify legitimacy of Chinchilla formula
     - https://arxiv.org/pdf/2509.23963
       - Reference this paper for sure as it also does perturbations to test robustness of the fit (in different interpretations of model parameters b/c paper is ambiguous)

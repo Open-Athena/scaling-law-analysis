@@ -592,6 +592,7 @@
                     <a href="#appendix">Appendix</a>
                     <ol>
                         <li><a href="#appendix-method-comparison">Detailed Method Comparison</a></li>
+                        <li><a href="#appendix-combined-extrapolation">Combined Extrapolation Error by Compute Budget</a></li>
                     </ol>
                 </li>
             </ol>
@@ -650,7 +651,8 @@
                 scaling law studies even if they are difficult to quantify precisely. Finally,
                 we propose an alternative fitting method that is simple, stable, and free of
                 these biases while building on the same intuitive computational shortcut:
-                optimizing exponential terms separately from linear terms.
+                optimizing exponential terms separately from linear terms. We call this
+                approach Variable Projection with Non-negative Least Squares (VPNLS).
             </p>
         </section>
 
@@ -815,7 +817,7 @@
             </div>
 
             <p>
-                This establishes our baseline: Approach 2 is precisely correct under ideal conditions that 
+                This establishes our baseline. Approach 2 is precisely correct under ideal conditions that 
                 are unrealistic in practice. The problems arise when we deviate from these ideal conditions, as we'll see
                 in the following sections where these conditions are perturbed in controlled ways.
             </p>
@@ -850,9 +852,9 @@
 
             <p>
                 The Asymmetric surface is not a contrived stress test. An exponent ratio of 3.0 is
-                comparable to what has been observed in practice: DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>
+                comparable to what has been observed in practice, e.g. DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>
                 reports compute-optimal allocation exponents of \(a = 0.73\), \(b = 0.27\) for
-                an OpenWebText2 variant, implying a loss surface exponent ratio of
+                an OpenWebText2 variant. This implies a loss surface exponent ratio of
                 \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
                 Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
                 of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
@@ -1109,11 +1111,13 @@
                 <img src="extrapolation_error/extrapolation_error.png" alt="Bar chart showing token prediction error by surface and grid width">
                 <figcaption>
                     <strong>Figure 3:</strong> Relative error in compute-optimal token prediction when
-                    extrapolating from the training range (10¹⁷-10²¹ FLOPs) to 10²⁴ FLOPs. Negative values
+                    extrapolating from the training range (10¹⁷–10²¹ FLOPs) to 10²⁴ FLOPs. Negative values
                     indicate underestimation: the inferred scaling law predicts fewer tokens than optimal.
                     Bars are grouped by sampling grid width. Annotations for the Chinchilla surface
                     show \(D^*\) (true compute-optimal token count) versus \(\hat{D}^*\) (the
-                    Approach 2 estimate).
+                    Approach 2 estimate); the Small and Large grid annotations are emphasized (thicker borders) as
+                    they fall within the realistic 1–2 decade range typical of scaling law experiments, while
+                    Extra Small and Extra Large bracket either side as more extreme configurations.
                 </figcaption>
             </figure>
 
@@ -1313,7 +1317,7 @@
             <h2>Off-Center Sampling: Exponent and Extrapolation Errors</h2>
 
             <p>
-                The previous sections assumed perfectly centered sampling: at every compute budget,
+                The previous sections assumed perfectly centered sampling. At every compute budget,
                 the IsoFLOP grid was placed exactly at the true optimum. In practice, you don't know
                 \(N^*\) before running the experiment. Sampling centers are guesses, informed by prior
                 estimates or heuristics, and they will inevitably be wrong by some amount.
@@ -1338,7 +1342,7 @@
 
             <p>
                 Because this offset is the same at every compute budget, it has a familiar geometric
-                effect: each parabola vertex shifts by a constant amount in log-space. This is the
+                effect where each parabola vertex shifts by a constant amount in log-space. This is the
                 same mechanism as asymmetry bias. The slope of \(\log D^*\) vs \(\log C\) is
                 unaffected (a constant additive shift in log-space doesn't change the slope), so the
                 scaling exponent is preserved perfectly. The intercept, however, absorbs the entire
@@ -1362,8 +1366,8 @@
             </figure>
 
             <p>
-                The extrapolation bar chart (top right) shows what this means for token prediction:
-                all four grid widths overestimate \(D^*\), with the narrowest grid (XS) producing the
+                The extrapolation bar chart (top right) shows what this means for token prediction.
+                All four grid widths overestimate \(D^*\), with the narrowest grid (XS) producing the
                 largest error. This is the reverse of the asymmetry bias pattern, where wider grids
                 amplified error. Here, narrower grids are more sensitive to off-center placement because
                 fewer samples lie near the true optimum.
@@ -1396,7 +1400,7 @@
 
             <p>
                 When the offset varies with compute budget, a qualitatively different failure
-                mode emerges. To illustrate this, we apply a linear drift: the sampling center
+                mode emerges. To illustrate this, we apply a linear drift. The sampling center
                 starts at the true optimum for the lowest budget and drifts to 3× the true
                 optimum at the highest budget, interpolating linearly in log-compute space.
             </p>
@@ -1488,53 +1492,148 @@
             <h3 id="putting-it-together">Compounding Errors</h3>
 
             <p>
-                Given evidence that both surface asymmetry and off-center sampling are present in
-                real studies, we can simulate what happens when these biases act simultaneously.
-                Using the same three loss surfaces and five sampling bias configurations from earlier
-                sections, we fit Approach 2 on compute budgets from 10<sup>17</sup> to 10<sup>21</sup>
-                FLOPs and extrapolate \(D^*\) predictions out to 10<sup>25</sup> FLOPs. Results are
-                shown at two grid widths that bracket the realistic range: XS (±2×) and XL (±16×).
+                Given evidence that both surface asymmetry and off-center sampling are present
+                in real studies, we can simulate what happens when these biases act
+                simultaneously. Using the same three loss surfaces from earlier sections, we
+                combine them with the 3× drift and 3× constant offset from the off-center
+                analysis. We fit Approach 2 on compute budgets from 10<sup>17</sup> to
+                10<sup>21</sup> FLOPs and extrapolate \(D^*\) predictions to 10<sup>24</sup>
+                FLOPs across all four grid widths.
             </p>
 
             <figure>
-                <img src="static/combined_extrapolation_error.png"
-                    alt="Combined extrapolation error across grid widths, surfaces, and sampling biases">
+                <img src="compounding_errors/compounding_errors.png"
+                    alt="Compounding errors: D* prediction error across three bias configurations, three surfaces, and four grid widths">
                 <figcaption>
-                    <strong>Figure 7 (research image):</strong> <em>TODO: Determine final
-                    presentation and layout. Relative error in \(D^*\) when extrapolating beyond
-                    the fitting range, with asymmetry and sampling biases acting simultaneously.
-                    Rows = XS and XL grids; columns = symmetric, Chinchilla, and Asymmetric
-                    surfaces; one curve per bias configuration (baseline, drift, constant offset).</em>
+                    <strong>Figure 7:</strong> Relative error in \(D^*\) at 10<sup>24</sup> FLOPs
+                    under three sampling configurations. Left: baseline (no sampling bias),
+                    reproducing Figure 3 for reference. Center: linear drift to 3× at the highest
+                    compute budget. Right: constant 3× center offset at every budget. Bars are
+                    grouped by sampling grid width (XS through XL). Negative values indicate
+                    underestimation; positive values indicate overestimation.
                 </figcaption>
             </figure>
 
+            <details class="data-table-container">
+                <summary>📊 View raw data</summary>
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Config</th>
+                                <th>Surface</th>
+                                <th>Grid</th>
+                                <th>True D*</th>
+                                <th>Inferred D*</th>
+                                <th>Rel Error</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Baseline -->
+                            <tr class="surface-header">
+                                <td colspan="6">Baseline (no sampling bias)</td>
+                            </tr>
+                            <tr><td>Baseline</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904640633e+11">408.2B</td><td title="0.000000000049053%" class="error-zero">≈0%</td></tr>
+                            <tr><td>Baseline</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904638362e+11">408.2B</td><td title="-0.000000000006578%" class="error-zero">≈0%</td></tr>
+                            <tr><td>Baseline</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904638746e+11">408.2B</td><td title="0.000000000002826%" class="error-zero">≈0%</td></tr>
+                            <tr><td>Baseline</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.082482904640399e+11">408.2B</td><td title="0.000000000043327%" class="error-zero">≈0%</td></tr>
+                            <tr><td>Baseline</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.022640080071175e+12">4.02T</td><td title="-0.326937803732719%" class="error-low">−0.33%</td></tr>
+                            <tr><td>Baseline</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.983323492914587e+12">3.98T</td><td title="-1.301125043704300%" class="error-low">−1.30%</td></tr>
+                            <tr><td>Baseline</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.918678311395280e+12">3.92T</td><td title="-2.902904738135434%" class="error-medium">−2.90%</td></tr>
+                            <tr><td>Baseline</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="3.829997307632958e+12">3.83T</td><td title="-5.100244551712022%" class="error-medium">−5.10%</td></tr>
+                            <tr><td>Baseline</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.434797634319416e+16">44.3Q</td><td title="-1.674747716507073%" class="error-low">−1.67%</td></tr>
+                            <tr><td>Baseline</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.217262808974590e+16">42.2Q</td><td title="-6.497778742083532%" class="error-medium">−6.50%</td></tr>
+                            <tr><td>Baseline</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="3.882927967488314e+16">38.8Q</td><td title="-13.910418584294648%" class="error-high">−13.91%</td></tr>
+                            <tr><td>Baseline</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="3.467711572211202e+16">34.7Q</td><td title="-23.116308048545221%" class="error-high">−23.12%</td></tr>
+                            <!-- Drift to 3× -->
+                            <tr class="surface-header">
+                                <td colspan="6">Drift to 3× (sampling center drifts from true optimum to 3× at highest budget)</td>
+                            </tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.330329296629141e+11">433.0B</td><td title="+6.070971949665736%" class="error-medium">+6.07%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.293594960061901e+11">429.4B</td><td title="+5.171168143371758%" class="error-medium">+5.17%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.233449170507438e+11">423.3B</td><td title="+3.697903197519233%" class="error-low">+3.70%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.151438757202593e+11">415.1B</td><td title="+1.689066535602950%" class="error-low">+1.69%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.504566829000340e+12">4.50T</td><td title="+11.614253519357661%" class="error-high">+11.61%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.432623377869933e+12">4.43T</td><td title="+9.831637143942757%" class="error-high">+9.83%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.315883700538125e+12">4.32T</td><td title="+6.939058914756627%" class="error-medium">+6.94%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.158830754490464e+12">4.16T</td><td title="+3.047597648542992%" class="error-medium">+3.05%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="6.069765266782697e+16">60.7Q</td><td title="+34.574618814502173%" class="error-high">+34.57%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.865168157587590e+16">58.7Q</td><td title="+30.038433843534605%" class="error-high">+30.04%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.546299036327943e+16">55.5Q</td><td title="+22.968689206115091%" class="error-high">+22.97%</td></tr>
+                            <tr><td>Drift to 3×</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.141644796779622e+16">51.4Q</td><td title="+13.996976521128124%" class="error-high">+14.00%</td></tr>
+                            <!-- Offset 3× -->
+                            <tr class="surface-header">
+                                <td colspan="6">Offset 3× (sampling center at 3× true optimum at every budget)</td>
+                            </tr>
+                            <tr><td>Offset 3×</td><td>Symmetric</td><td>XS (±2×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.244730718437291e+11">424.5B</td><td title="+3.974243556888148%" class="error-low">+3.97%</td></tr>
+                            <tr><td>Offset 3×</td><td>Symmetric</td><td>S (±4×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.224219276128955e+11">422.4B</td><td title="+3.471817881448564%" class="error-low">+3.47%</td></tr>
+                            <tr><td>Offset 3×</td><td>Symmetric</td><td>L (±8×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.190471331132362e+11">419.0B</td><td title="+2.645165430356910%" class="error-medium">+2.65%</td></tr>
+                            <tr><td>Offset 3×</td><td>Symmetric</td><td>XL (±16×)</td><td title="4.082482904638630e+11">408.2B</td><td title="4.144119915542275e+11">414.4B</td><td title="+1.509792259842919%" class="error-low">+1.51%</td></tr>
+                            <tr><td>Offset 3×</td><td>Chinchilla</td><td>XS (±2×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.322787400631939e+12">4.32T</td><td title="+7.110118943776913%" class="error-medium">+7.11%</td></tr>
+                            <tr><td>Offset 3×</td><td>Chinchilla</td><td>S (±4×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.265511774986103e+12">4.27T</td><td title="+5.690942262867751%" class="error-medium">+5.69%</td></tr>
+                            <tr><td>Offset 3×</td><td>Chinchilla</td><td>L (±8×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.172088880897259e+12">4.17T</td><td title="+3.376107789059233%" class="error-low">+3.38%</td></tr>
+                            <tr><td>Offset 3×</td><td>Chinchilla</td><td>XL (±16×)</td><td title="4.035834749563681e+12">4.04T</td><td title="4.045435227510737e+12">4.05T</td><td title="+0.237880848518242%" class="error-low">+0.24%</td></tr>
+                            <tr><td>Offset 3×</td><td>Asymmetric</td><td>XS (±2×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.377273818771581e+16">53.8Q</td><td title="+19.221179504682659%" class="error-high">+19.22%</td></tr>
+                            <tr><td>Offset 3×</td><td>Asymmetric</td><td>S (±4×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="5.160438683341485e+16">51.6Q</td><td title="+14.413661517819328%" class="error-high">+14.41%</td></tr>
+                            <tr><td>Offset 3×</td><td>Asymmetric</td><td>L (±8×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.824225048547561e+16">48.2Q</td><td title="+6.959366375593294%" class="error-medium">+6.96%</td></tr>
+                            <tr><td>Offset 3×</td><td>Asymmetric</td><td>XL (±16×)</td><td title="4.510334355952566e+16">45.1Q</td><td title="4.400977998376982e+16">44.0Q</td><td title="-2.424573190039884%" class="error-medium">−2.42%</td></tr>
+                        </tbody>
+                    </table>
+                    <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
+                        B = billion, T = trillion, Q = quadrillion. Hover over cells for full-precision values.
+                        Training range: 10¹⁷–10²¹ FLOPs. Evaluation budget: 10²⁴ FLOPs.
+                    </p>
+                </div>
+            </details>
+
             <p>
-                At narrow grids (XS), the parabolic approximation is tight and asymmetry bias is
-                negligible; errors are dominated by sampling biases, with drift creating errors that
-                grow with extrapolation distance (reaching roughly 25% on the Asymmetric surface
-                and 8% on the Chinchilla surface at 10<sup>25</sup> FLOPs). At wider grids (XL),
-                asymmetry bias dominates: the perfect-sampling baseline underestimates \(D^*\)
-                by about 5% on the Chinchilla surface and about 20% on the Asymmetric surface.
-                In these particular configurations, the sampling biases happen to partially offset
-                the asymmetry error, but this is not guaranteed: the direction of each bias source
-                depends on the sign and magnitude of the offset, and the two can just as easily
-                compound as cancel.
+                The baseline panel (left) reproduces Figure 3 for reference: asymmetry
+                bias alone produces errors up to −5% on the Chinchilla surface and −23%
+                on the Asymmetric surface at the widest grid. When off-center sampling is
+                introduced (center and right panels), the two bias sources interact.
             </p>
 
             <p>
-                <em>TODO: Add a configuration where the bias sources reinforce rather than offset
-                each other (e.g. an offset direction that pushes in the same direction as asymmetry
-                error), to demonstrate the compounding case directly.</em>
+                Off-center sampling pushes errors positive (overestimating \(D^*\)), while
+                asymmetry bias pushes errors negative (underestimating). The net error depends
+                on which source dominates. At narrow grids, asymmetry bias is negligible and
+                the sampling bias determines the error: drift to 3× produces +6% on the symmetric
+                surface and +12% on the Chinchilla surface. At wider grids, asymmetry bias
+                grows and begins to offset the sampling bias. On the Chinchilla surface with
+                a constant 3× offset, this cancellation is nearly perfect at XL (+0.24%), but
+                this is coincidental rather than reliable.
+            </p>
+
+            <p>
+                On the Asymmetric surface, the drift configuration produces the largest errors
+                in the figure: +35% at XS and still +14% at XL. Even the constant offset
+                configuration reaches +19% at XS before the asymmetry bias partially offsets
+                it at wider grids. These configurations use a 3× offset, which is modest
+                relative to the uncertainty in real experiments where the true optimum is
+                unknown.
+            </p>
+
+            <p>
+                <a href="#appendix-combined-extrapolation">Figure A2</a> provides a more
+                detailed view: it shows how \(D^*\) extrapolation errors evolve across
+                compute budgets from 10<sup>22</sup> to 10<sup>25</sup> FLOPs, revealing
+                which bias sources produce errors that grow with extrapolation distance
+                (drift) versus those that remain roughly constant (surface asymmetry and
+                constant offsets), and how these patterns vary across multiple drift rates
+                and center offset magnitudes.
             </p>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    Multiple bias sources act simultaneously in any real experiment. Even individually,
-                    asymmetry and sampling biases each produce meaningful errors; when they happen to
-                    align, the combined error can exceed either one alone. At practical grid widths
-                    with Chinchilla-like asymmetry, errors of 5% or more in \(D^*\) are typical, and
-                    on more asymmetric surfaces the errors reach 20% or more.
+                    Multiple bias sources act simultaneously in any real experiment. Surface
+                    asymmetry and off-center sampling each produce meaningful errors on their
+                    own. When they happen to act in the same direction, the combined error
+                    exceeds either one alone: on the Asymmetric surface with drift to 3×,
+                    errors reach 35% even at the narrowest grid. When they oppose, partial
+                    cancellation can occur, but this depends on the specific combination of
+                    surface geometry, offset magnitude, and grid width, making it unreliable
+                    in practice.
                 </p>
             </div>
 
@@ -1592,8 +1691,8 @@
                 evaluating a coarse grid without optimization and seeding the optimizer from
                 the single best candidate, or initializing from previously published parameter
                 values. None of these reliably solve the problem. The survey's own experiments
-                show that full-grid optimization over 4500 starting points sometimes yields the
-                <em>worst</em> fit among all strategies tested, evidence of "the difficulty of
+                show that full-grid optimization over 4500 starting points can yield results that
+                diverge significantly from reported figures, evidence of "the difficulty of
                 optimizing over this space, and the presence of many local minima."
             </p>
 
@@ -1634,10 +1733,10 @@
                 The algorithm searches over \((\alpha, \beta)\) and, at each candidate pair,
                 solves for \((E, A, B)\) via non-negative least squares (NNLS). A coarse
                 32&times;32 grid search identifies a good starting region, and a Nelder-Mead
-                simplex optimizer refines it. The linear separation is maintained throughout:
-                the optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
-                surface, never the full five-parameter space. We call this method VPNLS
-                (Variable Projection with Non-negative Least Squares).
+                simplex optimizer refines it. The linear separation is maintained throughout.
+                The optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
+                surface, never the full five-parameter space. We term this method Variable 
+                Projection with Non-negative Least Squares (VPNLS).
             </p>
 
             <div class="math-block" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88em; line-height: 1.8;">
@@ -1951,7 +2050,7 @@
                 carry a systematic bias that grows with exponent asymmetry and sampling
                 grid width. When precision matters for extrapolation to large compute
                 budgets, VPNLS offers one robust alternative, though the underlying
-                principle is more general: any method that exploits the linear
+                principle is more general. Any method that exploits the linear
                 separability of the Chinchilla loss surface can avoid the parabolic
                 approximation while retaining much of Approach 2's simplicity.
             </p>
@@ -2027,6 +2126,32 @@
                     sampling range, with one curve per method. Rows correspond to loss surfaces
                     (symmetric, Chinchilla, high imbalance); columns correspond to parameters
                     (E, A, B, &alpha;, &beta;). Gaps indicate convergence failures.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-combined-extrapolation">B. Combined Extrapolation Error by Compute Budget</h3>
+
+            <figure>
+                <img src="appendix/combined_extrapolation_error.png"
+                    alt="Extrapolation error in D* across compute budgets for all surfaces, sampling ranges, and bias configurations">
+                <figcaption>
+                    <strong>Figure A2:</strong> Relative error in compute-optimal token count
+                    \(D^*\) when extrapolating from the fitting range (10<sup>17</sup>&ndash;10<sup>21</sup>
+                    FLOPs) to higher compute budgets (10<sup>22</sup>&ndash;10<sup>25</sup> FLOPs),
+                    with asymmetry and sampling biases acting simultaneously. Columns correspond
+                    to loss surfaces (symmetric, Chinchilla, Asymmetric); rows correspond to
+                    sampling ranges (narrow ±2×, medium ±14×, wide ±100×). Each curve represents
+                    a different sampling bias configuration: baseline (no bias), two linear
+                    drift rates (drift_0.2 and drift_0.4, where the value is the log<sub>10</sub>
+                    offset at the highest compute budget), and two constant center offsets
+                    (scale_1.5 and scale_2.0, where the value is the multiplicative factor
+                    applied at every budget). On symmetric surfaces, errors are
+                    driven entirely by off-center sampling; on asymmetric surfaces, the inherent
+                    surface bias adds a constant offset visible as the non-zero baseline curve.
+                    Drift-based biases produce errors that grow with extrapolation distance (steeper
+                    curves), while constant offsets and surface asymmetry produce flat or slowly
+                    varying errors. At wider sampling ranges, surface asymmetry dominates and can
+                    either reinforce or partially offset the sampling biases.
                 </figcaption>
             </figure>
         </section>

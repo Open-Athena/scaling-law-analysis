@@ -1058,7 +1058,164 @@ def create_off_center_drifting_bias_figure(output_dir: Path) -> dict:
 
 
 # =============================================================================
-# Section 5: Method Comparison (Variable Projection Optimizer Analysis)
+# Section 5 (In the Wild): Compounding Errors Figure
+# =============================================================================
+
+# Sampling bias configurations for the compounding errors figure.
+# Uses the same 3× magnitudes as the main-text off-center figures (Figures 4–5).
+COMPOUNDING_CONFIGS = [
+    {"label": "Baseline", "drift_rate": 0.0, "center_scale": 1.0},
+    {
+        "label": f"Drift to {OFF_CENTER_SCALE:.0f}×",
+        "drift_rate": OFF_CENTER_DRIFT_RATE,
+        "center_scale": 1.0,
+    },
+    {
+        "label": f"Offset {OFF_CENTER_SCALE:.0f}×",
+        "drift_rate": 0.0,
+        "center_scale": OFF_CENTER_SCALE,
+    },
+]
+
+
+def create_compounding_errors_figure(output_dir: Path) -> dict:
+    """Create the compounding errors figure for the "Putting It Together" section.
+
+    A 1×3 grid of bar charts, one per sampling configuration (baseline, drift-only,
+    offset-only). Each subplot shows D* extrapolation error at 10²⁴ FLOPs with
+    loss surface on the x-axis and bars grouped/colored by sampling grid width.
+    Style matches Figure 3 (extrapolation error bar chart) but without annotations.
+
+    Returns:
+        Dict with error data keyed by config label, surface, and grid.
+    """
+    setup_style()
+
+    surfaces = [
+        ("Symmetric", SYMMETRIC_SURFACE),
+        ("Chinchilla", CHINCHILLA_SURFACE),
+        ("Asymmetric", ASYMMETRIC_SURFACE),
+    ]
+
+    EVAL_BUDGET = 1e24
+    colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]
+
+    fig, axes = plt.subplots(1, 3, figsize=(16, 5.5), sharey=True)
+
+    x_positions = np.arange(len(surfaces))
+    n_grids = len(GRID_WIDTHS)
+    bar_width = 0.20
+    offsets = [(i - (n_grids - 1) / 2) * bar_width for i in range(n_grids)]
+
+    results = {}
+
+    for ax_idx, config in enumerate(COMPOUNDING_CONFIGS):
+        ax = axes[ax_idx]
+        config_label = config["label"]
+        results[config_label] = {}
+
+        for i, ((grid_name, log_range), color, offset) in enumerate(
+            zip(GRID_WIDTHS, colors, offsets)
+        ):
+            rel_errors = []
+
+            for surface_name, surface in surfaces:
+                true_D, inferred_D, errors = compute_extrapolation_errors(
+                    surface=surface,
+                    training_budgets=TRAINING_BUDGETS,
+                    eval_budgets=np.array([EVAL_BUDGET]),
+                    log_range=log_range,
+                    center_scale=config["center_scale"],
+                    drift_rate=config["drift_rate"],
+                )
+
+                rel_error = errors[0] / true_D[0] * 100
+                rel_errors.append(rel_error)
+
+                key = surface_name.lower().replace(" ", "_")
+                if key not in results[config_label]:
+                    results[config_label][key] = {}
+                results[config_label][key][grid_name] = {
+                    "true_D": true_D[0],
+                    "inferred_D": inferred_D[0],
+                    "rel_error_pct": rel_error,
+                }
+
+            ax.bar(
+                x_positions + offset,
+                rel_errors,
+                bar_width,
+                label=grid_name,
+                color=color,
+                alpha=0.85,
+                edgecolor="white",
+                linewidth=0.5,
+            )
+
+        if ax_idx == 1:
+            ax.set_xlabel("Loss Surface")
+        ax.set_xticks(x_positions)
+        ax.set_xticklabels(
+            [f"{name}\n(α={s.alpha:.2f}, β={s.beta:.2f})" for name, s in surfaces],
+            fontsize=9,
+        )
+        ax.axhline(0, color="black", linewidth=0.8)
+        ax.grid(True, axis="y", alpha=0.3)
+        ax.set_title(config_label, fontsize=11)
+
+        if ax_idx == 0:
+            ax.set_ylabel("Relative Error in D* (%)")
+            ax.legend(title="Sampling Grid", loc="upper left", fontsize=8)
+
+    fig.suptitle(
+        "Compounding Errors: D* Prediction Error by Bias Configuration\n"
+        "(Fitting: 10¹⁷–10²¹ FLOPs → Extrapolating to 10²⁴ FLOPs)",
+        fontsize=12,
+        y=1.02,
+    )
+    fig.tight_layout()
+
+    figure_dir = prepare_output_dir(output_dir / "compounding_errors")
+    fig_path = figure_dir / "compounding_errors.png"
+    fig.savefig(fig_path)
+    plt.close(fig)
+    print(f"Saved: {fig_path}")
+
+    # Export raw data to CSV
+    TRAINING_RANGE = "1e17-1e21"
+    csv_path = figure_dir / "compounding_errors_data.csv"
+    with open(csv_path, "w") as f:
+        f.write(
+            "config,drift_rate,center_scale,surface,alpha,beta,"
+            "grid_name,log_range,training_range,eval_budget,"
+            "true_D,inferred_D,abs_error,rel_error_pct\n"
+        )
+        for config in COMPOUNDING_CONFIGS:
+            config_label = config["label"]
+            for surface_name, surface in surfaces:
+                key = surface_name.lower().replace(" ", "_")
+                for grid_name, log_range in GRID_WIDTHS:
+                    data = results[config_label][key][grid_name]
+                    true_D = data["true_D"]
+                    inferred_D = data["inferred_D"]
+                    abs_error = inferred_D - true_D
+                    rel_error = data["rel_error_pct"]
+                    f.write(
+                        f'"{config_label}",{config["drift_rate"]},'
+                        f'{config["center_scale"]},'
+                        f"{surface_name},{surface.alpha},{surface.beta},"
+                        f'"{grid_name}",{log_range},{TRAINING_RANGE},'
+                        f"{EVAL_BUDGET:.0e},"
+                        f"{true_D:.15e},{inferred_D:.15e},"
+                        f"{abs_error:.15e},{rel_error:.15f}\n"
+                    )
+    print(f"Saved: {csv_path}")
+
+    return results
+
+
+# =============================================================================
+# Section 6: Method Comparison (Variable Projection Optimizer Analysis)
 # =============================================================================
 
 
@@ -1459,7 +1616,10 @@ def generate_all_figures(output_dir: Path) -> dict:
     # Section 4b: Off-Center Sampling — Drifting Bias
     data["off_center_drifting"] = create_off_center_drifting_bias_figure(output_dir)
 
-    # Section 5: Method Comparison
+    # Section 5 (In the Wild): Compounding Errors
+    data["compounding"] = create_compounding_errors_figure(output_dir)
+
+    # Section 6: Method Comparison
     data["method_comparison"] = create_method_comparison_figure(output_dir)
 
     # Appendix figures (copied from experiment outputs)
@@ -1475,10 +1635,20 @@ def copy_appendix_figures(output_dir: Path) -> None:
     from scaling_law_analysis import config
 
     appendix_dir = prepare_output_dir(output_dir / "appendix")
-    src = config.RESULTS_DIR / "experiments" / "exp5" / "method_comparison.png"
-    dst = appendix_dir / "method_comparison_detailed.png"
-    shutil.copy2(src, dst)
-    print(f"Copied: {src} → {dst}")
+
+    copies = [
+        (
+            config.RESULTS_DIR / "experiments" / "exp5" / "method_comparison.png",
+            appendix_dir / "method_comparison_detailed.png",
+        ),
+        (
+            config.RESULTS_DIR / "experiments" / "exp4" / "extrapolation_error.png",
+            appendix_dir / "combined_extrapolation_error.png",
+        ),
+    ]
+    for src, dst in copies:
+        shutil.copy2(src, dst)
+        print(f"Copied: {src} → {dst}")
 
 
 if __name__ == "__main__":
