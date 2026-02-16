@@ -13,8 +13,8 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 6. **Build supplementary PDF** — skip if `scaling_parameter_errors.html` hasn't changed (see [Scaling Parameter Errors PDF](#scaling-parameter-errors-pdf))
 7. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
 8. **Push to `main`**
-9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab or via `gh workflow run`
-   - Agents: run without sandbox to avoid SSL errors
+9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab or via `gh workflow run deploy.yml`
+   - **Agent note — TLS errors**: The `gh` CLI may fail with `x509: OSStatus -26276` if the shell session cannot access the macOS system keychain for certificate verification (common in sandboxed environments). If your environment supports sandbox permissions, run `gh` commands without sandboxing (e.g. `required_permissions: ["all"]`). If a combined command (e.g. `git push && gh workflow run`) is used, ensure the entire command runs without sandbox restrictions.
 
 ---
 
