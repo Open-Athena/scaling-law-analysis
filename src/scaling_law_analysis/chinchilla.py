@@ -21,7 +21,36 @@ class FitError(Exception):
     at parameter bounds or grid edges, non-finite values, and degenerate fits
     (e.g. non-positive curvature in parabola fitting). It does NOT cover
     programmer errors like invalid arguments, which remain ValueError.
+
+    Subclasses provide specific failure categories. Callers can catch FitError
+    to handle any failure, or catch specific subclasses for finer control.
     """
+
+
+class MaxIterationsFitError(FitError):
+    """Optimizer reached the maximum iteration limit.
+
+    The result may still be usable — the optimizer simply ran out of budget
+    before meeting its convergence tolerances. The scipy result object is
+    attached for callers that want to inspect or use the parameters.
+    """
+
+    def __init__(self, message: str, result, estimate=None):
+        super().__init__(message)
+        self.result = result
+        self.estimate = estimate
+
+
+class OptimizerFitError(FitError):
+    """Optimizer reported failure (result.success=False) for reasons other than maxiter."""
+
+
+class BoundHitFitError(FitError):
+    """A fitted parameter landed at or near an optimizer or grid bound."""
+
+
+class NonFiniteFitError(FitError):
+    """A fitted parameter is NaN or Inf."""
 
 
 # Chinchilla paper ground truth parameters;
@@ -375,8 +404,10 @@ def fit_parabola(
         ParabolaFit with coefficients and minimum location
 
     Raises:
-        ValueError: If quadratic coefficient is not sufficiently positive
+        FitError: If fewer than 3 points or curvature is non-positive
     """
+    if len(log_x) < 3:
+        raise FitError(f"Parabola fit requires at least 3 points, got {len(log_x)}.")
     # Fit quadratic: L = a*log(x)² + b*log(x) + c
     coeffs = np.polyfit(log_x, L, 2)
     a, b, c = coeffs
@@ -577,7 +608,7 @@ def _compute_rss_and_params(
 def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> None:
     """Raise if index is at grid edge."""
     if idx == 0 or idx == len(grid) - 1:
-        raise FitError(
+        raise BoundHitFitError(
             f"Best {name}={grid[idx]:.4f} is at grid edge. "
             f"Consider expanding grid range [{grid[0]:.2f}, {grid[-1]:.2f}]."
         )
@@ -588,22 +619,26 @@ def _check_at_bounds(
 ) -> None:
     """Raise if value is at or near bounds."""
     if val - lo < tol:
-        raise FitError(f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}.")
+        raise BoundHitFitError(
+            f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}."
+        )
     if hi - val < tol:
-        raise FitError(f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}.")
+        raise BoundHitFitError(
+            f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}."
+        )
 
 
 def _check_positive(name: str, val: float, tol: float = 1e-6) -> None:
     """Raise if value is at or near zero."""
     if val < tol:
-        raise FitError(f"Fitted {name}={val:.2e} is at or near zero.")
+        raise BoundHitFitError(f"Fitted {name}={val:.2e} is at or near zero.")
 
 
 def _check_finite(**params: float) -> None:
     """Raise if any parameter is NaN or Inf."""
     bad = {k: v for k, v in params.items() if np.isnan(v) or np.isinf(v)}
     if bad:
-        raise FitError(f"Optimization produced non-finite values: {bad}")
+        raise NonFiniteFitError(f"Optimization produced non-finite values: {bad}")
 
 
 def _grid_search(
@@ -752,7 +787,16 @@ def fit_surface(
         if result is None or not result.success:
             message = result.message if result else "Unknown error"
             nit = result.nit if result else 0
-            raise FitError(f"Optimization failed: {message} (iterations: {nit})")
+            options = NELDER_MEAD_OPTIONS if method == "nelder-mead" else LBFGSB_OPTIONS
+            if result is not None and nit >= options["maxiter"]:
+                raise MaxIterationsFitError(
+                    f"Optimization hit maxiter ({options['maxiter']}): "
+                    f"{message} (iterations: {nit})",
+                    result=result,
+                )
+            raise OptimizerFitError(
+                f"Optimization failed: {message} (iterations: {nit})"
+            )
 
         alpha, beta = float(result.x[0]), float(result.x[1])
 
@@ -904,7 +948,13 @@ def fit_approach3(
     if result is None or not result.success:
         message = result.message if result else "Unknown error"
         nit = result.nit if result else 0
-        raise FitError(f"Optimization failed: {message} (iterations: {nit})")
+        if result is not None and nit >= LBFGSB_OPTIONS["maxiter"]:
+            raise MaxIterationsFitError(
+                f"Optimization hit maxiter ({LBFGSB_OPTIONS['maxiter']}): "
+                f"{message} (iterations: {nit})",
+                result=result,
+            )
+        raise OptimizerFitError(f"Optimization failed: {message} (iterations: {nit})")
 
     E, A, B, alpha, beta = result.x
 

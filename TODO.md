@@ -7,8 +7,10 @@ On article:
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
+  - IMPORTANT: Mention init for approach 3 w/ grid search
   - Add limitation on the possibility of sampling grid errors canceling out
   - Add limitation on not exploring data efficiency (yet)
+  - Add limitation on how 2D grid search + Nelder-Mead probably won't scale well to many more parameters
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Update editorial guidelines to match longer length now
