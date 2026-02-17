@@ -7,6 +7,8 @@ This module provides:
 - Surface fitting via variable projection (grid search + NNLS)
 """
 
+import enum
+
 import numpy as np
 from dataclasses import dataclass
 from typing import Union
@@ -14,39 +16,61 @@ from typing import Union
 from scipy.optimize import minimize, nnls
 
 
+# =============================================================================
+# Fit status and exceptions
+# =============================================================================
+
+
+class FitStatus(enum.Enum):
+    """Outcome of a surface-fitting procedure.
+
+    Non-CONVERGED statuses indicate that the optimizer flagged an issue,
+    but a usable parameter estimate was still produced.  Callers should
+    inspect ``SurfaceFitResult.status`` rather than relying on exceptions
+    for these soft issues.
+
+    Only hard failures (non-finite results, degenerate fits) raise
+    ``FitError``; everything else returns normally with status metadata.
+    """
+
+    CONVERGED = "converged"
+    """Optimizer reported success and all diagnostics passed."""
+
+    MAX_ITER = "max_iter"
+    """Optimizer exhausted its iteration budget before meeting convergence
+    tolerances.  The result is typically still usable — the optimizer
+    simply ran out of budget."""
+
+    ABNORMAL = "abnormal"
+    """Optimizer reported ``success=False`` for reasons other than hitting
+    the iteration limit.  The most common cause is L-BFGS-B returning
+    "ABNORMAL_TERMINATION_IN_LNSRCH" when its line search fails to find
+    sufficient decrease along the computed direction.  This happens when
+    the objective landscape is extremely flat or ill-conditioned in some
+    directions, causing gradient-based line search to break down even
+    though the current iterate may be very close to the optimum.  Despite
+    the alarming name, the fitted parameters are often still usable."""
+
+    BOUND_HIT = "bound_hit"
+    """One or more fitted parameters landed at or near an optimizer bound
+    or grid edge.  This suggests the true optimum may lie outside the
+    search region.  The estimate is still returned but should be treated
+    with caution."""
+
+
 class FitError(Exception):
-    """A fitting or optimization procedure failed to produce a valid result.
+    """A fitting procedure failed — no usable result is available.
 
-    This covers all runtime failure modes: optimizer non-convergence, solutions
-    at parameter bounds or grid edges, non-finite values, and degenerate fits
-    (e.g. non-positive curvature in parabola fitting). It does NOT cover
-    programmer errors like invalid arguments, which remain ValueError.
+    Raised for hard failures where no meaningful parameter estimate can
+    be constructed: non-finite (NaN/Inf) values, degenerate fits (e.g.
+    non-positive curvature in parabola fitting), or underdetermined
+    systems.
 
-    Subclasses provide specific failure categories. Callers can catch FitError
-    to handle any failure, or catch specific subclasses for finer control.
+    Does NOT cover soft issues (max iterations, abnormal termination,
+    bound hits) — those return normally via ``SurfaceFitResult.status``.
+    Does NOT cover programmer errors (invalid arguments), which remain
+    ``ValueError``.
     """
-
-
-class MaxIterationsFitError(FitError):
-    """Optimizer reached the maximum iteration limit.
-
-    The result may still be usable — the optimizer simply ran out of budget
-    before meeting its convergence tolerances. The scipy result object is
-    attached for callers that want to inspect or use the parameters.
-    """
-
-    def __init__(self, message: str, result, estimate=None):
-        super().__init__(message)
-        self.result = result
-        self.estimate = estimate
-
-
-class OptimizerFitError(FitError):
-    """Optimizer reported failure (result.success=False) for reasons other than maxiter."""
-
-
-class BoundHitFitError(FitError):
-    """A fitted parameter landed at or near an optimizer or grid bound."""
 
 
 class NonFiniteFitError(FitError):
@@ -534,6 +558,9 @@ class SurfaceFitResult:
         beta: Fitted data scaling exponent
         residual_sum_squares: Sum of squared residuals at optimal fit
         n_points: Number of data points used in fit
+        method: Fitting method used (e.g. "nelder-mead", "approach3")
+        status: Outcome of the fitting procedure (see FitStatus)
+        status_message: Human-readable detail when status is not CONVERGED
     """
 
     E: float
@@ -544,6 +571,13 @@ class SurfaceFitResult:
     residual_sum_squares: float
     n_points: int
     method: str = "nelder-mead"
+    status: FitStatus = FitStatus.CONVERGED
+    status_message: str = ""
+
+    @property
+    def converged(self) -> bool:
+        """True if the optimizer reported full convergence."""
+        return self.status == FitStatus.CONVERGED
 
     def to_loss_surface(self) -> LossSurface:
         """Convert fit result to a LossSurface object."""
@@ -605,33 +639,32 @@ def _compute_rss_and_params(
     return rss, params
 
 
-def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> None:
-    """Raise if index is at grid edge."""
+def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> str | None:
+    """Return a message if index is at grid edge, else None."""
     if idx == 0 or idx == len(grid) - 1:
-        raise BoundHitFitError(
-            f"Best {name}={grid[idx]:.4f} is at grid edge. "
-            f"Consider expanding grid range [{grid[0]:.2f}, {grid[-1]:.2f}]."
+        return (
+            f"Best {name}={grid[idx]:.4f} is at grid edge "
+            f"[{grid[0]:.2f}, {grid[-1]:.2f}]."
         )
+    return None
 
 
 def _check_at_bounds(
     name: str, val: float, lo: float, hi: float, tol: float = 1e-6
-) -> None:
-    """Raise if value is at or near bounds."""
+) -> str | None:
+    """Return a message if value is at or near bounds, else None."""
     if val - lo < tol:
-        raise BoundHitFitError(
-            f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}."
-        )
+        return f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}."
     if hi - val < tol:
-        raise BoundHitFitError(
-            f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}."
-        )
+        return f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}."
+    return None
 
 
-def _check_positive(name: str, val: float, tol: float = 1e-6) -> None:
-    """Raise if value is at or near zero."""
+def _check_positive(name: str, val: float, tol: float = 1e-6) -> str | None:
+    """Return a message if value is at or near zero, else None."""
     if val < tol:
-        raise BoundHitFitError(f"Fitted {name}={val:.2e} is at or near zero.")
+        return f"Fitted {name}={val:.2e} is at or near zero."
+    return None
 
 
 def _check_finite(**params: float) -> None:
@@ -746,13 +779,26 @@ def fit_surface(
 
     # Stage 1: Grid search (initialization for local methods, or final for "grid")
     best_i, best_j = _grid_search(alpha_grid, beta_grid, log_N, log_D, L)
-    _check_at_grid_edge("α", best_i, alpha_grid)
-    _check_at_grid_edge("β", best_j, beta_grid)
+    grid_edge_msgs = [
+        msg
+        for msg in [
+            _check_at_grid_edge("α", best_i, alpha_grid),
+            _check_at_grid_edge("β", best_j, beta_grid),
+        ]
+        if msg is not None
+    ]
+
+    # Track status for non-optimizer issues (grid edge, bounds)
+    status = FitStatus.CONVERGED
+    status_message = ""
 
     if method == "grid":
         # Grid search only — no local refinement
         alpha = float(alpha_grid[best_i])
         beta = float(beta_grid[best_j])
+        if grid_edge_msgs:
+            status = FitStatus.BOUND_HIT
+            status_message = "; ".join(grid_edge_msgs)
 
     else:
         # Local refinement from best grid point
@@ -784,32 +830,51 @@ def fit_surface(
                 lbfgs_kwargs["options"]["eps"] = eps
             result = minimize(objective, x0=x0, **lbfgs_kwargs)
 
-        if result is None or not result.success:
-            message = result.message if result else "Unknown error"
-            nit = result.nit if result else 0
+        if result is None:
+            raise FitError("Optimizer returned None.")
+
+        # Optimizer outcome overrides grid-edge status for refined methods
+        status = FitStatus.CONVERGED
+        status_message = ""
+        if not result.success:
             options = NELDER_MEAD_OPTIONS if method == "nelder-mead" else LBFGSB_OPTIONS
-            if result is not None and nit >= options["maxiter"]:
-                raise MaxIterationsFitError(
+            if result.nit >= options["maxiter"]:
+                status = FitStatus.MAX_ITER
+                status_message = (
                     f"Optimization hit maxiter ({options['maxiter']}): "
-                    f"{message} (iterations: {nit})",
-                    result=result,
+                    f"{result.message} (iterations: {result.nit})"
                 )
-            raise OptimizerFitError(
-                f"Optimization failed: {message} (iterations: {nit})"
-            )
+            else:
+                status = FitStatus.ABNORMAL
+                status_message = (
+                    f"Optimization failed: {result.message} "
+                    f"(iterations: {result.nit})"
+                )
 
         alpha, beta = float(result.x[0]), float(result.x[1])
 
     # Extract final parameters at optimized (α, β)
     rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
 
-    # Diagnostic checks
-    _check_at_bounds("α", alpha, alpha_grid[0], alpha_grid[-1])
-    _check_at_bounds("β", beta, beta_grid[0], beta_grid[-1])
-    _check_positive("E", E)
-    _check_positive("A", A)
-    _check_positive("B", B)
+    # Hard error: non-finite parameters cannot produce a usable result
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=rss)
+
+    # Bound/positivity checks — set status if not already degraded
+    if status == FitStatus.CONVERGED:
+        bound_msgs = [
+            msg
+            for msg in [
+                _check_at_bounds("α", alpha, alpha_grid[0], alpha_grid[-1]),
+                _check_at_bounds("β", beta, beta_grid[0], beta_grid[-1]),
+                _check_positive("E", E),
+                _check_positive("A", A),
+                _check_positive("B", B),
+            ]
+            if msg is not None
+        ]
+        if bound_msgs:
+            status = FitStatus.BOUND_HIT
+            status_message = "; ".join(bound_msgs)
 
     return SurfaceFitResult(
         E=E,
@@ -820,6 +885,8 @@ def fit_surface(
         residual_sum_squares=rss,
         n_points=len(N),
         method=method,
+        status=status,
+        status_message=status_message,
     )
 
 
@@ -945,32 +1012,54 @@ def fit_approach3(
         options=LBFGSB_OPTIONS,
     )
 
-    if result is None or not result.success:
-        message = result.message if result else "Unknown error"
-        nit = result.nit if result else 0
-        if result is not None and nit >= LBFGSB_OPTIONS["maxiter"]:
-            raise MaxIterationsFitError(
+    if result is None:
+        raise FitError("Optimizer returned None.")
+
+    # Determine status from optimizer outcome
+    status = FitStatus.CONVERGED
+    status_message = ""
+    if not result.success:
+        if result.nit >= LBFGSB_OPTIONS["maxiter"]:
+            status = FitStatus.MAX_ITER
+            status_message = (
                 f"Optimization hit maxiter ({LBFGSB_OPTIONS['maxiter']}): "
-                f"{message} (iterations: {nit})",
-                result=result,
+                f"{result.message} (iterations: {result.nit})"
             )
-        raise OptimizerFitError(f"Optimization failed: {message} (iterations: {nit})")
+        else:
+            status = FitStatus.ABNORMAL
+            status_message = (
+                f"Optimization failed: {result.message} " f"(iterations: {result.nit})"
+            )
 
     E, A, B, alpha, beta = result.x
+    final_rss = float(result.fun)
 
-    # Diagnostic checks — all 5 parameters are bounded
-    param_names = ["E", "A", "B", "α", "β"]
-    for name, val, (lo, hi) in zip(param_names, result.x, bounds):
-        _check_at_bounds(name, val, lo, hi)
-    _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=result.fun)
+    E, A, B, alpha, beta = float(E), float(A), float(B), float(alpha), float(beta)
+
+    # Hard error: non-finite parameters cannot produce a usable result
+    _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=final_rss)
+
+    # Bound checks — set status if not already degraded
+    if status == FitStatus.CONVERGED:
+        param_names = ["E", "A", "B", "α", "β"]
+        bound_msgs = [
+            msg
+            for name, val, (lo, hi) in zip(param_names, [E, A, B, alpha, beta], bounds)
+            if (msg := _check_at_bounds(name, val, lo, hi)) is not None
+        ]
+        if bound_msgs:
+            status = FitStatus.BOUND_HIT
+            status_message = "; ".join(bound_msgs)
 
     return SurfaceFitResult(
-        E=float(E),
-        A=float(A),
-        B=float(B),
-        alpha=float(alpha),
-        beta=float(beta),
-        residual_sum_squares=float(result.fun),
+        E=E,
+        A=A,
+        B=B,
+        alpha=alpha,
+        beta=beta,
+        residual_sum_squares=final_rss,
         n_points=len(N),
         method="approach3",
+        status=status,
+        status_message=status_message,
     )

@@ -14,6 +14,7 @@ and number of compute budgets (n_budgets).
 
 from __future__ import annotations
 
+import enum
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Union
@@ -25,69 +26,49 @@ from rich.console import Console
 from scipy.optimize import minimize, nnls
 
 
-# ── Exceptions ────────────────────────────────────────────────────────────────
+# ── Fit status and exceptions ─────────────────────────────────────────────────
+
+
+class FitStatus(enum.Enum):
+    """Outcome of a fitting procedure.
+
+    Non-CONVERGED statuses indicate the optimizer flagged an issue, but a
+    usable estimate was still produced.  Only hard failures raise FitError.
+    """
+
+    CONVERGED = "converged"
+    """Optimizer reported success and all diagnostics passed."""
+
+    MAX_ITER = "max_iter"
+    """Optimizer exhausted its iteration budget before meeting convergence
+    tolerances.  The result is typically still usable."""
+
+    ABNORMAL = "abnormal"
+    """Optimizer reported ``success=False`` for reasons other than hitting
+    the iteration limit.  The most common cause is L-BFGS-B returning
+    "ABNORMAL_TERMINATION_IN_LNSRCH" — its line search failed to find
+    sufficient decrease along the gradient direction.  This happens when
+    the landscape is extremely flat or ill-conditioned, causing the line
+    search to break down even though the current iterate may be close to
+    the optimum.  Despite the alarming name, the parameters are often
+    still usable."""
+
+    BOUND_HIT = "bound_hit"
+    """One or more fitted parameters landed at or near an optimizer bound
+    or grid edge.  The estimate is returned but should be treated with
+    caution."""
 
 
 class FitError(Exception):
-    """A fitting procedure failed to produce a valid result.
+    """A fitting procedure failed — no usable result is available.
 
-    Hard errors — no usable estimate is available. Callers should treat these
-    as NaN / missing data.
-
-    Subclasses:
-        FitWarning  — soft issue; an estimate is still attached and usable.
-        NonFiniteFitError — a parameter is NaN or Inf (hard error).
+    Raised for hard failures: non-finite values, degenerate fits (e.g.
+    non-positive curvature), or underdetermined systems.
     """
-
-
-class FitWarning(FitError):
-    """Base for soft fit issues that still produce a usable estimate.
-
-    All FitWarning subclasses carry an ``estimate`` attribute.
-    Callers can ``except FitWarning`` to handle any soft issue uniformly.
-    """
-
-    def __init__(self, message: str, *, estimate=None):
-        super().__init__(message)
-        self.estimate = estimate
-
-
-class MaxIterFitWarning(FitWarning):
-    """Optimizer reached the maximum iteration limit.
-
-    The result is typically still usable — the optimizer simply ran out of
-    budget before meeting its convergence tolerances.
-    """
-
-    def __init__(self, message: str, *, result, estimate=None):
-        super().__init__(message, estimate=estimate)
-        self.result = result
-
-
-class OptimizerFitWarning(FitWarning):
-    """Optimizer reported failure (result.success=False) for reasons other than maxiter.
-
-    Common cause: L-BFGS-B "ABNORMAL" on noisy surfaces. The result may
-    still be usable.
-    """
-
-    def __init__(self, message: str, *, result=None, estimate=None):
-        super().__init__(message, estimate=estimate)
-        self.result = result
-
-
-class BoundHitFitWarning(FitWarning):
-    """A fitted parameter landed at or near an optimizer or grid bound.
-
-    The estimate is still usable but should be treated with caution.
-    """
-
-    def __init__(self, message: str, *, estimate=None):
-        super().__init__(message, estimate=estimate)
 
 
 class NonFiniteFitError(FitError):
-    """A fitted parameter is NaN or Inf (hard error — no usable estimate)."""
+    """A fitted parameter is NaN or Inf."""
 
 
 # ── Loss Surface ──────────────────────────────────────────────────────────────
@@ -281,7 +262,13 @@ class ExponentEstimate:
     a: float  # Estimate of β/(α+β)
     b: float  # Estimate of α/(α+β)
     method: str
-    converged: bool  # Whether the optimizer reported convergence
+    status: FitStatus = FitStatus.CONVERGED
+    status_message: str = ""
+
+    @property
+    def converged(self) -> bool:
+        """True if the optimizer reported full convergence."""
+        return self.status == FitStatus.CONVERGED
 
 
 # ── Fitting: Approach 2 ──────────────────────────────────────────────────────
@@ -355,64 +342,60 @@ def fit_approach2(
     a_exp, _ = _fit_power_law(compute_budgets, N_opts_arr)
     b_exp, _ = _fit_power_law(compute_budgets, D_opts_arr)
 
-    return ExponentEstimate(
-        a=a_exp, b=b_exp, method="Chinchilla Approach 2", converged=True
-    )
+    return ExponentEstimate(a=a_exp, b=b_exp, method="Chinchilla Approach 2")
 
 
 # ── Shared fitting diagnostics ────────────────────────────────────────────────
 
 
 def _make_estimate(
-    alpha: float, beta: float, method: str, converged: bool = True
+    alpha: float,
+    beta: float,
+    method: str,
+    status: FitStatus = FitStatus.CONVERGED,
+    status_message: str = "",
 ) -> ExponentEstimate:
     """Compute ExponentEstimate from recovered alpha and beta."""
     return ExponentEstimate(
         a=beta / (alpha + beta),
         b=alpha / (alpha + beta),
         method=method,
-        converged=converged,
+        status=status,
+        status_message=status_message,
     )
 
 
-def _validate_optimizer_result(
+def _check_optimizer_result(
     result,
     method_name: str,
     maxiter: int,
-    alpha_beta_from_result,
-) -> None:
-    """Check optimizer result for None, maxiter, or general failure.
+) -> tuple[FitStatus, str]:
+    """Determine FitStatus from a scipy optimizer result.
 
     Args:
-        result: scipy.optimize.OptimizeResult (or None).
-        method_name: Human-readable name for error messages.
+        result: scipy.optimize.OptimizeResult.
+        method_name: Human-readable name for status messages.
         maxiter: The maxiter setting used for this optimizer.
-        alpha_beta_from_result: Callable(result) → (alpha, beta) to extract
-            exponents from an incomplete result for MaxIterationsFitError.
+
+    Returns:
+        (status, status_message) tuple.
 
     Raises:
-        OptimizerFitWarning: If result is None or optimizer reported failure.
-        MaxIterFitWarning: If optimizer hit the iteration limit.
-            Carries an ExponentEstimate computed from the partial result.
+        FitError: If result is None (optimizer produced no output at all).
     """
     if result is None:
-        raise OptimizerFitWarning(f"{method_name} optimization returned None.")
+        raise FitError(f"{method_name} optimization returned None.")
     if not result.success:
-        alpha, beta = alpha_beta_from_result(result)
-        estimate = _make_estimate(alpha, beta, method_name, converged=False)
         if result.nit >= maxiter:
-            raise MaxIterFitWarning(
+            return FitStatus.MAX_ITER, (
                 f"{method_name} hit maxiter ({maxiter}): "
-                f"{result.message} (iterations: {result.nit})",
-                result=result,
-                estimate=estimate,
+                f"{result.message} (iterations: {result.nit})"
             )
-        raise OptimizerFitWarning(
+        return FitStatus.ABNORMAL, (
             f"{method_name} optimization failed: {result.message} "
-            f"(iterations: {result.nit})",
-            result=result,
-            estimate=estimate,
+            f"(iterations: {result.nit})"
         )
+    return FitStatus.CONVERGED, ""
 
 
 def _check_params_finite(method_name: str, **params: float) -> None:
@@ -425,23 +408,20 @@ def _check_params_finite(method_name: str, **params: float) -> None:
 def _check_params_at_bounds(
     method_name: str,
     named_bounds: list[tuple[str, float, float, float]],
-    estimate: Union["ExponentEstimate", None] = None,
     tol: float = 1e-6,
-) -> None:
-    """Raise BoundHitFitWarning if any parameter is at or near a bound.
+) -> str | None:
+    """Return a message if any parameter is at or near a bound, else None.
 
     Args:
-        method_name: Human-readable name for error messages.
+        method_name: Human-readable name for messages.
         named_bounds: List of (name, value, lo, hi) tuples.
-        estimate: ExponentEstimate to attach to the warning (still usable).
         tol: Tolerance for bound proximity.
     """
+    msgs = []
     for name, val, lo, hi in named_bounds:
         if val - lo < tol or hi - val < tol:
-            raise BoundHitFitWarning(
-                f"{method_name}: {name}={val:.6f} at bound [{lo}, {hi}].",
-                estimate=estimate,
-            )
+            msgs.append(f"{method_name}: {name}={val:.6f} at bound [{lo}, {hi}].")
+    return "; ".join(msgs) if msgs else None
 
 
 # ── Optimizer defaults ────────────────────────────────────────────────────────
@@ -524,10 +504,11 @@ def fit_approach3(
         rng: Random generator (required when ``random_init`` is True).
 
     Returns:
-        ExponentEstimate with recovered a and b.
+        ExponentEstimate with recovered a and b.  Check ``status`` for
+        non-CONVERGED outcomes (max_iter, abnormal, bound_hit).
 
     Raises:
-        FitError: If optimization fails or hits parameter bounds.
+        FitError: Only for hard failures (non-finite parameters).
     """
     method_name = "Chinchilla Approach 3"
     N, D, L = (
@@ -572,29 +553,37 @@ def fit_approach3(
         options=_A3_LBFGSB_OPTIONS,
     )
 
-    _validate_optimizer_result(
-        result,
-        method_name,
-        _A3_LBFGSB_OPTIONS["maxiter"],
-        alpha_beta_from_result=lambda r: (r.x[3], r.x[4]),
+    status, status_message = _check_optimizer_result(
+        result, method_name, _A3_LBFGSB_OPTIONS["maxiter"]
     )
-    assert result is not None  # guaranteed by _validate_optimizer_result
+    assert result is not None  # ensured by _check_optimizer_result
 
-    E, A, B, alpha, beta = result.x
+    E, A, B, alpha, beta = (
+        float(result.x[0]),
+        float(result.x[1]),
+        float(result.x[2]),
+        float(result.x[3]),
+        float(result.x[4]),
+    )
     _check_params_finite(method_name, E=E, A=A, B=B, alpha=alpha, beta=beta)
-    estimate = _make_estimate(alpha, beta, method_name)
-    _check_params_at_bounds(
-        method_name,
-        [
-            (name, val, lo, hi)
-            for name, val, (lo, hi) in zip(
-                ["E", "A", "B", "α", "β"], result.x, _A3_BOUNDS
-            )
-        ],
-        estimate=estimate,
-    )
 
-    return estimate
+    if status == FitStatus.CONVERGED:
+        bound_msg = _check_params_at_bounds(
+            method_name,
+            [
+                (name, val, lo, hi)
+                for name, val, (lo, hi) in zip(
+                    ["E", "A", "B", "α", "β"], [E, A, B, alpha, beta], _A3_BOUNDS
+                )
+            ],
+        )
+        if bound_msg is not None:
+            status = FitStatus.BOUND_HIT
+            status_message = bound_msg
+
+    return _make_estimate(
+        alpha, beta, method_name, status=status, status_message=status_message
+    )
 
 
 # ── Fitting: VPNLS ───────────────────────────────────────────────────────────
@@ -671,10 +660,11 @@ def fit_vpnls(
         L: Array of loss values (same length as N and D).
 
     Returns:
-        ExponentEstimate with recovered a and b.
+        ExponentEstimate with recovered a and b.  Check ``status`` for
+        non-CONVERGED outcomes (max_iter, abnormal, bound_hit).
 
     Raises:
-        FitError: If optimization fails or hits parameter bounds.
+        FitError: Only for hard failures (non-finite parameters).
     """
     N, D, L = np.asarray(N), np.asarray(D), np.asarray(L)
     log_N, log_D = np.log(N), np.log(D)
@@ -694,32 +684,35 @@ def fit_vpnls(
         objective, x0=x0, method="Nelder-Mead", options=_VP_NELDER_MEAD_OPTIONS
     )
 
-    _validate_optimizer_result(
-        result,
-        method_name,
-        _VP_NELDER_MEAD_OPTIONS["maxiter"],
-        alpha_beta_from_result=lambda r: (float(r.x[0]), float(r.x[1])),
+    status, status_message = _check_optimizer_result(
+        result, method_name, _VP_NELDER_MEAD_OPTIONS["maxiter"]
     )
-    assert result is not None  # guaranteed by _validate_optimizer_result
+    assert result is not None  # ensured by _check_optimizer_result
 
     alpha, beta = float(result.x[0]), float(result.x[1])
+
     rss, (E, A, B) = _vp_compute_rss_and_params(alpha, beta, log_N, log_D, L)
 
     _check_params_finite(method_name, E=E, A=A, B=B, alpha=alpha, beta=beta)
-    estimate = _make_estimate(alpha, beta, method_name)
-    _check_params_at_bounds(
-        method_name,
-        [
-            ("E", E, *_E_BOUNDS),
-            ("A", A, *_A_BOUNDS),
-            ("B", B, *_B_BOUNDS),
-            ("α", alpha, *_ALPHA_BOUNDS),
-            ("β", beta, *_BETA_BOUNDS),
-        ],
-        estimate=estimate,
-    )
 
-    return estimate
+    if status == FitStatus.CONVERGED:
+        bound_msg = _check_params_at_bounds(
+            method_name,
+            [
+                ("E", E, *_E_BOUNDS),
+                ("A", A, *_A_BOUNDS),
+                ("B", B, *_B_BOUNDS),
+                ("α", alpha, *_ALPHA_BOUNDS),
+                ("β", beta, *_BETA_BOUNDS),
+            ],
+        )
+        if bound_msg is not None:
+            status = FitStatus.BOUND_HIT
+            status_message = bound_msg
+
+    return _make_estimate(
+        alpha, beta, method_name, status=status, status_message=status_message
+    )
 
 
 # ── Experiment ────────────────────────────────────────────────────────────────
@@ -766,11 +759,11 @@ def compute_exponent_errors(
     Returns:
         Dict mapping method name → dict with 2D arrays (n_repeats × n_points):
             "a_errors", "b_errors" — relative errors (NaN for hard failures).
-            Warnings (estimate still counted):
+            Status flags (estimate still counted):
                 "maxiter"   — optimizer hit iteration limit.
-                "optimizer" — optimizer reported failure (e.g. ABNORMAL).
+                "abnormal"  — optimizer reported failure (e.g. ABNORMAL).
                 "bound_hit" — parameter at bound.
-            Errors (estimate is NaN):
+            Hard failures (estimate is NaN):
                 "fail"      — hard failure (non-finite, underdetermined, etc.).
     """
     true_a = surface.a
@@ -782,7 +775,7 @@ def compute_exponent_errors(
             "a_errors": np.zeros((n_repeats, n_pts_len)),
             "b_errors": np.zeros((n_repeats, n_pts_len)),
             "maxiter": np.zeros((n_repeats, n_pts_len), dtype=bool),
-            "optimizer": np.zeros((n_repeats, n_pts_len), dtype=bool),
+            "abnormal": np.zeros((n_repeats, n_pts_len), dtype=bool),
             "bound_hit": np.zeros((n_repeats, n_pts_len), dtype=bool),
             "fail": np.zeros((n_repeats, n_pts_len), dtype=bool),
         }
@@ -817,26 +810,24 @@ def compute_exponent_errors(
                 ("VPNLS", lambda d: fit_vpnls(d.N, d.D, d.L)),
             ]:
                 res = results[method_name]
-                est = None
                 try:
                     est = fit_fn(data)
-                except MaxIterFitWarning as e:
-                    res["maxiter"][r, i] = True
-                    est = e.estimate
-                except OptimizerFitWarning as e:
-                    res["optimizer"][r, i] = True
-                    est = e.estimate
-                except BoundHitFitWarning as e:
-                    res["bound_hit"][r, i] = True
-                    est = e.estimate
                 except FitError:
                     res["fail"][r, i] = True
-                if est is not None:
-                    res["a_errors"][r, i] = (est.a - true_a) / true_a
-                    res["b_errors"][r, i] = (est.b - true_b) / true_b
-                else:
                     res["a_errors"][r, i] = np.nan
                     res["b_errors"][r, i] = np.nan
+                    continue
+
+                # Record status flags
+                if est.status == FitStatus.MAX_ITER:
+                    res["maxiter"][r, i] = True
+                elif est.status == FitStatus.ABNORMAL:
+                    res["abnormal"][r, i] = True
+                elif est.status == FitStatus.BOUND_HIT:
+                    res["bound_hit"][r, i] = True
+
+                res["a_errors"][r, i] = (est.a - true_a) / true_a
+                res["b_errors"][r, i] = (est.b - true_b) / true_b
 
     return results
 
@@ -1278,15 +1269,15 @@ def print_summary(
                     "Median |b| %": f"{np.nanmedian(b_abs):.2f}",
                     "P90 |a| %": f"{np.nanpercentile(a_abs, 90):.2f}",
                     "P90 |b| %": f"{np.nanpercentile(b_abs, 90):.2f}",
-                    "MaxIter (w)": f"{res['maxiter'].sum() / n_total * 100:.1f}%",
-                    "Optimizer (w)": f"{res['optimizer'].sum() / n_total * 100:.1f}%",
-                    "BoundHit (w)": f"{res['bound_hit'].sum() / n_total * 100:.1f}%",
+                    "MaxIter (s)": f"{res['maxiter'].sum() / n_total * 100:.1f}%",
+                    "Abnormal (s)": f"{res['abnormal'].sum() / n_total * 100:.1f}%",
+                    "BoundHit (s)": f"{res['bound_hit'].sum() / n_total * 100:.1f}%",
                     "Fail": f"{res['fail'].sum() / n_total * 100:.1f}%",
                 }
             )
         print(f"--- {nb} compute budgets ({range_label}) ---")
         print(pd.DataFrame(rows).to_string(index=False))
-        print("  (w) = warning only — estimate still counted in statistics")
+        print("  (s) = status flag only — estimate still counted in statistics")
         print()
 
     # ── Pairwise comparison frequencies for |b| error ──
