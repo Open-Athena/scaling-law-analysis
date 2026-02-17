@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
     FitError,
+    FitStatus,
     fit_surface,
     fit_approach3,
     FINE_ALPHA_GRID,
@@ -140,6 +141,14 @@ def compute_param_errors(
             else:
                 result = fit_surface(N, D, L, **fit_kwargs)
         except FitError:
+            failed[i] = True
+            for key in errors:
+                errors[key][i] = np.nan
+            continue
+
+        # Treat ABNORMAL and BOUND_HIT as failures — this is noise-free data
+        # where neither condition should occur.
+        if result.status in (FitStatus.ABNORMAL, FitStatus.BOUND_HIT):
             failed[i] = True
             for key in errors:
                 errors[key][i] = np.nan
