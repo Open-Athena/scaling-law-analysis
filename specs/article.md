@@ -180,11 +180,11 @@
   - Nelder-Mead avoids all of this; its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box; it scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
 - **Method Comparison (Parameter Recovery)**
   - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, Asymmetric) and 20 sampling ranges (the best case for gradient methods):
-    - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
-    - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
+    - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly; grid-seeded from 8⁵ ≈ 33k starting points
+    - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search; grid-seeded from 32² ≈ 1k starting points (32× fewer than Approach 3, by design, to give the 5D method an initialization advantage)
   - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) showing geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters, with horizontal bars spanning min to max, filled dots for methods that converged on all 60 fits and open dots for those with at least one failure (annotated with count); max-error heatmap (right) with columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text showing max |relative error| (%) over successful fits only
   - Companion CSVs: raw per-(method, surface, grid width, parameter) errors, max-error pivot, and failure-count pivot
-  - Key observations from the figure:
+  - Results:
     - High-resolution grid search (256²) is stable across all conditions but provides the poorest overall precision, limited by grid resolution
     - 5D direct optimization (Approach 3) is more accurate on average than grid search but highly variable across conditions; 5D optimization without analytical gradients (finite-difference only) performs very poorly and serves as a negative control, demonstrating what high variability and instability look like for comparison to Approach 3 with analytical gradients, which is similarly variable
     - L-BFGS-B with 2D variable projection can match Nelder-Mead precision, though the optimizer fails to converge in a non-trivial fraction of the relatively small number of scenarios simulated here
@@ -193,7 +193,22 @@
     - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
 - Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
 - **Method Comparison (Exponent Inference)**
-  - TBD
+  - Parameter recovery on noiseless data demonstrates numerical instabilities inherent to the loss surface (see "Problems with Direct Surface Fitting" above) but is not representative of practical use
+  - A more useful comparison incorporates training noise and varies the quantity of data available to each method; the focus shifts from all five surface parameters to the scaling exponents (a, b) that drive compute-optimal allocation, enabling direct comparison with Approach 2
+  - Emphasize worst-case errors: a practitioner typically runs one scaling law study, not hundreds, so sporadic optimizer failures that produce large errors in a minority of fits are arguably the most consequential practical risk
+  - **Setup**: extend the "Compounding Errors" scenario (Asymmetric surface, 3× drift, L grid) to a statistical setting
+    - Sweep over noise levels, budget counts, points-per-curve, and independent noise realizations; report the total number of fits per method and overall
+    - Gaussian noise on loss values; appendix IsoFLOP figure shows what the noisy samples look like at each noise level alongside the true surface and drifting sampling centers
+  - **Figure** (1 × 2, same layout as the parameter recovery comparison): dot-range plot (left) showing geometric mean error with min-max bars, rug ticks, and KDE for each method, pooled across all conditions; max-error heatmap (right) with columns for exponents a and b; methods sorted by worst-case error descending
+  - **Results**:
+    - Randomly initialized Approach 3 serves as a negative control: highly sensitive to starting point, worst overall
+    - Approach 2 has lower variance but consistently poor average accuracy, reflecting the structural bias documented in earlier sections; better than naive Approach 3, but for a qualitatively different reason (systematic approximation bias vs. optimizer fragility)
+    - Grid-initialized Approach 3 is substantially improved; note that its 5D grid evaluates 32× more starting points than VPNLS's 2D grid (same disparity as the parameter recovery comparison), giving it a deliberate initialization advantage
+    - Approach 3 and VPNLS produce similar median errors but diverge in the tails: Approach 3 exhibits sporadic large failures that VPNLS avoids
+      - These failures follow no clear pattern across dataset size, budget count, or noise level, making them difficult to anticipate or guard against in practice
+      - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
+
+
 
 ---
 
@@ -228,3 +243,15 @@
 - Detailed view of D* extrapolation error as a function of compute budget, from Experiment 4
 - Figure (3 rows × 3 columns): rows = sampling ranges (narrow ±2×, medium ±16×, wide ±100×), columns = loss surfaces (symmetric, Chinchilla, Asymmetric); each panel shows relative D* error vs extrapolation compute budget (10²²–10²⁵ FLOPs) with one curve per bias configuration (baseline, two drift rates, two constant offsets)
 - Shows how drift-based biases produce errors that grow with extrapolation distance while surface asymmetry and constant offsets produce flat or slowly varying errors; also reveals how these patterns change across sampling ranges and bias magnitudes
+
+### C. IsoFLOP Samples with Noise
+
+- Visualizes the noisy IsoFLOP data used in the exponent inference comparison
+- Figure (2 rows × n columns): rows = L vs N and L vs D; columns = noise levels; each panel shows scatter points (noisy) with noiseless reference curves, true optima, and drifting sampling centers
+- Gives the reader an intuitive sense of the signal-to-noise ratio at each noise level and how the drifting sampling centers shift relative to the true optima across compute budgets
+
+### D. Exponent Inference Error Breakdown
+
+- Detailed boxplots from the exponent inference comparison, broken down by noise level, number of compute budgets, and points per IsoFLOP curve
+- Figure (n_budgets rows × 4 columns): columns group by noise level (lowest, highest) and exponent (a, b); each panel shows per-method boxplots at each points-per-curve setting
+- Reveals where Approach 3's sporadic large errors occur and shows that they do not concentrate in any single experimental condition

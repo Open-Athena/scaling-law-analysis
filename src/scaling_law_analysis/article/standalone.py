@@ -26,12 +26,12 @@ def inline_local_images(html: str, base_dir: Path) -> str:
     Returns:
         HTML with local image sources replaced by inline base64 data URIs.
     """
-    img_pattern = re.compile(r'(<img\b[^>]*\bsrc=")([^"]+)(")')
+    img_pattern = re.compile(r"""(<img\b[^>]*\bsrc=(?P<q>["']))(.+?)(?P=q)""")
 
     def replace_src(match: re.Match) -> str:
         prefix = match.group(1)
-        src = match.group(2)
-        suffix = match.group(3)
+        src = match.group(3)
+        quote = match.group("q")
 
         # Skip URLs and already-inlined data URIs
         if src.startswith(("http://", "https://", "data:")):
@@ -52,7 +52,7 @@ def inline_local_images(html: str, base_dir: Path) -> str:
         b64 = base64.b64encode(img_data).decode("ascii")
 
         print(f"  Inlined: {src} ({len(img_data) / 1024:.0f} KB)")
-        return f"{prefix}data:{mime_type};base64,{b64}{suffix}"
+        return f"{prefix}data:{mime_type};base64,{b64}{quote}"
 
     return img_pattern.sub(replace_src, html)
 

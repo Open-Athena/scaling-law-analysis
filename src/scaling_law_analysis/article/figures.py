@@ -1623,34 +1623,58 @@ def generate_all_figures(output_dir: Path) -> dict:
     # Section 6: Method Comparison
     data["method_comparison"] = create_method_comparison_figure(output_dir)
 
-    # Appendix figures (copied from experiment outputs)
-    copy_appendix_figures(output_dir)
+    # Figures copied directly from experiment outputs
+    copy_experiment_outputs(output_dir)
 
     return data
 
 
-def copy_appendix_figures(output_dir: Path) -> None:
-    """Copy experiment figures used in the appendix."""
+def copy_experiment_outputs(output_dir: Path) -> None:
+    """Copy experiment outputs used directly in the article.
+
+    Some figures and data files are used as-is from experiment results rather
+    than being regenerated. This function copies them into the article
+    directory tree so that relative paths in the HTML resolve correctly.
+    """
     import shutil
 
     from scaling_law_analysis import config
 
-    appendix_dir = prepare_output_dir(output_dir / "appendix")
+    exp_dir = config.RESULTS_DIR / "experiments"
 
-    copies = [
+    appendix_dir = prepare_output_dir(output_dir / "appendix")
+    appendix_copies = [
         (
-            config.RESULTS_DIR
-            / "experiments"
-            / "exp5"
-            / "parameter_recovery_detailed.png",
+            exp_dir / "exp5" / "parameter_recovery_detailed.png",
             appendix_dir / "parameter_recovery_detailed.png",
         ),
         (
-            config.RESULTS_DIR / "experiments" / "exp4" / "extrapolation_error.png",
+            exp_dir / "exp4" / "extrapolation_error.png",
             appendix_dir / "combined_extrapolation_error.png",
         ),
+        (
+            exp_dir / "exp7" / "isoflop_curves.png",
+            appendix_dir / "isoflop_curves_noisy.png",
+        ),
+        (
+            exp_dir / "exp7" / "exponent_inference_errors.png",
+            appendix_dir / "exponent_inference_errors.png",
+        ),
     ]
-    for src, dst in copies:
+
+    inference_dir = prepare_output_dir(output_dir / "exponent_inference")
+    main_copies = [
+        (
+            exp_dir / "exp7" / "exponent_inference.png",
+            inference_dir / "exponent_inference.png",
+        ),
+        (
+            exp_dir / "exp7" / "exponent_inference.csv",
+            inference_dir / "exponent_inference.csv",
+        ),
+    ]
+
+    for src, dst in appendix_copies + main_copies:
         shutil.copy2(src, dst)
         print(f"Copied: {src} → {dst}")
 

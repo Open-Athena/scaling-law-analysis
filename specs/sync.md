@@ -25,8 +25,15 @@ When one implementation artifact changes, other artifacts that depend on it may 
   - `results/article/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
   - `results/article/parameter_recovery/parameter_recovery_max_errors.csv` → "Method Comparison (Parameter Recovery)" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
   - `results/article/parameter_recovery/parameter_recovery_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
+  - `results/article/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)
   - `results/experiments/exp8/conditioning_analysis.txt` → "Problems with Direct Surface Fitting" (experimental setup: surface parameters, compute budgets, points per curve; Hessian eigenvalue ranges, condition numbers κ ≈ 3.5×10¹¹ and κ ≈ 11, underdetermined parameter directions)
-- **Appendix figures from experiments**: `results/experiments/exp5/parameter_recovery_detailed.png` → `results/article/appendix/parameter_recovery_detailed.png` (copied by the figure generator; re-run step 2 after re-running experiments)
+- **Experiment outputs copied to article**: the figure generator's `copy_experiment_outputs` copies several experiment results directly into the article directory tree. Re-run step 2 after re-running experiments.
+  - `results/experiments/exp5/parameter_recovery_detailed.png` → `results/article/appendix/parameter_recovery_detailed.png`
+  - `results/experiments/exp4/extrapolation_error.png` → `results/article/appendix/combined_extrapolation_error.png`
+  - `results/experiments/exp7/isoflop_curves.png` → `results/article/appendix/isoflop_curves_noisy.png`
+  - `results/experiments/exp7/exponent_inference_errors.png` → `results/article/appendix/exponent_inference_errors.png`
+  - `results/experiments/exp7/exponent_inference.png` → `results/article/exponent_inference/exponent_inference.png`
+  - `results/experiments/exp7/exponent_inference.csv` → `results/article/exponent_inference/exponent_inference.csv`
 
 ## Spec → Spec
 
