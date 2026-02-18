@@ -579,7 +579,8 @@
                     <ol>
                         <li><a href="#approach-3-problems">Problems with Direct Surface Fitting</a></li>
                         <li><a href="#vpnls">Variable Projection (VPNLS)</a></li>
-                        <li><a href="#method-comparison">Method Comparison</a></li>
+                        <li><a href="#method-comparison-recovery">Method Comparison (Parameter Recovery)</a></li>
+                        <li><a href="#method-comparison-inference">Method Comparison (Parameter Inference)</a></li>
                     </ol>
                 </li>
                 <li>
@@ -1738,6 +1739,43 @@
                 of the nonlinear search is one way to make the problem more tractable.
             </p>
 
+            <p>
+                As an example of what "complex loss landscape" means concretely, consider the
+                Hessian of the residual sum of squares (RSS) objective for a five-parameter
+                fit on noise-free data from the Asymmetric surface
+                (\(\alpha = 0.465\), \(\beta = 0.155\)), using five IsoFLOP contours from
+                \(10^{17}\) to \(10^{21}\) FLOPs with 15 points per curve.
+                Its eigenvalues reveal how sensitive the objective is to perturbations along
+                each parameter
+                direction<sup><a href="#ref-hessian_optimization">[28]</a></sup>,
+                and the condition number \(\kappa\) (the ratio of
+                the largest to the smallest eigenvalue) measures how difficult the landscape
+                is for gradient-based methods to navigate. For this surface, the five
+                eigenvalues span from approximately \(8 \times 10^{-6}\) to
+                \(3 \times 10^{6}\), giving \(\kappa \approx 3.5 \times 10^{11}\). The two
+                flattest directions (smallest eigenvalues) point almost entirely along the
+                linear coefficients \(A\) and \(B\). Near the optimum, perturbing either
+                coefficient barely changes the RSS, making them effectively underdetermined
+                by the data even when the data are perfect. The steepest directions are
+                dominated by the scaling exponents \(\alpha\) and \(\beta\).
+            </p>
+
+            <p>
+                Quasi-Newton methods like L-BFGS, which are among the most common optimizers
+                for scaling law fits, build an approximate inverse Hessian to scale gradient
+                steps across parameter directions. When eigenvalues span 12 orders of
+                magnitude, the gradient signal along the flat \(A\)/\(B\) directions is
+                negligible compared to the steep \(\alpha\)/\(\beta\) directions, and
+                convergence criteria are often satisfied by progress in the steep directions
+                before the flat directions are resolved. Separating the linear parameters
+                from the nonlinear search eliminates the ill-conditioned directions entirely.
+                The resulting two-dimensional landscape over \((\alpha, \beta)\) has a Hessian
+                condition number of \(\kappa \approx 11\) in our example, a reduction by a factor of roughly
+                \(3 \times 10^{10}\). This motivates an algorithm that exploits the partially
+                linear structure of the Chinchilla loss surface to search only the
+                well-conditioned two-dimensional subspace.
+            </p>
+
             <h3 id="vpnls">Variable Projection (VPNLS)</h3>
 
             <p>
@@ -1796,7 +1834,7 @@
                 exactly the regime where simplex methods excel.
             </p>
 
-            <h3 id="method-comparison">Method Comparison</h3>
+            <h3 id="method-comparison-recovery">Method Comparison (Parameter Recovery)</h3>
 
             <p>
                 To validate this choice, we compare nine method configurations on noise-free
@@ -1830,78 +1868,6 @@
                     Methods are sorted by geometric mean error, with the worst at top.
                 </figcaption>
             </figure>
-
-            <p>
-                In the left panel, each dot shows the typical (geometric mean) parameter
-                recovery error for one method, and the horizontal bar shows the range from best
-                to worst case across 60 scenarios. The right panel breaks this down by parameter,
-                showing the worst-case error for each.
-            </p>
-
-            <p>
-                Consider the best Approach 3 configuration (5D L-BFGS-B with analytical
-                gradients). Even with exact gradients on noise-free data, the worst-case errors
-                reach about 5% for the scaling exponent \(\alpha\) and about 2% for the
-                irreducible loss \(E\). While a few percent may appear modest, the preceding
-                sections show that errors of this magnitude in scaling parameters translate into
-                meaningful distortions when extrapolating compute-optimal predictions to higher
-                budgets. VPNLS recovers all five parameters with errors on the order of
-                10<sup>&minus;8</sup>%, effectively eliminating parameter estimation as a
-                source of extrapolation error.
-                <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
-                surface and sampling range, also revealing that Approach 3's errors can vary
-                systematically with sampling range on certain surfaces.
-            </p>
-
-            <p>
-                Looking at the full set of methods, a clear hierarchy emerges. High-resolution
-                grid search (256&sup2;) is stable across all conditions but provides the poorest
-                overall precision among 2D methods, limited by grid resolution.
-            </p>
-
-            <p>
-                5D direct optimization (Approach 3) is more accurate on average than grid search
-                but highly variable across conditions. The 5D configurations that rely on
-                finite-difference gradients rather than analytical gradients perform particularly
-                poorly and serve as a useful negative control. They demonstrate what high
-                variability and instability look like, and Approach 3 with analytical gradients
-                exhibits a similar pattern at somewhat lower magnitude. The full
-                per-parameter breakdown (<a href="#appendix-method-comparison">Figure
-                A1</a>) shows these instability patterns in detail.
-            </p>
-
-            <p>
-                L-BFGS-B with 2D variable projection can match VPNLS precision, but the
-                optimizer fails to converge in a non-trivial fraction of scenarios even in this
-                relatively small test suite. The choice of finite-difference scheme matters
-                considerably. By default, scipy's L-BFGS-B approximates gradients with forward
-                differences: each partial derivative is estimated as
-                \((f(x + h) - f(x)) / h\). Passing
-                <code>jac='3-point'</code> to <code>scipy.optimize.minimize</code> switches to
-                3-point central differences, where each partial is estimated as
-                \((f(x + h) - f(x - h)) / 2h\). The central formula is generally more
-                accurate for smooth objectives because it samples symmetrically around the
-                point of interest. In our tests, this closes the precision gap with
-                Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
-                10<sup>&minus;8</sup>% error), but introduces sporadic line search failures.
-                Notably, these failures can be false positives. The optimizer has already
-                reached the true minimum, with residual sum of squares near machine zero, but
-                the line search cannot verify further progress because function values are too
-                small to distinguish. In scipy, this surfaces as
-                <code>result.success = False</code> with an <code>ABNORMAL</code> status
-                from <code>scipy.optimize.minimize</code>, even though the returned parameters
-                are correct.
-            </p>
-
-            <p>
-                L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
-                to tune settings carefully and who understand that certain convergence errors
-                from scipy are not necessarily problematic. That said, VPNLS with Nelder-Mead
-                is simpler, requires less tuning, and recovers parameter estimates with precision
-                at least as high as any other method tested. It technically achieves the most
-                precise estimates, though the margin over a well-configured L-BFGS-B with
-                3-point central differences is small.
-            </p>
 
             <details class="data-table-container">
                 <summary>📊 View method comparison data</summary>
@@ -2010,15 +1976,92 @@
                 </div>
             </details>
 
+            <p>
+                In the left panel, each dot shows the typical (geometric mean) parameter
+                recovery error for one method, and the horizontal bar shows the range from best
+                to worst case across 60 scenarios. The right panel breaks this down by parameter,
+                showing the worst-case error for each.
+            </p>
+
+            <p>
+                Consider the best Approach 3 configuration (5D L-BFGS-B with analytical
+                gradients). Even with exact gradients on noise-free data, the worst-case errors
+                reach about 5% for the scaling exponent \(\alpha\) and about 2% for the
+                irreducible loss \(E\). While a few percent may appear modest, the preceding
+                sections show that errors of this magnitude in scaling parameters translate into
+                meaningful distortions when extrapolating compute-optimal predictions to higher
+                budgets. VPNLS recovers all five parameters with errors on the order of
+                10<sup>&minus;8</sup>%, effectively eliminating parameter estimation as a
+                source of extrapolation error.
+                <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
+                surface and sampling range, also revealing that Approach 3's errors can vary
+                systematically with sampling range on certain surfaces.
+            </p>
+
+            <p>
+                Looking at the full set of methods, a clear hierarchy emerges. High-resolution
+                grid search (256&sup2;) is stable across all conditions but provides the poorest
+                overall precision among 2D methods, limited by grid resolution.
+            </p>
+
+            <p>
+                5D direct optimization (Approach 3) is more accurate on average than grid search
+                but highly variable across conditions. The 5D configurations that rely on
+                finite-difference gradients rather than analytical gradients perform particularly
+                poorly and serve as a useful negative control. They demonstrate what high
+                variability and instability look like, and Approach 3 with analytical gradients
+                exhibits a similar pattern centered around more accurate parameter estimates. The full
+                per-parameter breakdown (<a href="#appendix-method-comparison">Figure
+                A1</a>) shows these instability patterns in detail.
+            </p>
+
+            <p>
+                L-BFGS-B with 2D variable projection can match VPNLS precision, but the
+                optimizer fails to converge in a non-trivial fraction of scenarios even in this
+                relatively small test suite. The choice of finite-difference scheme matters
+                considerably. By default, scipy's L-BFGS-B approximates gradients with forward
+                differences: each partial derivative is estimated as
+                \((f(x + h) - f(x)) / h\). Passing
+                <code>jac='3-point'</code> to <code>scipy.optimize.minimize</code> switches to
+                3-point central differences, where each partial is estimated as
+                \((f(x + h) - f(x - h)) / 2h\). The central formula is generally more
+                accurate for smooth objectives because it samples symmetrically around the
+                point of interest. In our tests, this closes the precision gap with
+                Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
+                10<sup>&minus;8</sup>% error), but introduces sporadic line search failures.
+                Notably, these failures can be false positives. The optimizer has already
+                reached the true minimum, with residual sum of squares near machine zero, but
+                the line search cannot verify further progress because function values are too
+                small to distinguish. In scipy, this surfaces as
+                <code>result.success = False</code> with an <code>ABNORMAL</code> status
+                from <code>scipy.optimize.minimize</code>, even though the returned parameters
+                are correct.
+            </p>
+
+            <p>
+                L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
+                to tune settings carefully and who understand that certain convergence errors
+                from libraries like scipy may not necessarily be problematic. That said, VPNLS with Nelder-Mead
+                is simpler, requires less tuning, and recovers parameter estimates with precision
+                at least as high as any other method tested. It technically achieves the most
+                precise estimates, though the margin over a well-configured L-BFGS-B with
+                3-point central differences is small.
+            </p>
+
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
                     VPNLS eliminates the biases inherent in the parabolic approximation and
-                    avoids the fragile gradient tuning that complicates L-BFGS-B. All five loss
+                    avoids the fragile gradient tuning that complicates L-BFGS-B when used
+                    with variable projection. All five loss
                     surface parameters \((E, A, B, \alpha, \beta)\) are recovered with machine
                     precision, and extrapolation to higher compute budgets is exact.
                 </p>
             </div>
+
+            <h3 id="method-comparison-inference">Method Comparison (Parameter Inference)</h3>
+
+            <p>TBD</p>
 
         </section>
 
@@ -2207,6 +2250,7 @@
             <li id="ref-ai2_task_scaling">"Establishing Task Scaling Laws via Compute-Efficient Model Ladders," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2412.04403">https://arxiv.org/abs/2412.04403</a></li>
             <li id="ref-farseer">"Predictable Scale: Part II, Farseer: A Refined Scaling Law in Large Language Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2506.10972">https://arxiv.org/abs/2506.10972</a></li>
             <li id="ref-sld_agent">"Can Language Models Discover Scaling Laws?," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2507.21184">https://arxiv.org/abs/2507.21184</a></li>
+            <li id="ref-hessian_optimization">"An Investigation into Neural Net Optimization via Hessian Eigenvalue Density," <em>ArXiv</em>. <a href="https://arxiv.org/abs/1901.10159">https://arxiv.org/abs/1901.10159</a></li>
             </ol>
         </section>
 

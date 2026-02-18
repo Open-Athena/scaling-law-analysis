@@ -135,3 +135,8 @@
   title: Can Language Models Discover Scaling Laws?
   venue: ArXiv
   url: https://arxiv.org/abs/2507.21184
+
+- key: hessian_optimization
+  title: An Investigation into Neural Net Optimization via Hessian Eigenvalue Density
+  venue: ArXiv
+  url: https://arxiv.org/abs/1901.10159

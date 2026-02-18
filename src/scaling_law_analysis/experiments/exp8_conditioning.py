@@ -1,7 +1,7 @@
 """Experiment 8: Optimizer conditioning — Approach 3 vs VPNLS.
 
 Demonstrates why VPNLS achieves higher precision than Approach 3 on
-noise-free Chinchilla loss surfaces. The root cause is the extreme
+noise-free Chinchilla-style loss surfaces. The root cause is the extreme
 ill-conditioning of the 5-parameter optimization landscape that
 Approach 3 must navigate, which VPNLS avoids through variable projection.
 
@@ -117,7 +117,7 @@ def main() -> str:
     p()
     p("This experiment explains why VPNLS achieves higher precision than")
     p("Approach 3 (direct 5-parameter L-BFGS-B) when fitting noise-free")
-    p("Chinchilla loss surfaces. The difference is not due to grid search")
+    p("Chinchilla-style loss surfaces. The difference is not due to grid search")
     p("quality or optimizer settings — it is a fundamental consequence of")
     p("the ill-conditioning of the 5D optimization landscape.")
     p()
@@ -129,10 +129,9 @@ def main() -> str:
     rule("-")
     p()
     p(
-        f"Loss surface: α={loss.alpha}, β={loss.beta}, "
-        f"A={loss.A}, B={loss.B}, E={loss.E}"
+        f"Loss surface: E={loss.E}, A={loss.A}, B={loss.B}, "
+        f"α={loss.alpha}, β={loss.beta}"
     )
-    p(f"True scaling exponents: a={loss.a:.6f}, b={loss.b:.6f}")
     p(
         f"Compute budgets: {len(COMPUTE_BUDGETS)} budgets, "
         f"{COMPUTE_BUDGETS[0]:.0e} to {COMPUTE_BUDGETS[-1]:.0e} FLOPs"
@@ -161,39 +160,47 @@ def main() -> str:
     p("fitting functions with default settings.")
     p()
 
-    # Both methods now return a result with status metadata —
-    # no exceptions for soft issues like ABNORMAL termination.
     est_a3 = fit_approach3(N, D, L)
-    a3_a = est_a3.beta / (est_a3.alpha + est_a3.beta)
-    a3_b = est_a3.alpha / (est_a3.alpha + est_a3.beta)
-    a3_a_err = (a3_a - loss.a) / loss.a
-    a3_b_err = (a3_b - loss.b) / loss.b
-
     est_vp = fit_surface(N, D, L, method="nelder-mead")
-    vp_a = est_vp.beta / (est_vp.alpha + est_vp.beta)
-    vp_b = est_vp.alpha / (est_vp.alpha + est_vp.beta)
-    vp_a_err = (vp_a - loss.a) / loss.a
-    vp_b_err = (vp_b - loss.b) / loss.b
+
+    a3_errs = {
+        "E": (est_a3.E - loss.E) / loss.E,
+        "A": (est_a3.A - loss.A) / loss.A,
+        "B": (est_a3.B - loss.B) / loss.B,
+        "α": (est_a3.alpha - loss.alpha) / loss.alpha,
+        "β": (est_a3.beta - loss.beta) / loss.beta,
+    }
+    vp_errs = {
+        "E": (est_vp.E - loss.E) / loss.E,
+        "A": (est_vp.A - loss.A) / loss.A,
+        "B": (est_vp.B - loss.B) / loss.B,
+        "α": (est_vp.alpha - loss.alpha) / loss.alpha,
+        "β": (est_vp.beta - loss.beta) / loss.beta,
+    }
 
     p("Approach 3 (L-BFGS-B, 5 parameters):")
-    p(f"  a = {a3_a:.15f}  (relative error: {a3_a_err:+.2e})")
-    p(f"  b = {a3_b:.15f}  (relative error: {a3_b_err:+.2e})")
+    for name, err in a3_errs.items():
+        p(f"  {name:>1}:  relative error = {err:+.2e}")
     p(
         f"  status: {est_a3.status.value}"
         + (f" — {est_a3.status_message}" if est_a3.status_message else "")
     )
     p()
     p("VPNLS (Nelder-Mead, 2 parameters + NNLS):")
-    p(f"  a = {vp_a:.15f}  (relative error: {vp_a_err:+.2e})")
-    p(f"  b = {vp_b:.15f}  (relative error: {vp_b_err:+.2e})")
+    for name, err in vp_errs.items():
+        p(f"  {name:>1}:  relative error = {err:+.2e}")
     p(
         f"  status: {est_vp.status.value}"
         + (f" — {est_vp.status_message}" if est_vp.status_message else "")
     )
     p()
+    alpha_ratio = (
+        abs(a3_errs["α"] / vp_errs["α"]) if vp_errs["α"] != 0 else float("inf")
+    )
+    beta_ratio = abs(a3_errs["β"] / vp_errs["β"]) if vp_errs["β"] != 0 else float("inf")
     p(
-        f"VPNLS is ~{abs(a3_a_err / vp_a_err):.0f}x more precise on 'a' "
-        f"and ~{abs(a3_b_err / vp_b_err):.0f}x more precise on 'b'."
+        f"VPNLS is ~{alpha_ratio:.0f}× more precise on α "
+        f"and ~{beta_ratio:.0f}× more precise on β."
     )
     p()
     p("Why? Both methods use tight optimizer tolerances (ftol=1e-15,")
@@ -215,9 +222,10 @@ def main() -> str:
     p("A high condition number (ratio of largest to smallest eigenvalue)")
     p("means the optimizer must simultaneously handle directions where a")
     p("tiny step causes a huge change AND directions where a large step")
-    p("barely changes anything. Gradient-based optimizers like L-BFGS-B")
-    p("struggle with this because finite floating-point precision cannot")
-    p("accurately represent gradient information along the flat directions.")
+    p("barely changes anything. L-BFGS-B's limited-memory Hessian")
+    p("approximation (~10 vector pairs) cannot accurately represent")
+    p("such extreme curvature spread, so it cannot compute steps that")
+    p("make correct progress along all directions simultaneously.")
     p()
 
     H5 = _hessian_5d(true_x, log_N, log_D, L)
@@ -239,22 +247,105 @@ def main() -> str:
     p(f"Condition number: κ = λ_max / λ_min = {cond_5d:.2e}")
     p()
     p("Interpretation:")
-    p(f"  - The two flattest directions (λ₁, λ₂ ≈ 10⁻⁵) point almost")
+    p(
+        f"  - The two flattest directions "
+        f"(λ₁ ≈ {eigvals_5d[0]:.0e}, λ₂ ≈ {eigvals_5d[1]:.0e}) point almost"
+    )
     p(f"    entirely along A and B. This means perturbing the linear")
     p(f"    coefficients A or B barely changes the RSS — the loss surface")
     p(f"    is extremely insensitive to these parameters near the optimum.")
     p(f"  - The steepest direction (λ₅ ≈ {eigvals_5d[-1]:.2e}) is")
-    p(f"    dominated by α, the most sensitive parameter.")
+    p(f"    dominated by β. The next steepest (λ₄ ≈ {eigvals_5d[-2]:.2e})")
+    p(f"    is dominated by α.")
     p(f"  - The condition number κ ≈ {cond_5d:.0e} means L-BFGS-B must")
     p(
         f"    resolve curvature differences spanning {np.log10(cond_5d):.0f} "
         f"orders of magnitude."
     )
     p()
-    p("At RSS values near 10⁻¹⁶, the gradient along the flat A/B")
-    p("directions is dominated by floating-point rounding error. L-BFGS-B")
-    p("cannot distinguish true descent from numerical noise, so it stops")
-    p("early (or reports 'ABNORMAL' line search failure).")
+    p("We can verify this directly by examining the gradient.")
+    p()
+
+    # -- Gradient at the true parameters --
+    grad_true = _surface_rss_grad(true_x, log_N, log_D, L)
+    p("Gradient at the TRUE parameters (should be ~0 everywhere):")
+    for j, name in enumerate(param_names):
+        p(f"  ∂RSS/∂{name:>1} = {grad_true[j]:+.2e}")
+    p()
+    ab_max = max(abs(grad_true[1]), abs(grad_true[2]))
+    ab_exp = int(np.floor(np.log10(ab_max)))
+    p(f"The A and B components are near machine epsilon (~10^{ab_exp}),")
+    p("confirming these directions are truly flat at the minimum.")
+    alpha_grad = abs(grad_true[3])
+    beta_grad = abs(grad_true[4])
+    p(f"The α component ({alpha_grad:.0e}) and β component ({beta_grad:.0e})")
+    p("are larger because the surface is steeper there — even floating-")
+    p("point noise in the evaluation produces a measurable gradient.")
+    p("Now look at what L-BFGS-B sees at its converged solution")
+    p("(which is NOT the true minimum).")
+    p()
+
+    # -- Gradient at the Approach 3 solution --
+    a3_x = np.array([est_a3.E, est_a3.A, est_a3.B, est_a3.alpha, est_a3.beta])
+    grad_a3 = _surface_rss_grad(a3_x, log_N, log_D, L)
+    p("Gradient at the Approach 3 converged solution:")
+    for j, name in enumerate(param_names):
+        p(f"  ∂RSS/∂{name:>1} = {grad_a3[j]:+.2e}")
+    p()
+
+    # -- Project onto eigenvectors --
+    grad_proj = eigvecs_5d.T @ grad_a3
+    p("Same gradient projected onto Hessian eigenvectors:")
+    for k in range(5):
+        p(
+            f"  eigenvector {k+1} (λ={eigvals_5d[k]:.2e}): "
+            f"component = {grad_proj[k]:+.2e}"
+        )
+    p()
+    flat_range = (abs(grad_proj[0]), abs(grad_proj[1]))
+    steep_range = (
+        min(abs(grad_proj[2]), abs(grad_proj[3]), abs(grad_proj[4])),
+        max(abs(grad_proj[2]), abs(grad_proj[3]), abs(grad_proj[4])),
+    )
+    p(
+        f"The flat-direction components (eigenvectors 1–2) are "
+        f"~{min(flat_range):.0e} to {max(flat_range):.0e},"
+    )
+    p(
+        f"while the steep-direction components (3–5) are "
+        f"~{steep_range[0]:.0e} to {steep_range[1]:.0e}."
+    )
+    p("L-BFGS-B's limited-memory Hessian approximation (~10 vector")
+    p(f"pairs) in a κ ≈ {cond_5d:.0e} landscape cannot accurately resolve")
+    p("these differences — the step it computes is unreliable.")
+    p()
+
+    # -- Perturbation experiment --
+    delta = 1e-4
+    p(f"Perturbation test: displace by δ={delta} along each eigenvector")
+    p(f"from the true parameters, then measure |∇RSS|:")
+    p()
+    pert_norms = []
+    for k in range(5):
+        x_pert = true_x + delta * eigvecs_5d[:, k]
+        grad_pert = _surface_rss_grad(x_pert, log_N, log_D, L)
+        grad_norm = float(np.linalg.norm(grad_pert))
+        pert_norms.append(grad_norm)
+        p(f"  eigenvector {k+1} (λ={eigvals_5d[k]:.2e}): " f"|∇RSS| = {grad_norm:.2e}")
+    p()
+    ratio = pert_norms[-1] / pert_norms[0]
+    p("The gradient response scales with the eigenvalue: a perturbation")
+    p(
+        f"along the flat A/B directions (λ ≈ {eigvals_5d[0]:.0e}–{eigvals_5d[1]:.0e}) produces a gradient"
+    )
+    p(f"~{ratio:.0e}× smaller than the same perturbation along the steep β")
+    ab_grad_at_soln = max(abs(grad_a3[1]), abs(grad_a3[2]))
+    p(f"direction. At Approach 3's solution, the A/B gradient IS nonzero")
+    p(f"(~{ab_grad_at_soln:.0e}), but L-BFGS-B's limited-memory Hessian approximation")
+    p(f"(~10 vector pairs) cannot accurately represent κ ≈ {cond_5d:.0e}. It")
+    p("cannot convert those small A/B gradients into correctly-sized")
+    p("steps, and function-value changes from the flat directions are")
+    p("negligible, so convergence criteria trigger with A/B unresolved.")
     p()
 
     # ── Step 3: 2D Hessian analysis ──────────────────────────────────────
@@ -264,10 +355,10 @@ def main() -> str:
     rule("-")
     p()
     p("VPNLS avoids the ill-conditioned directions entirely. For each")
-    p("candidate (α, β), it solves for E, A, B using Non-Negative Least")
-    p("Squares (NNLS) — a direct linear algebra solve, not iterative")
-    p("optimization. This eliminates the 3 flattest dimensions from the")
-    p("search space.")
+    p("candidate (α, β), it solves for the linear coefficients E, A, B")
+    p("using Non-Negative Least Squares (NNLS) — a direct linear algebra")
+    p("solve, not iterative optimization. This eliminates E, A, B from")
+    p("the search space, including the two flattest directions.")
     p()
     p("The remaining 2D surface over (α, β) has its own Hessian:")
     p()
@@ -296,24 +387,24 @@ def main() -> str:
     p(f"  VPNLS (2D):       κ = {cond_2d:.1f}")
     p(f"  Ratio:            {cond_5d / cond_2d:.0e}x worse for Approach 3")
     p()
-    p("Summary of precision achieved:")
+    p("Summary of precision achieved (relative error in α and β):")
     p(
-        f"  Approach 3:  |a| error ≈ {abs(a3_a_err):.0e},  "
-        f"|b| error ≈ {abs(a3_b_err):.0e}"
+        f"  Approach 3:  |α| error ≈ {abs(a3_errs['α']):.0e},  "
+        f"|β| error ≈ {abs(a3_errs['β']):.0e}"
     )
     p(
-        f"  VPNLS:       |a| error ≈ {abs(vp_a_err):.0e},  "
-        f"|b| error ≈ {abs(vp_b_err):.0e}"
+        f"  VPNLS:       |α| error ≈ {abs(float(vp_errs['α'])):.0e},  "
+        f"|β| error ≈ {abs(float(vp_errs['β'])):.0e}"
     )
     p()
-    precision_ratio = abs(a3_a_err / vp_a_err) if vp_a_err != 0 else float("inf")
     p(
-        f"The ~{cond_5d / cond_2d:.0e} gap in conditioning explains the ~{precision_ratio:.0f}x gap"
+        f"The ~{cond_5d / cond_2d:.0e} gap in conditioning explains the "
+        f"~{alpha_ratio:.0f}×/~{beta_ratio:.0f}× gap in α/β precision."
     )
-    p("in precision. L-BFGS-B's convergence rate degrades with condition")
-    p("number, and at κ ≈ 10¹¹, floating-point noise in gradient")
-    p("evaluation becomes the binding constraint before the optimizer")
-    p("reaches the true minimum.")
+    p(f"At κ ≈ {cond_5d:.0e}, L-BFGS-B's limited-memory Hessian")
+    p("approximation cannot convert the small A/B gradients into")
+    p("correctly-sized steps. Convergence criteria trigger based on the")
+    p("dominant steep directions, leaving the flat directions unresolved.")
     p()
 
     # ── Step 5: Verify it's not the grid search ──────────────────────────
@@ -351,8 +442,9 @@ def main() -> str:
         p("no reliable improvement is possible.")
     else:
         E, A, B, alpha, beta = result_true_init.x
-        a_err = (beta / (alpha + beta) - loss.a) / loss.a
-        p(f"  a error: {a_err:.2e}")
+        alpha_err = (alpha - loss.alpha) / loss.alpha
+        beta_err = (beta - loss.beta) / loss.beta
+        p(f"  α error: {alpha_err:+.2e},  β error: {beta_err:+.2e}")
     p()
     p("Now compare grid search initialization quality:")
     p()
@@ -405,8 +497,8 @@ def main() -> str:
     assert result_ftol0 is not None
 
     E, A, B, alpha, beta = result_ftol0.x
-    a_ftol0 = beta / (alpha + beta)
-    a_ftol0_err = (a_ftol0 - loss.a) / loss.a
+    ftol0_alpha_err = (alpha - loss.alpha) / loss.alpha
+    ftol0_beta_err = (beta - loss.beta) / loss.beta
     grad_norm = float(
         np.linalg.norm(_surface_rss_grad(result_ftol0.x, log_N, log_D, L))
     )
@@ -414,16 +506,18 @@ def main() -> str:
     p(f"L-BFGS-B with ftol=0 (grid search init):")
     p(f"  Iterations: {result_ftol0.nit}")
     p(f"  Final RSS:  {result_ftol0.fun:.2e}")
-    p(f"  |a| error:  {abs(a_ftol0_err):.2e}")
+    p(f"  |α| error:  {abs(ftol0_alpha_err):.2e}")
+    p(f"  |β| error:  {abs(ftol0_beta_err):.2e}")
     p(f"  Grad norm:  {grad_norm:.2e}")
     p(f"  Message:    {result_ftol0.message}")
     p()
     p("Even with ftol=0 (no function-value stopping), L-BFGS-B improves")
     p(
-        f"only modestly (|a| error {abs(a3_a_err):.0e} → {abs(a_ftol0_err):.0e}). The gradient norm"
+        f"only modestly (|α| error {abs(a3_errs['α']):.0e} → "
+        f"{abs(ftol0_alpha_err):.0e}). The gradient norm"
     )
-    p(f"of {grad_norm:.2e} shows the optimizer is stuck — not because it")
-    p("truly converged, but because the gradient is too noisy to follow.")
+    p(f"of {grad_norm:.2e} is small but nonzero — descent signal exists, but")
+    p("L-BFGS-B's Hessian approximation cannot convert it into a useful step.")
     p()
 
     # ── Step 6: Why this matters less with noise ──────────────────────────
@@ -434,8 +528,9 @@ def main() -> str:
     p()
     p("With realistic noise (σ > 0), the true minimum of the RSS shifts")
     p("away from the true parameters. The relevant precision is now set")
+    a3_limit = max(abs(a3_errs["α"]), abs(a3_errs["β"]))
     p("by the noise floor, not machine epsilon. Since noise-induced errors")
-    p("are typically ~10⁻² to 10⁻¹ (much larger than the ~10⁻¹⁰ limit"),
+    p(f"are typically ~10⁻² to 10⁻¹ (much larger than the ~{a3_limit:.0e} limit")
     p("from conditioning), both methods achieve similar accuracy.")
     p()
     p("The conditioning problem only matters when you need precision")
@@ -450,15 +545,21 @@ def main() -> str:
     rule("=")
     p()
     p("VPNLS achieves higher precision than Approach 3 because variable")
-    p("projection eliminates the 3 most ill-conditioned parameter")
-    p("directions (E, A, B) from the search space. This reduces the")
+    p("projection eliminates the linear parameters (E, A, B) — including")
+    p(
+        "the two most ill-conditioned directions — from the search space. This reduces the"
+    )
     p(f"condition number from ~{cond_5d:.0e} (5D) to ~{cond_2d:.0f} (2D),")
     p("allowing the optimizer to converge to machine precision.")
     p()
+    grad_ab_mag = max(abs(grad_a3[1]), abs(grad_a3[2]))
+    grad_steep_mag = max(abs(grad_a3[0]), abs(grad_a3[4]))
+    grad_spread = grad_steep_mag / grad_ab_mag if grad_ab_mag > 0 else float("inf")
     p("Approach 3's precision is limited not by its grid search or")
-    p("optimizer settings, but by the fundamental inability of gradient-")
-    p("based methods to navigate an extremely ill-conditioned landscape")
-    p("when floating-point arithmetic is the binding constraint.")
+    p("optimizer settings, but by L-BFGS-B's inability to accurately")
+    p(f"approximate the inverse Hessian of a κ ≈ {cond_5d:.0e} landscape.")
+    p(f"The gradient signal along A/B exists but is ~{grad_spread:.0f}× smaller")
+    p("than along E/β; the limited-memory Hessian cannot amplify it correctly.")
     p()
     p("For practitioners: when fitting Chinchilla-style loss surfaces,")
     p("variable projection (VPNLS) should be preferred over direct 5D")

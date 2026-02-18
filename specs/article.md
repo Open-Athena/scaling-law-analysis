@@ -156,6 +156,7 @@
 ## Robust Fits: Unbiased Estimation with Linear Separation
 
 - Opening segue: the previous sections established the biases and showed they arise in practice; now address what to do about them
+- **Problems with Direct Surface Fitting**
 - Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
   - The following summary of fitting practices and failure modes draws from [misfitting], a survey of over 50 scaling law papers; the problems documented apply to scaling law fitting in general (not just Chinchilla forms), but they are directly relevant because Approach 3 involves the same kind of nonlinear optimization
   - Over half of surveyed papers do not fully specify their fitting procedure (optimizer, loss, initialization), compounding reproducibility issues
@@ -167,6 +168,8 @@
       - The survey also finds that loss function choice (Log-Huber, Huber, MSE, MAE) affects fitted parameters unpredictably across datasets, and non-MSE objectives can introduce systematic bias in parameter estimates; our goal is to identify a method that is simple, stable, and efficient rather than to address outliers or other statistical concerns, so we use MSE for all fits
   - The survey's experimental analysis varies optimizer, loss function, and initialization strategy across three datasets; the overarching finding is that none of these choices reliably eliminates instability, and results shift unpredictably between datasets
   - Segue: a key contributor to these problems is the high dimensionality of the joint 5-parameter optimization, which creates a complex loss landscape with many local minima and interacting sensitivities; variable projection reduces the nonlinear search to 2 dimensions (α, β), which shrinks the space enough to make simple grid-seeded optimization practical and greatly reduces (though does not eliminate) the risk of converging to poor local minima
+  - Concrete example from Experiment 8: Hessian of 5D RSS on the Asymmetric surface (α=0.465, β=0.155, five IsoFLOP contours 10¹⁷–10²¹, 15 points/curve) has eigenvalues spanning ~8×10⁻⁶ to ~3×10⁶ (κ ≈ 3.5×10¹¹); flattest directions are A and B (underdetermined near optimum), steepest are α and β; 2D landscape after variable projection has κ ≈ 11 [hessian_optimization]
+- **Variable Projection (VPNLS)**
 - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
 - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
 - **Algorithm**: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer (Nelder-Mead) that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space; we call this method VPNLS (Variable Projection with Non-negative Least Squares)
@@ -175,7 +178,7 @@
   - Switching to OLS would restore differentiability but cannot enforce non-negativity (the outer L-BFGS-B bounds only constrain α, β, not the inner solve's output); deriving and implementing the analytical gradient through the normal equations also adds complexity for marginal benefit in a 2D search space
   - With NNLS, L-BFGS-B must use finite-difference gradients, which creates interacting tuning parameters (`eps`, `jac`, `ftol`, `gtol`, `maxcor`, `maxls`) where tight tolerances demand gradient accuracy that finite differences cannot reliably provide
   - Nelder-Mead avoids all of this; its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box; it scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
-- **Method Comparison**
+- **Method Comparison (Parameter Recovery)**
   - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, Asymmetric) and 20 sampling ranges (the best case for gradient methods):
     - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly
     - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search
@@ -189,6 +192,8 @@
     - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner understands that `result.success = False` from `scipy.optimize.minimize` does not always indicate a bad fit
     - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
 - Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
+- **Method Comparison (Parameter Inference)**
+  - TBD
 
 ---
 

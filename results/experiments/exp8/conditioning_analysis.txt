@@ -4,7 +4,7 @@ Experiment 8: Optimizer Conditioning — Approach 3 vs VPNLS
 
 This experiment explains why VPNLS achieves higher precision than
 Approach 3 (direct 5-parameter L-BFGS-B) when fitting noise-free
-Chinchilla loss surfaces. The difference is not due to grid search
+Chinchilla-style loss surfaces. The difference is not due to grid search
 quality or optimizer settings — it is a fundamental consequence of
 the ill-conditioning of the 5D optimization landscape.
 
@@ -12,8 +12,7 @@ the ill-conditioning of the 5D optimization landscape.
 Setup
 ------------------------------------------------------------------------
 
-Loss surface: α=0.46499999999999997, β=0.155, A=406.4, B=410.7, E=1.69
-True scaling exponents: a=0.250000, b=0.750000
+Loss surface: E=1.69, A=406.4, B=410.7, α=0.46499999999999997, β=0.155
 Compute budgets: 5 budgets, 1e+17 to 1e+21 FLOPs
 Points per curve: 15
 Noise: σ = 0 (perfect data from the true loss surface)
@@ -30,16 +29,22 @@ true loss surface with zero noise. We use the library's standard
 fitting functions with default settings.
 
 Approach 3 (L-BFGS-B, 5 parameters):
-  a = 0.249999987772729  (relative error: -4.89e-08)
-  b = 0.750000012227272  (relative error: +1.63e-08)
+  E:  relative error = +8.24e-08
+  A:  relative error = +3.56e-07
+  B:  relative error = +6.94e-08
+  α:  relative error = +8.19e-08
+  β:  relative error = +1.67e-08
   status: converged
 
 VPNLS (Nelder-Mead, 2 parameters + NNLS):
-  a = 0.249999999952606  (relative error: -1.90e-10)
-  b = 0.750000000047393  (relative error: +6.32e-11)
+  E:  relative error = -4.64e-10
+  A:  relative error = +1.79e-10
+  B:  relative error = -7.12e-10
+  α:  relative error = +4.64e-11
+  β:  relative error = -2.06e-10
   status: converged
 
-VPNLS is ~258x more precise on 'a' and ~258x more precise on 'b'.
+VPNLS is ~1765× more precise on α and ~81× more precise on β.
 
 Why? Both methods use tight optimizer tolerances (ftol=1e-15,
 gtol=1e-15). The difference is not in the settings — it is in
@@ -57,9 +62,10 @@ vs 'flat' (low eigenvalue = insensitive).
 A high condition number (ratio of largest to smallest eigenvalue)
 means the optimizer must simultaneously handle directions where a
 tiny step causes a huge change AND directions where a large step
-barely changes anything. Gradient-based optimizers like L-BFGS-B
-struggle with this because finite floating-point precision cannot
-accurately represent gradient information along the flat directions.
+barely changes anything. L-BFGS-B's limited-memory Hessian
+approximation (~10 vector pairs) cannot accurately represent
+such extreme curvature spread, so it cannot compute steps that
+make correct progress along all directions simultaneously.
 
 Hessian eigenvalues at the true parameters:
 
@@ -72,29 +78,81 @@ Hessian eigenvalues at the true parameters:
 Condition number: κ = λ_max / λ_min = 3.48e+11
 
 Interpretation:
-  - The two flattest directions (λ₁, λ₂ ≈ 10⁻⁵) point almost
+  - The two flattest directions (λ₁ ≈ 8e-06, λ₂ ≈ 2e-05) point almost
     entirely along A and B. This means perturbing the linear
     coefficients A or B barely changes the RSS — the loss surface
     is extremely insensitive to these parameters near the optimum.
   - The steepest direction (λ₅ ≈ 2.71e+06) is
-    dominated by α, the most sensitive parameter.
+    dominated by β. The next steepest (λ₄ ≈ 2.61e+04)
+    is dominated by α.
   - The condition number κ ≈ 3e+11 means L-BFGS-B must
     resolve curvature differences spanning 12 orders of magnitude.
 
-At RSS values near 10⁻¹⁶, the gradient along the flat A/B
-directions is dominated by floating-point rounding error. L-BFGS-B
-cannot distinguish true descent from numerical noise, so it stops
-early (or reports 'ABNORMAL' line search failure).
+We can verify this directly by examining the gradient.
+
+Gradient at the TRUE parameters (should be ~0 everywhere):
+  ∂RSS/∂E = -8.53e-14
+  ∂RSS/∂A = -4.55e-16
+  ∂RSS/∂B = -1.05e-15
+  ∂RSS/∂α = +1.90e-12
+  ∂RSS/∂β = +1.21e-11
+
+The A and B components are near machine epsilon (~10^-15),
+confirming these directions are truly flat at the minimum.
+The α component (2e-12) and β component (1e-11)
+are larger because the surface is steeper there — even floating-
+point noise in the evaluation produces a measurable gradient.
+Now look at what L-BFGS-B sees at its converged solution
+(which is NOT the true minimum).
+
+Gradient at the Approach 3 converged solution:
+  ∂RSS/∂E = -1.28e-06
+  ∂RSS/∂A = +2.68e-09
+  ∂RSS/∂B = +3.77e-09
+  ∂RSS/∂α = +9.04e-09
+  ∂RSS/∂β = -5.51e-07
+
+Same gradient projected onto Hessian eigenvectors:
+  eigenvector 1 (λ=7.78e-06): component = -1.12e-09
+  eigenvector 2 (λ=1.56e-05): component = +5.36e-10
+  eigenvector 3 (λ=1.19e+01): component = -1.28e-06
+  eigenvector 4 (λ=2.61e+04): component = -1.06e-07
+  eigenvector 5 (λ=2.71e+06): component = -5.35e-07
+
+The flat-direction components (eigenvectors 1–2) are ~5e-10 to 1e-09,
+while the steep-direction components (3–5) are ~1e-07 to 1e-06.
+L-BFGS-B's limited-memory Hessian approximation (~10 vector
+pairs) in a κ ≈ 3e+11 landscape cannot accurately resolve
+these differences — the step it computes is unreliable.
+
+Perturbation test: displace by δ=0.0001 along each eigenvector
+from the true parameters, then measure |∇RSS|:
+
+  eigenvector 1 (λ=7.78e-06): |∇RSS| = 4.87e-09
+  eigenvector 2 (λ=1.56e-05): |∇RSS| = 4.91e-09
+  eigenvector 3 (λ=1.19e+01): |∇RSS| = 1.19e-03
+  eigenvector 4 (λ=2.61e+04): |∇RSS| = 2.61e+00
+  eigenvector 5 (λ=2.71e+06): |∇RSS| = 2.70e+02
+
+The gradient response scales with the eigenvalue: a perturbation
+along the flat A/B directions (λ ≈ 8e-06–2e-05) produces a gradient
+~6e+10× smaller than the same perturbation along the steep β
+direction. At Approach 3's solution, the A/B gradient IS nonzero
+(~4e-09), but L-BFGS-B's limited-memory Hessian approximation
+(~10 vector pairs) cannot accurately represent κ ≈ 3e+11. It
+cannot convert those small A/B gradients into correctly-sized
+steps, and function-value changes from the flat directions are
+negligible, so convergence criteria trigger with A/B unresolved.
 
 ------------------------------------------------------------------------
 Step 3: Conditioning of the 2D landscape (VPNLS)
 ------------------------------------------------------------------------
 
 VPNLS avoids the ill-conditioned directions entirely. For each
-candidate (α, β), it solves for E, A, B using Non-Negative Least
-Squares (NNLS) — a direct linear algebra solve, not iterative
-optimization. This eliminates the 3 flattest dimensions from the
-search space.
+candidate (α, β), it solves for the linear coefficients E, A, B
+using Non-Negative Least Squares (NNLS) — a direct linear algebra
+solve, not iterative optimization. This eliminates E, A, B from
+the search space, including the two flattest directions.
 
 The remaining 2D surface over (α, β) has its own Hessian:
 
@@ -115,15 +173,15 @@ Summary of condition numbers:
   VPNLS (2D):       κ = 10.6
   Ratio:            3e+10x worse for Approach 3
 
-Summary of precision achieved:
-  Approach 3:  |a| error ≈ 5e-08,  |b| error ≈ 2e-08
-  VPNLS:       |a| error ≈ 2e-10,  |b| error ≈ 6e-11
+Summary of precision achieved (relative error in α and β):
+  Approach 3:  |α| error ≈ 8e-08,  |β| error ≈ 2e-08
+  VPNLS:       |α| error ≈ 5e-11,  |β| error ≈ 2e-10
 
-The ~3e+10 gap in conditioning explains the ~258x gap
-in precision. L-BFGS-B's convergence rate degrades with condition
-number, and at κ ≈ 10¹¹, floating-point noise in gradient
-evaluation becomes the binding constraint before the optimizer
-reaches the true minimum.
+The ~3e+10 gap in conditioning explains the ~1765×/~81× gap in α/β precision.
+At κ ≈ 3e+11, L-BFGS-B's limited-memory Hessian
+approximation cannot convert the small A/B gradients into
+correctly-sized steps. Convergence criteria trigger based on the
+dominant steep directions, leaving the flat directions unresolved.
 
 ------------------------------------------------------------------------
 Step 5: Verify the grid search is not the bottleneck
@@ -157,14 +215,15 @@ not explain the final precision gap — let's verify with ftol=0:
 L-BFGS-B with ftol=0 (grid search init):
   Iterations: 236
   Final RSS:  1.48e-17
-  |a| error:  4.65e-10
+  |α| error:  4.18e-10
+  |β| error:  1.04e-09
   Grad norm:  2.99e-11
   Message:    CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
 
 Even with ftol=0 (no function-value stopping), L-BFGS-B improves
-only modestly (|a| error 5e-08 → 5e-10). The gradient norm
-of 2.99e-11 shows the optimizer is stuck — not because it
-truly converged, but because the gradient is too noisy to follow.
+only modestly (|α| error 8e-08 → 4e-10). The gradient norm
+of 2.99e-11 is small but nonzero — descent signal exists, but
+L-BFGS-B's Hessian approximation cannot convert it into a useful step.
 
 ------------------------------------------------------------------------
 Step 6: Why noise masks the conditioning problem
@@ -173,7 +232,7 @@ Step 6: Why noise masks the conditioning problem
 With realistic noise (σ > 0), the true minimum of the RSS shifts
 away from the true parameters. The relevant precision is now set
 by the noise floor, not machine epsilon. Since noise-induced errors
-are typically ~10⁻² to 10⁻¹ (much larger than the ~10⁻¹⁰ limit
+are typically ~10⁻² to 10⁻¹ (much larger than the ~8e-08 limit
 from conditioning), both methods achieve similar accuracy.
 
 The conditioning problem only matters when you need precision
@@ -185,15 +244,16 @@ Conclusion
 ========================================================================
 
 VPNLS achieves higher precision than Approach 3 because variable
-projection eliminates the 3 most ill-conditioned parameter
-directions (E, A, B) from the search space. This reduces the
+projection eliminates the linear parameters (E, A, B) — including
+the two most ill-conditioned directions — from the search space. This reduces the
 condition number from ~3e+11 (5D) to ~11 (2D),
 allowing the optimizer to converge to machine precision.
 
 Approach 3's precision is limited not by its grid search or
-optimizer settings, but by the fundamental inability of gradient-
-based methods to navigate an extremely ill-conditioned landscape
-when floating-point arithmetic is the binding constraint.
+optimizer settings, but by L-BFGS-B's inability to accurately
+approximate the inverse Hessian of a κ ≈ 3e+11 landscape.
+The gradient signal along A/B exists but is ~339× smaller
+than along E/β; the limited-memory Hessian cannot amplify it correctly.
 
 For practitioners: when fitting Chinchilla-style loss surfaces,
 variable projection (VPNLS) should be preferred over direct 5D

@@ -255,3 +255,26 @@ This validates that the derived closed-form expression exactly matches numerical
 **Visualization**:
 
 Produce a single figure with 2 rows (exponent a, exponent b) × 3 columns (narrow, medium, wide grid width). Each panel shows absolute relative error (log scale) vs points per isoflop curve, with one curve per fitting method.
+
+
+## Experiment 8: Conditioning Analysis
+
+**Hypothesis**: Approach 3's lower precision on noise-free data stems from ill-conditioning of the 5D problem, not from poor initialization or optimizer choice. VPNLS avoids this via a well-conditioned 2D reformulation.
+
+**Key finding**: Near the optimum, A and B are nearly interchangeable — perturbing either barely changes the RSS. The 5D Hessian at the true parameters has eigenvalues spanning 12 orders of magnitude: the two flattest (λ ≈ 10⁻⁵) point along A/B, the steepest (λ ≈ 3×10⁶) along β, giving κ ≈ 3.5×10¹¹. VPNLS eliminates A/B/E via NNLS and optimizes only (α, β), whose 2D Hessian has κ ≈ 11.
+
+At Approach 3's converged solution, the gradient along A/B is ~10⁻⁹ — nonzero and well above machine epsilon, so the descent signal exists. But L-BFGS-B cannot use it: its limited-memory Hessian approximation (~10 vector pairs) cannot accurately represent κ ≈ 10¹¹, so it cannot convert those small A/B gradients into appropriately-scaled steps. Meanwhile, function-value changes are dominated by the steep E/α/β directions; once those converge, the ftol criterion triggers with the flat directions unresolved.
+
+A perturbation test confirms the scale of the problem: displacing by δ=10⁻⁴ along each eigenvector produces gradient norms from ~5×10⁻⁹ (flat A/B) to ~3×10² (steep β) — a ~6×10¹⁰× spread matching κ.
+
+**Method**: Generate noise-free isoflop data from the Asymmetric surface (α/β = 3) using 5 compute budgets (10¹⁷–10²¹ FLOPs), 15 points per curve, ±8× sampling range. Steps:
+
+1. Fit both methods with default settings and compare recovered exponent precision.
+2. Compute numerical Hessian of the 5D RSS at true parameters; report eigenvalues, eigenvector directions, and condition number. Do the same for the 2D VPNLS Hessian.
+3. Compute the gradient at the true parameters, at Approach 3's converged solution (in both parameter space and projected onto Hessian eigenvectors), and under equal perturbations along each eigenvector — directly demonstrating the signal-vs-curvature mismatch.
+4. Summarize the conditioning-vs-precision correspondence.
+5. Initialize L-BFGS-B at the true parameters to rule out grid search quality as the cause. Compare grid search starting-point quality for both methods.
+6. Re-run L-BFGS-B with ftol=0 from grid init to rule out early stopping as the cause.
+7. Explain why statistical noise masks the conditioning gap in practice.
+
+**Output**: Text report at `results/experiments/exp8/conditioning_analysis.txt`.

@@ -23,8 +23,9 @@ When one implementation artifact changes, other artifacts that depend on it may 
 - **CSV data in article text**: The figure generator exports numerical results alongside each figure. Specific values from these CSVs are hardcoded in `results/article/article.html` in both prose and data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match. The mapping of CSVs to article sections is:
   - `results/article/extrapolation_error/extrapolation_error_data.csv` → "Why It Matters" (extrapolation bar chart, collapsible data table)
   - `results/article/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
-  - `results/article/method_comparison/method_comparison_max_errors.csv` → "Method Comparison" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
-  - `results/article/method_comparison/method_comparison_failures.csv` → "Method Comparison" (collapsible data table failure counts)
+  - `results/article/method_comparison/method_comparison_max_errors.csv` → "Method Comparison (Parameter Recovery)" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
+  - `results/article/method_comparison/method_comparison_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
+  - `results/experiments/exp8/conditioning_analysis.txt` → "Problems with Direct Surface Fitting" (experimental setup: surface parameters, compute budgets, points per curve; Hessian eigenvalue ranges, condition numbers κ ≈ 3.5×10¹¹ and κ ≈ 11, underdetermined parameter directions)
 - **Appendix figures from experiments**: `results/experiments/exp5/method_comparison.png` → `results/article/appendix/method_comparison_detailed.png` (copied by the figure generator; re-run step 2 after re-running experiments)
 
 ## Spec → Spec
