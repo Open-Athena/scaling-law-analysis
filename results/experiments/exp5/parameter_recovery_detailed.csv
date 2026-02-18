@@ -1,6 +1,6 @@
 surface,method,jac,eps,label,failures,max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%
 symmetric,approach3,,,5D L-BFGS-B (analytical grad),0/20,1.29e+00,2.98e+01,6.14e+00,5.03e+00,1.33e+00
-symmetric,approach3,,,5D L-BFGS-B (finite diff),1/20,1.57e+01,3.79e+02,8.32e+02,3.12e+01,4.40e+01
+symmetric,approach3,,,5D L-BFGS-B (finite diff),0/20,1.57e+01,3.27e+02,8.32e+02,2.91e+01,4.40e+01
 symmetric,approach3,3-point,,5D L-BFGS-B (central diff),0/20,1.53e+01,4.32e+02,3.43e+02,3.29e+01,2.88e+01
 symmetric,nelder-mead,,,2D Nelder-Mead (VPNLS),0/20,9.51e-09,5.00e-08,6.13e-08,9.67e-09,1.22e-08
 symmetric,l-bfgs-b,,,2D L-BFGS-B (default eps=1e-08),0/20,2.89e-06,1.03e-05,1.04e-05,2.09e-06,2.09e-06
