@@ -730,7 +730,7 @@ include grid search over thousands of starting points (running the optimizer
 from each and keeping the best fit), random sampling of starting points,
 evaluating a coarse grid without optimization and seeding the optimizer from the
 single best candidate, or initializing from previously published parameter
-values. None of these reliably solve the problem. The survey's own experiments
+values. Yet the survey's own experiments
 show that full-grid optimization over 4500 starting points can yield results
 that diverge significantly from reported figures, evidence of ``the difficulty
 of optimizing over this space, and the presence of many local minima.''
@@ -753,6 +753,37 @@ the joint five-parameter optimization, which creates a complex loss landscape
 with many local minima and interacting sensitivities. Reducing the
 dimensionality of the nonlinear search is one way to make the problem more
 tractable.
+
+As an example of what ``complex loss landscape'' means concretely, consider the
+Hessian of the residual sum of squares (RSS) objective for a five-parameter fit
+on noise-free data from the Asymmetric surface ($\alpha = 0.465$,
+$\beta = 0.155$), using five IsoFLOP contours from $10^{17}$ to $10^{21}$
+FLOPs with 15 points per curve. Its eigenvalues reveal how sensitive the
+objective is to perturbations along each parameter
+direction~\citep{hessian_optimization}, and the condition number $\kappa$ (the
+ratio of the largest to the smallest eigenvalue) measures how difficult the
+landscape is for gradient-based methods to navigate. For this surface, the five
+eigenvalues span from approximately $8 \times 10^{-6}$ to $3 \times 10^{6}$,
+giving $\kappa \approx 3.5 \times 10^{11}$. The two flattest directions
+(smallest eigenvalues) point almost entirely along the linear coefficients $A$
+and $B$. Near the optimum, perturbing either coefficient barely changes the
+RSS, making them effectively underdetermined by the data even when the data are
+perfect. The steepest directions are dominated by the scaling exponents
+$\alpha$ and $\beta$.
+
+Quasi-Newton methods like L-BFGS, which are among the most common optimizers
+for scaling law fits, build an approximate inverse Hessian to scale gradient
+steps across parameter directions. When eigenvalues span 12 orders of
+magnitude, the gradient signal along the flat $A$/$B$ directions is negligible
+compared to the steep $\alpha$/$\beta$ directions, and convergence criteria are
+often satisfied by progress in the steep directions before the flat directions
+are resolved. Separating the linear parameters from the nonlinear search
+eliminates the ill-conditioned directions entirely. The resulting
+two-dimensional landscape over $(\alpha, \beta)$ has a Hessian condition number
+of $\kappa \approx 11$ in our example, a reduction by a factor of roughly
+$3 \times 10^{10}$. This motivates an algorithm that exploits the partially
+linear structure of the Chinchilla loss surface to search only the
+well-conditioned two-dimensional subspace.
 
 \subsection{Variable Projection (VPNLS)}
 \label{sec:vpnls_method}
@@ -809,7 +840,7 @@ Nelder-Mead avoids this entirely. Its few settings (\texttt{xatol},
 scales poorly to high dimensions, but variable projection reduces the search to
 just two dimensions, which is exactly the regime where simplex methods excel.
 
-\subsection{Method Comparison}
+\subsection{Method Comparison (Parameter Recovery)}
 \label{sec:method_comparison}
 
 To validate this choice, we compare nine method configurations on noise-free
@@ -893,7 +924,7 @@ correct.
 
 L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
 to tune settings carefully and who understand that certain convergence errors
-from scipy are not necessarily problematic. That said, VPNLS with Nelder-Mead
+from libraries like scipy may not necessarily be problematic. That said, VPNLS with Nelder-Mead
 is simpler, requires less tuning, and recovers parameter estimates with
 precision at least as high as any other method tested. It technically achieves
 the most precise estimates, though the margin over a well-configured L-BFGS-B
@@ -904,9 +935,15 @@ Appendix~\ref{sec:appendix_method_data}.
 
 \paragraph{Key Result.}
 VPNLS eliminates the biases inherent in the parabolic approximation and avoids
-the fragile gradient tuning that complicates L-BFGS-B. All five loss surface
-parameters $(E, A, B, \alpha, \beta)$ are recovered with machine precision, and
-extrapolation to higher compute budgets is exact.
+the fragile gradient tuning that complicates L-BFGS-B when used with variable
+projection. All five loss surface parameters $(E, A, B, \alpha, \beta)$ are
+recovered with machine precision, and extrapolation to higher compute budgets
+is exact.
+
+\subsection{Method Comparison (Parameter Inference)}
+\label{sec:method_comparison_inference}
+
+TBD
 
 \section{Conclusion}
 \label{sec:conclusion}
