@@ -286,12 +286,13 @@ _BETA_GRID_MIN, _BETA_GRID_MAX = 0.05, 0.95
 
 # ── Fitting: Approach 3 ──────────────────────────────────────────────────────
 
-# Coarse 5D grid for initialization (8 values per parameter = 8^5 = 32768 points)
-_A3_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 8)
-_A3_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 8)
-_A3_E_GRID = np.linspace(0.1, 5.0, 8)
-_A3_A_GRID = np.logspace(1, 4, 8)
-_A3_B_GRID = np.logspace(1, 4, 8)
+# Coarse 5D grid for initialization (4 values per parameter = 4^5 = 1024 points,
+# same total grid size as VPNLS's 32^2 = 1024)
+_A3_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 4)
+_A3_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 4)
+_A3_E_GRID = np.linspace(0.1, 5.0, 4)
+_A3_A_GRID = np.logspace(1, 4, 4)
+_A3_B_GRID = np.logspace(1, 4, 4)
 
 _A3_BOUNDS = [_E_BOUNDS, _A_BOUNDS, _B_BOUNDS, _ALPHA_BOUNDS, _BETA_BOUNDS]
 _A3_LBFGSB_OPTIONS = {"ftol": _OPT_TOL, "gtol": _OPT_TOL, "maxiter": _OPT_MAXITER}
@@ -336,7 +337,7 @@ def fit_approach3(
     """Recover exponents via direct 5-parameter L-BFGS-B optimization.
 
     Optimizes E, A, B, α, β jointly using analytical gradients.
-    Initialization via coarse 5D grid search (8^5 = 32768 evaluations) or,
+    Initialization via coarse 5D grid search (4^5 = 1024 evaluations) or,
     when ``random_init`` is True, a single random starting point within bounds.
 
     Args:
@@ -443,9 +444,13 @@ _A3_GRID_SIZE = (
     * len(_A3_B_GRID)
 )
 _VP_GRID_SIZE = len(_VP_ALPHA_GRID) * len(_VP_BETA_GRID)
+
+# Equalize total grid evaluations so that any difference in worst-case error
+# reflects the optimizer and loss-landscape geometry, not an initialization
+# budget advantage for either method (4^5 = 32^2 = 1024).
 assert (
-    _A3_GRID_SIZE == 32 * _VP_GRID_SIZE
-), f"Expected Approach 3 grid to be 32× VPNLS grid, got {_A3_GRID_SIZE}/{_VP_GRID_SIZE}={_A3_GRID_SIZE/_VP_GRID_SIZE}×"
+    _A3_GRID_SIZE == _VP_GRID_SIZE
+), f"Expected Approach 3 grid to equal VPNLS grid, got {_A3_GRID_SIZE} vs {_VP_GRID_SIZE}"
 
 
 def _vp_compute_rss_and_params(

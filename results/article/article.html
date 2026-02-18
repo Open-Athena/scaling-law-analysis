@@ -1849,18 +1849,16 @@
                 The configurations fall into two groups. The first uses 5D direct optimization
                 (Approach 3), fitting all five parameters jointly with L-BFGS-B using either
                 analytical gradients, forward finite differences, or central finite differences.
-                Each 5D run is initialized from the best point in a coarse
-                8<sup>5</sup>&nbsp;&asymp;&nbsp;33k grid search over all five parameters.
                 The second uses 2D variable projection over \((\alpha, \beta)\) only, comparing
                 VPNLS (Nelder-Mead), L-BFGS-B with four finite-difference configurations
                 (default \(\varepsilon\), central differences,
                 \(\varepsilon = 10^{-6}\), and \(\varepsilon = 10^{-10}\)), and a fine
                 256&sup2; grid search with no local refinement.
-                The 2D methods are initialized from a 32&sup2;&nbsp;&asymp;&nbsp;1k grid over
-                \((\alpha, \beta)\) only, 32&times; fewer evaluations than the 5D group. This
-                disparity is deliberate, giving Approach&nbsp;3 a substantial initialization
-                advantage so that any remaining instability can be attributed to the optimization
-                landscape rather than under-sampling of starting points.
+                Both groups use the same total initialization budget: the 5D methods search a
+                4<sup>5</sup>&nbsp;=&nbsp;1,024-point grid over all five parameters, while the
+                2D methods search a 32<sup>2</sup>&nbsp;=&nbsp;1,024-point grid over
+                \((\alpha, \beta)\) only. This ensures that any accuracy difference reflects
+                the optimizer and loss-landscape geometry, not an initialization advantage.
             </p>
 
             <figure>
@@ -2141,9 +2139,9 @@
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">Approach 3 (grid init)</td>
-                                <td>1.08</td>
-                                <td>36.8</td>
-                                <td>12.3</td>
+                                <td>0.98</td>
+                                <td>69.5</td>
+                                <td>23.2</td>
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">Approach 2</td>
@@ -2194,20 +2192,23 @@
 
             <p>
                 Grid-initialized Approach&nbsp;3 is substantially more accurate, with a
-                geometric mean error of 1.08%. Its 5D grid search evaluates 32&times; more
-                starting points than VPNLS's 2D grid (the same 33k-vs-1k disparity as
-                the <a href="#method-comparison-recovery">parameter recovery comparison</a>),
-                giving it a deliberate initialization
-                advantage. Despite this, its maximum error on the \(a\) exponent reaches
-                36.8%, compared to 29.6% for VPNLS.
+                geometric mean error of 0.98%. As in the
+                <a href="#method-comparison-recovery">parameter recovery comparison</a>,
+                both methods use equal-sized initialization grids
+                (4<sup>5</sup>&nbsp;=&nbsp;1,024 for Approach&nbsp;3 and
+                32<sup>2</sup>&nbsp;=&nbsp;1,024 for VPNLS), so any accuracy difference
+                reflects the optimizer rather than an initialization advantage. Despite
+                similar typical accuracy, Approach&nbsp;3's maximum error on the \(a\)
+                exponent reaches 69.5%, compared to 29.6% for VPNLS.
             </p>
 
             <p>
                 The gap between grid-initialized Approach&nbsp;3 and VPNLS is most visible
-                in the tails of the error distribution. While both methods achieve similar
-                typical accuracy (geometric mean within 10% of each other), Approach&nbsp;3's
-                eight largest errors all exceed 32%, whereas VPNLS's eight largest all fall
-                below 30%. The detailed breakdown in
+                in the tails of the error distribution. Both methods achieve nearly
+                identical typical accuracy (geometric mean of 0.98% vs 0.97%), but
+                Approach&nbsp;3's eight largest errors range from 24% to 69%, with three
+                exceeding 40%, whereas VPNLS's eight largest all fall below 30%. The
+                detailed breakdown in
                 <a href="#appendix-exponent-errors">Figure&nbsp;A4</a> shows that these
                 sporadic Approach&nbsp;3 failures appear across different noise levels,
                 budget counts, and dataset sizes without a clear pattern that would

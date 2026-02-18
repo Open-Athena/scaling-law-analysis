@@ -16,6 +16,8 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
+    DEFAULT_ALPHA_GRID,
+    DEFAULT_BETA_GRID,
     FitError,
     FitStatus,
     fit_surface,
@@ -41,6 +43,30 @@ from scaling_law_analysis.experiments.common import (
     create_extrapolation_figure,
     log_range_to_label,
 )
+
+
+# ── Approach 3 initialization grid ────────────────────────────────────────────
+# 4 values per parameter → 4^5 = 1,024 total grid points, matching VPNLS's
+# 32^2 = 1,024 so that any accuracy difference reflects the optimizer and
+# loss-landscape geometry, not an initialization budget advantage.
+_A3_ALPHA_GRID = np.linspace(0.05, 0.95, 4)
+_A3_BETA_GRID = np.linspace(0.05, 0.95, 4)
+_A3_E_GRID = np.linspace(0.1, 5.0, 4)
+_A3_A_GRID = np.logspace(1, 4, 4)
+_A3_B_GRID = np.logspace(1, 4, 4)
+
+_A3_GRID_SIZE = (
+    len(_A3_ALPHA_GRID)
+    * len(_A3_BETA_GRID)
+    * len(_A3_E_GRID)
+    * len(_A3_A_GRID)
+    * len(_A3_B_GRID)
+)
+_VP_GRID_SIZE = len(DEFAULT_ALPHA_GRID) * len(DEFAULT_BETA_GRID)
+
+assert (
+    _A3_GRID_SIZE == _VP_GRID_SIZE
+), f"Expected Approach 3 grid to equal VPNLS grid, got {_A3_GRID_SIZE} vs {_VP_GRID_SIZE}"
 
 
 def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
@@ -134,7 +160,14 @@ def compute_param_errors(
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
         try:
             if method == "approach3":
-                a3_kwargs: dict = {"use_grad": use_grad}
+                a3_kwargs: dict = {
+                    "use_grad": use_grad,
+                    "E_grid": _A3_E_GRID,
+                    "A_grid": _A3_A_GRID,
+                    "B_grid": _A3_B_GRID,
+                    "alpha_grid": _A3_ALPHA_GRID,
+                    "beta_grid": _A3_BETA_GRID,
+                }
                 if jac is not None:
                     a3_kwargs["jac"] = jac
                 result = fit_approach3(N, D, L, **a3_kwargs)

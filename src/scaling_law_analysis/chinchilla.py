@@ -1012,6 +1012,11 @@ def fit_approach3(
     *,
     use_grad: bool = True,
     jac: str | None = None,
+    E_grid: np.ndarray | None = None,
+    A_grid: np.ndarray | None = None,
+    B_grid: np.ndarray | None = None,
+    alpha_grid: np.ndarray | None = None,
+    beta_grid: np.ndarray | None = None,
 ) -> SurfaceFitResult:
     """Fit the loss surface via direct L-BFGS-B over all 5 parameters.
 
@@ -1019,7 +1024,8 @@ def fit_approach3(
     optimize E, A, B, α, β jointly without exploiting linear structure.
     Uses RSS (not Huber loss) for direct comparison with variable projection.
 
-    Initialization is via a coarse 5D grid search (8 values per parameter).
+    Initialization is via a coarse 5D grid search. By default each parameter
+    uses 8 values (8^5 = 32,768 points); callers can override individual grids.
 
     Args:
         N: Array of parameter counts
@@ -1030,6 +1036,11 @@ def fit_approach3(
             unless jac is set).
         jac: Finite-difference scheme when use_grad is False (e.g. "3-point"
             for central differences). Ignored when use_grad is True.
+        E_grid: Optional override for E initialization grid.
+        A_grid: Optional override for A initialization grid.
+        B_grid: Optional override for B initialization grid.
+        alpha_grid: Optional override for α initialization grid.
+        beta_grid: Optional override for β initialization grid.
 
     Returns:
         SurfaceFitResult with fitted parameters.  Soft issues (max iterations,
@@ -1066,11 +1077,11 @@ def fit_approach3(
 
     # Stage 1: Coarse 5D grid search for initialization
     best_x0 = fit_grid_search(
-        E_grid=_A3_E_GRID,
-        A_grid=_A3_A_GRID,
-        B_grid=_A3_B_GRID,
-        alpha_grid=_A3_ALPHA_GRID,
-        beta_grid=_A3_BETA_GRID,
+        E_grid=E_grid if E_grid is not None else _A3_E_GRID,
+        A_grid=A_grid if A_grid is not None else _A3_A_GRID,
+        B_grid=B_grid if B_grid is not None else _A3_B_GRID,
+        alpha_grid=alpha_grid if alpha_grid is not None else _A3_ALPHA_GRID,
+        beta_grid=beta_grid if beta_grid is not None else _A3_BETA_GRID,
         log_N=log_N,
         log_D=log_D,
         L=L,

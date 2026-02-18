@@ -180,8 +180,8 @@
   - Nelder-Mead avoids all of this; its few settings (`xatol`, `fatol`, `maxiter`) are independent and work out of the box; it scales poorly to high dimensions, but variable projection reduces the search to 2D (α, β), which is exactly the regime where it excels
 - **Method Comparison (Parameter Recovery)**
   - We compare nine method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, Asymmetric) and 20 sampling ranges (the best case for gradient methods):
-    - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly; grid-seeded from 8⁵ ≈ 33k starting points
-    - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search; grid-seeded from 32² ≈ 1k starting points (32× fewer than Approach 3, by design, to give the 5D method an initialization advantage)
+    - 5D direct (Approach 3): L-BFGS-B with analytical gradients, finite-difference (forward), and finite-difference (central); no variable projection, optimizes all five parameters jointly; grid-seeded from 4⁵ = 1,024 starting points
+    - 2D variable projection: VPNLS (Nelder-Mead), L-BFGS-B with four configurations (default eps, central diff, eps=1e-6, eps=1e-10), and a fine 256² grid search; grid-seeded from 32² = 1,024 starting points (same total grid budget as Approach 3, so accuracy differences reflect the optimizer and loss landscape, not initialization)
   - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) showing geometric mean of |relative error| (%) pooled across all surfaces, grid widths, and parameters, with horizontal bars spanning min to max, filled dots for methods that converged on all 60 fits and open dots for those with at least one failure (annotated with count); max-error heatmap (right) with columns {E, A, B, α, β}, white-to-black log-scale colormap, cell text showing max |relative error| (%) over successful fits only
   - Companion CSVs: raw per-(method, surface, grid width, parameter) errors, max-error pivot, and failure-count pivot
   - Results:
@@ -203,8 +203,8 @@
   - **Results**:
     - Randomly initialized Approach 3 serves as a negative control: highly sensitive to starting point, worst overall
     - Approach 2 has lower variance but consistently poor average accuracy, reflecting the structural bias documented in earlier sections; better than naive Approach 3, but for a qualitatively different reason (systematic approximation bias vs. optimizer fragility)
-    - Grid-initialized Approach 3 is substantially improved; note that its 5D grid evaluates 32× more starting points than VPNLS's 2D grid (same disparity as the parameter recovery comparison), giving it a deliberate initialization advantage
-    - Approach 3 and VPNLS produce similar median errors but diverge in the tails: Approach 3 exhibits sporadic large failures that VPNLS avoids
+    - Grid-initialized Approach 3 is substantially improved; as in the parameter recovery comparison, both methods use equal-sized initialization grids (4⁵ = 1,024 vs 32² = 1,024), so accuracy differences reflect the optimizer; despite similar typical accuracy, Approach 3's worst-case errors are considerably larger
+    - Approach 3 and VPNLS produce nearly identical typical accuracy but diverge sharply in the tails: Approach 3 exhibits sporadic large failures that VPNLS avoids
       - These failures follow no clear pattern across dataset size, budget count, or noise level, making them difficult to anticipate or guard against in practice
       - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
 
