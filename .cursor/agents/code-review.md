@@ -1,6 +1,6 @@
 ---
 name: agent-code-review
-model: gpt-5.2-codex
+model: gpt-5.3-codex
 description: Reviews working tree changes like a PR review — correctness, consistency, and style.
 readonly: true
 ---

@@ -1,6 +1,6 @@
 ---
 name: agent-article-review
-model: gpt-5.2-codex
+model: gpt-5.3-codex
 description: Reviews the standalone article as a subject matter expert — correctness, clarity, and presentation.
 readonly: true
 ---

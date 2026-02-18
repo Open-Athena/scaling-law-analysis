@@ -398,7 +398,6 @@ def create_method_comparison_figure(
 
             ax.set_yscale("log")
             row_label = f"{surface_name} (α={loss.alpha:.2f}, β={loss.beta:.2f})"
-            ax.axhline(0, color="gray", linestyle="--", alpha=0.5)
             ax.set_title(f"|{param_name} error|\n{row_label}", fontsize=9)
             ax.grid(True, alpha=0.3)
 

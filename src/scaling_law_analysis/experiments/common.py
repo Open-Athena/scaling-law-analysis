@@ -401,6 +401,7 @@ def create_extrapolation_figure(
         n_surfaces,
         figsize=(4.5 * n_surfaces, 2.8 * n_ranges),
         gridspec_kw={"hspace": 0.35, "wspace": 0.15},
+        squeeze=False,
     )
 
     is_bottom_row = n_ranges - 1

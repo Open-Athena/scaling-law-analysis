@@ -1382,7 +1382,12 @@ def main():
     c_max = 1e21
 
     n_points_range = np.array([4, 8, 16, 32])
-    n_points_max = 32
+    isoflop_fig_n_points = 16
+    if isoflop_fig_n_points not in n_points_range:
+        raise ValueError(
+            f"isoflop_fig_n_points={isoflop_fig_n_points} must be one of "
+            f"n_points_range={n_points_range.tolist()}"
+        )
     log_range = np.log10(8)  # ±8x grid width
 
     drift_rate = np.log10(3)
@@ -1420,7 +1425,7 @@ def main():
             console.print("[green]done[/green]")
         noise_results[noise_std] = all_results
 
-    # IsoFLOP visualization (all noise levels, max budgets, max n_points)
+    # IsoFLOP visualization (all noise levels, max budgets, cherry-picked n_points)
     isoflop_budgets = np.geomspace(c_min, c_max, max(n_budgets_range))
     isoflop_datasets: list[tuple[float, IsoFlopData]] = []
     for ns in noise_std_levels:
@@ -1431,7 +1436,7 @@ def main():
                 generate_isoflop_data(
                     surface,
                     isoflop_budgets,
-                    n_points_max,
+                    isoflop_fig_n_points,
                     log_range,
                     drift_rate,
                     center_scale,

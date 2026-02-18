@@ -78,6 +78,14 @@ class NonFiniteFitError(FitError):
     """A fitted parameter is NaN or Inf."""
 
 
+def _validate_positive_finite(name: str, arr: np.ndarray) -> None:
+    """Raise ValueError if *arr* contains non-finite or non-positive values."""
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"{name} contains non-finite values (NaN or Inf)")
+    if np.any(arr <= 0):
+        raise ValueError(f"{name} must be strictly positive for log-space fitting")
+
+
 # Chinchilla paper ground truth parameters;
 # see "D.2. Approach 3: Parametric fitting of the loss"
 CHINCHILLA_PARAMS = {
@@ -353,7 +361,13 @@ def fit_power_law(x: np.ndarray, y: np.ndarray) -> PowerLawFit:
 
     Returns:
         PowerLawFit with exponent and intercept
+
+    Raises:
+        ValueError: If x or y contain non-finite or non-positive values
     """
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    _validate_positive_finite("x", x)
+    _validate_positive_finite("y", y)
     log_x = np.log10(x)
     log_y = np.log10(y)
     exponent, intercept = np.polyfit(log_x, log_y, 1)
@@ -760,21 +774,32 @@ def fit_surface(
             If None, uses scipy default (1e-8). Ignored for other methods.
 
     Returns:
-        SurfaceFitResult with fitted parameters
+        SurfaceFitResult with fitted parameters.  Soft issues (max iterations,
+        abnormal termination, bound/grid-edge hits) are reported via
+        ``SurfaceFitResult.status`` rather than exceptions.
 
     Raises:
-        ValueError: If arguments are invalid (unknown method, mismatched lengths)
-        FitError: If any diagnostic check fails (grid edge, bounds, convergence, etc.)
+        ValueError: If arguments are invalid (unknown method, mismatched lengths,
+            non-finite or non-positive N/D values)
+        NonFiniteFitError: If the fitted parameters contain NaN or Inf
     """
     valid_methods = ("nelder-mead", "l-bfgs-b", "grid")
     if method not in valid_methods:
         raise ValueError(f"method must be one of {valid_methods}, got {method!r}")
 
-    N, D, L = np.asarray(N), np.asarray(D), np.asarray(L)
+    N, D, L = (
+        np.asarray(N, dtype=float),
+        np.asarray(D, dtype=float),
+        np.asarray(L, dtype=float),
+    )
     if not (len(N) == len(D) == len(L)):
         raise ValueError(
             f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
         )
+    _validate_positive_finite("N", N)
+    _validate_positive_finite("D", D)
+    if not np.all(np.isfinite(L)):
+        raise ValueError("L contains non-finite values (NaN or Inf)")
 
     log_N, log_D = np.log(N), np.log(D)
 
@@ -1007,10 +1032,14 @@ def fit_approach3(
             for central differences). Ignored when use_grad is True.
 
     Returns:
-        SurfaceFitResult with fitted parameters
+        SurfaceFitResult with fitted parameters.  Soft issues (max iterations,
+        abnormal termination, bound hits) are reported via
+        ``SurfaceFitResult.status`` rather than exceptions.
 
     Raises:
-        ValueError: If optimization fails or produces invalid results
+        ValueError: If inputs have mismatched lengths or contain non-finite /
+            non-positive N/D values
+        NonFiniteFitError: If the fitted parameters contain NaN or Inf
     """
     N, D, L = (
         np.asarray(N, dtype=float),
@@ -1021,6 +1050,10 @@ def fit_approach3(
         raise ValueError(
             f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
         )
+    _validate_positive_finite("N", N)
+    _validate_positive_finite("D", D)
+    if not np.all(np.isfinite(L)):
+        raise ValueError("L contains non-finite values (NaN or Inf)")
 
     log_N = np.log(N)
     log_D = np.log(D)
