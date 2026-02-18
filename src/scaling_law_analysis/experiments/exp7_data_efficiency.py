@@ -31,6 +31,7 @@ from scaling_law_analysis.chinchilla import (
     FitStatus,
     LossSurface,
     NonFiniteFitError,
+    fit_grid_search,
     compute_center_offset,
     fit_parabola,
     fit_power_law,
@@ -285,12 +286,12 @@ _BETA_GRID_MIN, _BETA_GRID_MAX = 0.05, 0.95
 
 # ── Fitting: Approach 3 ──────────────────────────────────────────────────────
 
-# Coarse 5D grid for initialization (4 values per parameter = 4^5 = 1024 points)
-_A3_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 4)
-_A3_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 4)
-_A3_E_GRID = np.linspace(0.1, 5.0, 4)
-_A3_A_GRID = np.logspace(1, 4, 4)
-_A3_B_GRID = np.logspace(1, 4, 4)
+# Coarse 5D grid for initialization (8 values per parameter = 8^5 = 32768 points)
+_A3_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 8)
+_A3_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 8)
+_A3_E_GRID = np.linspace(0.1, 5.0, 8)
+_A3_A_GRID = np.logspace(1, 4, 8)
+_A3_B_GRID = np.logspace(1, 4, 8)
 
 _A3_BOUNDS = [_E_BOUNDS, _A_BOUNDS, _B_BOUNDS, _ALPHA_BOUNDS, _BETA_BOUNDS]
 _A3_LBFGSB_OPTIONS = {"ftol": _OPT_TOL, "gtol": _OPT_TOL, "maxiter": _OPT_MAXITER}
@@ -335,7 +336,7 @@ def fit_approach3(
     """Recover exponents via direct 5-parameter L-BFGS-B optimization.
 
     Optimizes E, A, B, α, β jointly using analytical gradients.
-    Initialization via coarse 5D grid search (4^5 = 1024 evaluations) or,
+    Initialization via coarse 5D grid search (8^5 = 32768 evaluations) or,
     when ``random_init`` is True, a single random starting point within bounds.
 
     Args:
@@ -371,20 +372,16 @@ def fit_approach3(
             raise ValueError("rng is required when random_init=True")
         best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in _A3_BOUNDS])
     else:
-        best_rss = np.inf
-        best_x0 = None
-        for E_init in _A3_E_GRID:
-            for A_init in _A3_A_GRID:
-                for B_init in _A3_B_GRID:
-                    for alpha_init in _A3_ALPHA_GRID:
-                        for beta_init in _A3_BETA_GRID:
-                            x = np.array(
-                                [E_init, A_init, B_init, alpha_init, beta_init]
-                            )
-                            r = rss(x)
-                            if r < best_rss:
-                                best_rss = r
-                                best_x0 = x
+        best_x0 = fit_grid_search(
+            E_grid=_A3_E_GRID,
+            A_grid=_A3_A_GRID,
+            B_grid=_A3_B_GRID,
+            alpha_grid=_A3_ALPHA_GRID,
+            beta_grid=_A3_BETA_GRID,
+            log_N=log_N,
+            log_D=log_D,
+            L=L,
+        )
 
     result = minimize(
         rss,
@@ -447,8 +444,8 @@ _A3_GRID_SIZE = (
 )
 _VP_GRID_SIZE = len(_VP_ALPHA_GRID) * len(_VP_BETA_GRID)
 assert (
-    _A3_GRID_SIZE == _VP_GRID_SIZE
-), f"Grid search sizes differ: Approach 3 has {_A3_GRID_SIZE}, VPNLS has {_VP_GRID_SIZE}"
+    _A3_GRID_SIZE == 32 * _VP_GRID_SIZE
+), f"Expected Approach 3 grid to be 32× VPNLS grid, got {_A3_GRID_SIZE}/{_VP_GRID_SIZE}={_A3_GRID_SIZE/_VP_GRID_SIZE}×"
 
 
 def _vp_compute_rss_and_params(
@@ -1173,20 +1170,23 @@ def create_method_comparison_figure(
                 linewidths=0.7,
             )
 
-        # KDE line (above the dot row)
+        # KDE line (above the dot row), clipped to actual data range
         if len(valid) > 20:
             try:
                 kde = gaussian_kde(np.log10(valid), bw_method=0.3)
-                density = kde(np.log10(kde_x))
-                density_norm = density / density.max() * 0.3
-                ax_dot.plot(
-                    kde_x,
-                    y - density_norm,
-                    color=dot_color,
-                    alpha=rug_kde_alpha,
-                    linewidth=0.8,
-                    zorder=2,
-                )
+                v_min, v_max = valid.min(), valid.max()
+                kde_x_clip = kde_x[(kde_x >= v_min) & (kde_x <= v_max)]
+                if len(kde_x_clip) > 1:
+                    density = kde(np.log10(kde_x_clip))
+                    density_norm = density / density.max() * 0.3
+                    ax_dot.plot(
+                        kde_x_clip,
+                        y - density_norm,
+                        color=dot_color,
+                        alpha=rug_kde_alpha,
+                        linewidth=0.8,
+                        zorder=2,
+                    )
             except np.linalg.LinAlgError:
                 pass
 

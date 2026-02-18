@@ -9,8 +9,10 @@ from scaling_law_analysis.chinchilla import (
     FINE_BETA_GRID,
     FitError,
     LossSurface,
+    _cartesian_product,
     _surface_rss,
     _surface_rss_grad,
+    fit_grid_search,
     fit_parabola,
     fit_approach2,
     fit_surface,
@@ -257,3 +259,74 @@ class TestSurfaceRssGrad:
             ) / (2 * h)
 
         np.testing.assert_allclose(analytic, fd, rtol=1e-9)
+
+
+class TestCartesianProduct:
+    """Tests for _cartesian_product helper."""
+
+    def test_matches_nested_loops(self):
+        """Columns match the order of nested for-loops (first=slowest)."""
+        a = np.array([1, 2])
+        b = np.array([10, 20, 30])
+        c = np.array([100, 200])
+
+        result = _cartesian_product(a, b, c)
+
+        expected = np.array(
+            [
+                [1, 10, 100],
+                [1, 10, 200],
+                [1, 20, 100],
+                [1, 20, 200],
+                [1, 30, 100],
+                [1, 30, 200],
+                [2, 10, 100],
+                [2, 10, 200],
+                [2, 20, 100],
+                [2, 20, 200],
+                [2, 30, 100],
+                [2, 30, 200],
+            ]
+        ).T  # (3, 12)
+
+        assert result.shape == (3, 2 * 3 * 2)
+        np.testing.assert_array_equal(result, expected)
+
+
+class TestFitGridSearch:
+    """Tests for fit_grid_search vectorized grid initialization."""
+
+    @pytest.mark.parametrize(
+        "target_idx",
+        [(0, 0, 0, 0, 0), (2, 1, 2, 1, 2), (1, 0, 1, 1, 0)],
+        ids=["first", "last", "interior"],
+    )
+    def test_finds_planted_zero_rss_point(self, target_idx):
+        """Plant a grid point as the exact data generator; function must find it."""
+        E_grid = np.array([1.0, 2.0, 3.0])
+        A_grid = np.array([10.0, 100.0])
+        B_grid = np.array([10.0, 50.0, 100.0])
+        alpha_grid = np.array([0.2, 0.5])
+        beta_grid = np.array([0.3, 0.6, 0.9])
+
+        grids = [E_grid, A_grid, B_grid, alpha_grid, beta_grid]
+        expected = np.array([g[i] for g, i in zip(grids, target_idx)])
+        E, A, B, alpha, beta = expected
+
+        N = np.array([1e8, 1e9, 1e10])
+        D = np.array([1e9, 1e10, 1e11])
+        log_N, log_D = np.log(N), np.log(D)
+        L = E + A * N ** (-alpha) + B * D ** (-beta)
+
+        best_x0 = fit_grid_search(
+            E_grid=E_grid,
+            A_grid=A_grid,
+            B_grid=B_grid,
+            alpha_grid=alpha_grid,
+            beta_grid=beta_grid,
+            log_N=log_N,
+            log_D=log_D,
+            L=L,
+        )
+
+        np.testing.assert_array_equal(best_x0, expected)

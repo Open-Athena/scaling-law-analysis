@@ -8,6 +8,7 @@ This module provides:
 """
 
 import enum
+import itertools
 
 import numpy as np
 from dataclasses import dataclass
@@ -929,6 +930,56 @@ def _surface_rss_grad(
     return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
 
 
+def _cartesian_product(*arrays: np.ndarray) -> np.ndarray:
+    """Build a (K, N) matrix whose columns are the Cartesian product of K 1-D arrays.
+
+    N is the product of all array lengths. Column order matches nested
+    for-loops: the first array varies slowest and the last varies fastest.
+    """
+    result = np.array(list(itertools.product(*arrays))).T
+    assert result.shape == (len(arrays), np.prod([len(a) for a in arrays]))
+    return result
+
+
+def fit_grid_search(
+    *,
+    E_grid: np.ndarray,
+    A_grid: np.ndarray,
+    B_grid: np.ndarray,
+    alpha_grid: np.ndarray,
+    beta_grid: np.ndarray,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> np.ndarray:
+    """Vectorized 5D grid search for the best Chinchilla surface initialization.
+
+    Evaluates RSS = sum((L - pred)^2) over the Cartesian product of the five
+    grids and returns the parameter vector with the lowest RSS.
+
+    Args:
+        E_grid: 1-D grid of E values.
+        A_grid: 1-D grid of A values.
+        B_grid: 1-D grid of B values.
+        alpha_grid: 1-D grid of α values.
+        beta_grid: 1-D grid of β values.
+        log_N: Log parameter counts, shape (n_data,).
+        log_D: Log token counts, shape (n_data,).
+        L: Loss values, shape (n_data,).
+
+    Returns:
+        1-D array [E, A, B, α, β] with the lowest RSS on the grid.
+    """
+    grid = _cartesian_product(E_grid, A_grid, B_grid, alpha_grid, beta_grid)
+    preds = (
+        grid[0]
+        + grid[1] * np.exp(-grid[3] * log_N[:, None])
+        + grid[2] * np.exp(-grid[4] * log_D[:, None])
+    )  # (n_data, N_grid)
+    rss_vals = np.sum((L[:, None] - preds) ** 2, axis=0)
+    return grid[:, int(np.argmin(rss_vals))]
+
+
 def fit_approach3(
     N: np.ndarray,
     D: np.ndarray,
@@ -981,18 +1032,16 @@ def fit_approach3(
         return _surface_rss_grad(x, log_N, log_D, L)
 
     # Stage 1: Coarse 5D grid search for initialization
-    best_rss = np.inf
-    best_x0 = None
-    for E_init in _A3_E_GRID:
-        for A_init in _A3_A_GRID:
-            for B_init in _A3_B_GRID:
-                for alpha_init in _A3_ALPHA_GRID:
-                    for beta_init in _A3_BETA_GRID:
-                        x = np.array([E_init, A_init, B_init, alpha_init, beta_init])
-                        r = rss(x)
-                        if r < best_rss:
-                            best_rss = r
-                            best_x0 = x
+    best_x0 = fit_grid_search(
+        E_grid=_A3_E_GRID,
+        A_grid=_A3_A_GRID,
+        B_grid=_A3_B_GRID,
+        alpha_grid=_A3_ALPHA_GRID,
+        beta_grid=_A3_BETA_GRID,
+        log_N=log_N,
+        log_D=log_D,
+        L=L,
+    )
 
     # Stage 2: L-BFGS-B refinement from best grid point
     bounds = [
