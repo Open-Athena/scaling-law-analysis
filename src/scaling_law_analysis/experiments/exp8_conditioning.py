@@ -16,19 +16,14 @@ from scipy.optimize import approx_fprime, minimize
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    DEFAULT_ALPHA_GRID,
-    DEFAULT_BETA_GRID,
-    LBFGSB_OPTIONS,
-    _A3_A_GRID,
-    _A3_ALPHA_GRID,
-    _A3_B_GRID,
-    _A3_BETA_GRID,
-    _A3_E_GRID,
+    DEFAULT_APPROACH3_GRID,
+    DEFAULT_LBFGSB_OPTIONS,
+    DEFAULT_VPNLS_GRID,
     _compute_rss_and_params,
     _surface_rss,
     _surface_rss_grad,
     fit_approach3,
-    fit_surface,
+    fit_vpnls,
 )
 from scaling_law_analysis.experiments.common import (
     ASYMMETRIC_CONFIG,
@@ -161,7 +156,7 @@ def main() -> str:
     p()
 
     est_a3 = fit_approach3(N, D, L)
-    est_vp = fit_surface(N, D, L, method="nelder-mead")
+    est_vp = fit_vpnls(N, D, L)
 
     a3_errs = {
         "E": (est_a3.E - loss.E) / loss.E,
@@ -424,7 +419,7 @@ def main() -> str:
         jac=lambda x: _surface_rss_grad(x, log_N, log_D, L),
         method="L-BFGS-B",
         bounds=[(1e-6, 1e6)] * 3 + [(0.01, 0.99)] * 2,
-        options=LBFGSB_OPTIONS,
+        options=DEFAULT_LBFGSB_OPTIONS.to_dict(),
     )
     assert result_true_init is not None
 
@@ -450,13 +445,14 @@ def main() -> str:
     p()
 
     # Re-do the Approach 3 grid search to get the starting point
+    a3_grid = DEFAULT_APPROACH3_GRID
     best_rss_grid = np.inf
     best_x0 = true_x.copy()
-    for E_init in _A3_E_GRID:
-        for A_init in _A3_A_GRID:
-            for B_init in _A3_B_GRID:
-                for alpha_init in _A3_ALPHA_GRID:
-                    for beta_init in _A3_BETA_GRID:
+    for E_init in a3_grid.E:
+        for A_init in a3_grid.A:
+            for B_init in a3_grid.B:
+                for alpha_init in a3_grid.alpha:
+                    for beta_init in a3_grid.beta:
                         x0 = np.array([E_init, A_init, B_init, alpha_init, beta_init])
                         r = _surface_rss(x0, log_N, log_D, L)
                         if r < best_rss_grid:
@@ -464,19 +460,20 @@ def main() -> str:
                             best_x0 = x0
 
     # VPNLS grid search for comparison
+    vp_grid = DEFAULT_VPNLS_GRID
     best_rss_vp = np.inf
-    for alpha_g in DEFAULT_ALPHA_GRID:
-        for beta_g in DEFAULT_BETA_GRID:
+    for alpha_g in vp_grid.alpha:
+        for beta_g in vp_grid.beta:
             rss_g, _ = _compute_rss_and_params(alpha_g, beta_g, log_N, log_D, L)
             if rss_g < best_rss_vp:
                 best_rss_vp = rss_g
 
     p(
-        f"  Approach 3 grid search: 8⁵ = {len(_A3_E_GRID)**5} evaluations, "
+        f"  Approach 3 grid search: {a3_grid.total_size} evaluations, "
         f"best RSS = {best_rss_grid:.2e}"
     )
     p(
-        f"  VPNLS grid search:     32² = {len(DEFAULT_ALPHA_GRID)**2} evaluations, "
+        f"  VPNLS grid search:     {vp_grid.total_size} evaluations, "
         f"best RSS = {best_rss_vp:.2e}"
     )
     p()

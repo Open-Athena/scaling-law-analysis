@@ -16,15 +16,15 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    DEFAULT_ALPHA_GRID,
-    DEFAULT_BETA_GRID,
+    DEFAULT_APPROACH3_GRID,
+    DEFAULT_VPNLS_GRID,
+    FINE_VPNLS_GRID,
     FitError,
     FitStatus,
-    fit_surface,
-    fit_approach3,
-    FINE_ALPHA_GRID,
-    FINE_BETA_GRID,
+    LBFGSBOptions,
     LBFGSB_DEFAULT_EPS,
+    fit_approach3,
+    fit_vpnls,
 )
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
@@ -45,28 +45,13 @@ from scaling_law_analysis.experiments.common import (
 )
 
 
-# ── Approach 3 initialization grid ────────────────────────────────────────────
-# 4 values per parameter → 4^5 = 1,024 total grid points, matching VPNLS's
-# 32^2 = 1,024 so that any accuracy difference reflects the optimizer and
-# loss-landscape geometry, not an initialization budget advantage.
-_A3_ALPHA_GRID = np.linspace(0.05, 0.95, 4)
-_A3_BETA_GRID = np.linspace(0.05, 0.95, 4)
-_A3_E_GRID = np.linspace(0.1, 5.0, 4)
-_A3_A_GRID = np.logspace(1, 4, 4)
-_A3_B_GRID = np.logspace(1, 4, 4)
-
-_A3_GRID_SIZE = (
-    len(_A3_ALPHA_GRID)
-    * len(_A3_BETA_GRID)
-    * len(_A3_E_GRID)
-    * len(_A3_A_GRID)
-    * len(_A3_B_GRID)
+# Both methods use equal-sized initialization grids so that any accuracy
+# difference reflects the optimizer and loss-landscape geometry, not an
+# initialization budget advantage.
+assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
+    f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
+    f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
 )
-_VP_GRID_SIZE = len(DEFAULT_ALPHA_GRID) * len(DEFAULT_BETA_GRID)
-
-assert (
-    _A3_GRID_SIZE == _VP_GRID_SIZE
-), f"Expected Approach 3 grid to equal VPNLS grid, got {_A3_GRID_SIZE} vs {_VP_GRID_SIZE}"
 
 
 def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
@@ -110,7 +95,7 @@ def surface_fitter(
 ):
     """Fit surface parameters and return D_opt function."""
     N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
-    result = fit_surface(N, D, L)
+    result = fit_vpnls(N, D, L)
     fitted_surface = result.to_loss_surface()
     return fitted_surface.D_opt
 
@@ -132,7 +117,7 @@ def compute_param_errors(
         compute_budgets: Compute budgets for IsoFLOP sampling
         log_ranges: Array of sampling ranges to sweep
         n_points: Number of points per IsoFLOP curve
-        method: Optimization method for fit_surface
+        method: Optimization method for fit_vpnls
         jac: Jacobian scheme for L-BFGS-B (e.g. "3-point")
         eps: Override finite-difference step size for L-BFGS-B
         use_grad: For approach3, whether to use analytical gradients
@@ -143,15 +128,6 @@ def compute_param_errors(
     loss = sim_config.loss
     n_ranges = len(log_ranges)
 
-    fit_kwargs: dict = {"method": method}
-    if method == "grid":
-        fit_kwargs["alpha_grid"] = FINE_ALPHA_GRID
-        fit_kwargs["beta_grid"] = FINE_BETA_GRID
-    if jac is not None:
-        fit_kwargs["jac"] = jac
-    if eps is not None:
-        fit_kwargs["eps"] = eps
-
     # Arrays to store relative errors and per-range failure flags
     errors = {key: np.zeros(n_ranges) for key in ["E", "A", "B", "alpha", "beta"]}
     failed = np.zeros(n_ranges, dtype=bool)
@@ -160,19 +136,23 @@ def compute_param_errors(
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
         try:
             if method == "approach3":
-                a3_kwargs: dict = {
-                    "use_grad": use_grad,
-                    "E_grid": _A3_E_GRID,
-                    "A_grid": _A3_A_GRID,
-                    "B_grid": _A3_B_GRID,
-                    "alpha_grid": _A3_ALPHA_GRID,
-                    "beta_grid": _A3_BETA_GRID,
-                }
-                if jac is not None:
-                    a3_kwargs["jac"] = jac
-                result = fit_approach3(N, D, L, **a3_kwargs)
+                a3_options = LBFGSBOptions(jac=jac) if jac is not None else None
+                result = fit_approach3(
+                    N,
+                    D,
+                    L,
+                    grid=DEFAULT_APPROACH3_GRID,
+                    use_grad=use_grad,
+                    options=a3_options,
+                )
             else:
-                result = fit_surface(N, D, L, **fit_kwargs)
+                vpnls_grid = FINE_VPNLS_GRID if method == "grid" else None
+                vpnls_options: LBFGSBOptions | None = None
+                if method == "l-bfgs-b" and (jac is not None or eps is not None):
+                    vpnls_options = LBFGSBOptions(jac=jac, eps=eps)
+                result = fit_vpnls(
+                    N, D, L, grid=vpnls_grid, method=method, options=vpnls_options
+                )
         except FitError:
             failed[i] = True
             for key in errors:

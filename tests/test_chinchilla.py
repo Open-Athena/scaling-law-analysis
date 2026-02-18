@@ -5,8 +5,7 @@ import pytest
 
 from scaling_law_analysis.chinchilla import (
     DEFAULT_LOSS_SURFACE,
-    FINE_ALPHA_GRID,
-    FINE_BETA_GRID,
+    FINE_VPNLS_GRID,
     FitError,
     LossSurface,
     _cartesian_product,
@@ -15,7 +14,7 @@ from scaling_law_analysis.chinchilla import (
     fit_grid_search,
     fit_parabola,
     fit_approach2,
-    fit_surface,
+    fit_vpnls,
     isoflop_sample,
     compute_center_offset,
 )
@@ -168,8 +167,8 @@ def _generate_isoflop_data(
     return np.array(all_N), np.array(all_D), np.array(all_L)
 
 
-class TestFitSurface:
-    """Tests for fit_surface across optimization methods."""
+class TestFitVPNLS:
+    """Tests for fit_vpnls across optimization methods."""
 
     SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
     CHINCHILLA = DEFAULT_LOSS_SURFACE  # α=0.34, β=0.28
@@ -184,16 +183,9 @@ class TestFitSurface:
         N, D, L = _generate_isoflop_data(surface)
 
         if method == "grid":
-            result = fit_surface(
-                N,
-                D,
-                L,
-                alpha_grid=FINE_ALPHA_GRID,
-                beta_grid=FINE_BETA_GRID,
-                method=method,
-            )
+            result = fit_vpnls(N, D, L, grid=FINE_VPNLS_GRID, method=method)
         else:
-            result = fit_surface(N, D, L, method=method)
+            result = fit_vpnls(N, D, L, method=method)
 
         assert result.method == method
 
@@ -216,13 +208,13 @@ class TestFitSurface:
     def test_nelder_mead_rss_near_zero(self):
         """Nelder-Mead should achieve near-zero RSS on noise-free data."""
         N, D, L = _generate_isoflop_data(self.SYMMETRIC)
-        result = fit_surface(N, D, L, method="nelder-mead")
+        result = fit_vpnls(N, D, L, method="nelder-mead")
         assert result.residual_sum_squares < 1e-18
 
     def test_to_loss_surface_roundtrip(self):
         """to_loss_surface() should produce an equivalent surface."""
         N, D, L = _generate_isoflop_data(self.SYMMETRIC)
-        result = fit_surface(N, D, L, method="nelder-mead")
+        result = fit_vpnls(N, D, L, method="nelder-mead")
         fitted = result.to_loss_surface()
         assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
         assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)

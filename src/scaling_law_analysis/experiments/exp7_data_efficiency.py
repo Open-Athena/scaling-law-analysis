@@ -22,16 +22,21 @@ from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 from rich.console import Console
-from scipy.optimize import minimize, nnls
 from scipy.stats import gaussian_kde, gmean
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
+    DEFAULT_APPROACH3_GRID,
+    DEFAULT_SURFACE_BOUNDS,
+    DEFAULT_VPNLS_GRID,
     FitError,
     FitStatus,
+    LBFGSBOptions,
     LossSurface,
-    NonFiniteFitError,
-    fit_grid_search,
+    NelderMeadOptions,
+    SurfaceFitResult,
+    fit_approach3 as _chinchilla_fit_approach3,
+    fit_vpnls as _chinchilla_fit_vpnls,
     compute_center_offset,
     fit_parabola,
     fit_power_law,
@@ -208,122 +213,28 @@ def _make_estimate(
     )
 
 
-def _check_optimizer_result(
-    result,
-    method_name: str,
-    maxiter: int,
-) -> tuple[FitStatus, str]:
-    """Determine FitStatus from a scipy optimizer result.
+# ── Fitting: Approach 3 & VPNLS (thin wrappers over chinchilla.py) ────────────
 
-    Args:
-        result: scipy.optimize.OptimizeResult.
-        method_name: Human-readable name for status messages.
-        maxiter: The maxiter setting used for this optimizer.
+# Equalize total grid evaluations so that any difference in worst-case error
+# reflects the optimizer and loss-landscape geometry, not an initialization
+# budget advantage for either method (4^5 = 32^2 = 1024).
+assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
+    f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
+    f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
+)
 
-    Returns:
-        (status, status_message) tuple.
-
-    Raises:
-        FitError: If result is None (optimizer produced no output at all).
-    """
-    if result is None:
-        raise FitError(f"{method_name} optimization returned None.")
-    if not result.success:
-        if result.nit >= maxiter:
-            return FitStatus.MAX_ITER, (
-                f"{method_name} hit maxiter ({maxiter}): "
-                f"{result.message} (iterations: {result.nit})"
-            )
-        return FitStatus.ABNORMAL, (
-            f"{method_name} optimization failed: {result.message} "
-            f"(iterations: {result.nit})"
-        )
-    return FitStatus.CONVERGED, ""
+_EXP7_LBFGSB_OPTIONS = LBFGSBOptions(maxiter=1000)
+_EXP7_NELDER_MEAD_OPTIONS = NelderMeadOptions(xatol=1e-15, maxiter=1000)
 
 
-def _check_params_finite(method_name: str, **params: float) -> None:
-    """Raise NonFiniteFitError if any parameter is NaN or Inf."""
-    for name, val in params.items():
-        if np.isnan(val) or np.isinf(val):
-            raise NonFiniteFitError(f"{method_name}: {name}={val} is non-finite.")
-
-
-def _check_params_at_bounds(
-    method_name: str,
-    named_bounds: list[tuple[str, float, float, float]],
-    tol: float = 1e-6,
-) -> str | None:
-    """Return a message if any parameter is at or near a bound, else None.
-
-    Args:
-        method_name: Human-readable name for messages.
-        named_bounds: List of (name, value, lo, hi) tuples.
-        tol: Tolerance for bound proximity.
-    """
-    msgs = []
-    for name, val, lo, hi in named_bounds:
-        if val - lo < tol or hi - val < tol:
-            msgs.append(f"{method_name}: {name}={val:.6f} at bound [{lo}, {hi}].")
-    return "; ".join(msgs) if msgs else None
-
-
-# ── Optimizer defaults ────────────────────────────────────────────────────────
-
-_OPT_TOL = 1e-15
-_OPT_MAXITER = 1000
-
-# Shared parameter bounds (used by both Approach 3 and VPNLS)
-_E_BOUNDS = (1e-6, 10.0)
-_A_BOUNDS = (1e-6, 1e6)
-_B_BOUNDS = (1e-6, 1e6)
-_ALPHA_BOUNDS = (0.01, 0.99)
-_BETA_BOUNDS = (0.01, 0.99)
-
-# Grid search endpoints for α/β (interior to optimizer bounds)
-_ALPHA_GRID_MIN, _ALPHA_GRID_MAX = 0.05, 0.95
-_BETA_GRID_MIN, _BETA_GRID_MAX = 0.05, 0.95
-
-
-# ── Fitting: Approach 3 ──────────────────────────────────────────────────────
-
-# Coarse 5D grid for initialization (4 values per parameter = 4^5 = 1024 points,
-# same total grid size as VPNLS's 32^2 = 1024)
-_A3_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 4)
-_A3_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 4)
-_A3_E_GRID = np.linspace(0.1, 5.0, 4)
-_A3_A_GRID = np.logspace(1, 4, 4)
-_A3_B_GRID = np.logspace(1, 4, 4)
-
-_A3_BOUNDS = [_E_BOUNDS, _A_BOUNDS, _B_BOUNDS, _ALPHA_BOUNDS, _BETA_BOUNDS]
-_A3_LBFGSB_OPTIONS = {"ftol": _OPT_TOL, "gtol": _OPT_TOL, "maxiter": _OPT_MAXITER}
-
-
-def _surface_rss(
-    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
-) -> float:
-    """RSS objective for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
-    return float(np.sum((L - pred) ** 2))
-
-
-def _surface_rss_grad(
-    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
-) -> np.ndarray:
-    """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    term_N = np.exp(-alpha * log_N)
-    term_D = np.exp(-beta * log_D)
-    pred = E + A * term_N + B * term_D
-    resid = pred - L
-    return np.array(
-        [
-            2 * np.sum(resid),
-            2 * np.sum(resid * term_N),
-            2 * np.sum(resid * term_D),
-            2 * np.sum(resid * A * term_N * (-log_N)),
-            2 * np.sum(resid * B * term_D * (-log_D)),
-        ]
+def _result_to_estimate(result: SurfaceFitResult, method: str) -> ExponentEstimate:
+    """Convert a SurfaceFitResult to an ExponentEstimate."""
+    return _make_estimate(
+        result.alpha,
+        result.beta,
+        method,
+        status=result.status,
+        status_message=result.status_message,
     )
 
 
@@ -334,158 +245,18 @@ def fit_approach3(
     random_init: bool = False,
     rng: np.random.Generator | None = None,
 ) -> ExponentEstimate:
-    """Recover exponents via direct 5-parameter L-BFGS-B optimization.
-
-    Optimizes E, A, B, α, β jointly using analytical gradients.
-    Initialization via coarse 5D grid search (4^5 = 1024 evaluations) or,
-    when ``random_init`` is True, a single random starting point within bounds.
-
-    Args:
-        N: Array of parameter counts.
-        D: Array of token counts.
-        L: Array of loss values (same length as N and D).
-        random_init: If True, use a random starting point instead of grid search.
-        rng: Random generator (required when ``random_init`` is True).
-
-    Returns:
-        ExponentEstimate with recovered a and b.  Check ``status`` for
-        non-CONVERGED outcomes (max_iter, abnormal, bound_hit).
-
-    Raises:
-        FitError: Only for hard failures (non-finite parameters).
-    """
-    method_name = "Chinchilla Approach 3"
-    N, D, L = (
-        np.asarray(N, dtype=float),
-        np.asarray(D, dtype=float),
-        np.asarray(L, dtype=float),
+    """Recover exponents via direct 5-parameter L-BFGS-B optimization."""
+    result = _chinchilla_fit_approach3(
+        N,
+        D,
+        L,
+        grid=DEFAULT_APPROACH3_GRID,
+        bounds=DEFAULT_SURFACE_BOUNDS,
+        options=_EXP7_LBFGSB_OPTIONS,
+        random_init=random_init,
+        rng=rng,
     )
-    log_N, log_D = np.log(N), np.log(D)
-
-    def rss(x: np.ndarray) -> float:
-        return _surface_rss(x, log_N, log_D, L)
-
-    def rss_grad(x: np.ndarray) -> np.ndarray:
-        return _surface_rss_grad(x, log_N, log_D, L)
-
-    if random_init:
-        if rng is None:
-            raise ValueError("rng is required when random_init=True")
-        best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in _A3_BOUNDS])
-    else:
-        best_x0 = fit_grid_search(
-            E_grid=_A3_E_GRID,
-            A_grid=_A3_A_GRID,
-            B_grid=_A3_B_GRID,
-            alpha_grid=_A3_ALPHA_GRID,
-            beta_grid=_A3_BETA_GRID,
-            log_N=log_N,
-            log_D=log_D,
-            L=L,
-        )
-
-    result = minimize(
-        rss,
-        x0=best_x0,
-        jac=rss_grad,
-        method="L-BFGS-B",
-        bounds=_A3_BOUNDS,
-        options=_A3_LBFGSB_OPTIONS,
-    )
-
-    status, status_message = _check_optimizer_result(
-        result, method_name, _A3_LBFGSB_OPTIONS["maxiter"]
-    )
-    assert result is not None  # ensured by _check_optimizer_result
-
-    E, A, B, alpha, beta = (
-        float(result.x[0]),
-        float(result.x[1]),
-        float(result.x[2]),
-        float(result.x[3]),
-        float(result.x[4]),
-    )
-    _check_params_finite(method_name, E=E, A=A, B=B, alpha=alpha, beta=beta)
-
-    if status == FitStatus.CONVERGED:
-        bound_msg = _check_params_at_bounds(
-            method_name,
-            [
-                (name, val, lo, hi)
-                for name, val, (lo, hi) in zip(
-                    ["E", "A", "B", "α", "β"], [E, A, B, alpha, beta], _A3_BOUNDS
-                )
-            ],
-        )
-        if bound_msg is not None:
-            status = FitStatus.BOUND_HIT
-            status_message = bound_msg
-
-    return _make_estimate(
-        alpha, beta, method_name, status=status, status_message=status_message
-    )
-
-
-# ── Fitting: VPNLS ───────────────────────────────────────────────────────────
-
-_VP_ALPHA_GRID = np.linspace(_ALPHA_GRID_MIN, _ALPHA_GRID_MAX, 32)
-_VP_BETA_GRID = np.linspace(_BETA_GRID_MIN, _BETA_GRID_MAX, 32)
-_VP_NELDER_MEAD_OPTIONS = {
-    "xatol": _OPT_TOL,
-    "fatol": _OPT_TOL,
-    "maxiter": _OPT_MAXITER,
-}
-
-_A3_GRID_SIZE = (
-    len(_A3_ALPHA_GRID)
-    * len(_A3_BETA_GRID)
-    * len(_A3_E_GRID)
-    * len(_A3_A_GRID)
-    * len(_A3_B_GRID)
-)
-_VP_GRID_SIZE = len(_VP_ALPHA_GRID) * len(_VP_BETA_GRID)
-
-# Equalize total grid evaluations so that any difference in worst-case error
-# reflects the optimizer and loss-landscape geometry, not an initialization
-# budget advantage for either method (4^5 = 32^2 = 1024).
-assert (
-    _A3_GRID_SIZE == _VP_GRID_SIZE
-), f"Expected Approach 3 grid to equal VPNLS grid, got {_A3_GRID_SIZE} vs {_VP_GRID_SIZE}"
-
-
-def _vp_compute_rss_and_params(
-    alpha: float,
-    beta: float,
-    log_N: np.ndarray,
-    log_D: np.ndarray,
-    L: np.ndarray,
-) -> tuple[float, np.ndarray]:
-    """For fixed (α, β), solve NNLS for (E, A, B) and return (RSS, [E, A, B])."""
-    N_neg_alpha = np.exp(-alpha * log_N)
-    D_neg_beta = np.exp(-beta * log_D)
-    design_matrix = np.column_stack([np.ones(len(L)), N_neg_alpha, D_neg_beta])
-    params, rnorm = nnls(design_matrix, L)
-    rss = rnorm**2
-    return rss, params
-
-
-def _vp_grid_search(
-    alpha_grid: np.ndarray,
-    beta_grid: np.ndarray,
-    log_N: np.ndarray,
-    log_D: np.ndarray,
-    L: np.ndarray,
-) -> tuple[int, int]:
-    """Find best (α, β) indices via exhaustive grid search."""
-    best_rss = np.inf
-    best_i, best_j = 0, 0
-    for i, alpha in enumerate(alpha_grid):
-        for j, beta in enumerate(beta_grid):
-            rss, _ = _vp_compute_rss_and_params(alpha, beta, log_N, log_D, L)
-            if rss < best_rss:
-                best_rss = rss
-                best_i, best_j = i, j
-    return best_i, best_j
+    return _result_to_estimate(result, "Chinchilla Approach 3")
 
 
 def fit_vpnls(
@@ -493,70 +264,16 @@ def fit_vpnls(
     D: np.ndarray,
     L: np.ndarray,
 ) -> ExponentEstimate:
-    """Recover exponents via Variable Projection + NNLS + Nelder-Mead.
-
-    Searches over (α, β) only; solves (E, A, B) via NNLS at each candidate.
-    Coarse 32×32 grid initialization followed by Nelder-Mead refinement.
-
-    Args:
-        N: Array of parameter counts.
-        D: Array of token counts.
-        L: Array of loss values (same length as N and D).
-
-    Returns:
-        ExponentEstimate with recovered a and b.  Check ``status`` for
-        non-CONVERGED outcomes (max_iter, abnormal, bound_hit).
-
-    Raises:
-        FitError: Only for hard failures (non-finite parameters).
-    """
-    N, D, L = np.asarray(N), np.asarray(D), np.asarray(L)
-    log_N, log_D = np.log(N), np.log(D)
-
-    alpha_grid = _VP_ALPHA_GRID
-    beta_grid = _VP_BETA_GRID
-
-    method_name = "VPNLS"
-    best_i, best_j = _vp_grid_search(alpha_grid, beta_grid, log_N, log_D, L)
-
-    def objective(x):
-        rss, _ = _vp_compute_rss_and_params(x[0], x[1], log_N, log_D, L)
-        return rss
-
-    x0 = [alpha_grid[best_i], beta_grid[best_j]]
-    result = minimize(
-        objective, x0=x0, method="Nelder-Mead", options=_VP_NELDER_MEAD_OPTIONS
+    """Recover exponents via Variable Projection + NNLS + Nelder-Mead."""
+    result = _chinchilla_fit_vpnls(
+        N,
+        D,
+        L,
+        grid=DEFAULT_VPNLS_GRID,
+        bounds=DEFAULT_SURFACE_BOUNDS,
+        options=_EXP7_NELDER_MEAD_OPTIONS,
     )
-
-    status, status_message = _check_optimizer_result(
-        result, method_name, _VP_NELDER_MEAD_OPTIONS["maxiter"]
-    )
-    assert result is not None  # ensured by _check_optimizer_result
-
-    alpha, beta = float(result.x[0]), float(result.x[1])
-
-    rss, (E, A, B) = _vp_compute_rss_and_params(alpha, beta, log_N, log_D, L)
-
-    _check_params_finite(method_name, E=E, A=A, B=B, alpha=alpha, beta=beta)
-
-    if status == FitStatus.CONVERGED:
-        bound_msg = _check_params_at_bounds(
-            method_name,
-            [
-                ("E", E, *_E_BOUNDS),
-                ("A", A, *_A_BOUNDS),
-                ("B", B, *_B_BOUNDS),
-                ("α", alpha, *_ALPHA_BOUNDS),
-                ("β", beta, *_BETA_BOUNDS),
-            ],
-        )
-        if bound_msg is not None:
-            status = FitStatus.BOUND_HIT
-            status_message = bound_msg
-
-    return _make_estimate(
-        alpha, beta, method_name, status=status, status_message=status_message
-    )
+    return _result_to_estimate(result, "VPNLS")
 
 
 # ── Experiment ────────────────────────────────────────────────────────────────

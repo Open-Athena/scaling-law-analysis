@@ -2,9 +2,9 @@ method,total_failures,total_fits,failure_rate,surfaces_with_failures,total_surfa
 "2D Grid (256²)",0,60,0.0000,0,3
 "5D L-BFGS-B (finite diff)",4,60,0.0667,2,3
 "5D L-BFGS-B (central diff)",2,60,0.0333,1,3
-"2D L-BFGS-B (eps=1e-6)",20,60,0.3333,3,3
-"2D L-BFGS-B (default eps=1e-08)",0,60,0.0000,0,3
+"2D L-BFGS-B (eps=1e-6)",17,60,0.2833,3,3
+"2D L-BFGS-B (default eps=1e-08)",3,60,0.0500,2,3
 "5D L-BFGS-B (analytical grad)",0,60,0.0000,0,3
-"2D L-BFGS-B (eps=1e-10)",3,60,0.0500,1,3
-"2D L-BFGS-B (central diff)",1,60,0.0167,1,3
+"2D L-BFGS-B (eps=1e-10)",0,60,0.0000,0,3
+"2D L-BFGS-B (central diff)",2,60,0.0333,1,3
 "2D Nelder-Mead (VPNLS)",0,60,0.0000,0,3

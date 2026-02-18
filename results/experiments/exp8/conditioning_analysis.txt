@@ -29,11 +29,11 @@ true loss surface with zero noise. We use the library's standard
 fitting functions with default settings.
 
 Approach 3 (L-BFGS-B, 5 parameters):
-  E:  relative error = +8.24e-08
-  A:  relative error = +3.56e-07
-  B:  relative error = +6.94e-08
-  α:  relative error = +8.19e-08
-  β:  relative error = +1.67e-08
+  E:  relative error = +4.71e-08
+  A:  relative error = -9.30e-08
+  B:  relative error = +1.23e-07
+  α:  relative error = -2.35e-08
+  β:  relative error = +3.47e-08
   status: converged
 
 VPNLS (Nelder-Mead, 2 parameters + NNLS):
@@ -44,7 +44,7 @@ VPNLS (Nelder-Mead, 2 parameters + NNLS):
   β:  relative error = -2.06e-10
   status: converged
 
-VPNLS is ~1765× more precise on α and ~81× more precise on β.
+VPNLS is ~506× more precise on α and ~168× more precise on β.
 
 Why? Both methods use tight optimizer tolerances (ftol=1e-15,
 gtol=1e-15). The difference is not in the settings — it is in
@@ -106,21 +106,21 @@ Now look at what L-BFGS-B sees at its converged solution
 (which is NOT the true minimum).
 
 Gradient at the Approach 3 converged solution:
-  ∂RSS/∂E = -1.28e-06
-  ∂RSS/∂A = +2.68e-09
-  ∂RSS/∂B = +3.77e-09
-  ∂RSS/∂α = +9.04e-09
-  ∂RSS/∂β = -5.51e-07
+  ∂RSS/∂E = -3.06e-07
+  ∂RSS/∂A = -1.43e-10
+  ∂RSS/∂B = +1.75e-09
+  ∂RSS/∂α = -3.01e-08
+  ∂RSS/∂β = -2.19e-07
 
 Same gradient projected onto Hessian eigenvectors:
-  eigenvector 1 (λ=7.78e-06): component = -1.12e-09
-  eigenvector 2 (λ=1.56e-05): component = +5.36e-10
-  eigenvector 3 (λ=1.19e+01): component = -1.28e-06
-  eigenvector 4 (λ=2.61e+04): component = -1.06e-07
-  eigenvector 5 (λ=2.71e+06): component = -5.35e-07
+  eigenvector 1 (λ=7.78e-06): component = +1.03e-10
+  eigenvector 2 (λ=1.56e-05): component = -9.66e-10
+  eigenvector 3 (λ=1.19e+01): component = -3.08e-07
+  eigenvector 4 (λ=2.61e+04): component = -6.56e-09
+  eigenvector 5 (λ=2.71e+06): component = -2.19e-07
 
-The flat-direction components (eigenvectors 1–2) are ~5e-10 to 1e-09,
-while the steep-direction components (3–5) are ~1e-07 to 1e-06.
+The flat-direction components (eigenvectors 1–2) are ~1e-10 to 1e-09,
+while the steep-direction components (3–5) are ~7e-09 to 3e-07.
 L-BFGS-B's limited-memory Hessian approximation (~10 vector
 pairs) in a κ ≈ 3e+11 landscape cannot accurately resolve
 these differences — the step it computes is unreliable.
@@ -138,7 +138,7 @@ The gradient response scales with the eigenvalue: a perturbation
 along the flat A/B directions (λ ≈ 8e-06–2e-05) produces a gradient
 ~6e+10× smaller than the same perturbation along the steep β
 direction. At Approach 3's solution, the A/B gradient IS nonzero
-(~4e-09), but L-BFGS-B's limited-memory Hessian approximation
+(~2e-09), but L-BFGS-B's limited-memory Hessian approximation
 (~10 vector pairs) cannot accurately represent κ ≈ 3e+11. It
 cannot convert those small A/B gradients into correctly-sized
 steps, and function-value changes from the flat directions are
@@ -174,10 +174,10 @@ Summary of condition numbers:
   Ratio:            3e+10x worse for Approach 3
 
 Summary of precision achieved (relative error in α and β):
-  Approach 3:  |α| error ≈ 8e-08,  |β| error ≈ 2e-08
+  Approach 3:  |α| error ≈ 2e-08,  |β| error ≈ 3e-08
   VPNLS:       |α| error ≈ 5e-11,  |β| error ≈ 2e-10
 
-The ~3e+10 gap in conditioning explains the ~1765×/~81× gap in α/β precision.
+The ~3e+10 gap in conditioning explains the ~506×/~168× gap in α/β precision.
 At κ ≈ 3e+11, L-BFGS-B's limited-memory Hessian
 approximation cannot convert the small A/B gradients into
 correctly-sized steps. Convergence criteria trigger based on the
@@ -204,8 +204,8 @@ no reliable improvement is possible.
 
 Now compare grid search initialization quality:
 
-  Approach 3 grid search: 8⁵ = 32768 evaluations, best RSS = 2.49e+01
-  VPNLS grid search:     32² = 1024 evaluations, best RSS = 7.73e-02
+  Approach 3 grid search: 1024 evaluations, best RSS = 2.37e+02
+  VPNLS grid search:     1024 evaluations, best RSS = 7.73e-02
 
 VPNLS starts much closer to the optimum despite fewer evaluations
 because it only needs to search 2D, and NNLS solves E/A/B exactly
@@ -213,16 +213,16 @@ for each (α, β) candidate. But the grid search quality alone does
 not explain the final precision gap — let's verify with ftol=0:
 
 L-BFGS-B with ftol=0 (grid search init):
-  Iterations: 236
-  Final RSS:  1.48e-17
-  |α| error:  4.18e-10
-  |β| error:  1.04e-09
-  Grad norm:  2.99e-11
-  Message:    CONVERGENCE: RELATIVE REDUCTION OF F <= FACTR*EPSMCH
+  Iterations: 189
+  Final RSS:  3.26e-28
+  |α| error:  1.19e-15
+  |β| error:  8.95e-16
+  Grad norm:  2.40e-11
+  Message:    ABNORMAL: 
 
 Even with ftol=0 (no function-value stopping), L-BFGS-B improves
-only modestly (|α| error 8e-08 → 4e-10). The gradient norm
-of 2.99e-11 is small but nonzero — descent signal exists, but
+only modestly (|α| error 2e-08 → 1e-15). The gradient norm
+of 2.40e-11 is small but nonzero — descent signal exists, but
 L-BFGS-B's Hessian approximation cannot convert it into a useful step.
 
 ------------------------------------------------------------------------
@@ -232,7 +232,7 @@ Step 6: Why noise masks the conditioning problem
 With realistic noise (σ > 0), the true minimum of the RSS shifts
 away from the true parameters. The relevant precision is now set
 by the noise floor, not machine epsilon. Since noise-induced errors
-are typically ~10⁻² to 10⁻¹ (much larger than the ~8e-08 limit
+are typically ~10⁻² to 10⁻¹ (much larger than the ~3e-08 limit
 from conditioning), both methods achieve similar accuracy.
 
 The conditioning problem only matters when you need precision
@@ -252,7 +252,7 @@ allowing the optimizer to converge to machine precision.
 Approach 3's precision is limited not by its grid search or
 optimizer settings, but by L-BFGS-B's inability to accurately
 approximate the inverse Hessian of a κ ≈ 3e+11 landscape.
-The gradient signal along A/B exists but is ~339× smaller
+The gradient signal along A/B exists but is ~174× smaller
 than along E/β; the limited-memory Hessian cannot amplify it correctly.
 
 For practitioners: when fitting Chinchilla-style loss surfaces,
