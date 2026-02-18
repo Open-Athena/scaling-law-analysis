@@ -532,12 +532,12 @@ def main():
     print(f"\n{'─' * 70}")
     print("Generating method comparison figure...")
     method_fig = create_method_comparison_figure(method_results)
-    method_path = output_dir / "method_comparison.png"
+    method_path = output_dir / "parameter_recovery_detailed.png"
     method_fig.savefig(method_path, dpi=150, bbox_inches="tight", facecolor="white")
     print(f"Saved: {method_path}")
     plt.close(method_fig)
 
-    csv_path = output_dir / "method_comparison.csv"
+    csv_path = output_dir / "parameter_recovery_detailed.csv"
     export_method_comparison_csv(method_results, csv_path)
     print(f"Saved: {csv_path}")
 

@@ -192,7 +192,7 @@
     - L-BFGS-B is a viable alternative to Nelder-Mead if settings are tuned carefully and the practitioner understands that `result.success = False` from `scipy.optimize.minimize` does not always indicate a bad fit
     - VPNLS with Nelder-Mead is simpler, requires less tuning, and recovers parameter estimates with precision at least as high as any other method tested; it technically achieves the most precise estimates, though the margin over a well-configured L-BFGS-B with 3-point central differences is small
 - Key message: VPNLS eliminates the biases inherent in the parabolic approximation and avoids the fragile gradient tuning that complicates L-BFGS-B; all five loss surface parameters (E, A, B, α, β) are recovered with machine precision and extrapolation is exact
-- **Method Comparison (Parameter Inference)**
+- **Method Comparison (Exponent Inference)**
   - TBD
 
 ---

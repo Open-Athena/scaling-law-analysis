@@ -1521,17 +1521,17 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     ax_heat.set_title("Max Error by Parameter", fontsize=11)
     ax_heat.tick_params(left=False)  # hide y-axis ticks (shared from left)
 
-    fig.suptitle("Optimizer Comparison: Parameter Recovery Accuracy", fontsize=13)
+    fig.suptitle("Method Comparison: Parameter Recovery Accuracy", fontsize=13)
 
     # Save figure
-    figure_dir = prepare_output_dir(output_dir / "method_comparison")
-    fig_path = figure_dir / "method_comparison.png"
+    figure_dir = prepare_output_dir(output_dir / "parameter_recovery")
+    fig_path = figure_dir / "parameter_recovery.png"
     fig.savefig(fig_path)
     plt.close(fig)
     print(f"Saved: {fig_path}")
 
     # --- Export CSV 1: Raw data ---
-    raw_csv_path = figure_dir / "method_comparison_raw.csv"
+    raw_csv_path = figure_dir / "parameter_recovery_raw.csv"
     with open(raw_csv_path, "w") as f:
         f.write(
             "method,surface,log_range,parameter,relative_error_pct,"
@@ -1546,7 +1546,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     print(f"Saved: {raw_csv_path}")
 
     # --- Export CSV 2: Max error pivot (method × parameter) ---
-    max_err_csv_path = figure_dir / "method_comparison_max_errors.csv"
+    max_err_csv_path = figure_dir / "parameter_recovery_max_errors.csv"
     with open(max_err_csv_path, "w") as f:
         f.write("method," + ",".join(f"max_{pk}_err_pct" for pk in param_keys) + "\n")
         for m_idx, mc in enumerate(METHOD_CONFIGS):
@@ -1569,7 +1569,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     print(f"Saved: {max_err_csv_path}")
 
     # --- Export CSV 3: Failure counts pivot ---
-    fail_csv_path = figure_dir / "method_comparison_failures.csv"
+    fail_csv_path = figure_dir / "parameter_recovery_failures.csv"
     with open(fail_csv_path, "w") as f:
         f.write(
             "method,total_failures,total_fits,failure_rate,"
@@ -1639,8 +1639,11 @@ def copy_appendix_figures(output_dir: Path) -> None:
 
     copies = [
         (
-            config.RESULTS_DIR / "experiments" / "exp5" / "method_comparison.png",
-            appendix_dir / "method_comparison_detailed.png",
+            config.RESULTS_DIR
+            / "experiments"
+            / "exp5"
+            / "parameter_recovery_detailed.png",
+            appendix_dir / "parameter_recovery_detailed.png",
         ),
         (
             config.RESULTS_DIR / "experiments" / "exp4" / "extrapolation_error.png",

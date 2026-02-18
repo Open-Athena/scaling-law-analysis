@@ -18,13 +18,12 @@ from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
-from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 import numpy as np
 import pandas as pd
 from rich.console import Console
 from scipy.optimize import minimize, nnls
-from scipy.stats import gmean
+from scipy.stats import gaussian_kde, gmean
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
@@ -53,13 +52,11 @@ class _PooledStats:
 
 @dataclass
 class _ComparisonRow:
-    noise_std: float
     method: str
     stats: _PooledStats
+    pooled_errors: np.ndarray
     max_a: float
     max_b: float
-    total_failures: int
-    total_fits: int
 
 
 @dataclass
@@ -562,11 +559,17 @@ def fit_vpnls(
 
 # ── Experiment ────────────────────────────────────────────────────────────────
 
-METHOD_NAMES = ["Chinchilla Approach 2", "Chinchilla Approach 3", "VPNLS"]
+METHOD_NAMES = [
+    "Chinchilla Approach 2",
+    "Chinchilla Approach 3 (grid init)",
+    "Chinchilla Approach 3 (random init)",
+    "VPNLS",
+]
 
 METHOD_STYLES = {
     "Chinchilla Approach 2": {"color": "#d62728", "marker": "s"},
-    "Chinchilla Approach 3": {"color": "#ff7f0e", "marker": "^"},
+    "Chinchilla Approach 3 (grid init)": {"color": "#ff7f0e", "marker": "^"},
+    "Chinchilla Approach 3 (random init)": {"color": "#9467bd", "marker": "v"},
     "VPNLS": {"color": "#1f77b4", "marker": "o"},
 }
 
@@ -581,12 +584,11 @@ def compute_exponent_errors(
     noise_std: float,
     seed: int,
     n_repeats: int,
-    a3_random_init: bool = False,
 ) -> dict[str, dict]:
     """Compute a/b exponent errors for all methods across n_points and seeds.
 
     For each seed and n_points in n_points_range, generates data and fits
-    all three methods, recording relative error in recovered a and b exponents.
+    all four methods, recording relative error in recovered a and b exponents.
 
     Args:
         surface: Loss surface configuration.
@@ -598,8 +600,6 @@ def compute_exponent_errors(
         noise_std: Standard deviation of Gaussian noise added to loss values.
         seed: Base random seed (each repeat uses seed + r).
         n_repeats: Number of independent noise realizations per n_points.
-        a3_random_init: If True, initialize Approach 3 from a random point
-            within bounds instead of the default 5D grid search.
 
     Returns:
         Dict mapping method name → dict with 2D arrays (n_repeats × n_points):
@@ -643,13 +643,17 @@ def compute_exponent_errors(
                 rng,
             )
 
-            a3_rng = rng.spawn(1)[0] if a3_random_init else None
+            a3_random_rng = rng.spawn(1)[0]
             for method_name, fit_fn in [
                 ("Chinchilla Approach 2", lambda d: fit_approach2(d, compute_budgets)),
                 (
-                    "Chinchilla Approach 3",
+                    "Chinchilla Approach 3 (grid init)",
+                    lambda d: fit_approach3(d.N, d.D, d.L),
+                ),
+                (
+                    "Chinchilla Approach 3 (random init)",
                     lambda d: fit_approach3(
-                        d.N, d.D, d.L, random_init=a3_random_init, rng=a3_rng
+                        d.N, d.D, d.L, random_init=True, rng=a3_random_rng
                     ),
                 ),
                 ("VPNLS", lambda d: fit_vpnls(d.N, d.D, d.L)),
@@ -681,7 +685,8 @@ def compute_exponent_errors(
 
 
 def create_figure(
-    all_results: dict[int, dict[str, dict]],
+    noise_results: dict[float, dict[int, dict[str, dict]]],
+    noise_std_levels: list[float],
     surface: LossSurface,
     n_points_range: np.ndarray,
     n_budgets_range: list[int],
@@ -689,111 +694,118 @@ def create_figure(
     c_max: float,
     log_range: float,
     drift_rate: float,
-    noise_std: float,
     n_repeats: int,
     output_path: str,
 ) -> None:
-    """Create and save the data efficiency comparison figure using boxplots.
+    """Create combined exponent recovery boxplot figure.
 
-    Layout: len(n_budgets_range) rows × 2 columns (exponent a, exponent b).
-    Each subplot shows boxplots of |relative error| vs n_points for all methods.
-
-    Args:
-        all_results: Dict mapping n_budgets → method results dict.
-            Each method dict has 2D arrays (n_repeats × n_points).
-        surface: Loss surface (for ground truth display).
-        n_points_range: Array of n_points values (x-axis).
-        n_budgets_range: List of n_budgets values (one row per value).
-        c_min: Minimum compute budget in FLOPs.
-        c_max: Maximum compute budget in FLOPs.
-        log_range: Sampling grid width in log10 space.
-        drift_rate: Drift rate used (for title).
-        noise_std: Noise standard deviation (for title).
-        n_repeats: Number of repeats per configuration (for title).
-        output_path: Path to save the figure.
+    Shows only the lowest and highest noise levels.
+    Layout: len(n_budgets_range) rows × 4 columns (2 noise × 2 exponents),
+    with a subtle vertical separator between the two noise groups.
     """
     range_label = log_range_to_label(log_range)
     exponent_labels = ["a", "b"]
     error_keys = ["a_errors", "b_errors"]
     n_rows = len(n_budgets_range)
+
+    shown_noise = [min(noise_std_levels), max(noise_std_levels)]
+    n_shown = len(shown_noise)
+    n_cols = 2 * n_shown
     n_methods = len(METHOD_NAMES)
     log_positions = np.log2(n_points_range.astype(float))
-    box_width = 0.2
+    box_width = 0.15
     offsets = np.linspace(
         -(n_methods - 1) / 2 * box_width, (n_methods - 1) / 2 * box_width, n_methods
     )
 
     fig, axes = plt.subplots(
         n_rows,
-        2,
-        figsize=(14, 2.8 * n_rows),
-        gridspec_kw={"hspace": 0.5, "wspace": 0.2},
+        n_cols,
+        figsize=(2.8 * n_cols, 2.3 * n_rows),
+        gridspec_kw={"hspace": 0.45, "wspace": 0.25},
         squeeze=False,
     )
 
-    for row, nb in enumerate(n_budgets_range):
-        results = all_results[nb]
+    for noise_idx, noise_std in enumerate(shown_noise):
+        all_results = noise_results[noise_std]
+        for row, nb in enumerate(n_budgets_range):
+            results = all_results[nb]
 
-        for col, (exp_label, err_key) in enumerate(zip(exponent_labels, error_keys)):
-            ax = axes[row, col]
+            for exp_idx, (exp_label, err_key) in enumerate(
+                zip(exponent_labels, error_keys)
+            ):
+                col = noise_idx * 2 + exp_idx
+                ax = axes[row, col]
 
-            for m_idx, method_name in enumerate(METHOD_NAMES):
-                style = METHOD_STYLES[method_name]
-                errors_2d = np.abs(results[method_name][err_key]) * 100
-                positions = log_positions + offsets[m_idx]
+                for m_idx, method_name in enumerate(METHOD_NAMES):
+                    style = METHOD_STYLES[method_name]
+                    errors_2d = np.abs(results[method_name][err_key]) * 100
+                    positions = log_positions + offsets[m_idx]
 
-                bp = ax.boxplot(
-                    [
-                        errors_2d[:, i][~np.isnan(errors_2d[:, i])]
-                        for i in range(errors_2d.shape[1])
-                    ],
-                    positions=positions,
-                    widths=box_width * 0.85,
-                    patch_artist=True,
-                    showfliers=True,
-                    flierprops={
-                        "marker": ".",
-                        "markersize": 3,
-                        "alpha": 0.5,
-                        "markerfacecolor": style["color"],
-                    },
-                    medianprops={"color": "white", "linewidth": 1.2},
-                    whiskerprops={"color": style["color"], "linewidth": 0.8},
-                    capprops={"color": style["color"], "linewidth": 0.8},
-                    boxprops={
-                        "facecolor": style["color"],
-                        "alpha": 0.6,
-                        "edgecolor": style["color"],
-                    },
+                    ax.boxplot(
+                        [
+                            errors_2d[:, i][~np.isnan(errors_2d[:, i])]
+                            for i in range(errors_2d.shape[1])
+                        ],
+                        positions=positions,
+                        widths=box_width * 0.85,
+                        patch_artist=True,
+                        showfliers=True,
+                        flierprops={
+                            "marker": ".",
+                            "markersize": 2,
+                            "alpha": 0.4,
+                            "markerfacecolor": style["color"],
+                        },
+                        medianprops={"color": "white", "linewidth": 0.8},
+                        whiskerprops={"color": style["color"], "linewidth": 0.6},
+                        capprops={"color": style["color"], "linewidth": 0.6},
+                        boxprops={
+                            "facecolor": style["color"],
+                            "alpha": 0.6,
+                            "edgecolor": style["color"],
+                        },
+                    )
+
+                ax.set_yscale("log")
+                ax.grid(True, alpha=0.3)
+                ax.set_xticks(log_positions)
+                ax.set_xticklabels(n_points_range, fontsize=6)
+                ax.set_xlim(log_positions[0] - 0.5, log_positions[-1] + 0.5)
+
+                ax.set_title(
+                    f"{exp_label} (σ={noise_std}), {nb} budgets",
+                    fontsize=7,
                 )
 
-            ax.set_yscale("log")
-            ax.grid(True, alpha=0.3)
-            ax.set_xticks(log_positions)
-            ax.set_xticklabels(n_points_range)
-            ax.set_xlim(log_positions[0] - 0.5, log_positions[-1] + 0.5)
+                if row == n_rows - 1:
+                    ax.set_xlabel("Points/curve", fontsize=7)
+                if col == 0:
+                    ax.set_ylabel("Abs. rel. error (%)", fontsize=7)
+                ax.tick_params(labelsize=6)
 
-            true_val = surface.a if exp_label == "a" else surface.b
-            ax.set_title(
-                f"Exponent {exp_label} (true={true_val:.3f}), " f"{nb} compute budgets",
-                fontsize=9,
-            )
-
-            if row == n_rows - 1:
-                ax.set_xlabel("Points per isoflop curve", fontsize=9)
-            if col == 0:
-                ax.set_ylabel("Absolute relative error (%)", fontsize=9)
-            ax.tick_params(labelsize=8)
+    # Subtle vertical line between the two noise groups
+    mid_x = 0.5
+    fig.add_artist(
+        plt.Line2D(
+            [mid_x, mid_x],
+            [0.02, 0.95],
+            transform=fig.transFigure,
+            color="#cccccc",
+            linewidth=1,
+            linestyle="--",
+            zorder=0,
+        )
+    )
 
     fig.suptitle(
-        "Data Efficiency: Scaling Exponent Recovery\n"
+        "Exponent Recovery: Boxplots by Noise Level\n"
         f"$\\alpha$={surface.alpha:.3f}, $\\beta$={surface.beta:.3f}, "
-        f"grid width = {range_label}, "
-        f"drift rate = {drift_rate:.3f}, "
-        f"noise $\\sigma$ = {noise_std}, "
+        f"grid = {range_label}, "
+        f"drift = {drift_rate:.3f}, "
         f"{n_repeats} seeds, "
         f"budgets: {c_min:.0e}\u2013{c_max:.0e} FLOPs",
-        fontsize=11,
+        fontsize=10,
         y=1.01,
     )
 
@@ -805,7 +817,7 @@ def create_figure(
         handles=handles,
         loc="lower center",
         ncol=len(METHOD_NAMES),
-        fontsize=9,
+        fontsize=7,
         bbox_to_anchor=(0.5, -0.01),
         frameon=True,
     )
@@ -815,162 +827,146 @@ def create_figure(
 
 
 def create_isoflop_figure(
-    data: IsoFlopData,
+    datasets: list[tuple[float, IsoFlopData]],
     surface: LossSurface,
     compute_budgets: np.ndarray,
     log_range: float,
     drift_rate: float,
     center_scale: float,
-    noise_std: float,
     output_path: str,
 ) -> None:
-    """Create and save a visualization of the IsoFLOP curves with noise.
+    """Create and save IsoFLOP curves for multiple noise levels.
 
-    Shows L vs log10(N) and L vs log10(D) for each compute budget, with the
-    true (noiseless) curve overlaid, plus markers for the true optimum and the
-    sampling center.
+    Layout: 2 rows (L vs N, L vs D) × len(datasets) columns (one per noise
+    level).  Noise level is shown as a prominent column header.
 
     Args:
-        data: IsoFlopData from generate_isoflop_data.
+        datasets: List of (noise_std, IsoFlopData) pairs, one per noise level.
         surface: Loss surface (for noiseless reference curves and true optima).
         compute_budgets: Compute budgets used (for labels).
         log_range: Sampling grid width in log10 space (for title).
         drift_rate: Drift rate used for sampling bias.
         center_scale: Center scale used for sampling bias.
-        noise_std: Noise standard deviation (for title).
         output_path: Path to save the figure.
     """
     range_label = log_range_to_label(log_range)
     n_budgets = len(compute_budgets)
+    n_noise = len(datasets)
     colors = plt.colormaps["viridis"](np.linspace(0.1, 0.9, n_budgets))
 
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.5))
+    x_configs = [
+        ("log$_{10}$(N)", "N", surface.N_opt),
+        ("log$_{10}$(D)", "D", surface.D_opt),
+    ]
 
-    # Left: L vs log10(N)
-    ax_n = axes[0]
-    for i, ((N, D, L), C) in enumerate(zip(data.per_budget, compute_budgets)):
-        log_N = np.log10(N)
-        ax_n.scatter(
-            log_N, L, color=colors[i], s=30, alpha=0.7, zorder=2, label=f"C = {C:.0e}"
-        )
-        L_true = surface.loss(N, D)
-        ax_n.plot(log_N, L_true, color=colors[i], linewidth=1, alpha=0.5, zorder=1)
-
-        # True optimum (red X)
-        N_opt = surface.N_opt(C)
-        L_opt = float(surface.loss(N_opt, surface.D_opt(C)))
-        ax_n.scatter(
-            [np.log10(N_opt)],
-            [L_opt],
-            c="red",
-            marker="x",
-            s=100,
-            zorder=4,
-            linewidths=2.5,
-        )
-
-        # Sampling center (black diamond)
-        center_offset = compute_center_offset(
-            C, compute_budgets, drift_rate, center_scale
-        )
-        N_center = N_opt * 10**center_offset
-        D_center = C / (6 * N_center)
-        L_center = float(surface.loss(N_center, D_center))
-        ax_n.scatter(
-            [np.log10(N_center)],
-            [L_center],
-            c="black",
-            marker="D",
-            s=90,
-            zorder=5,
-            linewidths=1,
-            edgecolors="white",
-        )
-
-    ax_n.set_xlabel("log$_{10}$(N)", fontsize=10)
-    ax_n.set_ylabel("Loss L(N, D)", fontsize=10)
-    ax_n.set_title("IsoFLOP curves: L vs N", fontsize=10)
-    ax_n.legend(fontsize=7, loc="upper right")
-    ax_n.grid(True, alpha=0.3)
-    ax_n.tick_params(labelsize=8)
-    ax_n.scatter([], [], c="red", marker="x", s=80, linewidths=2, label="True $N^*$")
-    ax_n.scatter(
-        [],
-        [],
-        c="black",
-        marker="D",
-        s=60,
-        linewidths=1,
-        edgecolors="white",
-        label="Sampling center",
+    fig, axes = plt.subplots(
+        2,
+        n_noise,
+        figsize=(4.0 * n_noise, 6),
+        squeeze=False,
+        gridspec_kw={"hspace": 0.2, "wspace": 0.2},
     )
-    ax_n.legend(fontsize=7, loc="upper right")
 
-    # Right: L vs log10(D)
-    ax_d = axes[1]
-    for i, ((N, D, L), C) in enumerate(zip(data.per_budget, compute_budgets)):
-        log_D = np.log10(D)
-        ax_d.scatter(
-            log_D, L, color=colors[i], s=30, alpha=0.7, zorder=2, label=f"C = {C:.0e}"
-        )
-        L_true = surface.loss(N, D)
-        ax_d.plot(log_D, L_true, color=colors[i], linewidth=1, alpha=0.5, zorder=1)
+    for col_idx, (noise_std, data) in enumerate(datasets):
+        for row_idx, (x_label, x_param, opt_fn) in enumerate(x_configs):
+            ax = axes[row_idx, col_idx]
+            for i, ((N, D, L), C) in enumerate(zip(data.per_budget, compute_budgets)):
+                x_vals = np.log10(N) if x_param == "N" else np.log10(D)
+                ax.scatter(
+                    x_vals,
+                    L,
+                    color=colors[i],
+                    s=25,
+                    alpha=0.7,
+                    zorder=2,
+                    label=f"C = {C:.0e}" if col_idx == 0 and row_idx == 0 else None,
+                )
+                L_true = surface.loss(N, D)
+                ax.plot(
+                    x_vals, L_true, color=colors[i], linewidth=1, alpha=0.5, zorder=1
+                )
 
-        # True optimum (red X)
-        D_opt = surface.D_opt(C)
-        L_opt = float(surface.loss(surface.N_opt(C), D_opt))
-        ax_d.scatter(
-            [np.log10(D_opt)],
-            [L_opt],
-            c="red",
-            marker="x",
-            s=100,
-            zorder=4,
-            linewidths=2.5,
-        )
+                x_opt = np.log10(opt_fn(C))
+                L_opt = float(surface.loss(surface.N_opt(C), surface.D_opt(C)))
+                ax.scatter(
+                    [x_opt],
+                    [L_opt],
+                    c="red",
+                    marker="x",
+                    s=80,
+                    zorder=4,
+                    linewidths=2,
+                )
 
-        # Sampling center (black diamond)
-        center_offset = compute_center_offset(
-            C, compute_budgets, drift_rate, center_scale
-        )
-        N_center = surface.N_opt(C) * 10**center_offset
-        D_center = C / (6 * N_center)
-        L_center = float(surface.loss(N_center, D_center))
-        ax_d.scatter(
-            [np.log10(D_center)],
-            [L_center],
-            c="black",
-            marker="D",
-            s=90,
-            zorder=5,
-            linewidths=1,
-            edgecolors="white",
-        )
+                center_offset = compute_center_offset(
+                    C, compute_budgets, drift_rate, center_scale
+                )
+                N_center = surface.N_opt(C) * 10**center_offset
+                D_center = C / (6 * N_center)
+                L_center = float(surface.loss(N_center, D_center))
+                x_center = np.log10(N_center) if x_param == "N" else np.log10(D_center)
+                ax.scatter(
+                    [x_center],
+                    [L_center],
+                    c="black",
+                    marker="D",
+                    s=70,
+                    zorder=5,
+                    linewidths=1,
+                    edgecolors="white",
+                )
 
-    ax_d.set_xlabel("log$_{10}$(D)", fontsize=10)
-    ax_d.set_ylabel("Loss L(N, D)", fontsize=10)
-    ax_d.set_title("IsoFLOP curves: L vs D", fontsize=10)
-    ax_d.grid(True, alpha=0.3)
-    ax_d.tick_params(labelsize=8)
-    ax_d.scatter([], [], c="red", marker="x", s=80, linewidths=2, label="True $D^*$")
-    ax_d.scatter(
-        [],
-        [],
-        c="black",
-        marker="D",
-        s=60,
-        linewidths=1,
-        edgecolors="white",
-        label="Sampling center",
-    )
-    ax_d.legend(fontsize=7, loc="upper right")
+            if row_idx == 1:
+                ax.set_xlabel(x_label, fontsize=9)
+            if col_idx == 0:
+                ax.set_ylabel("Loss L(N, D)", fontsize=9)
 
-    n_pts = len(data.per_budget[0][0])
+            if row_idx == 0:
+                ax.set_title(f"σ = {noise_std}", fontsize=11)
+
+            ax.grid(True, alpha=0.3)
+            ax.tick_params(labelsize=7)
+
+            # Row labels on the right edge of the last column
+            if col_idx == n_noise - 1:
+                ax.annotate(
+                    f"L vs {x_param}",
+                    xy=(1.02, 0.5),
+                    xycoords="axes fraction",
+                    fontsize=9,
+                    ha="left",
+                    va="center",
+                    rotation=-90,
+                    color="#555555",
+                )
+
+            if col_idx == 0 and row_idx == 0:
+                ax.scatter(
+                    [],
+                    [],
+                    c="red",
+                    marker="x",
+                    s=60,
+                    linewidths=2,
+                    label="True optimum",
+                )
+                ax.scatter(
+                    [],
+                    [],
+                    c="black",
+                    marker="D",
+                    s=50,
+                    linewidths=1,
+                    edgecolors="white",
+                    label="Sampling center",
+                )
+                ax.legend(fontsize=6, loc="upper right")
+
+    n_pts = len(datasets[0][1].per_budget[0][0])
     fig.suptitle(
         f"IsoFLOP Samples ({n_budgets} budgets, {n_pts} points/curve, "
-        f"grid width = {range_label}, noise $\\sigma$ = {noise_std})",
+        f"grid width = {range_label})",
         fontsize=11,
-        y=1.01,
     )
 
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
@@ -1070,16 +1066,47 @@ def print_summary(
 # ── Entry Point ───────────────────────────────────────────────────────────────
 
 
-def _noise_color(noise_std: float, noise_std_levels: list[float]) -> str:
-    """Map noise level to a black→white shade (white = least noise)."""
-    sorted_levels = sorted(noise_std_levels)
-    if len(sorted_levels) <= 1:
-        return "#000000"
-    idx = sorted_levels.index(noise_std)
-    # 0.15 (near-black) for highest noise → 0.75 (light gray) for lowest
-    frac = idx / (len(sorted_levels) - 1)
-    gray = 0.15 + 0.60 * frac
-    return f"#{int(gray*255):02x}{int(gray*255):02x}{int(gray*255):02x}"
+def _pool_method_errors(
+    noise_results: dict[float, dict[int, dict[str, dict]]],
+    noise_std_levels: list[float],
+    n_budgets_range: list[int],
+) -> list[_ComparisonRow]:
+    """Pool absolute relative errors across all noise levels, budgets, n_points, seeds."""
+    row_data: list[_ComparisonRow] = []
+    for method_name in METHOD_NAMES:
+        all_a: list[np.ndarray] = []
+        all_b: list[np.ndarray] = []
+
+        for noise_std in noise_std_levels:
+            for nb in n_budgets_range:
+                res = noise_results[noise_std][nb][method_name]
+                all_a.append(np.abs(res["a_errors"]).ravel() * 100)
+                all_b.append(np.abs(res["b_errors"]).ravel() * 100)
+
+        pooled_a = np.concatenate(all_a)
+        pooled_b = np.concatenate(all_b)
+        pooled_all = np.concatenate([pooled_a, pooled_b])
+
+        valid = pooled_all[np.isfinite(pooled_all) & (pooled_all > 0)]
+        if len(valid) > 0:
+            stats = _PooledStats(
+                gmean=float(gmean(valid)),
+                min=float(valid.min()),
+                max=float(valid.max()),
+            )
+        else:
+            stats = _PooledStats(gmean=np.nan, min=np.nan, max=np.nan)
+
+        row_data.append(
+            _ComparisonRow(
+                method=method_name,
+                stats=stats,
+                pooled_errors=pooled_all,
+                max_a=float(np.nanmax(pooled_a)),
+                max_b=float(np.nanmax(pooled_b)),
+            )
+        )
+    return row_data
 
 
 def create_method_comparison_figure(
@@ -1090,83 +1117,81 @@ def create_method_comparison_figure(
 ) -> None:
     """Create method comparison figure: dot-range plot + max-error heatmap.
 
-    Layout: 1×2 figure.
-    - Left: geometric mean of |relative error| pooled across a+b, all budgets,
-      n_points, and seeds, with min-max error bars. 9 rows = 3 noise × 3 methods,
-      colored by noise level. Sorted by noise (highest at top), then gmean within.
-    - Right: heatmap of max |a| and max |b| errors per row.
+    Layout: 1×2 figure with one row per method (4 rows), pooled across all
+    noise levels, compute budgets, n_points, and seeds.  Sorted by max error
+    descending.
+    - Left: geometric mean with min-max bars, rug plot below, KDE line above.
+    - Right: narrow heatmap of max |a| and max |b| errors.
     """
-    row_data: list[_ComparisonRow] = []
-    for noise_std in sorted(noise_std_levels, reverse=True):
-        all_results = noise_results[noise_std]
-        for method_name in METHOD_NAMES:
-            all_a = []
-            all_b = []
-            total_failures = 0
-            total_fits = 0
+    row_data = _pool_method_errors(noise_results, noise_std_levels, n_budgets_range)
 
-            for nb in n_budgets_range:
-                res = all_results[nb][method_name]
-                a_abs = np.abs(res["a_errors"]).ravel() * 100
-                b_abs = np.abs(res["b_errors"]).ravel() * 100
-                all_a.append(a_abs)
-                all_b.append(b_abs)
-                total_failures += int(res["abnormal"].sum() + res["fail"].sum())
-                total_fits += res["fail"].size
-
-            pooled_a = np.concatenate(all_a)
-            pooled_b = np.concatenate(all_b)
-            pooled_all = np.concatenate([pooled_a, pooled_b])
-
-            valid = pooled_all[np.isfinite(pooled_all) & (pooled_all > 0)]
-            if len(valid) > 0:
-                stats = _PooledStats(
-                    gmean=float(gmean(valid)),
-                    min=float(valid.min()),
-                    max=float(valid.max()),
-                )
-            else:
-                stats = _PooledStats(gmean=np.nan, min=np.nan, max=np.nan)
-
-            row_data.append(
-                _ComparisonRow(
-                    noise_std=noise_std,
-                    method=method_name,
-                    stats=stats,
-                    max_a=float(np.nanmax(pooled_a)),
-                    max_b=float(np.nanmax(pooled_b)),
-                    total_failures=total_failures,
-                    total_fits=total_fits,
-                )
-            )
-
-    # Sort: method first (in METHOD_NAMES order), then highest noise first
-    method_order = {m: i for i, m in enumerate(METHOD_NAMES)}
-    row_data.sort(key=lambda rd: (method_order[rd.method], -rd.noise_std))
+    # Sort descending by max error
+    row_data.sort(key=lambda rd: -rd.stats.max if not np.isnan(rd.stats.max) else 0.0)
 
     n_rows = len(row_data)
     y_positions = np.arange(n_rows)
+    dot_color = "#333333"
+    rug_kde_alpha = 0.35
 
-    fig_height = 0.5 * n_rows + 1.5
+    fig_height = 0.7 * n_rows + 1.5
     fig, (ax_dot, ax_heat) = plt.subplots(
         1,
         2,
         figsize=(12, fig_height),
-        gridspec_kw={"width_ratios": [3, 2], "wspace": 0.02},
+        gridspec_kw={"width_ratios": [5, 1], "wspace": 0.02},
         sharey=True,
         layout="constrained",
     )
 
-    # ── Left panel: dot-range plot ──
-    for idx, rd in enumerate(row_data):
-        color = _noise_color(rd.noise_std, noise_std_levels)
-        s = rd.stats
-        fillstyle = "full" if rd.total_failures == 0 else "none"
-        y = y_positions[idx]
+    # Compute shared x-axis limits in log space for KDE
+    all_finite = np.concatenate(
+        [rd.pooled_errors[np.isfinite(rd.pooled_errors)] for rd in row_data]
+    )
+    if len(all_finite) > 0:
+        x_lo = max(all_finite[all_finite > 0].min() * 0.5, 1e-4)
+        x_hi = all_finite.max() * 2.0
+    else:
+        x_lo, x_hi = 1e-2, 1e2
+    kde_x = np.geomspace(x_lo, x_hi, 300)
 
-        if np.isnan(s.gmean):
-            ax_dot.scatter([1e-1], [y], marker="x", s=60, color=color, zorder=5)
-        else:
+    # ── Left panel: dot-range plot with rug and KDE ──
+    for idx, rd in enumerate(row_data):
+        s = rd.stats
+        y = y_positions[idx]
+        valid = rd.pooled_errors[np.isfinite(rd.pooled_errors) & (rd.pooled_errors > 0)]
+
+        # Rug plot (small ticks below the dot row)
+        if len(valid) > 0:
+            ax_dot.scatter(
+                valid,
+                np.full_like(valid, y + 0.25),
+                marker="|",
+                s=15,
+                color=dot_color,
+                alpha=1.0,
+                zorder=2,
+                linewidths=0.7,
+            )
+
+        # KDE line (above the dot row)
+        if len(valid) > 20:
+            try:
+                kde = gaussian_kde(np.log10(valid), bw_method=0.3)
+                density = kde(np.log10(kde_x))
+                density_norm = density / density.max() * 0.3
+                ax_dot.plot(
+                    kde_x,
+                    y - density_norm,
+                    color=dot_color,
+                    alpha=rug_kde_alpha,
+                    linewidth=0.8,
+                    zorder=2,
+                )
+            except np.linalg.LinAlgError:
+                pass
+
+        # Dot-range (geometric mean with min-max error bars)
+        if not np.isnan(s.gmean):
             xerr_lo = max(0.0, s.gmean - s.min)
             xerr_hi = max(0.0, s.max - s.gmean)
             ax_dot.errorbar(
@@ -1174,89 +1199,27 @@ def create_method_comparison_figure(
                 y,
                 xerr=[[xerr_lo], [xerr_hi]],
                 fmt="o",
-                color=color,
+                color=dot_color,
                 markersize=7,
                 capsize=4,
                 linewidth=1.5,
-                fillstyle=fillstyle,
                 markeredgewidth=1.5,
                 zorder=5,
             )
-
-        if rd.total_failures > 0:
-            gm = s.gmean if not np.isnan(s.gmean) else 1e-1
-            ax_dot.annotate(
-                f"{rd.total_failures}/{rd.total_fits} fits failed",
-                xy=(gm, y),
-                xytext=(0, -10),
-                textcoords="offset points",
-                fontsize=8,
-                color="#555555",
-                ha="center",
-                va="top",
-            )
-
-    # Legend: noise shades + fill style
-    noise_handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color=_noise_color(ns, noise_std_levels),
-            markerfacecolor=_noise_color(ns, noise_std_levels),
-            markersize=7,
-            linestyle="None",
-            label=f"σ = {ns}",
-        )
-        for ns in sorted(noise_std_levels, reverse=True)
-    ]
-    fill_handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="#444444",
-            markerfacecolor="#444444",
-            markersize=7,
-            linestyle="None",
-            label="No failures",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="#444444",
-            markerfacecolor="none",
-            markersize=7,
-            markeredgewidth=1.5,
-            linestyle="None",
-            label="Has failures",
-        ),
-    ]
-    ax_dot.legend(
-        handles=noise_handles + fill_handles,
-        fontsize=8,
-        loc="lower right",
-        framealpha=0.9,
-        edgecolor="#cccccc",
-    )
+        else:
+            ax_dot.scatter([1e-1], [y], marker="x", s=60, color=dot_color, zorder=5)
 
     ax_dot.set_xscale("log")
     ax_dot.set_yticks(y_positions)
-    # Show method name + noise on each row; group visually by method
-    ax_dot.set_yticklabels(
-        [f"{rd.method}  (σ={rd.noise_std})" for rd in row_data],
-        fontsize=9,
-    )
+    ax_dot.set_yticklabels([rd.method for rd in row_data], fontsize=9)
     ax_dot.set_xlabel("Absolute relative error (%)", fontsize=11)
     ax_dot.set_title("Geometric Mean Error (min–max range)", fontsize=11)
     ax_dot.grid(True, axis="x", alpha=0.3)
     ax_dot.invert_yaxis()
 
     # ── Right panel: max-error heatmap ──
-    param_keys = ["a", "b"]
     col_labels = ["a", "b"]
-    n_params = len(param_keys)
+    n_params = len(col_labels)
 
     heat_data = np.full((n_rows, n_params), np.nan)
     for idx, rd in enumerate(row_data):
@@ -1310,17 +1273,98 @@ def create_method_comparison_figure(
 
     ax_heat.set_xticks(np.arange(n_params))
     ax_heat.set_xticklabels(col_labels, fontsize=11)
-    ax_heat.set_xlabel("Estimated exponent", fontsize=11)
+    ax_heat.set_xlabel("Exponent", fontsize=11)
     ax_heat.set_title("Max Error", fontsize=11)
     ax_heat.tick_params(left=False)
 
     fig.suptitle(
-        "Data Efficiency: Exponent Recovery Accuracy",
+        "Method Comparison: Exponent Inference Accuracy",
         fontsize=13,
     )
 
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
+
+
+def export_method_comparison_csv(
+    noise_results: dict[float, dict[int, dict[str, dict]]],
+    noise_std_levels: list[float],
+    n_budgets_range: list[int],
+    n_points_range: np.ndarray,
+    output_path: str,
+) -> None:
+    """Export method comparison data to CSV.
+
+    Includes error statistics, status/error counts per type, top 8 largest
+    errors, and metadata about what was aggregated over.
+    """
+    rows = []
+    for method_name in METHOD_NAMES:
+        all_a: list[np.ndarray] = []
+        all_b: list[np.ndarray] = []
+        n_maxiter = 0
+        n_abnormal = 0
+        n_bound_hit = 0
+        n_fail = 0
+        total_fits = 0
+
+        for noise_std in noise_std_levels:
+            for nb in n_budgets_range:
+                res = noise_results[noise_std][nb][method_name]
+                all_a.append(np.abs(res["a_errors"]).ravel() * 100)
+                all_b.append(np.abs(res["b_errors"]).ravel() * 100)
+                n_maxiter += int(res["maxiter"].sum())
+                n_abnormal += int(res["abnormal"].sum())
+                n_bound_hit += int(res["bound_hit"].sum())
+                n_fail += int(res["fail"].sum())
+                total_fits += res["fail"].size
+
+        pooled_a = np.concatenate(all_a)
+        pooled_b = np.concatenate(all_b)
+        pooled_all = np.concatenate([pooled_a, pooled_b])
+
+        valid = pooled_all[np.isfinite(pooled_all) & (pooled_all > 0)]
+        gm = float(gmean(valid)) if len(valid) > 0 else np.nan
+
+        sorted_desc = np.sort(pooled_all[np.isfinite(pooled_all)])[::-1]
+        top8 = [
+            float(sorted_desc[i]) if i < len(sorted_desc) else np.nan for i in range(8)
+        ]
+
+        row: dict[str, object] = {
+            "method": method_name,
+            "n_noise_levels": len(noise_std_levels),
+            "n_budgets": len(n_budgets_range),
+            "n_points_per_curve": len(n_points_range),
+            "total_fits": total_fits,
+            "min": (
+                float(np.nanmin(pooled_all))
+                if np.any(np.isfinite(pooled_all))
+                else np.nan
+            ),
+            "gmean": gm,
+            "max": (
+                float(np.nanmax(pooled_all))
+                if np.any(np.isfinite(pooled_all))
+                else np.nan
+            ),
+            "max_a": (
+                float(np.nanmax(pooled_a)) if np.any(np.isfinite(pooled_a)) else np.nan
+            ),
+            "max_b": (
+                float(np.nanmax(pooled_b)) if np.any(np.isfinite(pooled_b)) else np.nan
+            ),
+            "n_maxiter": n_maxiter,
+            "n_abnormal": n_abnormal,
+            "n_bound_hit": n_bound_hit,
+            "n_fail": n_fail,
+        }
+        for rank, val in enumerate(top8, 1):
+            row[f"top{rank}"] = val
+        rows.append(row)
+
+    pd.DataFrame(rows).to_csv(output_path, index=False)
+    print(f"Saved: {output_path}")
 
 
 def main():
@@ -1348,8 +1392,6 @@ def main():
     seed = 42
     n_repeats = 32
 
-    a3_random_init = False
-
     console = Console()
     range_label = log_range_to_label(log_range)
     noise_results: dict[float, dict[int, dict[str, dict]]] = {}
@@ -1374,34 +1416,38 @@ def main():
                 noise_std=noise_std,
                 seed=seed,
                 n_repeats=n_repeats,
-                a3_random_init=a3_random_init,
             )
             console.print("[green]done[/green]")
         noise_results[noise_std] = all_results
 
-    # IsoFLOP visualization (middle noise level, max budgets, max n_points)
-    isoflop_noise = noise_std_levels[len(noise_std_levels) // 2]
+    # IsoFLOP visualization (all noise levels, max budgets, max n_points)
     isoflop_budgets = np.geomspace(c_min, c_max, max(n_budgets_range))
-    isoflop_rng = np.random.default_rng(seed)
-    isoflop_data = generate_isoflop_data(
-        surface,
-        isoflop_budgets,
-        n_points_max,
-        log_range,
-        drift_rate,
-        center_scale,
-        isoflop_noise,
-        isoflop_rng,
-    )
+    isoflop_datasets: list[tuple[float, IsoFlopData]] = []
+    for ns in noise_std_levels:
+        isoflop_rng = np.random.default_rng(seed)
+        isoflop_datasets.append(
+            (
+                ns,
+                generate_isoflop_data(
+                    surface,
+                    isoflop_budgets,
+                    n_points_max,
+                    log_range,
+                    drift_rate,
+                    center_scale,
+                    ns,
+                    isoflop_rng,
+                ),
+            )
+        )
     isoflop_path = output_dir / "isoflop_curves.png"
     create_isoflop_figure(
-        isoflop_data,
+        isoflop_datasets,
         surface,
         isoflop_budgets,
         log_range,
         drift_rate,
         center_scale,
-        isoflop_noise,
         str(isoflop_path),
     )
     print(f"Saved: {isoflop_path}")
@@ -1419,26 +1465,25 @@ def main():
         n_repeats,
     )
 
-    # Per-noise boxplot figures
-    for noise_std in noise_std_levels:
-        errors_path = output_dir / f"exponent_recovery_errors_{noise_std}.png"
-        create_figure(
-            noise_results[noise_std],
-            surface,
-            n_points_range,
-            n_budgets_range,
-            c_min,
-            c_max,
-            log_range,
-            drift_rate,
-            noise_std,
-            n_repeats,
-            str(errors_path),
-        )
-        print(f"Saved: {errors_path}")
+    # Combined boxplot figure (all noise levels)
+    errors_path = output_dir / "exponent_inference_errors.png"
+    create_figure(
+        noise_results,
+        noise_std_levels,
+        surface,
+        n_points_range,
+        n_budgets_range,
+        c_min,
+        c_max,
+        log_range,
+        drift_rate,
+        n_repeats,
+        str(errors_path),
+    )
+    print(f"Saved: {errors_path}")
 
     # Method comparison figure
-    comparison_path = output_dir / "method_comparison.png"
+    comparison_path = output_dir / "exponent_inference.png"
     create_method_comparison_figure(
         noise_results,
         noise_std_levels,
@@ -1446,6 +1491,16 @@ def main():
         str(comparison_path),
     )
     print(f"Saved: {comparison_path}")
+
+    # Method comparison CSV
+    csv_path = output_dir / "exponent_inference.csv"
+    export_method_comparison_csv(
+        noise_results,
+        noise_std_levels,
+        n_budgets_range,
+        n_points_range,
+        str(csv_path),
+    )
 
     print("\nExperiment 7 complete.")
 
