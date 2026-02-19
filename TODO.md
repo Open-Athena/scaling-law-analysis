@@ -11,8 +11,7 @@ On article:
   - Add limitation on not exploring data efficiency (yet)
   - Add limitation on how 2D grid search + Nelder-Mead probably won't scale well to many more parameters
   - Add appendix table on published scaling law exponents:
-    - https://gemini.google.com/app/4c67a4fc2d1f3b4d
-    - Approach 2 users in Scaling Laws notes
+    - See "Published Fit Parameters" in Scaling Laws notes
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Update editorial guidelines to match longer length now
