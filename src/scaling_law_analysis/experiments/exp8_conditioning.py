@@ -510,7 +510,7 @@ def main() -> str:
     p()
     p("Even with ftol=0 (no function-value stopping), L-BFGS-B improves")
     p(
-        f"only modestly (|α| error {abs(a3_errs['α']):.0e} → "
+        f"(|α| error {abs(a3_errs['α']):.0e} → "
         f"{abs(ftol0_alpha_err):.0e}). The gradient norm"
     )
     p(f"of {grad_norm:.2e} is small but nonzero — descent signal exists, but")

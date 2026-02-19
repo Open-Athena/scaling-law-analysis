@@ -221,7 +221,7 @@ L-BFGS-B with ftol=0 (grid search init):
   Message:    ABNORMAL: 
 
 Even with ftol=0 (no function-value stopping), L-BFGS-B improves
-only modestly (|α| error 2e-08 → 1e-15). The gradient norm
+(|α| error 2e-08 → 1e-15). The gradient norm
 of 2.40e-11 is small but nonzero — descent signal exists, but
 L-BFGS-B's Hessian approximation cannot convert it into a useful step.
 
