@@ -14,7 +14,10 @@ and number of compute budgets (n_budgets).
 
 from __future__ import annotations
 
+import argparse
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
+import functools
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
@@ -293,6 +296,93 @@ METHOD_STYLES = {
 }
 
 
+def _run_single_repeat(
+    repeat_index: int,
+    *,
+    surface: LossSurface,
+    compute_budgets: np.ndarray,
+    n_points_range: np.ndarray,
+    log_range: float,
+    drift_rate: float,
+    center_scale: float,
+    noise_std: float,
+    seed: int,
+) -> dict[str, dict]:
+    """Run all method fits for a single repeat (one seed).
+
+    Returns dict mapping method name → 1-D arrays (one entry per n_points).
+    """
+    true_a = surface.a
+    true_b = surface.b
+    n_pts_len = len(n_points_range)
+
+    results: dict[str, dict] = {
+        m: {
+            "a_errors": np.zeros(n_pts_len),
+            "b_errors": np.zeros(n_pts_len),
+            "maxiter": np.zeros(n_pts_len, dtype=bool),
+            "abnormal": np.zeros(n_pts_len, dtype=bool),
+            "bound_hit": np.zeros(n_pts_len, dtype=bool),
+            "fail": np.zeros(n_pts_len, dtype=bool),
+        }
+        for m in METHOD_NAMES
+    }
+
+    rng = np.random.default_rng(seed + repeat_index)
+    for i, n_points in enumerate(n_points_range):
+        n_pts = int(n_points)
+
+        data = generate_isoflop_data(
+            surface,
+            compute_budgets,
+            n_pts,
+            log_range,
+            drift_rate,
+            center_scale,
+            noise_std,
+            rng,
+        )
+
+        a3_random_rng = rng.spawn(1)[0]
+        for method_name, fit_fn in [
+            ("Chinchilla Approach 2", lambda d: fit_approach2(d, compute_budgets)),
+            (
+                "Chinchilla Approach 3 (grid init)",
+                lambda d: fit_approach3(d.N, d.D, d.L),
+            ),
+            (
+                "Chinchilla Approach 3 (random init)",
+                lambda d: fit_approach3(
+                    d.N, d.D, d.L, random_init=True, rng=a3_random_rng
+                ),
+            ),
+            ("VPNLS", lambda d: fit_vpnls(d.N, d.D, d.L)),
+        ]:
+            res = results[method_name]
+            try:
+                est = fit_fn(data)
+            except FitError:
+                res["fail"][i] = True
+                res["a_errors"][i] = np.nan
+                res["b_errors"][i] = np.nan
+                continue
+
+            if est.status == FitStatus.MAX_ITER:
+                res["maxiter"][i] = True
+            elif est.status == FitStatus.ABNORMAL:
+                res["abnormal"][i] = True
+            elif est.status == FitStatus.BOUND_HIT:
+                res["bound_hit"][i] = True
+
+            res["a_errors"][i] = (est.a - true_a) / true_a
+            res["b_errors"][i] = (est.b - true_b) / true_b
+
+    return results
+
+
+_ARRAY_KEYS = ("a_errors", "b_errors", "maxiter", "abnormal", "bound_hit", "fail")
+
+
 def compute_exponent_errors(
     surface: LossSurface,
     compute_budgets: np.ndarray,
@@ -303,6 +393,7 @@ def compute_exponent_errors(
     noise_std: float,
     seed: int,
     n_repeats: int,
+    n_workers: int = 1,
 ) -> dict[str, dict]:
     """Compute a/b exponent errors for all methods across n_points and seeds.
 
@@ -319,6 +410,7 @@ def compute_exponent_errors(
         noise_std: Standard deviation of Gaussian noise added to loss values.
         seed: Base random seed (each repeat uses seed + r).
         n_repeats: Number of independent noise realizations per n_points.
+        n_workers: Number of parallel worker processes (1 = serial).
 
     Returns:
         Dict mapping method name → dict with 2D arrays (n_repeats × n_points):
@@ -330,9 +422,30 @@ def compute_exponent_errors(
             Hard failures (estimate is NaN):
                 "fail"      — hard failure (non-finite, underdetermined, etc.).
     """
-    true_a = surface.a
-    true_b = surface.b
     n_pts_len = len(n_points_range)
+
+    worker = functools.partial(
+        _run_single_repeat,
+        surface=surface,
+        compute_budgets=compute_budgets,
+        n_points_range=n_points_range,
+        log_range=log_range,
+        drift_rate=drift_rate,
+        center_scale=center_scale,
+        noise_std=noise_std,
+        seed=seed,
+    )
+
+    # executor.map preserves input order (unlike as_completed which yields
+    # in completion order), so repeat_results[r] always corresponds to
+    # repeat_index=r regardless of which worker finishes first.
+    # See: https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Executor.map
+    #      https://stackoverflow.com/a/16376753
+    if n_workers > 1:
+        with ProcessPoolExecutor(max_workers=n_workers) as executor:
+            repeat_results = list(executor.map(worker, range(n_repeats)))
+    else:
+        repeat_results = [worker(r) for r in range(n_repeats)]
 
     results: dict[str, dict] = {
         m: {
@@ -345,57 +458,10 @@ def compute_exponent_errors(
         }
         for m in METHOD_NAMES
     }
-
-    for r in range(n_repeats):
-        rng = np.random.default_rng(seed + r)
-        for i, n_points in enumerate(n_points_range):
-            n_pts = int(n_points)
-
-            data = generate_isoflop_data(
-                surface,
-                compute_budgets,
-                n_pts,
-                log_range,
-                drift_rate,
-                center_scale,
-                noise_std,
-                rng,
-            )
-
-            a3_random_rng = rng.spawn(1)[0]
-            for method_name, fit_fn in [
-                ("Chinchilla Approach 2", lambda d: fit_approach2(d, compute_budgets)),
-                (
-                    "Chinchilla Approach 3 (grid init)",
-                    lambda d: fit_approach3(d.N, d.D, d.L),
-                ),
-                (
-                    "Chinchilla Approach 3 (random init)",
-                    lambda d: fit_approach3(
-                        d.N, d.D, d.L, random_init=True, rng=a3_random_rng
-                    ),
-                ),
-                ("VPNLS", lambda d: fit_vpnls(d.N, d.D, d.L)),
-            ]:
-                res = results[method_name]
-                try:
-                    est = fit_fn(data)
-                except FitError:
-                    res["fail"][r, i] = True
-                    res["a_errors"][r, i] = np.nan
-                    res["b_errors"][r, i] = np.nan
-                    continue
-
-                # Record status flags
-                if est.status == FitStatus.MAX_ITER:
-                    res["maxiter"][r, i] = True
-                elif est.status == FitStatus.ABNORMAL:
-                    res["abnormal"][r, i] = True
-                elif est.status == FitStatus.BOUND_HIT:
-                    res["bound_hit"][r, i] = True
-
-                res["a_errors"][r, i] = (est.a - true_a) / true_a
-                res["b_errors"][r, i] = (est.b - true_b) / true_b
+    for r, single in enumerate(repeat_results):
+        for m in METHOD_NAMES:
+            for key in _ARRAY_KEYS:
+                results[m][key][r] = single[m][key]
 
     return results
 
@@ -1100,6 +1166,15 @@ def export_method_comparison_csv(
 
 def main():
     """Run Experiment 7: data efficiency comparison."""
+    parser = argparse.ArgumentParser(description="Experiment 7: Data Efficiency")
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=8,
+        help="Number of parallel worker processes (default: 8)",
+    )
+    args = parser.parse_args()
+
     print("=" * 70)
     print("Experiment 7: Data Efficiency Comparison")
     print("=" * 70)
@@ -1126,7 +1201,7 @@ def main():
 
     noise_std_levels = [0.05, 0.1, 0.2]
     seed = 42
-    n_repeats = 32
+    n_repeats = 256
 
     console = Console()
     range_label = log_range_to_label(log_range)
@@ -1139,7 +1214,7 @@ def main():
             compute_budgets = np.geomspace(c_min, c_max, nb)
             console.print(
                 f"  [bold]Running:[/bold] {nb} budgets, {range_label}, "
-                f"{n_repeats} seeds ...",
+                f"{n_repeats} seeds ({args.workers} workers) ...",
                 end=" ",
             )
             all_results[nb] = compute_exponent_errors(
@@ -1152,6 +1227,7 @@ def main():
                 noise_std=noise_std,
                 seed=seed,
                 n_repeats=n_repeats,
+                n_workers=args.workers,
             )
             console.print("[green]done[/green]")
         noise_results[noise_std] = all_results

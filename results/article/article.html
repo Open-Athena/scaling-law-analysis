@@ -2080,8 +2080,8 @@
                 a statistical setting. Gaussian noise is added to loss values at three levels
                 (&sigma;&nbsp;=&nbsp;0.05,&nbsp;0.1,&nbsp;0.2), the number of compute
                 budgets varies from 2 to 4, and the number of points per IsoFLOP curve
-                ranges from 4 to 32. Each configuration is repeated with 32 independent
-                noise realizations, yielding 1,152 fits per method and 4,608 fits in total.
+                ranges from 4 to 32. Each configuration is repeated with 256 independent
+                noise realizations, yielding 9,216 fits per method and 36,864 fits in total.
                 <a href="#appendix-noisy-isoflop">Figure&nbsp;A3</a> shows what the noisy
                 IsoFLOP samples look like at each noise level.
             </p>
@@ -2111,7 +2111,7 @@
                 <figcaption>
                     <strong>Figure 9:</strong> Comparison of four fitting methods on noisy
                     synthetic data, pooled across three noise levels, three budget counts,
-                    four points-per-curve settings, and 32 noise realizations (1,152 fits
+                    four points-per-curve settings, and 256 noise realizations (9,216 fits
                     per method). Left: geometric mean of |relative error| (%) with
                     min-to-max range bars, rug ticks for individual errors, and kernel
                     density estimate. Right: maximum |relative error| (%) per exponent.
@@ -2137,25 +2137,25 @@
                         <tbody>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">VPNLS</td>
-                                <td>0.97</td>
-                                <td>29.6</td>
-                                <td>9.9</td>
+                                <td>1.09</td>
+                                <td>34.2</td>
+                                <td>11.4</td>
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">Approach 3 (grid init)</td>
-                                <td>0.98</td>
-                                <td>69.5</td>
-                                <td>23.2</td>
+                                <td>1.11</td>
+                                <td>73.6</td>
+                                <td>24.5</td>
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">Approach 2</td>
-                                <td>4.60</td>
-                                <td>108.6</td>
-                                <td>36.2</td>
+                                <td>4.84</td>
+                                <td>715.5</td>
+                                <td>238.5</td>
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">Approach 3 (random init)</td>
-                                <td>14.6</td>
+                                <td>16.2</td>
                                 <td>296.0</td>
                                 <td>98.7</td>
                             </tr>
@@ -2164,18 +2164,18 @@
                     <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
                         Geometric mean and maximum |relative error| (%) on scaling exponents
                         \(a\) and \(b\), pooled across 3 noise levels &times; 3 budget counts
-                        &times; 4 points-per-curve settings &times; 32 seeds = 1,152 fits per
-                        method. All fits produced usable estimates (zero hard failures), though
-                        a fraction triggered soft optimizer status flags (iteration limits or
-                        abnormal convergence) that did not prevent the optimizer from returning
-                        parameter estimates.
+                        &times; 4 points-per-curve settings &times; 256 seeds = 9,216 fits per
+                        method. Nearly all fits produced usable estimates (one hard failure
+                        across all 36,864 fits, in Approach&nbsp;2), though a fraction triggered
+                        soft optimizer status flags (iteration limits or abnormal convergence)
+                        that did not prevent the optimizer from returning parameter estimates.
                     </p>
                 </div>
             </details>
 
             <p>
                 Randomly initialized Approach&nbsp;3 performs the worst overall, with a
-                geometric mean error of 14.6% and a maximum error on the \(a\) exponent
+                geometric mean error of 16.2% and a maximum error on the \(a\) exponent
                 exceeding 290%. This confirms the sensitivity to initialization
                 <a href="#approach-3-problems">documented above</a> and serves as a
                 reference for what
@@ -2184,35 +2184,34 @@
 
             <p>
                 Approach&nbsp;2 produces tighter distributions than randomly initialized
-                Approach&nbsp;3, but its geometric mean error of 4.6% is four times higher
-                than VPNLS. Unlike the optimizer-related failures that affect Approach&nbsp;3,
-                this error reflects the structural bias from the
+                Approach&nbsp;3, but its geometric mean error of 4.8% is more than four
+                times higher than VPNLS. Unlike the optimizer-related failures that affect
+                Approach&nbsp;3, this error reflects the structural bias from the
                 <a href="#asymmetric">parabolic approximation</a>. Even with 32 points
                 per curve and low
                 noise, the systematic inaccuracy persists. The maximum error on the \(a\)
-                exponent exceeds 100%, driven by configurations with few points per curve
+                exponent exceeds 700%, driven by configurations with few points per curve
                 where the parabolic fit to each IsoFLOP curve is less constrained
                 (<a href="#appendix-exponent-errors">Figure&nbsp;A4</a>).
             </p>
 
             <p>
                 Grid-initialized Approach&nbsp;3 is substantially more accurate, with a
-                geometric mean error of 0.98%. As in the
+                geometric mean error of 1.1%. As in the
                 <a href="#method-comparison-recovery">parameter recovery comparison</a>,
                 both methods use equal-sized initialization grids
                 (4<sup>5</sup>&nbsp;=&nbsp;1,024 for Approach&nbsp;3 and
                 32<sup>2</sup>&nbsp;=&nbsp;1,024 for VPNLS), so any accuracy difference
                 reflects the optimizer rather than an initialization advantage. Despite
                 similar typical accuracy, Approach&nbsp;3's maximum error on the \(a\)
-                exponent reaches 69.5%, compared to 29.6% for VPNLS.
+                exponent reaches 73.6%, compared to 34.2% for VPNLS.
             </p>
 
             <p>
                 The gap between grid-initialized Approach&nbsp;3 and VPNLS is most visible
                 in the tails of the error distribution. Both methods achieve nearly
-                identical typical accuracy (geometric mean of 0.98% vs 0.97%), but
-                Approach&nbsp;3's eight largest errors range from 24% to 69%, with three
-                exceeding 40%, whereas VPNLS's eight largest all fall below 30%. The
+                identical typical accuracy (geometric mean of 1.1% vs 1.1%), but
+                Approach&nbsp;3's eight largest errors range from 66% to 74%, whereas VPNLS's eight largest all fall below 35%. The
                 detailed breakdown in
                 <a href="#appendix-exponent-errors">Figure&nbsp;A4</a> shows that these
                 sporadic Approach&nbsp;3 failures appear across different noise levels,
@@ -2224,14 +2223,14 @@
                 <div class="callout-title">✓ Key Result</div>
                 <p>
                     On asymmetric loss surfaces with realistic noise, Approach&nbsp;2's
-                    structural bias persists. Its geometric mean exponent error (4.6%) is
-                    four times that of VPNLS (0.97%), and its worst-case error on the
-                    \(a\) exponent exceeds 100%. Approach&nbsp;3 without careful
-                    initialization fares even worse, with a geometric mean of 14.6% and
+                    structural bias persists. Its geometric mean exponent error (4.8%) is
+                    more than four times that of VPNLS (1.1%), and its worst-case error on
+                    the \(a\) exponent exceeds 700%. Approach&nbsp;3 without careful
+                    initialization fares even worse, with a geometric mean of 16.2% and
                     worst-case errors approaching 300%. With grid initialization,
                     Approach&nbsp;3 matches VPNLS in typical accuracy but produces
-                    sporadic large errors (max 69.5% vs 29.6% on \(a\)) that appear
-                    unpredictably across conditions. VPNLS offers the most reliable
+                    sporadic large errors (max 73.6% vs 34.2% on \(a\)) that appear
+                    unpredictably across IsoFLOP experiment design conditions. VPNLS offers the most reliable
                     accuracy overall.
                 </p>
             </div>
@@ -2431,7 +2430,7 @@
                     the lowest noise level (&sigma;=0.05) and right columns show the highest
                     (&sigma;=0.2), each split by exponent (\(a\) and \(b\)). Within each
                     panel, boxplots show absolute relative error (%) on a log scale for each
-                    method at each points-per-curve setting (4, 8, 16, 32), over 32 noise
+                    method at each points-per-curve setting (4, 8, 16, 32), over 256 noise
                     realizations. Approach&nbsp;3's sporadic large errors (outlier points above
                     the upper whiskers) appear across conditions without concentrating in any
                     single noise level, budget count, or dataset size.
