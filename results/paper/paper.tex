@@ -56,7 +56,7 @@ or exponents depending on whether the offset is constant or varies with compute
 budget. These biases compound in practice and grow with sampling grid width. We
 show that exploiting the partially linear structure of the Chinchilla loss
 surface, by separating linear coefficients from nonlinear exponents, eliminates
-these biases entirely. Our realization of this approach, Variable Projection
+these biases. Our realization of this approach, Variable Projection
 with Non-negative Least Squares (VPNLS), recovers all five surface parameters
 with machine precision across all conditions tested, while offering comparable
 data efficiency to Approach~2, high stability with full parametric inference,
@@ -388,8 +388,9 @@ vertex away from the true optimum.
 \label{sec:why_it_matters}
 
 Extrapolation to higher compute budgets requires both exponents and intercepts
-to be correct. The previous subsection established that asymmetric loss
-surfaces produce provably biased intercepts even under ideal experimental
+to be correct. The previous subsection (Section~\ref{sec:why_it_happens})
+established that asymmetric loss surfaces produce provably biased intercepts
+even under ideal experimental
 conditions. Here we quantify what those errors mean in practical terms by
 examining compute-optimal token prediction: given a compute budget, how many
 tokens does the inferred scaling law predict?
@@ -594,16 +595,20 @@ scaling law studies~\citep{chinchilla,llama3,deepseek}.
     \label{fig:wild}
 \end{figure}
 
-Several features relevant to the biases studied in this paper are visible
-across all three panels:
+Published scaling law studies frequently report asymmetric loss surfaces. Some
+degree of asymmetry is nearly universal across modalities, and several reported
+exponent estimates reach the same levels of imbalance as the most extreme
+configuration in our simulations. The related biases documented in this paper
+therefore apply broadly.
+
+Beyond surface asymmetry, the IsoFLOP curves in Figure~\ref{fig:wild} also
+show visible signs of off-center sampling and drift:
 \begin{itemize}
-    \item \textbf{Asymmetric curve shapes:} The IsoFLOP curves are visibly
-        steeper on one side of the minimum than the other, consistent with
-        $\alpha \neq \beta$. This is the condition under which the parabolic
-        approximation introduces systematic intercept bias.
     \item \textbf{Off-center sampling:} At some compute budgets, the sampling
-        grid does not appear centered at the curve minimum. The degree of
-        off-centering also appears to vary across compute budgets, which is the
+        grid does not appear centered at the curve minimum, placing more points
+        on one side of the optimum than the other.
+    \item \textbf{Drifting centers:} The degree of off-centering appears to
+        vary across compute budgets rather than remaining constant, which is the
         drifting-bias pattern that distorts both exponents and intercepts.
 \end{itemize}
 
@@ -612,7 +617,8 @@ careful and influential scaling law analyses published. The point is a more
 general one: the conditions under which Approach~2's biases activate,
 asymmetric surfaces and imperfect sampling centers, appear to be the norm
 rather than the exception. The idealized conditions of the Happy Path
-(symmetric surface, perfectly centered grids) are the special case.
+(Section~\ref{sec:happy_path}; symmetric surface, perfectly centered grids) are
+the special case.
 
 \subsection{Compounding Errors}
 \label{sec:compounding}
@@ -856,7 +862,11 @@ The second uses 2D variable projection over $(\alpha, \beta)$ only, comparing
 VPNLS (Nelder-Mead), L-BFGS-B with four finite-difference configurations
 (default $\varepsilon$, central differences, $\varepsilon = 10^{-6}$, and
 $\varepsilon = 10^{-10}$), and a fine $256^2$ grid search with no local
-refinement.
+refinement. Both groups use the same total initialization budget: the 5D
+methods search a $4^5 = 1{,}024$-point grid over all five parameters, while
+the 2D methods search a $32^2 = 1{,}024$-point grid over $(\alpha, \beta)$
+only, so that accuracy differences are more likely to reflect the optimizer and
+loss-landscape geometry than an initialization advantage.
 
 \begin{figure}[ht]
     \centering
@@ -880,13 +890,9 @@ parameter, showing the worst-case error for each.
 
 Consider the best Approach~3 configuration (5D L-BFGS-B with analytical
 gradients). Even with exact gradients on noise-free data, the worst-case errors
-reach about 5\% for the scaling exponent $\alpha$ and about 2\% for the
-irreducible loss $E$. While a few percent may appear modest, the preceding
-sections show that errors of this magnitude in scaling parameters translate into
-meaningful distortions when extrapolating compute-optimal predictions to higher
-budgets. VPNLS recovers all five parameters with errors on the order of
-$10^{-8}$\%, effectively eliminating parameter estimation as a source of
-extrapolation error. Figure~\ref{fig:appendix_method_detail} in the appendix
+reach about 1.4\% for $B$ and about 0.75\% for $A$, compared with VPNLS errors
+on the order of $10^{-8}$\%---a gap of roughly seven orders of magnitude.
+Figure~\ref{fig:appendix_method_detail} in the appendix
 breaks this down by surface and sampling range, also revealing that Approach~3's
 errors can vary systematically with sampling range on certain surfaces.
 
@@ -934,51 +940,156 @@ The full method comparison data is provided in
 Appendix~\ref{sec:appendix_method_data}.
 
 \paragraph{Key Result.}
-VPNLS eliminates the biases inherent in the parabolic approximation and avoids
-the fragile gradient tuning that complicates L-BFGS-B when used with variable
-projection. All five loss surface parameters $(E, A, B, \alpha, \beta)$ are
-recovered with machine precision, and extrapolation to higher compute budgets
-is exact.
+On noise-free synthetic data, VPNLS eliminates the biases inherent in the
+parabolic approximation and avoids the fragile gradient tuning that complicates
+L-BFGS-B when used with variable projection. All five loss surface parameters
+$(E, A, B, \alpha, \beta)$ are recovered with machine precision, and
+extrapolation to higher compute budgets is exact.
 
-\subsection{Method Comparison (Parameter Inference)}
+\subsection{Method Comparison (Exponent Inference)}
 \label{sec:method_comparison_inference}
 
-TBD
+The parameter recovery results above are noise-free, which is obviously not
+representative of practice. We now extend the compounding errors scenario
+(Section~\ref{sec:compounding}; Asymmetric surface with a $3\times$ drift at
+the $\pm 8\times$ grid) to a statistical setting. Gaussian noise is added to
+loss values at three levels ($\sigma = 0.05, 0.1, 0.2$), the number of compute
+budgets varies from 2 to 4, and the number of points per IsoFLOP curve ranges
+from 4 to 32. Each configuration is repeated with 32 independent noise
+realizations, yielding 1{,}152 fits per method and 4{,}608 fits in total.
+Figure~\ref{fig:appendix_noisy_isoflop} in the appendix shows what the noisy
+IsoFLOP samples look like at each noise level.
+
+Because a scaling law study is typically run once rather than repeated hundreds
+of times, sporadic optimizer failures that produce large errors in a minority
+of fits are arguably the most consequential practical risk. The comparison
+below emphasizes maximum errors alongside typical accuracy for this reason.
+
+The parameter recovery comparison (Section~\ref{sec:method_comparison})
+evaluated all five surface parameters, but Approach~2 does not estimate them
+individually. Here we focus on the scaling exponents $a = \beta / (\alpha +
+\beta)$ and $b = \alpha / (\alpha + \beta)$, which determine compute-optimal
+allocation and are the quantities all four methods can be compared on directly.
+Figure~\ref{fig:exponent_inference} pools these exponent errors across all
+experimental conditions.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/exponent_inference/exponent_inference.png}
+    \caption{Comparison of four fitting methods on noisy synthetic data, pooled
+    across three noise levels, three budget counts, four points-per-curve
+    settings, and 32 noise realizations (1{,}152 fits per method). Left:
+    geometric mean of $|\text{relative error}|$ (\%) with min-to-max range
+    bars. Right: maximum $|\text{relative error}|$ (\%) per exponent. Methods
+    sorted by worst-case error, worst at top. Surface: Asymmetric
+    ($\alpha = 0.465$, $\beta = 0.155$) with $3\times$ drift, $\pm 8\times$
+    grid, compute budgets $10^{17}$--$10^{21}$~FLOPs.}
+    \label{fig:exponent_inference}
+\end{figure}
+
+\begin{table}[ht]
+    \centering
+    \begin{tabular}{lccc}
+        \toprule
+        Method & GMean err\% & Max $a$ err\% & Max $b$ err\% \\
+        \midrule
+        VPNLS & 0.97 & 29.6 & 9.9 \\
+        Approach~3 (grid init) & 0.98 & 69.5 & 23.2 \\
+        Approach~2 & 4.60 & 108.6 & 36.2 \\
+        Approach~3 (random init) & 14.6 & 296.0 & 98.7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Geometric mean and maximum $|\text{relative error}|$ (\%) on
+    scaling exponents $a$ and $b$, pooled across 3 noise levels $\times$ 3
+    budget counts $\times$ 4 points-per-curve settings $\times$ 32 seeds =
+    1{,}152 fits per method.}
+    \label{tab:exponent_inference}
+\end{table}
+
+Randomly initialized Approach~3 performs the worst overall, with a geometric
+mean error of 14.6\% and a maximum error on the $a$ exponent exceeding 290\%.
+This confirms the sensitivity to initialization documented in
+Section~\ref{sec:approach3_problems} and serves as a reference for what
+unconstrained 5D optimization looks like without careful seeding.
+
+Approach~2 produces tighter distributions than randomly initialized Approach~3,
+but its geometric mean error of 4.6\% is four times higher than VPNLS. Unlike
+the optimizer-related failures that affect Approach~3, this error reflects the
+structural bias from the parabolic approximation
+(Section~\ref{sec:asymmetric}). Even with 32 points per curve and low noise,
+the systematic inaccuracy persists. The maximum error on the $a$ exponent
+exceeds 100\%, driven by configurations with few points per curve where the
+parabolic fit to each IsoFLOP curve is less constrained
+(Figure~\ref{fig:appendix_exponent_errors}).
+
+Grid-initialized Approach~3 is substantially more accurate, with a geometric
+mean error of 0.98\%. As in the parameter recovery comparison
+(Section~\ref{sec:method_comparison}), both methods use equal-sized
+initialization grids ($4^5 = 1{,}024$ for Approach~3 and $32^2 = 1{,}024$ for
+VPNLS), so any accuracy difference reflects the optimizer rather than an
+initialization advantage. Despite similar typical accuracy, Approach~3's
+maximum error on the $a$ exponent reaches 69.5\%, compared to 29.6\% for
+VPNLS.
+
+The gap between grid-initialized Approach~3 and VPNLS is most visible in the
+tails of the error distribution. Both methods achieve nearly identical typical
+accuracy (geometric mean of 0.98\% vs 0.97\%), but Approach~3's eight largest
+errors range from 24\% to 69\%, with three exceeding 40\%, whereas VPNLS's
+eight largest all fall below 30\%. The detailed breakdown in
+Figure~\ref{fig:appendix_exponent_errors} shows that these sporadic Approach~3
+failures appear across different noise levels, budget counts, and dataset sizes
+without a clear pattern that would help anticipate them.
+
+\paragraph{Key Result.}
+On asymmetric loss surfaces with realistic noise, Approach~2's structural bias
+persists. Its geometric mean exponent error (4.6\%) is four times that of VPNLS
+(0.97\%), and its worst-case error on the $a$ exponent exceeds 100\%.
+Approach~3 without careful initialization fares even worse, with a geometric
+mean of 14.6\% and worst-case errors approaching 300\%. With grid
+initialization, Approach~3 matches VPNLS in typical accuracy but produces
+sporadic large errors (max 69.5\% vs 29.6\% on $a$) that appear unpredictably
+across conditions. VPNLS offers the most reliable accuracy overall.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-The biases documented in this paper are structural, not statistical. They exist
-on noise-free data with perfect experimental conditions. Real experiments,
-which contend with measurement noise and unknown optima, can only make them
-worse.
+The Approach~2 biases documented in this paper are structural, not statistical.
+They exist on noise-free data with perfect experimental conditions and, as the
+noisy method comparison (Section~\ref{sec:method_comparison_inference})
+confirms, persist under realistic noise levels with varying amounts of data.
 
 Two independent sources of error compound in practice. Surface asymmetry
 ($\alpha \neq \beta$) biases intercepts, and off-center sampling biases
 intercepts or exponents depending on whether the offset is constant or varies
 with compute budget. Both act simultaneously in any real experiment, and
-IsoFLOP curves from published scaling law studies exhibit exactly the conditions
-that trigger them: parabola vertices that clearly do not coincide with the true
-loss minimum, with the degree of misalignment varying across compute budgets. At
-practical grid widths with Chinchilla-like asymmetry, token count errors of
+published scaling law studies frequently show clear signs of off-center sampling
+and report high levels of asymmetry, at least among those that publish IsoFLOP
+curves. At practical grid widths with Chinchilla-like asymmetry, token count
+errors of
 5\% or more are typical; on more asymmetric surfaces, the errors reach 20\% or
 more.
 
 A practical alternative exists. VPNLS (Variable Projection with Non-negative
-Least Squares) recovers all five surface parameters with machine precision,
-uses the same intuitive linear separation that makes Approach~2 appealing, and
-is straightforward to implement.
+Least Squares) recovers all five surface parameters with machine precision on
+noise-free data. Under noise, VPNLS achieves typical accuracy on scaling
+exponents comparable to well-initialized Approach~3 while producing tighter
+worst-case errors. It uses the same intuitive linear separation that makes
+Approach~2 appealing and is straightforward to implement.
 
 Because VPNLS recovers the full loss surface rather than just scaling
 exponents, it may also provide a more precise foundation for the analytical
-extensions to the Chinchilla model discussed in the introduction. These
-extensions build on the same functional form and in most cases retain the
+extensions to the Chinchilla model discussed in the introduction
+(Section~\ref{sec:introduction}). These extensions build on the same functional
+form and in most cases retain the
 partially linear structure that variable projection exploits, making them a
 natural direction for future work.
 
 Practitioners using Approach~2 should be aware that intercept estimates carry a
 systematic bias that grows with exponent asymmetry and sampling grid width.
-When precision matters for extrapolation to large compute budgets, VPNLS offers
+This bias persists under noise: even with generous data and low noise levels,
+Approach~2's exponent errors remain several times larger than those of methods
+that fit the full surface. When precision matters for extrapolation to large
+compute budgets, VPNLS offers
 one robust alternative, though the underlying principle is more general. Any
 method that exploits the linear separability of the Chinchilla loss surface can
 avoid the parabolic approximation while retaining much of Approach~2's
@@ -1125,14 +1236,14 @@ Several limitations scope the conclusions of this study.
         Method & Failures & Max $E$ & Max $A$ & Max $B$ & Max $\alpha$ & Max $\beta$ \\
         \midrule
         2D Nelder-Mead (VPNLS) & 0/60 & $5.2 \!\times\! 10^{-8}$ & $6.3 \!\times\! 10^{-8}$ & $7.9 \!\times\! 10^{-8}$ & $1.2 \!\times\! 10^{-8}$ & $2.0 \!\times\! 10^{-8}$ \\
-        2D L-BFGS-B (central) & 1/60 & $8.3 \!\times\! 10^{-8}$ & $5.3 \!\times\! 10^{-8}$ & $6.4 \!\times\! 10^{-8}$ & $1.2 \!\times\! 10^{-8}$ & $2.0 \!\times\! 10^{-8}$ \\
-        2D L-BFGS-B (default $\varepsilon$) & 0/60 & $1.6 \!\times\! 10^{-5}$ & $1.0 \!\times\! 10^{-5}$ & $1.3 \!\times\! 10^{-5}$ & $2.1 \!\times\! 10^{-6}$ & $3.9 \!\times\! 10^{-6}$ \\
-        2D L-BFGS-B ($\varepsilon\!=\!10^{-10}$) & 3/60 & $1.6 \!\times\! 10^{-7}$ & $8.9 \!\times\! 10^{-7}$ & $8.6 \!\times\! 10^{-7}$ & $1.8 \!\times\! 10^{-7}$ & $1.7 \!\times\! 10^{-7}$ \\
-        2D L-BFGS-B ($\varepsilon\!=\!10^{-6}$) & 20/60 & $1.2 \!\times\! 10^{-3}$ & $1.1 \!\times\! 10^{-3}$ & $1.3 \!\times\! 10^{-3}$ & $2.2 \!\times\! 10^{-4}$ & $3.8 \!\times\! 10^{-4}$ \\
+        2D L-BFGS-B (central) & 2/60 & $8.3 \!\times\! 10^{-8}$ & $5.3 \!\times\! 10^{-8}$ & $6.4 \!\times\! 10^{-8}$ & $1.2 \!\times\! 10^{-8}$ & $2.0 \!\times\! 10^{-8}$ \\
+        2D L-BFGS-B (default $\varepsilon$) & 3/60 & $1.5 \!\times\! 10^{-5}$ & $1.2 \!\times\! 10^{-5}$ & $1.3 \!\times\! 10^{-5}$ & $2.7 \!\times\! 10^{-6}$ & $3.8 \!\times\! 10^{-6}$ \\
+        2D L-BFGS-B ($\varepsilon\!=\!10^{-10}$) & 0/60 & $1.6 \!\times\! 10^{-7}$ & $8.9 \!\times\! 10^{-7}$ & $8.6 \!\times\! 10^{-7}$ & $1.8 \!\times\! 10^{-7}$ & $1.7 \!\times\! 10^{-7}$ \\
+        2D L-BFGS-B ($\varepsilon\!=\!10^{-6}$) & 17/60 & $1.6 \!\times\! 10^{-3}$ & $1.1 \!\times\! 10^{-3}$ & $1.3 \!\times\! 10^{-3}$ & $2.2 \!\times\! 10^{-4}$ & $3.9 \!\times\! 10^{-4}$ \\
         2D Grid ($256^2$) & 0/60 & 2.58 & 2.03 & 2.03 & 0.44 & 0.57 \\
-        5D L-BFGS-B (analytical) & 0/60 & 2.23 & 29.8 & 6.14 & 5.03 & 1.33 \\
-        5D L-BFGS-B (central) & 1/60 & 103 & 2{,}334 & 343 & 78.9 & 28.8 \\
-        5D L-BFGS-B (finite diff) & 2/60 & 113 & 2{,}334 & 832 & 80.6 & 44.0 \\
+        5D L-BFGS-B (analytical) & 0/60 & 0.07 & 0.75 & 1.4 & 0.15 & 0.28 \\
+        5D L-BFGS-B (central) & 2/60 & 39.0 & 2{,}361 & 57.9 & 69.8 & 9.6 \\
+        5D L-BFGS-B (finite diff) & 4/60 & 132 & 2{,}361 & 2{,}335 & 71.4 & 87.6 \\
         \bottomrule
     \end{tabular}
     \caption{Method comparison: maximum $|\text{relative error}|$ (\%) per
@@ -1174,6 +1285,43 @@ ranges, loss surfaces, and bias configurations.
     (symmetric, Chinchilla, Asymmetric). Each panel shows relative $D^*$ error
     vs extrapolation compute budget with one curve per bias configuration.}
     \label{fig:appendix_combined_extrapolation}
+\end{figure}
+
+\section{IsoFLOP Samples with Noise}
+\label{sec:appendix_noisy_isoflop}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.png}
+    \caption{Noisy IsoFLOP samples used in the exponent inference comparison
+    (Figure~\ref{fig:exponent_inference}). Columns correspond to noise levels
+    ($\sigma = 0.05, 0.1, 0.2$); rows show loss versus $\log_{10}(N)$ (top)
+    and $\log_{10}(D)$ (bottom). Scatter points are noisy observations; solid
+    curves show the noiseless reference surface. Red $\times$ marks the true
+    compute-optimal point at each budget; black diamonds mark the sampling
+    centers, which drift away from the true optima at higher compute budgets.
+    Surface: Asymmetric ($\alpha = 0.465$, $\beta = 0.155$), 4 budgets
+    ($10^{17}$--$10^{21}$~FLOPs), 32 points per curve, $\pm 8\times$ grid.}
+    \label{fig:appendix_noisy_isoflop}
+\end{figure}
+
+\section{Exponent Inference Error Breakdown}
+\label{sec:appendix_exponent_errors}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.png}
+    \caption{Per-condition breakdown of exponent inference errors from
+    Figure~\ref{fig:exponent_inference}. Rows correspond to number of compute
+    budgets (2, 3, 4); left columns show the lowest noise level
+    ($\sigma = 0.05$) and right columns show the highest ($\sigma = 0.2$),
+    each split by exponent ($a$ and $b$). Within each panel, boxplots show
+    absolute relative error (\%) on a log scale for each method at each
+    points-per-curve setting (4, 8, 16, 32), over 32 noise realizations.
+    Approach~3's sporadic large errors (outlier points above the upper
+    whiskers) appear across conditions without concentrating in any single
+    noise level, budget count, or dataset size.}
+    \label{fig:appendix_exponent_errors}
 \end{figure}
 
 \end{document}
