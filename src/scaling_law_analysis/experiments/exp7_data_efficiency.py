@@ -695,6 +695,15 @@ def create_isoflop_figure(
 # ── Console Output ────────────────────────────────────────────────────────────
 
 
+def _nanmax_or_raise(arr: np.ndarray, label: str) -> float:
+    """Return nanmax of arr, raising ValueError if all values are NaN."""
+    if not np.any(np.isfinite(arr)):
+        raise ValueError(
+            f"All values for '{label}' are NaN — every fit failed for this parameter"
+        )
+    return float(np.nanmax(arr))
+
+
 def _safe_gmean(arr: np.ndarray) -> float:
     """Geometric mean of positive values, ignoring NaN and zeros."""
     vals = arr[np.isfinite(arr) & (arr > 0)]
@@ -767,8 +776,8 @@ def print_summary(
                         "Method": method_name,
                         "GMean |a| %": f"{_safe_gmean(a_abs):.2f}",
                         "GMean |b| %": f"{_safe_gmean(b_abs):.2f}",
-                        "Max |a| %": f"{np.nanmax(a_abs):.2f}",
-                        "Max |b| %": f"{np.nanmax(b_abs):.2f}",
+                        "Max |a| %": f"{_nanmax_or_raise(a_abs, f'{method_name}/a'):.2f}",
+                        "Max |b| %": f"{_nanmax_or_raise(b_abs, f'{method_name}/b'):.2f}",
                         "MaxIter (s)": f"{res['maxiter'].sum() / n_total * 100:.1f}%",
                         "Abnormal (s)": f"{res['abnormal'].sum() / n_total * 100:.1f}%",
                         "BoundHit (s)": f"{res['bound_hit'].sum() / n_total * 100:.1f}%",
@@ -821,8 +830,8 @@ def _pool_method_errors(
                 method=method_name,
                 stats=stats,
                 pooled_errors=pooled_all,
-                max_a=float(np.nanmax(pooled_a)),
-                max_b=float(np.nanmax(pooled_b)),
+                max_a=_nanmax_or_raise(pooled_a, f"{method_name}/a"),
+                max_b=_nanmax_or_raise(pooled_b, f"{method_name}/b"),
             )
         )
     return row_data

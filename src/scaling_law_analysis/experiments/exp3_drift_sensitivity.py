@@ -97,7 +97,9 @@ def run_all_configurations(
             surface_results.append(results)
 
             # Generate individual exp1-style figure
-            fig = create_exp1_figure(results, DISPLAY_LOG_RANGES, compute_budgets)
+            fig = create_exp1_figure(
+                results, DISPLAY_LOG_RANGES, compute_budgets, n_points
+            )
             fig.suptitle(
                 f"Experiment 3: {surface_name} / {bias_name}\n"
                 f"Loss surface: α={loss.alpha:.2f}, β={loss.beta:.2f}, A={loss.A:.1f}, B={loss.B:.1f}\n"

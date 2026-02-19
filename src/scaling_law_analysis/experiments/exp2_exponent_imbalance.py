@@ -149,7 +149,7 @@ def main():
             log_ranges[len(log_ranges) // 2],
             log_ranges[-1],
         ]
-        fig = create_figure(results, display_log_ranges, compute_budgets)
+        fig = create_figure(results, display_log_ranges, compute_budgets, n_points)
 
         # Update title for Experiment 2 context
         fig.suptitle(

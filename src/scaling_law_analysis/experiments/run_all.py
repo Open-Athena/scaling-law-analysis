@@ -8,6 +8,7 @@ from scaling_law_analysis.experiments import (
     exp5_parametric_surface,
     exp6_analytical_error,
     exp7_data_efficiency,
+    exp8_conditioning,
 )
 
 
@@ -36,6 +37,9 @@ def main():
 
     print("\n")
     exp7_data_efficiency.main()
+
+    print("\n")
+    exp8_conditioning.main()
 
     print("\n" + "=" * 80)
     print("ALL EXPERIMENTS COMPLETE")

@@ -7,15 +7,17 @@ On article:
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
-  - IMPORTANT: Mention init for approach 3 w/ grid search
-  - Add thoughts on results/experiments/exp8/conditioning_analysis.txt and explain why approach 3 is worse w/ no noise
   - Add limitation on the possibility of sampling grid errors canceling out
   - Add limitation on not exploring data efficiency (yet)
   - Add limitation on how 2D grid search + Nelder-Mead probably won't scale well to many more parameters
+  - Add appendix table on published scaling law exponents:
+    - https://gemini.google.com/app/4c67a4fc2d1f3b4d
+    - Approach 2 users in Scaling Laws notes
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Update editorial guidelines to match longer length now
   - Pad out list of Approach 2 uses in first paragraph
+  - Add citations from "Configuration-to-Performance Scaling Law with Neural Ansatz" on other adaptations of functional forms for Chinchilla scaling laws
   - Justify legitimacy of Chinchilla formula
     - https://arxiv.org/pdf/2509.23963
       - Reference this paper for sure as it also does perturbations to test robustness of the fit (in different interpretations of model parameters b/c paper is ambiguous)

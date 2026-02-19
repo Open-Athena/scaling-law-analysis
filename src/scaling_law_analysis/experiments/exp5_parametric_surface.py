@@ -48,6 +48,15 @@ from scaling_law_analysis.experiments.common import (
 # Both methods use equal-sized initialization grids so that any accuracy
 # difference reflects the optimizer and loss-landscape geometry, not an
 # initialization budget advantage.
+def _nanmax_or_raise(arr: np.ndarray, label: str) -> float:
+    """Return nanmax of arr, raising ValueError if all values are NaN."""
+    if not np.any(np.isfinite(arr)):
+        raise ValueError(
+            f"All values for '{label}' are NaN — every fit failed for this parameter"
+        )
+    return float(np.nanmax(arr))
+
+
 assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
     f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
     f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
@@ -359,7 +368,7 @@ def run_method_comparison(
             surface_results.append((mc, results))
 
             max_errs = {
-                k: np.nanmax(np.abs(results[k])) * 100
+                k: _nanmax_or_raise(np.abs(results[k]), k) * 100
                 for k in ["E", "A", "B", "alpha", "beta"]
             }
             failures = results["n_failures"]
@@ -461,7 +470,9 @@ def export_method_comparison_csv(
         for mc, results in all_results[surface_name]:
             n_ranges = len(results["log_ranges"])
             n_failures = results["n_failures"]
-            max_errs = {k: np.nanmax(np.abs(results[k])) * 100 for k in param_keys}
+            max_errs = {
+                k: _nanmax_or_raise(np.abs(results[k]), k) * 100 for k in param_keys
+            }
             rows.append(
                 f"{surface_name},{mc.method},{mc.jac or ''},{mc.eps or ''},"
                 f"{mc.label},{n_failures}/{n_ranges},"

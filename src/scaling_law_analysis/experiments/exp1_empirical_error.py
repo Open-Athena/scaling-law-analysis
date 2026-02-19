@@ -120,6 +120,7 @@ def plot_isoflop_fits(
     compute_budgets: np.ndarray,
     log_range: float,
     sim_config: SimulationConfig,
+    n_points: int,
     title: str,
     show_ylabel: bool = True,
 ):
@@ -131,6 +132,7 @@ def plot_isoflop_fits(
         compute_budgets: Compute budgets used
         log_range: Grid step size used
         sim_config: Simulation configuration
+        n_points: Number of points per IsoFLOP curve (must match fitting)
         title: Plot title
         show_ylabel: Whether to show y-axis label
     """
@@ -145,10 +147,9 @@ def plot_isoflop_fits(
             center_scale=sim_config.center_scale,
         )
 
-        # Get sampled data (use same n_points as fit for consistency)
         N, D, L = isoflop_sample(
             C=C,
-            n_points=N_POINTS,
+            n_points=n_points,
             log_range=log_range,
             center_offset=center_offset,
             surface=loss,
@@ -467,6 +468,7 @@ def create_figure(
     experiment_results: dict,
     display_log_ranges: list[float],
     compute_budgets: np.ndarray,
+    n_points: int,
 ) -> plt.Figure:
     """Create the main experiment figure.
 
@@ -478,6 +480,7 @@ def create_figure(
         experiment_results: Results from run_experiment
         display_log_ranges: 3 log_range values to display in top rows
         compute_budgets: Compute budgets used
+        n_points: Number of points per IsoFLOP curve (must match fitting)
 
     Returns:
         Matplotlib figure
@@ -511,6 +514,7 @@ def create_figure(
             compute_budgets=compute_budgets,
             log_range=actual_log_range,
             sim_config=sim_config,
+            n_points=n_points,
             title=f"{size_labels[i]} grid ({log_range_to_label(actual_log_range)})",
             show_ylabel=(i == 0),
         )
@@ -627,7 +631,7 @@ def main():
         log_ranges[len(log_ranges) // 2],
         log_ranges[-1],
     ]
-    fig = create_figure(results, display_log_ranges, compute_budgets)
+    fig = create_figure(results, display_log_ranges, compute_budgets, n_points)
 
     # Save figure
     fig_path = output_dir / f"{sim_config.name}.png"
