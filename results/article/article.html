@@ -1023,7 +1023,7 @@
                 and the sampling grid (width \(W\) in log-space, number of points \(n\) per IsoFLOP curve), not on \(C\), \(E\),
                 \(A\), or \(B\). Here \(W\) spans \(10^{-W/2}\) to \(10^{W/2}\) times the optimal \(N^*\),
                 so \(W = 2.41\) (the XL grid) means sampling from \(\frac{1}{16}\times\) to \(16\times\) the optimum.
-                And \(n = 10\) means 10 model sizes per compute budget. Key properties:
+                And \(n = 15\) means 15 model sizes per compute budget. Key properties:
             </p>
 
             <ul>
@@ -1493,19 +1493,27 @@
             </figure>
 
             <p>
-                Several features relevant to the biases studied in this article are visible across
-                all three panels:
+                Published scaling law studies frequently report asymmetric loss
+                surfaces, as shown in (TODO: compile reported scaling exponents from
+                studies spanning text, images, proteins, and DNA). Some degree of
+                asymmetry is nearly universal across modalities, and several reported
+                exponent estimates reach the same levels of imbalance as the most
+                extreme configuration in our simulations. The related biases documented
+                in this article therefore apply broadly.
+            </p>
+
+            <p>
+                Beyond surface asymmetry, the IsoFLOP curves in Figure 6 also show visible
+                signs of off-center sampling and drift:
             </p>
 
             <ul>
-                <li><strong>Asymmetric curve shapes:</strong> The IsoFLOP curves are visibly steeper on
-                    one side of the minimum than the other, consistent with \(\alpha \neq \beta\). This
-                    is the condition under which the parabolic approximation introduces systematic
-                    intercept bias.</li>
                 <li><strong>Off-center sampling:</strong> At some compute budgets, the sampling grid
-                    does not appear centered at the curve minimum. The degree of off-centering also
-                    appears to vary across compute budgets, which is the drifting-bias pattern that
-                    distorts both exponents and intercepts.</li>
+                    does not appear centered at the curve minimum, placing more points on one side
+                    of the optimum than the other.</li>
+                <li><strong>Drifting centers:</strong> The degree of off-centering appears to vary
+                    across compute budgets rather than remaining constant, which is the
+                    drifting-bias pattern that distorts both exponents and intercepts.</li>
             </ul>
 
             <p>
@@ -2054,9 +2062,9 @@
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    VPNLS eliminates the biases inherent in the parabolic approximation and
-                    avoids the fragile gradient tuning that complicates L-BFGS-B when used
-                    with variable projection. All five loss
+                    On noise-free synthetic data, VPNLS eliminates the biases inherent in the
+                    parabolic approximation and avoids the fragile gradient tuning that
+                    complicates L-BFGS-B when used with variable projection. All five loss
                     surface parameters \((E, A, B, \alpha, \beta)\) are recovered with machine
                     precision, and extrapolation to higher compute budgets is exact.
                 </p>
@@ -2183,7 +2191,7 @@
                 per curve and low
                 noise, the systematic inaccuracy persists. The maximum error on the \(a\)
                 exponent exceeds 100%, driven by configurations with few points per curve
-                where the parabolic fit to each iso-FLOP curve is less constrained
+                where the parabolic fit to each IsoFLOP curve is less constrained
                 (<a href="#appendix-exponent-errors">Figure&nbsp;A4</a>).
             </p>
 
@@ -2219,10 +2227,12 @@
             <h2>Conclusion</h2>
 
             <p>
-                The biases documented in this article are structural, not statistical. They
-                exist on noise-free data with perfect experimental conditions. Real
-                experiments, which contend with measurement noise and unknown optima, can
-                only make them worse.
+                The Approach&nbsp;2 biases documented in this article are structural, not
+                statistical. They exist on noise-free data with perfect experimental
+                conditions and, as the
+                <a href="#method-comparison-inference">noisy method comparison</a>
+                confirms, persist under realistic noise levels with varying amounts
+                of data.
             </p>
 
             <p>
@@ -2230,10 +2240,9 @@
                 (\(\alpha \neq \beta\)) biases intercepts, and off-center sampling biases
                 intercepts or exponents depending on whether the offset is constant or
                 varies with compute budget. Both act simultaneously in any real experiment,
-                and IsoFLOP curves from published scaling law studies exhibit exactly the
-                conditions that trigger them: parabola vertices that clearly do not
-                coincide with the true loss minimum, with the degree of misalignment
-                varying across compute budgets. At practical grid widths
+                and published scaling law studies frequently show clear signs of
+                off-center sampling and report high levels of asymmetry, at least
+                among those that publish IsoFLOP curves. At practical grid widths
                 with Chinchilla-like asymmetry, token count errors of 5% or more are
                 typical; on more asymmetric surfaces, the errors reach 20% or more.
             </p>
@@ -2241,8 +2250,11 @@
             <p>
                 A practical alternative exists. VPNLS (Variable Projection with
                 Non-negative Least Squares) recovers all five surface parameters with
-                machine precision, uses the same intuitive linear separation that makes
-                Approach 2 appealing, and is straightforward to implement.
+                machine precision on noise-free data. Under noise, VPNLS achieves
+                typical accuracy on scaling exponents comparable to well-initialized
+                Approach&nbsp;3 while producing tighter worst-case errors. It uses the
+                same intuitive linear separation that makes Approach 2 appealing and is
+                straightforward to implement.
             </p>
 
             <p>
@@ -2257,7 +2269,10 @@
             <p>
                 Practitioners using Approach 2 should be aware that intercept estimates
                 carry a systematic bias that grows with exponent asymmetry and sampling
-                grid width. When precision matters for extrapolation to large compute
+                grid width. This bias persists under noise: even with generous data and
+                low noise levels, Approach&nbsp;2's exponent errors remain several times
+                larger than those of methods that fit the full surface. When precision
+                matters for extrapolation to large compute
                 budgets, VPNLS offers one robust alternative, though the underlying
                 principle is more general. Any method that exploits the linear
                 separability of the Chinchilla loss surface can avoid the parabolic
