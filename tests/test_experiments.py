@@ -1,6 +1,6 @@
 """Tests for experiment utilities."""
 
-from scaling_law_analysis.experiments.exp5_parametric_surface import _verify_default_eps
+from scaling_law_analysis.experiments.exp5_parameter_recovery import _verify_default_eps
 
 
 def test_lbfgsb_default_eps_matches_scipy():

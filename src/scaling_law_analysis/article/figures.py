@@ -1235,7 +1235,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
         LOG_RANGES,
         LOSS_SURFACES,
     )
-    from scaling_law_analysis.experiments.exp5_parametric_surface import (
+    from scaling_law_analysis.experiments.exp5_parameter_recovery import (
         METHOD_CONFIGS,
         MethodConfig,
         run_method_comparison,

@@ -1,4 +1,4 @@
-"""Experiment 7: Data Efficiency Comparison.
+"""Experiment 7: Exponent Inference.
 
 Generates synthetic IsoFLOP data from the Chinchilla loss surface
 L(N, D) = E + A/N^α + B/D^β and recovers scaling exponents
@@ -807,7 +807,7 @@ def print_summary(
     range_label = log_range_to_label(log_range)
 
     print("=" * 60)
-    print("Scaling Law Estimation — Data Efficiency")
+    print("Scaling Law Estimation — Exponent Inference")
     print("=" * 60)
 
     cfg = {
@@ -1166,7 +1166,7 @@ def export_method_comparison_csv(
 
 def main():
     """Run Experiment 7: data efficiency comparison."""
-    parser = argparse.ArgumentParser(description="Experiment 7: Data Efficiency")
+    parser = argparse.ArgumentParser(description="Experiment 7: Exponent Inference")
     parser.add_argument(
         "--workers",
         type=int,
@@ -1176,7 +1176,7 @@ def main():
     args = parser.parse_args()
 
     print("=" * 70)
-    print("Experiment 7: Data Efficiency Comparison")
+    print("Experiment 7: Exponent Inference")
     print("=" * 70)
 
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp7")

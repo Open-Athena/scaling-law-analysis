@@ -131,7 +131,7 @@ Produce the following figures:
 
 Produce a single figure organized as a grid with one row per sampling range (3 rows: narrow, medium, wide) and one column per loss surface (3 columns: symmetric, chinchilla, asymmetric). Each panel shows the relative error in inferred D* as a function of extrapolation compute budget, with one curve per sampling bias configuration. This reveals how extrapolation error depends on the sampling range, loss surface geometry, and sampling biases.
 
-## Experiment 5: Parametric Surface Fitting
+## Experiment 5: Parameter Recovery
 
 **Hypothesis**: Variable projection with grid search (over α/β) provides stable and accurate scaling law parameter recovery, and extrapolation using fitted parameters remains accurate even at compute budgets far beyond the fitting range.
 
@@ -238,7 +238,7 @@ This validates that the derived closed-form expression exactly matches numerical
 - Sanity check: symmetric surfaces (α = β) should produce zero error
 
 
-## Experiment 7: Data Efficiency
+## Experiment 7: Exponent Inference
 
 **Hypothesis**: VPNLS and Approach 3 recover the scaling exponents a and b more accurately than Approach 2 when given fewer data points per isoflop curve, especially under sampling drift. Variable projection (VPNLS) may be more data-efficient than full 5D optimization (Approach 3) because it searches a lower-dimensional space.
 

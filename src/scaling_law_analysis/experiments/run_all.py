@@ -5,9 +5,9 @@ from scaling_law_analysis.experiments import (
     exp2_exponent_imbalance,
     exp3_drift_sensitivity,
     exp4_extrapolation_error,
-    exp5_parametric_surface,
+    exp5_parameter_recovery,
     exp6_analytical_error,
-    exp7_data_efficiency,
+    exp7_exponent_inference,
     exp8_conditioning,
 )
 
@@ -30,13 +30,13 @@ def main():
     exp4_extrapolation_error.main()
 
     print("\n")
-    exp5_parametric_surface.main()
+    exp5_parameter_recovery.main()
 
     print("\n")
     exp6_analytical_error.main()
 
     print("\n")
-    exp7_data_efficiency.main()
+    exp7_exponent_inference.main()
 
     print("\n")
     exp8_conditioning.main()

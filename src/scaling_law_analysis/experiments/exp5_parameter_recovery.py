@@ -1,4 +1,4 @@
-"""Experiment 5: Parametric Surface Fitting.
+"""Experiment 5: Parameter Recovery.
 
 This experiment investigates fitting the loss surface L(N, D) = E + A/N^α + B/D^β
 directly via variable projection (grid search over α/β + NNLS for E/A/B).
@@ -489,7 +489,7 @@ def export_method_comparison_csv(
 def main():
     """Run Experiment 5: parametric surface fitting analysis."""
     print("=" * 70)
-    print("Experiment 5: Parametric Surface Fitting")
+    print("Experiment 5: Parameter Recovery")
     print("=" * 70)
 
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp5")

@@ -44,5 +44,5 @@ uv run python -m scaling_law_analysis.experiments.run_all
 | **Exp 2**: Exponent Imbalance | How α/β asymmetry amplifies fitting errors |
 | **Exp 3**: Drift Sensitivity | How systematic sampling center biases affect accuracy |
 | **Exp 4**: Extrapolation Error | How inference degrades when extrapolating beyond fitting range |
-| **Exp 5**: Parametric Surface | Whether direct surface fitting (variable projection) avoids Approach 2 biases |
+| **Exp 5**: Parameter Recovery | Whether direct surface fitting (variable projection) avoids Approach 2 biases |
 | **Exp 6**: Analytical Error | Analytical modeling of inference error *(TODO)* |
