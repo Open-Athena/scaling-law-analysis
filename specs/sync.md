@@ -21,19 +21,19 @@ Required only for implementation changes that touch topics a spec covers. If the
 When one implementation artifact changes, other artifacts that depend on it may need updating.
 
 - **CSV data in article text**: The figure generator exports numerical results alongside each figure. Specific values from these CSVs are hardcoded in `results/article/article.html` in both prose and data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match. The mapping of CSVs to article sections is:
-  - `results/article/extrapolation_error/extrapolation_error_data.csv` → "Why It Matters" (extrapolation bar chart, collapsible data table)
-  - `results/article/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
-  - `results/article/parameter_recovery/parameter_recovery_max_errors.csv` → "Method Comparison (Parameter Recovery)" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
-  - `results/article/parameter_recovery/parameter_recovery_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
-  - `results/article/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)
+  - `results/article/figures/extrapolation_error/extrapolation_error_data.csv` → "Why It Matters" (extrapolation bar chart, collapsible data table)
+  - `results/article/figures/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
+  - `results/article/figures/parameter_recovery/parameter_recovery_max_errors.csv` → "Method Comparison (Parameter Recovery)" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
+  - `results/article/figures/parameter_recovery/parameter_recovery_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
+  - `results/article/figures/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)
   - `results/experiments/exp8/conditioning_analysis.txt` → "Problems with Direct Surface Fitting" (experimental setup: surface parameters, compute budgets, points per curve; Hessian eigenvalue ranges, condition numbers κ ≈ 3.5×10¹¹ and κ ≈ 11, underdetermined parameter directions)
 - **Experiment outputs copied to article**: the figure generator's `copy_experiment_outputs` copies several experiment results directly into the article directory tree. Re-run step 2 after re-running experiments.
   - `results/experiments/exp5/parameter_recovery_detailed.png` → `results/article/appendix/parameter_recovery_detailed.png`
   - `results/experiments/exp4/extrapolation_error.png` → `results/article/appendix/combined_extrapolation_error.png`
   - `results/experiments/exp7/isoflop_curves.png` → `results/article/appendix/isoflop_curves_noisy.png`
   - `results/experiments/exp7/exponent_inference_errors.png` → `results/article/appendix/exponent_inference_errors.png`
-  - `results/experiments/exp7/exponent_inference.png` → `results/article/exponent_inference/exponent_inference.png`
-  - `results/experiments/exp7/exponent_inference.csv` → `results/article/exponent_inference/exponent_inference.csv`
+  - `results/experiments/exp7/exponent_inference.png` → `results/article/figures/exponent_inference/exponent_inference.png`
+  - `results/experiments/exp7/exponent_inference.csv` → `results/article/figures/exponent_inference/exponent_inference.csv`
 
 ## Spec → Spec
 

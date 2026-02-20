@@ -40,12 +40,12 @@ This project follows Spec-Driven Development (SDD). The `specs/` directory is an
 | `  experiments/common.py` | Shared experiment config: compute budgets, sampling ranges, surface configs, bias configs, plotting utilities |
 | `  experiments/exp{N}_*.py` | Individual experiment scripts; each writes to `results/experiments/exp{N}/` |
 | `  experiments/run_all.py` | Runs all experiments sequentially |
-| `  article/figures.py` | Generates article figures and CSV data to `results/article/` |
+| `  article/figures.py` | Generates article figures and CSV data to `results/article/figures/` |
 | `  article/standalone.py` | Inlines images into self-contained HTML |
 | `  paper/build.py` | Compiles LaTeX paper to PDF via Tectonic |
 | `docs/` | Supplementary documentation |
 | `  references/` | `references.yaml` — source of truth for citations |
 | `results/` | All generated outputs (git-tracked) |
 | `  experiments/` | Per-experiment figures (`exp{N}/`) |
-| `  article/` | Article HTML, figures, CSVs, and supplementary PDF |
+| `  article/` | Article HTML (`article.html`, `article_standalone.html`); figure PNGs and CSVs under `figures/`; `appendix/`, `static/`, `references/` |
 | `  paper/` | LaTeX source (paper.tex, references.bib) and compiled PDF |

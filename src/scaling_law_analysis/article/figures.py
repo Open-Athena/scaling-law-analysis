@@ -234,7 +234,7 @@ def create_happy_path_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save
-    figure_dir = prepare_output_dir(output_dir / "happy_path")
+    figure_dir = prepare_output_dir(output_dir / "figures" / "happy_path")
     fig_path = figure_dir / "happy_path.png"
     fig.savefig(fig_path)
     plt.close(fig)
@@ -371,7 +371,7 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save
-    figure_dir = prepare_output_dir(output_dir / "asymmetric")
+    figure_dir = prepare_output_dir(output_dir / "figures" / "asymmetric")
     fig_path = figure_dir / "asymmetric.png"
     fig.savefig(fig_path)
     plt.close(fig)
@@ -645,7 +645,7 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     fig.tight_layout()
 
     # Save figure
-    figure_dir = prepare_output_dir(output_dir / "extrapolation_error")
+    figure_dir = prepare_output_dir(output_dir / "figures" / "extrapolation_error")
     fig_path = figure_dir / "extrapolation_error.png"
     fig.savefig(fig_path)
     plt.close(fig)
@@ -961,7 +961,7 @@ def _create_off_center_bias_figure(
     fig.tight_layout()
 
     # Save figure
-    figure_dir = prepare_output_dir(output_dir / figure_subdir)
+    figure_dir = prepare_output_dir(output_dir / "figures" / figure_subdir)
     fig_path = figure_dir / fig_filename
     fig.savefig(fig_path)
     plt.close(fig)
@@ -1177,7 +1177,7 @@ def create_compounding_errors_figure(output_dir: Path) -> dict:
     )
     fig.tight_layout()
 
-    figure_dir = prepare_output_dir(output_dir / "compounding_errors")
+    figure_dir = prepare_output_dir(output_dir / "figures" / "compounding_errors")
     fig_path = figure_dir / "compounding_errors.png"
     fig.savefig(fig_path)
     plt.close(fig)
@@ -1524,7 +1524,7 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     fig.suptitle("Method Comparison: Parameter Recovery Accuracy", fontsize=13)
 
     # Save figure
-    figure_dir = prepare_output_dir(output_dir / "parameter_recovery")
+    figure_dir = prepare_output_dir(output_dir / "figures" / "parameter_recovery")
     fig_path = figure_dir / "parameter_recovery.png"
     fig.savefig(fig_path)
     plt.close(fig)
@@ -1593,7 +1593,7 @@ def generate_all_figures(output_dir: Path) -> dict:
     """Generate all article figures.
 
     Each figure's outputs are placed in a dedicated subdirectory under
-    output_dir (e.g. output_dir/happy_path/, output_dir/asymmetric/).
+    output_dir/figures/ (e.g. output_dir/figures/happy_path/).
     Subdirectories are cleared before each figure is generated.
 
     Returns dict of data needed for the HTML article.
@@ -1662,7 +1662,7 @@ def copy_experiment_outputs(output_dir: Path) -> None:
         ),
     ]
 
-    inference_dir = prepare_output_dir(output_dir / "exponent_inference")
+    inference_dir = prepare_output_dir(output_dir / "figures" / "exponent_inference")
     main_copies = [
         (
             exp_dir / "exp7" / "exponent_inference.png",
