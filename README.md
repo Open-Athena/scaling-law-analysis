@@ -40,9 +40,11 @@ uv run python -m scaling_law_analysis.experiments.run_all
 
 | Experiment | Focus |
 |------------|-------|
-| **Exp 1**: Empirical Error | How sampling range affects exponent recovery |
-| **Exp 2**: Exponent Imbalance | How α/β asymmetry amplifies fitting errors |
-| **Exp 3**: Drift Sensitivity | How systematic sampling center biases affect accuracy |
-| **Exp 4**: Extrapolation Error | How inference degrades when extrapolating beyond fitting range |
-| **Exp 5**: Parameter Recovery | Whether direct surface fitting (variable projection) avoids Approach 2 biases |
-| **Exp 6**: Analytical Error | Analytical modeling of inference error *(TODO)* |
+| **Exp 1**: Empirical Error | How sampling range affects exponent and intercept recovery on a symmetric surface |
+| **Exp 2**: Exponent Imbalance | How α/β asymmetry amplifies fitting errors across surface configurations |
+| **Exp 3**: Drift Sensitivity | How systematic sampling center biases (constant offset and linear drift) affect exponent and intercept accuracy |
+| **Exp 4**: Extrapolation Error | How intercept errors from asymmetry and off-center sampling translate into token count errors when extrapolating to large compute budgets |
+| **Exp 5**: Parameter Recovery | Whether VPNLS (variable projection + NNLS) recovers all five surface parameters without the parabolic approximation's biases, and how optimizer choice affects precision and stability |
+| **Exp 6**: Analytical Error | Closed-form derivation of Approach 2 intercept error as a function of surface exponents and grid specification, validated against numerical results |
+| **Exp 7**: Exponent Inference | How VPNLS and Approach 3 compare to Approach 2 for recovering scaling exponents under noise, sampling drift, and varying data budgets |
+| **Exp 8**: Conditioning Analysis | Why Approach 3's 5D optimization is ill-conditioned (κ ≈ 3.5×10¹¹) and how variable projection reduces the problem to a well-conditioned 2D search (κ ≈ 11) |
