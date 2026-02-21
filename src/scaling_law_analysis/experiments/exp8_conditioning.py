@@ -16,9 +16,9 @@ from scipy.optimize import approx_fprime, minimize
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    DEFAULT_APPROACH3_GRID,
+    DEFAULT_PARAMETER_GRID,
     DEFAULT_LBFGSB_OPTIONS,
-    DEFAULT_VPNLS_GRID,
+    DEFAULT_EXPONENT_GRID,
     _compute_rss_and_params,
     _surface_rss,
     _surface_rss_grad,
@@ -445,7 +445,7 @@ def main() -> str:
     p()
 
     # Re-do the Approach 3 grid search to get the starting point
-    a3_grid = DEFAULT_APPROACH3_GRID
+    a3_grid = DEFAULT_PARAMETER_GRID
     best_rss_grid = np.inf
     best_x0 = true_x.copy()
     for E_init in a3_grid.E:
@@ -460,7 +460,7 @@ def main() -> str:
                             best_x0 = x0
 
     # VPNLS grid search for comparison
-    vp_grid = DEFAULT_VPNLS_GRID
+    vp_grid = DEFAULT_EXPONENT_GRID
     best_rss_vp = np.inf
     for alpha_g in vp_grid.alpha:
         for beta_g in vp_grid.beta:

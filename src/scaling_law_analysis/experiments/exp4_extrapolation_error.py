@@ -12,7 +12,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
-from scaling_law_analysis.chinchilla import fit_approach2
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
     LOSS_SURFACES,
@@ -25,6 +24,7 @@ from scaling_law_analysis.experiments.common import (
     N_POINTS,
     run_extrapolation_analysis,
     create_extrapolation_figure,
+    fit_simulated_approach2,
 )
 
 
@@ -35,7 +35,7 @@ def approach2_fitter(
     n_points: int,
 ):
     """Fit using Approach 2 and return D_opt function."""
-    result = fit_approach2(
+    result = fit_simulated_approach2(
         compute_budgets=compute_budgets,
         surface=sim_config.loss,
         drift_rate=sim_config.drift_rate,

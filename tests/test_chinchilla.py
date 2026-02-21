@@ -5,19 +5,21 @@ import pytest
 
 from scaling_law_analysis.chinchilla import (
     DEFAULT_LOSS_SURFACE,
-    FINE_VPNLS_GRID,
+    FINE_EXPONENT_GRID,
     FitError,
     LossSurface,
+    ParameterGrid,
     _cartesian_product,
     _surface_rss,
     _surface_rss_grad,
+    fit_approach2,
     fit_grid_search,
     fit_parabola,
-    fit_approach2,
     fit_vpnls,
     isoflop_sample,
     compute_center_offset,
 )
+from scaling_law_analysis.experiments.common import fit_simulated_approach2
 
 
 class TestFitParabola:
@@ -126,13 +128,22 @@ class TestFitApproach2:
         surface = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
         compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
 
+        # Generate IsoFLOP data and build per-point C array
+        all_N, all_D, all_L, all_C = [], [], [], []
+        for C in compute_budgets:
+            N, D, L = isoflop_sample(
+                C=C, n_points=15, log_range=1.0, center_offset=0.0, surface=surface
+            )
+            all_N.append(N)
+            all_D.append(D)
+            all_L.append(L)
+            all_C.append(np.full(len(N), C))
+
         result = fit_approach2(
-            compute_budgets=compute_budgets,
-            surface=surface,
-            drift_rate=0.0,
-            center_scale=1.0,
-            n_points=15,
-            log_range=1.0,
+            N=np.concatenate(all_N),
+            D=np.concatenate(all_D),
+            L=np.concatenate(all_L),
+            C=np.concatenate(all_C),
         )
 
         # Exponents should be exactly 0.5 for symmetric surface
@@ -149,6 +160,23 @@ class TestFitApproach2:
         # Intercepts should match analytical values from LossSurface
         assert result.a_intercept == pytest.approx(surface.a_intercept, rel=1e-10)
         assert result.b_intercept == pytest.approx(surface.b_intercept, rel=1e-10)
+
+    def test_fit_simulated_approach2_matches_new_fit_approach2(self):
+        """fit_simulated_approach2 should produce the same results as fit_approach2."""
+        surface = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+        compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
+
+        result = fit_simulated_approach2(
+            compute_budgets=compute_budgets,
+            surface=surface,
+            drift_rate=0.0,
+            center_scale=1.0,
+            n_points=15,
+            log_range=1.0,
+        )
+
+        assert result.a == pytest.approx(0.5, rel=1e-10)
+        assert result.b == pytest.approx(0.5, rel=1e-10)
 
 
 def _generate_isoflop_data(
@@ -183,7 +211,7 @@ class TestFitVPNLS:
         N, D, L = _generate_isoflop_data(surface)
 
         if method == "grid":
-            result = fit_vpnls(N, D, L, grid=FINE_VPNLS_GRID, method=method)
+            result = fit_vpnls(N, D, L, grid=FINE_EXPONENT_GRID, method=method)
         else:
             result = fit_vpnls(N, D, L, method=method)
 
@@ -218,6 +246,21 @@ class TestFitVPNLS:
         fitted = result.to_loss_surface()
         assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
         assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)
+
+    def test_scaling_exponents_on_result(self):
+        """SurfaceFitResult should expose .a and .b scaling exponents."""
+        N, D, L = _generate_isoflop_data(self.CHINCHILLA)
+        result = fit_vpnls(N, D, L, method="nelder-mead")
+
+        # a = β/(α+β), b = α/(α+β)
+        expected_a = self.CHINCHILLA.beta / (
+            self.CHINCHILLA.alpha + self.CHINCHILLA.beta
+        )
+        expected_b = self.CHINCHILLA.alpha / (
+            self.CHINCHILLA.alpha + self.CHINCHILLA.beta
+        )
+        assert result.a == pytest.approx(expected_a, rel=1e-4)
+        assert result.b == pytest.approx(expected_b, rel=1e-4)
 
 
 class TestSurfaceRssGrad:
@@ -286,7 +329,7 @@ class TestCartesianProduct:
 
 
 class TestFitGridSearch:
-    """Tests for fit_grid_search vectorized grid initialization."""
+    """Tests for fit_grid_search as a primary fitting method."""
 
     @pytest.mark.parametrize(
         "target_idx",
@@ -307,18 +350,22 @@ class TestFitGridSearch:
 
         N = np.array([1e8, 1e9, 1e10])
         D = np.array([1e9, 1e10, 1e11])
-        log_N, log_D = np.log(N), np.log(D)
         L = E + A * N ** (-alpha) + B * D ** (-beta)
 
-        best_x0 = fit_grid_search(
-            E_grid=E_grid,
-            A_grid=A_grid,
-            B_grid=B_grid,
-            alpha_grid=alpha_grid,
-            beta_grid=beta_grid,
-            log_N=log_N,
-            log_D=log_D,
-            L=L,
+        grid = ParameterGrid(
+            E=E_grid,
+            A=A_grid,
+            B=B_grid,
+            alpha=alpha_grid,
+            beta=beta_grid,
         )
+        result = fit_grid_search(N, D, L, grid=grid)
 
-        np.testing.assert_array_equal(best_x0, expected)
+        # Result should be a SurfaceFitResult with the planted parameters
+        assert result.E == pytest.approx(E, rel=1e-10)
+        assert result.A == pytest.approx(A, rel=1e-10)
+        assert result.B == pytest.approx(B, rel=1e-10)
+        assert result.alpha == pytest.approx(alpha, rel=1e-10)
+        assert result.beta == pytest.approx(beta, rel=1e-10)
+        assert result.residual_sum_squares == pytest.approx(0.0, abs=1e-20)
+        assert result.method == "grid-search"

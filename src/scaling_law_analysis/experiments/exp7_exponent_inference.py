@@ -29,20 +29,19 @@ from scipy.stats import gaussian_kde, gmean
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    DEFAULT_APPROACH3_GRID,
+    DEFAULT_PARAMETER_GRID,
     DEFAULT_SURFACE_BOUNDS,
-    DEFAULT_VPNLS_GRID,
+    DEFAULT_EXPONENT_GRID,
     FitError,
     FitStatus,
     LBFGSBOptions,
     LossSurface,
     NelderMeadOptions,
     SurfaceFitResult,
-    fit_approach3 as _chinchilla_fit_approach3,
-    fit_vpnls as _chinchilla_fit_vpnls,
+    fit_approach2,
+    fit_approach3,
+    fit_vpnls,
     compute_center_offset,
-    fit_parabola,
-    fit_power_law,
     isoflop_sample,
 )
 from scaling_law_analysis.experiments.common import (
@@ -139,144 +138,18 @@ def generate_isoflop_data(
     return IsoFlopData(per_budget=per_budget)
 
 
-# ── Fitting: Common Result ────────────────────────────────────────────────────
-
-
-@dataclass(frozen=True)
-class ExponentEstimate:
-    """Recovered scaling exponents from any fitting method."""
-
-    a: float  # Estimate of β/(α+β)
-    b: float  # Estimate of α/(α+β)
-    method: str
-    status: FitStatus = FitStatus.CONVERGED
-    status_message: str = ""
-
-    @property
-    def converged(self) -> bool:
-        """True if the optimizer reported full convergence."""
-        return self.status == FitStatus.CONVERGED
-
-
-# ── Fitting: Approach 2 ──────────────────────────────────────────────────────
-
-
-def fit_approach2(
-    data: IsoFlopData,
-    compute_budgets: np.ndarray,
-) -> ExponentEstimate:
-    """Recover exponents via Chinchilla Approach 2 (parabolic IsoFLOP fits).
-
-    Fits L vs log(N) parabolas per budget to find N* and D*, then fits
-    power laws N* ∝ C^a and D* ∝ C^b across budgets.
-
-    Args:
-        data: IsoFlopData from generate_isoflop_data.
-        compute_budgets: Array of compute budgets in FLOPs (same order as data).
-
-    Returns:
-        ExponentEstimate with recovered a and b.
-
-    Raises:
-        FitError: If any parabola fit has non-positive curvature.
-    """
-    N_opts = []
-    D_opts = []
-
-    for N, D, L in data.per_budget:
-        N_opts.append(fit_parabola(np.log10(N), L).x_opt)
-        D_opts.append(fit_parabola(np.log10(D), L).x_opt)
-
-    N_opts_arr = np.array(N_opts)
-    D_opts_arr = np.array(D_opts)
-
-    a_exp = fit_power_law(compute_budgets, N_opts_arr).exponent
-    b_exp = fit_power_law(compute_budgets, D_opts_arr).exponent
-
-    return ExponentEstimate(a=a_exp, b=b_exp, method="Chinchilla Approach 2")
-
-
-# ── Shared fitting diagnostics ────────────────────────────────────────────────
-
-
-def _make_estimate(
-    alpha: float,
-    beta: float,
-    method: str,
-    status: FitStatus = FitStatus.CONVERGED,
-    status_message: str = "",
-) -> ExponentEstimate:
-    """Compute ExponentEstimate from recovered alpha and beta."""
-    return ExponentEstimate(
-        a=beta / (alpha + beta),
-        b=alpha / (alpha + beta),
-        method=method,
-        status=status,
-        status_message=status_message,
-    )
-
-
-# ── Fitting: Approach 3 & VPNLS (thin wrappers over chinchilla.py) ────────────
+# ── Fitting configuration ─────────────────────────────────────────────────────
 
 # Equalize total grid evaluations so that any difference in worst-case error
 # reflects the optimizer and loss-landscape geometry, not an initialization
 # budget advantage for either method (4^5 = 32^2 = 1024).
-assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
-    f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
-    f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
+assert DEFAULT_PARAMETER_GRID.total_size == DEFAULT_EXPONENT_GRID.total_size, (
+    f"Parameter grid ({DEFAULT_PARAMETER_GRID.total_size}) must equal "
+    f"exponent grid ({DEFAULT_EXPONENT_GRID.total_size})"
 )
 
 _EXP7_LBFGSB_OPTIONS = LBFGSBOptions(maxiter=1000)
 _EXP7_NELDER_MEAD_OPTIONS = NelderMeadOptions(xatol=1e-15, maxiter=1000)
-
-
-def _result_to_estimate(result: SurfaceFitResult, method: str) -> ExponentEstimate:
-    """Convert a SurfaceFitResult to an ExponentEstimate."""
-    return _make_estimate(
-        result.alpha,
-        result.beta,
-        method,
-        status=result.status,
-        status_message=result.status_message,
-    )
-
-
-def fit_approach3(
-    N: np.ndarray,
-    D: np.ndarray,
-    L: np.ndarray,
-    random_init: bool = False,
-    rng: np.random.Generator | None = None,
-) -> ExponentEstimate:
-    """Recover exponents via direct 5-parameter L-BFGS-B optimization."""
-    result = _chinchilla_fit_approach3(
-        N,
-        D,
-        L,
-        grid=DEFAULT_APPROACH3_GRID,
-        bounds=DEFAULT_SURFACE_BOUNDS,
-        options=_EXP7_LBFGSB_OPTIONS,
-        random_init=random_init,
-        rng=rng,
-    )
-    return _result_to_estimate(result, "Chinchilla Approach 3")
-
-
-def fit_vpnls(
-    N: np.ndarray,
-    D: np.ndarray,
-    L: np.ndarray,
-) -> ExponentEstimate:
-    """Recover exponents via Variable Projection + NNLS + Nelder-Mead."""
-    result = _chinchilla_fit_vpnls(
-        N,
-        D,
-        L,
-        grid=DEFAULT_VPNLS_GRID,
-        bounds=DEFAULT_SURFACE_BOUNDS,
-        options=_EXP7_NELDER_MEAD_OPTIONS,
-    )
-    return _result_to_estimate(result, "VPNLS")
 
 
 # ── Experiment ────────────────────────────────────────────────────────────────
@@ -342,21 +215,50 @@ def _run_single_repeat(
             noise_std,
             rng,
         )
+        # Build per-point C array for fit_approach2
+        C_per_point = np.repeat(compute_budgets, n_pts)
 
         a3_random_rng = rng.spawn(1)[0]
         for method_name, fit_fn in [
-            ("Chinchilla Approach 2", lambda d: fit_approach2(d, compute_budgets)),
+            (
+                "Chinchilla Approach 2",
+                lambda d: fit_approach2(d.N, d.D, d.L, C_per_point),
+            ),
             (
                 "Chinchilla Approach 3 (grid init)",
-                lambda d: fit_approach3(d.N, d.D, d.L),
+                lambda d: fit_approach3(
+                    d.N,
+                    d.D,
+                    d.L,
+                    grid=DEFAULT_PARAMETER_GRID,
+                    bounds=DEFAULT_SURFACE_BOUNDS,
+                    options=_EXP7_LBFGSB_OPTIONS,
+                ),
             ),
             (
                 "Chinchilla Approach 3 (random init)",
                 lambda d: fit_approach3(
-                    d.N, d.D, d.L, random_init=True, rng=a3_random_rng
+                    d.N,
+                    d.D,
+                    d.L,
+                    random_init=True,
+                    rng=a3_random_rng,
+                    grid=DEFAULT_PARAMETER_GRID,
+                    bounds=DEFAULT_SURFACE_BOUNDS,
+                    options=_EXP7_LBFGSB_OPTIONS,
                 ),
             ),
-            ("VPNLS", lambda d: fit_vpnls(d.N, d.D, d.L)),
+            (
+                "VPNLS",
+                lambda d: fit_vpnls(
+                    d.N,
+                    d.D,
+                    d.L,
+                    grid=DEFAULT_EXPONENT_GRID,
+                    bounds=DEFAULT_SURFACE_BOUNDS,
+                    options=_EXP7_NELDER_MEAD_OPTIONS,
+                ),
+            ),
         ]:
             res = results[method_name]
             try:
@@ -367,11 +269,13 @@ def _run_single_repeat(
                 res["b_errors"][i] = np.nan
                 continue
 
-            if est.status == FitStatus.MAX_ITER:
+            # SurfaceFitResult has .status; ParabolaFitResult does not
+            status = getattr(est, "status", FitStatus.CONVERGED)
+            if status == FitStatus.MAX_ITER:
                 res["maxiter"][i] = True
-            elif est.status == FitStatus.ABNORMAL:
+            elif status == FitStatus.ABNORMAL:
                 res["abnormal"][i] = True
-            elif est.status == FitStatus.BOUND_HIT:
+            elif status == FitStatus.BOUND_HIT:
                 res["bound_hit"][i] = True
 
             res["a_errors"][i] = (est.a - true_a) / true_a
@@ -666,7 +570,7 @@ def create_isoflop_figure(
                     zorder=2,
                     label=f"C = {C:.0e}" if col_idx == 0 and row_idx == 0 else None,
                 )
-                L_true = surface.loss(N, D)
+                L_true = np.array([surface.loss(n, d) for n, d in zip(N, D)])
                 ax.plot(
                     x_vals, L_true, color=colors[i], linewidth=1, alpha=0.5, zorder=1
                 )

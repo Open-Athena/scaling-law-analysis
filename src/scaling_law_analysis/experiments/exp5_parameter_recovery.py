@@ -16,9 +16,9 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    DEFAULT_APPROACH3_GRID,
-    DEFAULT_VPNLS_GRID,
-    FINE_VPNLS_GRID,
+    DEFAULT_PARAMETER_GRID,
+    DEFAULT_EXPONENT_GRID,
+    FINE_EXPONENT_GRID,
     FitError,
     FitStatus,
     LBFGSBOptions,
@@ -57,9 +57,9 @@ def _nanmax_or_raise(arr: np.ndarray, label: str) -> float:
     return float(np.nanmax(arr))
 
 
-assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
-    f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
-    f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
+assert DEFAULT_PARAMETER_GRID.total_size == DEFAULT_EXPONENT_GRID.total_size, (
+    f"Parameter grid ({DEFAULT_PARAMETER_GRID.total_size}) must equal "
+    f"exponent grid ({DEFAULT_EXPONENT_GRID.total_size})"
 )
 
 
@@ -150,12 +150,12 @@ def compute_param_errors(
                     N,
                     D,
                     L,
-                    grid=DEFAULT_APPROACH3_GRID,
+                    grid=DEFAULT_PARAMETER_GRID,
                     use_grad=use_grad,
                     options=a3_options,
                 )
             else:
-                vpnls_grid = FINE_VPNLS_GRID if method == "grid" else None
+                vpnls_grid = FINE_EXPONENT_GRID if method == "grid" else None
                 vpnls_options: LBFGSBOptions | None = None
                 if method == "l-bfgs-b" and (jac is not None or eps is not None):
                     vpnls_options = LBFGSBOptions(jac=jac, eps=eps)

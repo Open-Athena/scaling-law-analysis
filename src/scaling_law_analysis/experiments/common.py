@@ -9,7 +9,9 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis.chinchilla import (
     LossSurface,
+    ParabolaFitResult,
     DEFAULT_LOSS_SURFACE,
+    fit_approach2,
     isoflop_sample,
     compute_center_offset,
 )
@@ -242,6 +244,70 @@ def sample_isoflop_data(
         all_L.append(L)
 
     return np.concatenate(all_N), np.concatenate(all_D), np.concatenate(all_L)
+
+
+def fit_simulated_approach2(
+    compute_budgets: np.ndarray,
+    surface: LossSurface,
+    *,
+    drift_rate: float = 0.0,
+    center_scale: float = 1.0,
+    n_points: int = 15,
+    log_range: float = 1.0,
+) -> ParabolaFitResult:
+    """Recover scaling exponents by simulating IsoFLOP data and fitting via Approach 2.
+
+    This is a convenience wrapper that generates synthetic IsoFLOP samples from a
+    known loss surface and then calls fit_approach2 on the resulting data.
+
+    Args:
+        compute_budgets: Array of compute budgets (FLOPs)
+        surface: Loss surface configuration
+        drift_rate: Rate at which sampling center drifts from optimal as a
+                    function of compute budget. When non-zero, centers are shifted
+                    left (smaller N) at all budgets except the lowest, where drift
+                    is zero. The drift is linear in log-compute space (0 at min,
+                    -drift_rate at max) and measured in log10 units of N.
+        center_scale: Constant multiplier applied to all sampling centers.
+                      When 1.0, centers are at true optimal N*.
+                      When >1, all centers are shifted left (smaller N).
+                      When <1, all centers are shifted right (larger N).
+        n_points: Number of points per IsoFLOP curve
+        log_range: Sampling range in log10 space around optimal N (and D)
+
+    Returns:
+        ParabolaFitResult with recovered exponents a and b
+    """
+    all_N = []
+    all_D = []
+    all_L = []
+    all_C = []
+
+    for C in compute_budgets:
+        center_offset = compute_center_offset(
+            C=C,
+            compute_budgets=compute_budgets,
+            drift_rate=drift_rate,
+            center_scale=center_scale,
+        )
+        N, D, L = isoflop_sample(
+            C=C,
+            n_points=n_points,
+            log_range=log_range,
+            center_offset=center_offset,
+            surface=surface,
+        )
+        all_N.append(N)
+        all_D.append(D)
+        all_L.append(L)
+        all_C.append(np.full(len(N), C))
+
+    return fit_approach2(
+        N=np.concatenate(all_N),
+        D=np.concatenate(all_D),
+        L=np.concatenate(all_L),
+        C=np.concatenate(all_C),
+    )
 
 
 # Type alias for extrapolation fitter: takes config and returns D_opt function

@@ -12,10 +12,9 @@ import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
-    Approach2Result,
+    ParabolaFitResult,
     compute_center_offset,
     isoflop_sample,
-    fit_approach2,
 )
 from scaling_law_analysis.experiments.common import (
     SimulationConfig,
@@ -26,6 +25,7 @@ from scaling_law_analysis.experiments.common import (
     N_POINTS,
     TICK_POSITIONS,
     log_range_to_label,
+    fit_simulated_approach2,
 )
 
 
@@ -62,7 +62,7 @@ def run_experiment(
     true_D_opts = np.array([loss.D_opt(C) for C in compute_budgets])
 
     for log_range in log_ranges:
-        result = fit_approach2(
+        result = fit_simulated_approach2(
             compute_budgets=compute_budgets,
             surface=loss,
             drift_rate=sim_config.drift_rate,
@@ -116,7 +116,7 @@ def run_experiment(
 
 def plot_isoflop_fits(
     ax: plt.Axes,
-    result: Approach2Result,
+    result: ParabolaFitResult,
     compute_budgets: np.ndarray,
     log_range: float,
     sim_config: SimulationConfig,
@@ -128,7 +128,7 @@ def plot_isoflop_fits(
 
     Args:
         ax: Matplotlib axes to plot on
-        result: Approach2Result from recovery
+        result: ParabolaFitResult from recovery
         compute_budgets: Compute budgets used
         log_range: Grid step size used
         sim_config: Simulation configuration
@@ -201,7 +201,7 @@ def plot_isoflop_fits(
 
 def plot_power_law_fits(
     ax: plt.Axes,
-    result: Approach2Result,
+    result: ParabolaFitResult,
     compute_budgets: np.ndarray,
     sim_config: SimulationConfig,
     title: str = "",
@@ -214,7 +214,7 @@ def plot_power_law_fits(
 
     Args:
         ax: Matplotlib axes to plot on (will create twin for D*)
-        result: Approach2Result with parabola fits and power-law coefficients
+        result: ParabolaFitResult with parabola fits and power-law coefficients
         compute_budgets: Compute budgets used
         sim_config: Simulation configuration
         title: Plot title

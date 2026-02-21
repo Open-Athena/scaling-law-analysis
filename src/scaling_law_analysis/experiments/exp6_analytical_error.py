@@ -11,7 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from scaling_law_analysis import config
-from scaling_law_analysis.chinchilla import LossSurface, fit_approach2
+from scaling_law_analysis.chinchilla import LossSurface
 from scaling_law_analysis.experiments.common import (
     COMPUTE_BUDGETS,
     LOG_RANGES,
@@ -20,6 +20,7 @@ from scaling_law_analysis.experiments.common import (
     DEFAULT_LOSS_SURFACE,
     ASYMMETRIC_CONFIG,
     prepare_output_dir,
+    fit_simulated_approach2,
 )
 
 
@@ -137,7 +138,7 @@ def compute_numerical_errors(
     intercept_errors = []
 
     for log_range in log_ranges:
-        result = fit_approach2(
+        result = fit_simulated_approach2(
             compute_budgets=compute_budgets,
             surface=surface,
             drift_rate=0.0,  # No drift (symmetric sampling)

@@ -3,8 +3,11 @@
 This module provides:
 - The Chinchilla loss function L(N, D) = E + A/N^α + B/D^β
 - IsoFLOP sampling along constant compute contours
-- Approach 2 parameter recovery via parabolic fits
-- Surface fitting via variable projection (grid search + NNLS)
+- Four fitting methods with a standardized (N, D, L, ...) interface:
+  - Approach 2: Parabolic IsoFLOP fits → power-law regression
+  - Grid Search: 5D exhaustive parameter search
+  - VPNLS: Variable Projection with Non-negative Least Squares
+  - Approach 3: Direct 5-parameter L-BFGS-B optimization
 """
 
 import enum
@@ -78,13 +81,9 @@ class NonFiniteFitError(FitError):
     """A fitted parameter is NaN or Inf."""
 
 
-def _validate_positive_finite(name: str, arr: np.ndarray) -> None:
-    """Raise ValueError if *arr* contains non-finite or non-positive values."""
-    if not np.all(np.isfinite(arr)):
-        raise ValueError(f"{name} contains non-finite values (NaN or Inf)")
-    if np.any(arr <= 0):
-        raise ValueError(f"{name} must be strictly positive for log-space fitting")
-
+# =============================================================================
+# Loss surface model
+# =============================================================================
 
 # Chinchilla paper ground truth parameters;
 # see "D.2. Approach 3: Parametric fitting of the loss"
@@ -144,8 +143,8 @@ class LossSurface:
 
         This ensures N* · D* = C/6 holds exactly.
         """
-        return (self.alpha * self.A / (self.beta * self.B)) ** (
-            1 / (self.alpha + self.beta)
+        return ((self.alpha * self.A) / (self.beta * self.B)) ** (
+            1.0 / (self.alpha + self.beta)
         )
 
     @property
@@ -157,7 +156,7 @@ class LossSurface:
 
         The intercept is: log₁₀(G) - a·log₁₀(6)
         """
-        return np.log10(self.G) - self.a * np.log10(6)
+        return np.log10(self.G) - (self.a * np.log10(6))
 
     @property
     def b_intercept(self) -> float:
@@ -168,7 +167,7 @@ class LossSurface:
 
         The intercept is: -log₁₀(G) - b·log₁₀(6)
         """
-        return -np.log10(self.G) - self.b * np.log10(6)
+        return -np.log10(self.G) - (self.b * np.log10(6))
 
     def N_opt(self, C: float) -> float:
         """Compute optimal parameter count N* for a given compute budget.
@@ -202,19 +201,17 @@ class LossSurface:
         """
         return (1 / self.G) * ((C / 6) ** self.b)
 
-    def loss(
-        self, N: Union[float, np.ndarray], D: Union[float, np.ndarray]
-    ) -> Union[float, np.ndarray]:
+    def loss(self, N: float, D: float) -> float:
         """Compute loss L(N, D) = E + A/N^α + B/D^β.
 
         Args:
-            N: Number of parameters (scalar or array)
-            D: Number of training tokens (scalar or array)
+            N: Number of parameters
+            D: Number of training tokens
 
         Returns:
-            Loss values corresponding to each (N, D) pair
+            Loss value for the (N, D) pair
         """
-        return self.E + self.A / (N**self.alpha) + self.B / (D**self.beta)  # type: ignore[operator]
+        return self.E + (self.A / (N**self.alpha)) + (self.B / (D**self.beta))
 
     @classmethod
     def from_chinchilla(cls, alpha: float, beta: float) -> "LossSurface":
@@ -244,6 +241,11 @@ DEFAULT_LOSS_SURFACE = LossSurface(
     B=CHINCHILLA_PARAMS["B"],
     E=CHINCHILLA_PARAMS["E"],
 )
+
+
+# =============================================================================
+# IsoFLOP sampling
+# =============================================================================
 
 
 def compute_center_offset(
@@ -283,13 +285,14 @@ def compute_center_offset(
 
     # Subtract linear drift offset (0 at min compute, -drift_rate at max compute)
     if drift_rate != 0.0:
-        log_C_all = np.log10(compute_budgets)
-        log_C_min = log_C_all.min()
-        log_C_range = log_C_all.max() - log_C_min
-
-        if log_C_range > 0:
-            normalized_log_C = (np.log10(C) - log_C_min) / log_C_range
-            offset -= drift_rate * normalized_log_C
+        log_C = np.log10(C)
+        log_C_min = np.log10(compute_budgets.min())
+        log_C_max = np.log10(compute_budgets.max())
+        if log_C_max > log_C_min:
+            fraction = (log_C - log_C_min) / (log_C_max - log_C_min)
+        else:
+            fraction = 0.0
+        offset -= drift_rate * fraction
 
     return offset
 
@@ -327,292 +330,19 @@ def isoflop_sample(
     D = C / (6 * N)
 
     # Compute loss at each point
-    L = surface.loss(N, D)
-    if not isinstance(L, np.ndarray):
-        L = np.array([L])
+    L = np.array([surface.loss(n, d) for n, d in zip(N, D)])
 
     return N, D, L
 
 
-@dataclass(frozen=True)
-class PowerLawFit:
-    """Results from fitting a power law relationship in log-log space.
-
-    Fits the model: log₁₀(y) = exponent · log₁₀(x) + intercept
-    Equivalently: y = 10^intercept · x^exponent
-    """
-
-    exponent: float  # Slope in log-log space (power law exponent)
-    intercept: float  # Intercept in log₁₀ space
-
-
-def fit_power_law(x: np.ndarray, y: np.ndarray) -> PowerLawFit:
-    """Fit a power law relationship y = a · x^b via linear regression in log-log space.
-
-    Fits: log₁₀(y) = exponent · log₁₀(x) + intercept
-
-    This is used in Chinchilla Approach 2 to fit:
-        N* = 10^a_intercept · C^a  (optimal parameters vs compute)
-        D* = 10^b_intercept · C^b  (optimal tokens vs compute)
-
-    Args:
-        x: Independent variable (e.g., compute budgets)
-        y: Dependent variable (e.g., optimal N* or D* values)
-
-    Returns:
-        PowerLawFit with exponent and intercept
-
-    Raises:
-        ValueError: If x or y contain non-finite or non-positive values
-    """
-    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
-    _validate_positive_finite("x", x)
-    _validate_positive_finite("y", y)
-    log_x = np.log10(x)
-    log_y = np.log10(y)
-    exponent, intercept = np.polyfit(log_x, log_y, 1)
-    return PowerLawFit(exponent=float(exponent), intercept=float(intercept))
-
-
-@dataclass(frozen=True)
-class ParabolaFit:
-    """Results from fitting a parabola to IsoFLOP data."""
-
-    coeffs: np.ndarray  # Polynomial coefficients [a, b, c] for ax² + bx + c
-    log_x_opt: float  # Log10 of optimal x from parabola minimum
-    x_opt: float  # Optimal x from parabola minimum
-    L_min: float  # Minimum loss from parabola
-
-
-@dataclass
-class Approach2Result:
-    """Results from Approach 2 parameter recovery.
-
-    Approach 2 fits power laws:
-        N* ∝ C^a  where a = β/(α+β)
-        D* ∝ C^b  where b = α/(α+β)
-
-    Note: a and b satisfy a + b = 1.
-    """
-
-    a: float  # Exponent of N* vs C power law, equals β/(α+β)
-    b: float  # Exponent of D* vs C power law, equals α/(α+β)
-    a_intercept: float  # Intercept of log(N*) vs log(C) fit
-    b_intercept: float  # Intercept of log(D*) vs log(C) fit
-    parabola_fits_N: list[ParabolaFit]  # Per-budget parabola fits for L vs log(N)
-    parabola_fits_D: list[ParabolaFit]  # Per-budget parabola fits for L vs log(D)
-    compute_budgets: np.ndarray  # Compute budgets used
-    N_opts: np.ndarray  # Optimal N* from each parabola fit
-    D_opts: np.ndarray  # Optimal D* from each parabola fit
-
-    def D_opt(self, C: float) -> float:
-        """Compute inferred optimal token count D* for a given compute budget.
-
-        Uses the fitted power law from Approach 2:
-            log₁₀(D*) = b · log₁₀(C) + b_intercept
-
-        This can be used to extrapolate D* to compute budgets beyond those
-        used for fitting.
-
-        Args:
-            C: Compute budget in FLOPs
-
-        Returns:
-            Inferred optimal number of training tokens D*
-        """
-        log10_D = self.b * np.log10(C) + self.b_intercept
-        return 10**log10_D
-
-
-def fit_parabola(
-    log_x: np.ndarray,
-    L: np.ndarray,
-    min_curvature: float = 1e-10,
-) -> ParabolaFit:
-    """Fit a parabola to loss vs log-x data.
-
-    Fits L = a*log(x)² + b*log(x) + c and finds the minimum.
-
-    Args:
-        log_x: Log10 of x values (e.g., parameter counts N or token counts D)
-        L: Loss values
-        min_curvature: Minimum value for quadratic coefficient (must be positive
-                       for an upward-facing parabola with a minimum).
-
-    Returns:
-        ParabolaFit with coefficients and minimum location
-
-    Raises:
-        FitError: If fewer than 3 points or curvature is non-positive
-    """
-    if len(log_x) < 3:
-        raise FitError(f"Parabola fit requires at least 3 points, got {len(log_x)}.")
-    # Fit quadratic: L = a*log(x)² + b*log(x) + c
-    coeffs = np.polyfit(log_x, L, 2)
-    a, b, c = coeffs
-
-    # Require positive curvature (upward-facing parabola) to have a minimum
-    if a < min_curvature:
-        raise FitError(
-            f"Parabola fit has non-positive curvature (a={a:.2e}). "
-            f"A minimum requires positive curvature (upward-facing parabola). "
-            f"This may indicate a flat loss surface, insufficient data, or inverted curvature."
-        )
-
-    # Minimum at log(x*) = -b / (2a)
-    log_x_opt = -b / (2 * a)
-    x_opt = 10**log_x_opt
-
-    # Minimum loss value
-    L_min = np.polyval(coeffs, log_x_opt)
-
-    return ParabolaFit(
-        coeffs=coeffs,
-        log_x_opt=log_x_opt,
-        x_opt=x_opt,
-        L_min=L_min,
-    )
-
-
-def fit_approach2(
-    compute_budgets: np.ndarray,
-    surface: LossSurface,
-    drift_rate: float = 0.0,
-    center_scale: float = 1.0,
-    n_points: int = 15,
-    log_range: float = 1.0,
-) -> Approach2Result:
-    """Recover scaling exponents using Chinchilla Approach 2.
-
-    Stage 1: For each compute budget, fit parabolas to find optimal N* and D*
-    Stage 2: Fit power laws N* ∝ C^a and D* ∝ C^b
-
-    Args:
-        compute_budgets: Array of compute budgets (FLOPs)
-        surface: Loss surface configuration
-        drift_rate: Rate at which sampling center drifts from optimal as a
-                    function of compute budget. When non-zero, centers are shifted
-                    left (smaller N) at all budgets except the lowest, where drift
-                    is zero. The drift is linear in log-compute space (0 at min,
-                    -drift_rate at max) and measured in log10 units of N.
-        center_scale: Constant multiplier applied to all sampling centers.
-                      When 1.0, centers are at true optimal N*.
-                      When >1, all centers are shifted left (smaller N).
-                      When <1, all centers are shifted right (larger N).
-        n_points: Number of points per IsoFLOP curve
-        log_range: Sampling range in log10 space around optimal N (and D)
-
-    Returns:
-        Approach2Result with recovered exponents a and b
-    """
-    # Stage 1: Parabola fits to find N* and D* at each compute budget
-    parabola_fits_N = []
-    parabola_fits_D = []
-    N_opts = []
-    D_opts = []
-
-    for C in compute_budgets:
-        center_offset = compute_center_offset(
-            C=C,
-            compute_budgets=compute_budgets,
-            drift_rate=drift_rate,
-            center_scale=center_scale,
-        )
-        N, D, L = isoflop_sample(
-            C=C,
-            n_points=n_points,
-            log_range=log_range,
-            center_offset=center_offset,
-            surface=surface,
-        )
-
-        # Fit parabola to L vs log(N) to find N*
-        fit_N = fit_parabola(np.log10(N), L)
-        parabola_fits_N.append(fit_N)
-        N_opts.append(fit_N.x_opt)
-
-        # Fit parabola to L vs log(D) to find D*
-        fit_D = fit_parabola(np.log10(D), L)
-        parabola_fits_D.append(fit_D)
-        D_opts.append(fit_D.x_opt)
-
-    N_opts = np.array(N_opts)
-    D_opts = np.array(D_opts)
-
-    # Stage 2: Fit power laws N* ∝ C^a and D* ∝ C^b in log-log space
-    N_fit = fit_power_law(compute_budgets, N_opts)
-    D_fit = fit_power_law(compute_budgets, D_opts)
-
-    return Approach2Result(
-        a=N_fit.exponent,
-        b=D_fit.exponent,
-        a_intercept=N_fit.intercept,
-        b_intercept=D_fit.intercept,
-        parabola_fits_N=parabola_fits_N,
-        parabola_fits_D=parabola_fits_D,
-        compute_budgets=compute_budgets,
-        N_opts=N_opts,
-        D_opts=D_opts,
-    )
-
-
 # =============================================================================
-# Surface Fitting via Variable Projection
-# =============================================================================
-
-
-@dataclass
-class SurfaceFitResult:
-    """Results from fitting the loss surface L(N, D) = E + A/N^α + B/D^β.
-
-    Attributes:
-        E: Fitted irreducible loss
-        A: Fitted parameter scaling coefficient
-        B: Fitted data scaling coefficient
-        alpha: Fitted parameter scaling exponent
-        beta: Fitted data scaling exponent
-        residual_sum_squares: Sum of squared residuals at optimal fit
-        n_points: Number of data points used in fit
-        method: Fitting method used (e.g. "nelder-mead", "approach3")
-        status: Outcome of the fitting procedure (see FitStatus)
-        status_message: Human-readable detail when status is not CONVERGED
-    """
-
-    E: float
-    A: float
-    B: float
-    alpha: float
-    beta: float
-    residual_sum_squares: float
-    n_points: int
-    method: str = "nelder-mead"
-    status: FitStatus = FitStatus.CONVERGED
-    status_message: str = ""
-
-    @property
-    def converged(self) -> bool:
-        """True if the optimizer reported full convergence."""
-        return self.status == FitStatus.CONVERGED
-
-    def to_loss_surface(self) -> LossSurface:
-        """Convert fit result to a LossSurface object."""
-        return LossSurface(
-            alpha=self.alpha,
-            beta=self.beta,
-            A=self.A,
-            B=self.B,
-            E=self.E,
-        )
-
-
-# =============================================================================
-# Configuration dataclasses
+# Configuration: grids, bounds, optimizer options
 # =============================================================================
 
 
 @dataclass(frozen=True)
-class VPNLSInitGrid:
-    """Initialization grid for 2D variable projection (alpha, beta)."""
+class ExponentGrid:
+    """Initialization grid for 2D searches over (alpha, beta)."""
 
     alpha: np.ndarray
     beta: np.ndarray
@@ -623,8 +353,8 @@ class VPNLSInitGrid:
 
 
 @dataclass(frozen=True)
-class Approach3InitGrid:
-    """Initialization grid for 5D direct optimization (E, A, B, alpha, beta)."""
+class ParameterGrid:
+    """Initialization grid for 5D searches over (E, A, B, alpha, beta)."""
 
     E: np.ndarray
     A: np.ndarray
@@ -683,16 +413,14 @@ class LBFGSBOptions:
         return d
 
 
-# =============================================================================
 # Default instances
-# =============================================================================
 
-DEFAULT_VPNLS_GRID = VPNLSInitGrid(
+DEFAULT_EXPONENT_GRID = ExponentGrid(
     alpha=np.linspace(0.05, 0.95, 32),
     beta=np.linspace(0.05, 0.95, 32),
 )
 
-DEFAULT_APPROACH3_GRID = Approach3InitGrid(
+DEFAULT_PARAMETER_GRID = ParameterGrid(
     E=np.linspace(0.1, 5.0, 4),
     A=np.logspace(1, 4, 4),
     B=np.logspace(1, 4, 4),
@@ -700,7 +428,7 @@ DEFAULT_APPROACH3_GRID = Approach3InitGrid(
     beta=np.linspace(0.05, 0.95, 4),
 )
 
-FINE_VPNLS_GRID = VPNLSInitGrid(
+FINE_EXPONENT_GRID = ExponentGrid(
     alpha=np.linspace(0.05, 0.95, 256),
     beta=np.linspace(0.05, 0.95, 256),
 )
@@ -710,12 +438,301 @@ DEFAULT_SURFACE_BOUNDS = SurfaceBounds()
 DEFAULT_NELDER_MEAD_OPTIONS = NelderMeadOptions()
 DEFAULT_LBFGSB_OPTIONS = LBFGSBOptions()
 
-assert DEFAULT_APPROACH3_GRID.total_size == DEFAULT_VPNLS_GRID.total_size, (
-    f"Approach 3 grid ({DEFAULT_APPROACH3_GRID.total_size}) must equal "
-    f"VPNLS grid ({DEFAULT_VPNLS_GRID.total_size})"
+assert DEFAULT_PARAMETER_GRID.total_size == DEFAULT_EXPONENT_GRID.total_size, (
+    f"Parameter grid ({DEFAULT_PARAMETER_GRID.total_size}) must equal "
+    f"exponent grid ({DEFAULT_EXPONENT_GRID.total_size})"
 )
 
 LBFGSB_DEFAULT_EPS = 1e-8
+
+
+# =============================================================================
+# Result types
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class PowerLawFit:
+    """Results from fitting a power law relationship in log-log space.
+
+    Fits the model: log₁₀(y) = exponent · log₁₀(x) + intercept
+    Equivalently: y = 10^intercept · x^exponent
+    """
+
+    exponent: float  # Slope in log-log space (power law exponent)
+    intercept: float  # Intercept in log₁₀ space
+
+
+@dataclass(frozen=True)
+class ParabolaFit:
+    """Results from fitting a parabola to IsoFLOP data."""
+
+    coeffs: np.ndarray  # Polynomial coefficients [a, b, c] for ax² + bx + c
+    log_x_opt: float  # Log10 of optimal x from parabola minimum
+    x_opt: float  # Optimal x from parabola minimum
+    L_min: float  # Minimum loss from parabola
+
+
+@dataclass(frozen=True)
+class ParabolaFitResult:
+    """Results from Approach 2 (parabolic IsoFLOP fits → power-law regression).
+
+    Approach 2 fits power laws:
+        N* ∝ C^a  where a = β/(α+β)
+        D* ∝ C^b  where b = α/(α+β)
+
+    Note: a and b satisfy a + b = 1.
+    """
+
+    a: float  # Exponent of N* vs C power law, equals β/(α+β)
+    b: float  # Exponent of D* vs C power law, equals α/(α+β)
+    a_intercept: float  # Intercept of log(N*) vs log(C) fit
+    b_intercept: float  # Intercept of log(D*) vs log(C) fit
+    parabola_fits_N: tuple[ParabolaFit, ...]  # Per-budget parabola fits for L vs log(N)
+    parabola_fits_D: tuple[ParabolaFit, ...]  # Per-budget parabola fits for L vs log(D)
+    compute_budgets: np.ndarray  # Unique compute budgets used
+    N_opts: np.ndarray  # Optimal N* from each parabola fit
+    D_opts: np.ndarray  # Optimal D* from each parabola fit
+
+    def N_opt(self, C: float) -> float:
+        """Compute inferred optimal parameter count N* for a given compute budget.
+
+        Uses the fitted power law from Approach 2:
+            log₁₀(N*) = a · log₁₀(C) + a_intercept
+
+        Args:
+            C: Compute budget in FLOPs
+
+        Returns:
+            Inferred optimal number of parameters N*
+        """
+        log10_N = self.a * np.log10(C) + self.a_intercept
+        return 10**log10_N
+
+    def D_opt(self, C: float) -> float:
+        """Compute inferred optimal token count D* for a given compute budget.
+
+        Uses the fitted power law from Approach 2:
+            log₁₀(D*) = b · log₁₀(C) + b_intercept
+
+        This can be used to extrapolate D* to compute budgets beyond those
+        used for fitting.
+
+        Args:
+            C: Compute budget in FLOPs
+
+        Returns:
+            Inferred optimal number of training tokens D*
+        """
+        log10_D = self.b * np.log10(C) + self.b_intercept
+        return 10**log10_D
+
+
+@dataclass(frozen=True)
+class SurfaceFitResult:
+    """Results from fitting the loss surface L(N, D) = E + A/N^α + B/D^β.
+
+    Returned by fit_grid_search, fit_vpnls, and fit_approach3.
+
+    Attributes:
+        E: Fitted irreducible loss
+        A: Fitted parameter scaling coefficient
+        B: Fitted data scaling coefficient
+        alpha: Fitted parameter scaling exponent
+        beta: Fitted data scaling exponent
+        residual_sum_squares: Sum of squared residuals at optimal fit
+        n_points: Number of data points used in fit
+        method: Fitting method used (e.g. "nelder-mead", "approach3")
+        status: Outcome of the fitting procedure (see FitStatus)
+        status_message: Human-readable detail when status is not CONVERGED
+    """
+
+    E: float
+    A: float
+    B: float
+    alpha: float
+    beta: float
+    residual_sum_squares: float
+    n_points: int
+    method: str = "nelder-mead"
+    status: FitStatus = FitStatus.CONVERGED
+    status_message: str = ""
+
+    @property
+    def a(self) -> float:
+        """N* scaling exponent: β/(α+β)."""
+        return self.beta / (self.alpha + self.beta)
+
+    @property
+    def b(self) -> float:
+        """D* scaling exponent: α/(α+β)."""
+        return self.alpha / (self.alpha + self.beta)
+
+    @property
+    def converged(self) -> bool:
+        """True if the optimizer reported full convergence."""
+        return self.status == FitStatus.CONVERGED
+
+    def to_loss_surface(self) -> LossSurface:
+        """Convert fit result to a LossSurface object."""
+        return LossSurface(
+            alpha=self.alpha,
+            beta=self.beta,
+            A=self.A,
+            B=self.B,
+            E=self.E,
+        )
+
+
+# =============================================================================
+# Shared utilities (validation, diagnostics, internal grid searches)
+# =============================================================================
+
+
+def _validate_positive_finite(name: str, arr: np.ndarray) -> None:
+    """Raise ValueError if *arr* contains non-finite or non-positive values."""
+    if not np.all(np.isfinite(arr)):
+        raise ValueError(f"{name} contains non-finite values (NaN or Inf)")
+    if np.any(arr <= 0):
+        raise ValueError(f"{name} must be strictly positive for log-space fitting")
+
+
+def _validate_ndl_inputs(
+    N: np.ndarray, D: np.ndarray, L: np.ndarray
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Validate and coerce N, D, L inputs.
+
+    Returns:
+        (N, D, L) as float arrays after validation.
+
+    Raises:
+        ValueError: If lengths mismatch or values are invalid.
+    """
+    N = np.asarray(N, dtype=float)
+    D = np.asarray(D, dtype=float)
+    L = np.asarray(L, dtype=float)
+    if not (len(N) == len(D) == len(L)):
+        raise ValueError(
+            f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
+        )
+    _validate_positive_finite("N", N)
+    _validate_positive_finite("D", D)
+    if not np.all(np.isfinite(L)):
+        raise ValueError("L contains non-finite values (NaN or Inf)")
+    return N, D, L
+
+
+def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> str | None:
+    """Return a message if index is at grid edge, else None."""
+    if idx == 0 or idx == len(grid) - 1:
+        return (
+            f"Best {name}={grid[idx]:.4f} is at grid edge "
+            f"[{grid[0]:.2f}, {grid[-1]:.2f}]."
+        )
+    return None
+
+
+def _check_at_bounds(
+    name: str, val: float, lo: float, hi: float, tol: float = 1e-6
+) -> str | None:
+    """Return a message if value is at or near bounds, else None."""
+    if val - lo < tol:
+        return f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}."
+    if hi - val < tol:
+        return f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}."
+    return None
+
+
+def _check_positive(name: str, val: float, tol: float = 1e-6) -> str | None:
+    """Return a message if value is at or near zero, else None."""
+    if val < tol:
+        return f"Fitted {name}={val:.2e} is at or near zero."
+    return None
+
+
+def _check_finite(**params: float) -> None:
+    """Raise if any parameter is NaN or Inf."""
+    bad = {k: v for k, v in params.items() if np.isnan(v) or np.isinf(v)}
+    if bad:
+        raise NonFiniteFitError(f"Optimization produced non-finite values: {bad}")
+
+
+def fit_power_law(x: np.ndarray, y: np.ndarray) -> PowerLawFit:
+    """Fit a power law relationship y = a · x^b via linear regression in log-log space.
+
+    Fits: log₁₀(y) = exponent · log₁₀(x) + intercept
+
+    This is used in Chinchilla Approach 2 to fit:
+        N* = 10^a_intercept · C^a  (optimal parameters vs compute)
+        D* = 10^b_intercept · C^b  (optimal tokens vs compute)
+
+    Args:
+        x: Independent variable (e.g., compute budgets)
+        y: Dependent variable (e.g., optimal N* or D* values)
+
+    Returns:
+        PowerLawFit with exponent and intercept
+
+    Raises:
+        ValueError: If x or y contain non-finite or non-positive values
+    """
+    x, y = np.asarray(x, dtype=float), np.asarray(y, dtype=float)
+    _validate_positive_finite("x", x)
+    _validate_positive_finite("y", y)
+    log_x = np.log10(x)
+    log_y = np.log10(y)
+    exponent, intercept = np.polyfit(log_x, log_y, 1)
+    return PowerLawFit(exponent=float(exponent), intercept=float(intercept))
+
+
+def fit_parabola(
+    log_x: np.ndarray,
+    L: np.ndarray,
+    min_curvature: float = 1e-10,
+) -> ParabolaFit:
+    """Fit a parabola to loss vs log-x data.
+
+    Fits L = a*log(x)² + b*log(x) + c and finds the minimum.
+
+    Args:
+        log_x: Log10 of x values (e.g., parameter counts N or token counts D)
+        L: Loss values
+        min_curvature: Minimum value for quadratic coefficient (must be positive
+                       for an upward-facing parabola with a minimum).
+
+    Returns:
+        ParabolaFit with coefficients and minimum location
+
+    Raises:
+        FitError: If fewer than 3 points or curvature is non-positive
+    """
+    if len(log_x) < 3:
+        raise FitError(f"Parabola fit requires at least 3 points, got {len(log_x)}.")
+    # Fit quadratic: L = a*log(x)² + b*log(x) + c
+    coeffs = np.polyfit(log_x, L, 2)
+    a, b, c = coeffs
+
+    # Require positive curvature (upward-facing parabola) to have a minimum
+    if a < min_curvature:
+        raise FitError(
+            f"Parabola fit has non-positive curvature (a={a:.2e}). "
+            f"A minimum requires positive curvature (upward-facing parabola). "
+            f"This may indicate a flat loss surface, insufficient data, or inverted curvature."
+        )
+
+    # Minimum at log(x*) = -b / (2a)
+    log_x_opt = -b / (2 * a)
+    x_opt = 10**log_x_opt
+
+    # Minimum loss value
+    L_min = np.polyval(coeffs, log_x_opt)
+
+    return ParabolaFit(
+        coeffs=coeffs,
+        log_x_opt=log_x_opt,
+        x_opt=x_opt,
+        L_min=L_min,
+    )
 
 
 def _compute_rss_and_params(
@@ -754,49 +771,25 @@ def _compute_rss_and_params(
     return rss, params
 
 
-def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> str | None:
-    """Return a message if index is at grid edge, else None."""
-    if idx == 0 or idx == len(grid) - 1:
-        return (
-            f"Best {name}={grid[idx]:.4f} is at grid edge "
-            f"[{grid[0]:.2f}, {grid[-1]:.2f}]."
-        )
-    return None
+def _cartesian_product(*arrays: np.ndarray) -> np.ndarray:
+    """Build a (K, N) matrix whose columns are the Cartesian product of K 1-D arrays.
+
+    N is the product of all array lengths. Column order matches nested
+    for-loops: the first array varies slowest and the last varies fastest.
+    """
+    result = np.array(list(itertools.product(*arrays))).T
+    assert result.shape == (len(arrays), np.prod([len(a) for a in arrays]))
+    return result
 
 
-def _check_at_bounds(
-    name: str, val: float, lo: float, hi: float, tol: float = 1e-6
-) -> str | None:
-    """Return a message if value is at or near bounds, else None."""
-    if val - lo < tol:
-        return f"Optimized {name}={val:.6f} is at lower bound {lo:.2f}."
-    if hi - val < tol:
-        return f"Optimized {name}={val:.6f} is at upper bound {hi:.2f}."
-    return None
-
-
-def _check_positive(name: str, val: float, tol: float = 1e-6) -> str | None:
-    """Return a message if value is at or near zero, else None."""
-    if val < tol:
-        return f"Fitted {name}={val:.2e} is at or near zero."
-    return None
-
-
-def _check_finite(**params: float) -> None:
-    """Raise if any parameter is NaN or Inf."""
-    bad = {k: v for k, v in params.items() if np.isnan(v) or np.isinf(v)}
-    if bad:
-        raise NonFiniteFitError(f"Optimization produced non-finite values: {bad}")
-
-
-def _grid_search(
+def _grid_search_2d(
     alpha_grid: np.ndarray,
     beta_grid: np.ndarray,
     log_N: np.ndarray,
     log_D: np.ndarray,
     L: np.ndarray,
 ) -> tuple[int, int]:
-    """Find best (α, β) indices via exhaustive grid search."""
+    """Find best (α, β) indices via exhaustive 2D grid search."""
     best_rss = np.inf
     best_i, best_j = 0, 0
 
@@ -810,12 +803,202 @@ def _grid_search(
     return best_i, best_j
 
 
+def _grid_search_5d(
+    grid: ParameterGrid,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> tuple[np.ndarray, float]:
+    """Vectorized 5D grid search for the best Chinchilla surface parameters.
+
+    Evaluates RSS = sum((L - pred)^2) over the Cartesian product of the five
+    grids and returns the parameter vector with the lowest RSS.
+
+    Args:
+        grid: 5D parameter grid.
+        log_N: Log parameter counts (natural log), shape (n_data,).
+        log_D: Log token counts (natural log), shape (n_data,).
+        L: Loss values, shape (n_data,).
+
+    Returns:
+        Tuple of (best_params, best_rss) where best_params is
+        a 1-D array [E, A, B, α, β].
+    """
+    cart = _cartesian_product(grid.E, grid.A, grid.B, grid.alpha, grid.beta)
+    preds = (
+        cart[0]
+        + cart[1] * np.exp(-cart[3] * log_N[:, None])
+        + cart[2] * np.exp(-cart[4] * log_D[:, None])
+    )  # (n_data, N_grid)
+    rss_vals = np.sum((L[:, None] - preds) ** 2, axis=0)
+    best_idx = int(np.argmin(rss_vals))
+    return cart[:, best_idx], float(rss_vals[best_idx])
+
+
+def _surface_rss(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> float:
+    """RSS objective for 5-parameter Chinchilla loss surface."""
+    E, A, B, alpha, beta = x
+    pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
+    return float(np.sum((L - pred) ** 2))
+
+
+def _surface_rss_grad(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> np.ndarray:
+    """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
+    E, A, B, alpha, beta = x
+    term_N = np.exp(-alpha * log_N)  # N^(-alpha)
+    term_D = np.exp(-beta * log_D)  # D^(-beta)
+    pred = E + A * term_N + B * term_D
+    resid = pred - L  # (pred - observed)
+    # d(RSS)/dx = 2 * sum(resid * d(pred)/dx)
+    grad_E = 2 * np.sum(resid)
+    grad_A = 2 * np.sum(resid * term_N)
+    grad_B = 2 * np.sum(resid * term_D)
+    grad_alpha = 2 * np.sum(resid * A * term_N * (-log_N))
+    grad_beta = 2 * np.sum(resid * B * term_D * (-log_D))
+    return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
+
+
+# =============================================================================
+# Method: Approach 2 (Parabolic IsoFLOP → Power Law)
+# =============================================================================
+
+
+def fit_approach2(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    C: np.ndarray,
+) -> ParabolaFitResult:
+    """Recover scaling exponents using Chinchilla Approach 2.
+
+    Stage 1: For each compute budget, fit parabolas to find optimal N* and D*
+    Stage 2: Fit power laws N* ∝ C^a and D* ∝ C^b
+
+    Args:
+        N: Array of parameter counts (one per data point)
+        D: Array of token counts (one per data point)
+        L: Array of loss values (one per data point)
+        C: Array of compute budgets (one per data point, same length as N/D/L).
+            Points are grouped by unique values of C.
+
+    Returns:
+        ParabolaFitResult with recovered exponents a and b
+    """
+    N, D, L = _validate_ndl_inputs(N, D, L)
+    C = np.asarray(C, dtype=float)
+    if len(C) != len(N):
+        raise ValueError(f"C must have same length as N/D/L, got {len(C)} vs {len(N)}")
+
+    # Group by unique compute budgets
+    unique_C = np.unique(C)
+
+    # Stage 1: Parabola fits to find N* and D* at each compute budget
+    parabola_fits_N = []
+    parabola_fits_D = []
+    N_opts = []
+    D_opts = []
+
+    for c in unique_C:
+        mask = C == c
+        N_group = N[mask]
+        D_group = D[mask]
+        L_group = L[mask]
+
+        # Fit parabola to L vs log(N) to find N*
+        fit_N = fit_parabola(np.log10(N_group), L_group)
+        parabola_fits_N.append(fit_N)
+        N_opts.append(fit_N.x_opt)
+
+        # Fit parabola to L vs log(D) to find D*
+        fit_D = fit_parabola(np.log10(D_group), L_group)
+        parabola_fits_D.append(fit_D)
+        D_opts.append(fit_D.x_opt)
+
+    N_opts_arr = np.array(N_opts)
+    D_opts_arr = np.array(D_opts)
+
+    # Stage 2: Fit power laws N* ∝ C^a and D* ∝ C^b in log-log space
+    N_fit = fit_power_law(unique_C, N_opts_arr)
+    D_fit = fit_power_law(unique_C, D_opts_arr)
+
+    return ParabolaFitResult(
+        a=N_fit.exponent,
+        b=D_fit.exponent,
+        a_intercept=N_fit.intercept,
+        b_intercept=D_fit.intercept,
+        parabola_fits_N=tuple(parabola_fits_N),
+        parabola_fits_D=tuple(parabola_fits_D),
+        compute_budgets=unique_C,
+        N_opts=N_opts_arr,
+        D_opts=D_opts_arr,
+    )
+
+
+# =============================================================================
+# Method: Grid Search (5D Exhaustive)
+# =============================================================================
+
+
+def fit_grid_search(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    *,
+    grid: ParameterGrid | None = None,
+) -> SurfaceFitResult:
+    """Fit the loss surface via exhaustive 5D grid search.
+
+    Evaluates RSS = sum((L - pred)^2) over the Cartesian product of the
+    parameter grid and returns the best-fitting point.
+
+    Args:
+        N: Array of parameter counts
+        D: Array of token counts
+        L: Array of loss values (same length as N and D)
+        grid: 5D parameter grid. Defaults to DEFAULT_PARAMETER_GRID.
+
+    Returns:
+        SurfaceFitResult with the best grid point parameters.
+    """
+    if grid is None:
+        grid = DEFAULT_PARAMETER_GRID
+
+    N, D, L = _validate_ndl_inputs(N, D, L)
+    log_N = np.log(N)
+    log_D = np.log(D)
+
+    best_params, best_rss = _grid_search_5d(grid, log_N, log_D, L)
+    E, A, B, alpha, beta = best_params
+
+    return SurfaceFitResult(
+        E=float(E),
+        A=float(A),
+        B=float(B),
+        alpha=float(alpha),
+        beta=float(beta),
+        residual_sum_squares=best_rss,
+        n_points=len(N),
+        method="grid-search",
+        status=FitStatus.CONVERGED,
+        status_message="",
+    )
+
+
+# =============================================================================
+# Method: VPNLS (Variable Projection + NNLS)
+# =============================================================================
+
+
 def fit_vpnls(
     N: np.ndarray,
     D: np.ndarray,
     L: np.ndarray,
     *,
-    grid: VPNLSInitGrid | None = None,
+    grid: ExponentGrid | None = None,
     bounds: SurfaceBounds | None = None,
     method: str = "nelder-mead",
     options: Union[NelderMeadOptions, LBFGSBOptions, None] = None,
@@ -831,13 +1014,13 @@ def fit_vpnls(
         - "l-bfgs-b": Coarse grid search for initialization, then L-BFGS-B
           refinement. Gradient scheme and step size configurable via options.
         - "grid": Grid search only with no local refinement. Pass a high-
-          resolution grid (e.g. FINE_VPNLS_GRID) for better precision.
+          resolution grid (e.g. FINE_EXPONENT_GRID) for better precision.
 
     Args:
         N: Array of parameter counts
         D: Array of token counts
         L: Array of loss values (same length as N and D)
-        grid: Initialization grid for (α, β). Defaults to DEFAULT_VPNLS_GRID.
+        grid: Initialization grid for (α, β). Defaults to DEFAULT_EXPONENT_GRID.
         bounds: Parameter bounds for optimization and post-fit checking.
             Defaults to DEFAULT_SURFACE_BOUNDS.
         method: Optimization method — "nelder-mead", "l-bfgs-b", or "grid"
@@ -860,30 +1043,18 @@ def fit_vpnls(
         raise ValueError(f"method must be one of {valid_methods}, got {method!r}")
 
     if grid is None:
-        grid = DEFAULT_VPNLS_GRID
+        grid = DEFAULT_EXPONENT_GRID
     if bounds is None:
         bounds = DEFAULT_SURFACE_BOUNDS
 
-    N, D, L = (
-        np.asarray(N, dtype=float),
-        np.asarray(D, dtype=float),
-        np.asarray(L, dtype=float),
-    )
-    if not (len(N) == len(D) == len(L)):
-        raise ValueError(
-            f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
-        )
-    _validate_positive_finite("N", N)
-    _validate_positive_finite("D", D)
-    if not np.all(np.isfinite(L)):
-        raise ValueError("L contains non-finite values (NaN or Inf)")
+    N, D, L = _validate_ndl_inputs(N, D, L)
 
     alpha_grid = grid.alpha
     beta_grid = grid.beta
     log_N, log_D = np.log(N), np.log(D)
 
     # Stage 1: Grid search (initialization for local methods, or final for "grid")
-    best_i, best_j = _grid_search(alpha_grid, beta_grid, log_N, log_D, L)
+    best_i, best_j = _grid_search_2d(alpha_grid, beta_grid, log_N, log_D, L)
     grid_edge_msgs = [
         msg
         for msg in [
@@ -990,85 +1161,8 @@ def fit_vpnls(
 
 
 # =============================================================================
-# Approach 3: Direct nonlinear optimization over all 5 parameters
+# Method: Approach 3 (Direct 5-parameter L-BFGS-B)
 # =============================================================================
-
-
-def _surface_rss(
-    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
-) -> float:
-    """RSS objective for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
-    return float(np.sum((L - pred) ** 2))
-
-
-def _surface_rss_grad(
-    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
-) -> np.ndarray:
-    """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    term_N = np.exp(-alpha * log_N)  # N^(-alpha)
-    term_D = np.exp(-beta * log_D)  # D^(-beta)
-    pred = E + A * term_N + B * term_D
-    resid = pred - L  # (pred - observed)
-    # d(RSS)/dx = 2 * sum(resid * d(pred)/dx)
-    grad_E = 2 * np.sum(resid)
-    grad_A = 2 * np.sum(resid * term_N)
-    grad_B = 2 * np.sum(resid * term_D)
-    grad_alpha = 2 * np.sum(resid * A * term_N * (-log_N))
-    grad_beta = 2 * np.sum(resid * B * term_D * (-log_D))
-    return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
-
-
-def _cartesian_product(*arrays: np.ndarray) -> np.ndarray:
-    """Build a (K, N) matrix whose columns are the Cartesian product of K 1-D arrays.
-
-    N is the product of all array lengths. Column order matches nested
-    for-loops: the first array varies slowest and the last varies fastest.
-    """
-    result = np.array(list(itertools.product(*arrays))).T
-    assert result.shape == (len(arrays), np.prod([len(a) for a in arrays]))
-    return result
-
-
-def fit_grid_search(
-    *,
-    E_grid: np.ndarray,
-    A_grid: np.ndarray,
-    B_grid: np.ndarray,
-    alpha_grid: np.ndarray,
-    beta_grid: np.ndarray,
-    log_N: np.ndarray,
-    log_D: np.ndarray,
-    L: np.ndarray,
-) -> np.ndarray:
-    """Vectorized 5D grid search for the best Chinchilla surface initialization.
-
-    Evaluates RSS = sum((L - pred)^2) over the Cartesian product of the five
-    grids and returns the parameter vector with the lowest RSS.
-
-    Args:
-        E_grid: 1-D grid of E values.
-        A_grid: 1-D grid of A values.
-        B_grid: 1-D grid of B values.
-        alpha_grid: 1-D grid of α values.
-        beta_grid: 1-D grid of β values.
-        log_N: Log parameter counts, shape (n_data,).
-        log_D: Log token counts, shape (n_data,).
-        L: Loss values, shape (n_data,).
-
-    Returns:
-        1-D array [E, A, B, α, β] with the lowest RSS on the grid.
-    """
-    grid = _cartesian_product(E_grid, A_grid, B_grid, alpha_grid, beta_grid)
-    preds = (
-        grid[0]
-        + grid[1] * np.exp(-grid[3] * log_N[:, None])
-        + grid[2] * np.exp(-grid[4] * log_D[:, None])
-    )  # (n_data, N_grid)
-    rss_vals = np.sum((L[:, None] - preds) ** 2, axis=0)
-    return grid[:, int(np.argmin(rss_vals))]
 
 
 def fit_approach3(
@@ -1076,7 +1170,7 @@ def fit_approach3(
     D: np.ndarray,
     L: np.ndarray,
     *,
-    grid: Approach3InitGrid | None = None,
+    grid: ParameterGrid | None = None,
     bounds: SurfaceBounds | None = None,
     options: LBFGSBOptions | None = None,
     use_grad: bool = True,
@@ -1096,7 +1190,7 @@ def fit_approach3(
         N: Array of parameter counts
         D: Array of token counts
         L: Array of loss values (same length as N and D)
-        grid: Initialization grid. Defaults to DEFAULT_APPROACH3_GRID.
+        grid: Initialization grid. Defaults to DEFAULT_PARAMETER_GRID.
         bounds: Parameter bounds. Defaults to DEFAULT_SURFACE_BOUNDS.
         options: L-BFGS-B options. Defaults to DEFAULT_LBFGSB_OPTIONS.
             When use_grad is False, ``options.jac`` sets the finite-difference
@@ -1118,25 +1212,13 @@ def fit_approach3(
         NonFiniteFitError: If the fitted parameters contain NaN or Inf
     """
     if grid is None:
-        grid = DEFAULT_APPROACH3_GRID
+        grid = DEFAULT_PARAMETER_GRID
     if bounds is None:
         bounds = DEFAULT_SURFACE_BOUNDS
     if options is None:
         options = DEFAULT_LBFGSB_OPTIONS
 
-    N, D, L = (
-        np.asarray(N, dtype=float),
-        np.asarray(D, dtype=float),
-        np.asarray(L, dtype=float),
-    )
-    if not (len(N) == len(D) == len(L)):
-        raise ValueError(
-            f"N, D, L must have same length, got {len(N)}, {len(D)}, {len(L)}"
-        )
-    _validate_positive_finite("N", N)
-    _validate_positive_finite("D", D)
-    if not np.all(np.isfinite(L)):
-        raise ValueError("L contains non-finite values (NaN or Inf)")
+    N, D, L = _validate_ndl_inputs(N, D, L)
 
     log_N = np.log(N)
     log_D = np.log(D)
@@ -1154,16 +1236,7 @@ def fit_approach3(
             raise ValueError("rng is required when random_init=True")
         best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in bounds_list])
     else:
-        best_x0 = fit_grid_search(
-            E_grid=grid.E,
-            A_grid=grid.A,
-            B_grid=grid.B,
-            alpha_grid=grid.alpha,
-            beta_grid=grid.beta,
-            log_N=log_N,
-            log_D=log_D,
-            L=L,
-        )
+        best_x0, _ = _grid_search_5d(grid, log_N, log_D, L)
 
     result = minimize(
         rss,

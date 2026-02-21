@@ -12,12 +12,11 @@ from pathlib import Path
 from scaling_law_analysis.chinchilla import (
     LossSurface,
     isoflop_sample,
-    fit_approach2,
     compute_center_offset,
-    Approach2Result,
+    ParabolaFitResult,
 )
 from scaling_law_analysis.config import prepare_output_dir
-from scaling_law_analysis.experiments.common import N_POINTS
+from scaling_law_analysis.experiments.common import N_POINTS, fit_simulated_approach2
 
 
 # =============================================================================
@@ -60,7 +59,7 @@ def setup_style():
 
 def plot_isoflop_curves_D(
     ax: plt.Axes,
-    result: Approach2Result,
+    result: ParabolaFitResult,
     surface: LossSurface,
     compute_budgets: np.ndarray,
     log_range: float,
@@ -127,7 +126,7 @@ def plot_isoflop_curves_D(
 
 def plot_power_law_fit_D(
     ax: plt.Axes,
-    result: Approach2Result,
+    result: ParabolaFitResult,
     surface: LossSurface,
     compute_budgets: np.ndarray,
 ):
@@ -208,7 +207,7 @@ def create_happy_path_figure(output_dir: Path) -> dict:
     log_range = LOG_RANGE
 
     # Fit using Approach 2 (no drift, no scale)
-    result = fit_approach2(
+    result = fit_simulated_approach2(
         compute_budgets=compute_budgets,
         surface=surface,
         drift_rate=0.0,
@@ -332,7 +331,7 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
 
     for col, (name, surface) in enumerate(surfaces):
         # Fit using Approach 2 (no drift, no scale)
-        result = fit_approach2(
+        result = fit_simulated_approach2(
             compute_budgets=compute_budgets,
             surface=surface,
             drift_rate=0.0,
@@ -421,7 +420,7 @@ def compute_extrapolation_errors(
         Tuple of (true_D, inferred_D, abs_errors) arrays at each eval budget
     """
     # Fit using Approach 2 on training budgets
-    result = fit_approach2(
+    result = fit_simulated_approach2(
         compute_budgets=training_budgets,
         surface=surface,
         drift_rate=drift_rate,
@@ -728,7 +727,7 @@ def _create_off_center_bias_figure(
     b_intercept_errors = []
 
     for lr in log_ranges:
-        result = fit_approach2(
+        result = fit_simulated_approach2(
             compute_budgets=compute_budgets,
             surface=surface,
             drift_rate=drift_rate,
@@ -765,7 +764,7 @@ def _create_off_center_bias_figure(
 
     # --- IsoFLOP contour data at L (±8×) grid ---
     log_range_display = np.log10(8)
-    result_display = fit_approach2(
+    result_display = fit_simulated_approach2(
         compute_budgets=compute_budgets,
         surface=surface,
         drift_rate=drift_rate,
