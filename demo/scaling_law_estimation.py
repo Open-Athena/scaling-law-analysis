@@ -1,3 +1,0 @@
-"""Standalone scaling law estimation demo."""
-
-...
