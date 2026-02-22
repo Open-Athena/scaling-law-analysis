@@ -13,6 +13,8 @@ import mimetypes
 import re
 from pathlib import Path
 
+from scaling_law_analysis import config
+
 
 def inline_local_images(html: str, base_dir: Path) -> str:
     """Replace local <img src="..."> references with base64 data URIs.
@@ -90,8 +92,6 @@ def build_standalone(
 
 
 if __name__ == "__main__":
-    from scaling_law_analysis import config
-
     article_dir = config.RESULTS_DIR / "article"
     input_path = article_dir / "article.html"
 

@@ -3,12 +3,16 @@
 This module generates clean, publication-ready figures for the blog post.
 """
 
+import shutil
+from pathlib import Path
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm, LinearSegmentedColormap
 from matplotlib.lines import Line2D
-from pathlib import Path
+from scipy.stats import gmean
 
+from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
     LossSurface,
     isoflop_sample,
@@ -16,7 +20,18 @@ from scaling_law_analysis.chinchilla import (
     ParabolaFitResult,
 )
 from scaling_law_analysis.config import prepare_output_dir
-from scaling_law_analysis.experiments.common import N_POINTS, fit_simulated_approach2
+from scaling_law_analysis.experiments.common import (
+    N_POINTS,
+    COMPUTE_BUDGETS as EXP_BUDGETS,
+    LOG_RANGES,
+    LOSS_SURFACES,
+    fit_simulated_approach2,
+)
+from scaling_law_analysis.experiments.exp5_parameter_recovery import (
+    METHOD_CONFIGS,
+    MethodConfig,
+    run_method_comparison,
+)
 
 
 # =============================================================================
@@ -1227,19 +1242,6 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     across all surfaces, sampling ranges, and parameters, with min-max bars.
     Methods with convergence failures are drawn with reduced opacity.
     """
-    from scipy.stats import gmean
-
-    from scaling_law_analysis.experiments.common import (
-        COMPUTE_BUDGETS as EXP_BUDGETS,
-        LOG_RANGES,
-        LOSS_SURFACES,
-    )
-    from scaling_law_analysis.experiments.exp5_parameter_recovery import (
-        METHOD_CONFIGS,
-        MethodConfig,
-        run_method_comparison,
-    )
-
     setup_style()
 
     # Run the experiment
@@ -1635,10 +1637,6 @@ def copy_experiment_outputs(output_dir: Path) -> None:
     than being regenerated. This function copies them into the article
     directory tree so that relative paths in the HTML resolve correctly.
     """
-    import shutil
-
-    from scaling_law_analysis import config
-
     exp_dir = config.RESULTS_DIR / "experiments"
 
     appendix_dir = prepare_output_dir(output_dir / "appendix")
@@ -1679,8 +1677,6 @@ def copy_experiment_outputs(output_dir: Path) -> None:
 
 
 if __name__ == "__main__":
-    from scaling_law_analysis import config
-
     output_dir = config.RESULTS_DIR / "article"
     data = generate_all_figures(output_dir)
 

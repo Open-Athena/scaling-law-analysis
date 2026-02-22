@@ -12,11 +12,9 @@ This module provides:
 
 import enum
 import itertools
+from dataclasses import dataclass
 
 import numpy as np
-from dataclasses import dataclass
-from typing import Union
-
 from scipy.optimize import minimize, nnls
 
 
@@ -1001,7 +999,7 @@ def fit_vpnls(
     grid: ExponentGrid | None = None,
     bounds: SurfaceBounds | None = None,
     method: str = "nelder-mead",
-    options: Union[NelderMeadOptions, LBFGSBOptions, None] = None,
+    options: NelderMeadOptions | LBFGSBOptions | None = None,
 ) -> SurfaceFitResult:
     """Fit the loss surface L(N, D) = E + A/N^α + B/D^β via variable projection.
 

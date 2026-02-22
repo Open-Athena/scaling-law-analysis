@@ -8,11 +8,15 @@ accurate scaling law parameter recovery, and extrapolation using fitted paramete
 remains accurate even at compute budgets far beyond the fitting range.
 """
 
+import inspect
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+# Private API import used intentionally for exposition (verifying the default eps value).
+from scipy.optimize._lbfgsb_py import _minimize_lbfgsb
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
@@ -84,11 +88,6 @@ def _verify_default_eps() -> None:
     The method comparison labels and article exposition reference this value
     explicitly, so we need to ensure it stays correct across scipy versions.
     """
-    import inspect
-
-    # Private API import used intentionally for exposition (verifying the default eps value).
-    from scipy.optimize._lbfgsb_py import _minimize_lbfgsb
-
     sig = inspect.signature(_minimize_lbfgsb)
     scipy_default = sig.parameters["eps"].default
     assert (
