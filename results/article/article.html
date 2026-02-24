@@ -837,15 +837,15 @@
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling, 
-                    Approach 2 recovers both exponents and intercepts with machine-precision 
+                    On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling,
+                    Approach 2 recovers both exponents and intercepts with machine-precision
                     accuracy. When \(\alpha = \beta\), the parabola vertex shift is zero,
                     so the inferred optima coincide with the true optima.
                 </p>
             </div>
 
             <p>
-                This establishes our baseline. Approach 2 is precisely correct under ideal conditions that 
+                This establishes our baseline. Approach 2 is precisely correct under ideal conditions that
                 are unrealistic in practice. The problems arise when we deviate from these ideal conditions, as we'll see
                 in the following sections where these conditions are perturbed in controlled ways.
             </p>
@@ -1051,8 +1051,9 @@
                 \(L(w) \approx L(0) + \frac{1}{2}L''(0)w^2\) is only valid when higher-order terms are
                 negligible, i.e., when samples are close to the true minimum. As sampling range increases,
                 3rd and 4th order terms grow. For symmetric surfaces (\(\alpha = \beta\)), odd-order
-                terms cancel by symmetry, preserving the vertex location. For asymmetric surfaces,
-                they don't cancel, shifting the fitted vertex away from the true optimum.
+                terms cancel because their derivatives are equal and opposite at equal distances from the optimum
+                (while even-order derivatives are exactly equal), preserving the vertex location. For asymmetric
+                surfaces, they don't cancel, shifting the fitted vertex away from the true optimum.
             </p>
 
             <h3 id="why-it-matters">Why It Matters</h3>
@@ -1803,7 +1804,7 @@
                 32&times;32 grid search identifies a good starting region, and a Nelder-Mead
                 simplex optimizer refines it. The linear separation is maintained throughout.
                 The optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
-                surface, never the full five-parameter space. We term this method Variable 
+                surface, never the full five-parameter space. We term this method Variable
                 Projection with Non-negative Least Squares (VPNLS).
             </p>
 
