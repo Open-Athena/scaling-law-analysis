@@ -18,6 +18,12 @@ On article:
     - See "Published Fit Parameters" in Scaling Laws notes
   - Improve this after adding appendix table w/ other reported numbers:
     - > "An exponent ratio of 3.0 is comparable to what has been observed in practice, e.g. DeepSeek[3] reports compute-optimal allocation exponents"
+  - On scaling laws in other modalities:
+    - See [ProGen3](https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2.full.pdf):
+      - "We fit a variant of the equation proposed by Kaplan et al"
+      - It looks like they used Kaplan formula 1.5 exactly
+    - SODA from Marin: https://arxiv.org/abs/2602.16687
+      
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Pad out list of Approach 2 uses in first paragraph
