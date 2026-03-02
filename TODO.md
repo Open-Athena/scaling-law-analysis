@@ -4,16 +4,47 @@ On article:
 
 - Primary:
   - Code:
-    - Check LossSurface.loss (add vectorized version)
-      - return self.E + self.A / np.power(N, self.alpha) + self.B / np.power(D, self.beta)
     - Check bases for logs
-    - Standardize the 2d/5d grid search 
+  - Mention that 2D optimization allows for much finer grid search rather than random initializations from many points
+    - Papers that do this include:
+      - [The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws](https://arxiv.org/pdf/2501.12486)
+      - [Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws](https://arxiv.org/pdf/2401.00448)
+        - "We use the L-BFGS algorithm to perform the minimization, initialized from a grid of starting points for each of the parameters"
+          - This is not actually that clear that they used multiple initializations but "The Journey Matters" cites it that way
+        - "We set the maximum number of L-BFGS iterations to 1000"
+        - "we follow the procedure described in the Sec. D.2 of the Chinchilla paper, minimizing the objective in Eq.4, where LSE is the log-sum-exp operator"
+      - Chinchilla itself on Approach 3: "We account for possible local minima by selecting the best fit from a grid of initialisations"
+      - From Misfitting scaling laws paper:
+        "One approach is to iteratively train with different initializations, selecting the best fit at the termination of the search. This is typically a grid search over choices for each parameter (Aghajanyan et al., 2023; Muennighoff et al., 2024), or a random sample from that grid (Frantar et al., 2023; Tao et al., 2024)."
+  - Cite papers for user of 1000 iterations
+    - Training Compute-Optimal Protein Language Models, Beyond Chinchilla-Optimal
+  - More extension methods:
+    - Add [Towards Robust Scaling Laws for Optimizers](https://arxiv.org/html/2602.07712v2) as a new kind of extensions
+      - This adds multiplicative terms to measure how optimizers affect scaling rates (see 5.1)
+    - Add [The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws](https://arxiv.org/pdf/2501.12486)
+      - Includes "average parameters" to incorporate pruning during pretraining
+    - Best reference on MoE scaling:
+      - [Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models](https://arxiv.org/abs/2507.17702)
+      - https://github.com/marin-community/marin/issues/2167#issuecomment-3962197868
+  - Add limitations:
+    - Add limitiaton on not comparing to Approach 3 w/ LSE
+      - Mention LSE fiting approach in equation 11 of Chinchilla (https://arxiv.org/pdf/2203.15556 / "D. Details on the scaling analyses") and relationship to variable projection
+      - It might have prevented some of the tail events for approach 3
+      - Other LSE examples:
+        - [Towards Robust Scaling Laws for Optimizers](https://arxiv.org/html/2602.07712v2)
+        - [Training Compute-Optimal Protein Language Models](https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1)
+        - [Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws](https://arxiv.org/pdf/2401.00448)
+        - [Chinchilla Scaling: A replication attempt](https://arxiv.org/pdf/2404.10102)
+      - Notable papers that don't use LSE:
+        - [Scaling Laws for Optimal Data Mixtures](https://arxiv.org/pdf/2507.09404)
+    - Add limitation on the possibility of sampling grid errors canceling out
+    - Add limitation on not exploring data efficiency (yet)
+    - Add limitation on how 2D grid search + Nelder-Mead probably won't scale well to many more parameters
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e
-  - Add limitation on the possibility of sampling grid errors canceling out
-  - Add limitation on not exploring data efficiency (yet)
-  - Add limitation on how 2D grid search + Nelder-Mead probably won't scale well to many more parameters
+  - Cite [Scaling Laws for Native Multimodal Models](https://arxiv.org/pdf/2504.07951) on PlantCAD issue for empirical C ~ D^b method (see C. Scaling Laws)
+  - Copy intercept-error proof into paper appendix
   - Add appendix table on published scaling law exponents:
     - See "Published Fit Parameters" in Scaling Laws notes
   - Improve this after adding appendix table w/ other reported numbers:
