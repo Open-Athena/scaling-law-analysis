@@ -16,6 +16,7 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy.optimize import minimize, nnls
+from scipy.special import logsumexp
 
 
 # =============================================================================
@@ -836,28 +837,45 @@ def _grid_search_5d(
 def _surface_rss(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> float:
-    """RSS objective for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
+    """RSS objective for 5-parameter Chinchilla loss surface (LSE form).
+
+    Parameters are in log space for the coefficients: x = (log_E, log_A,
+    log_B, alpha, beta).  The prediction is computed via logsumexp for
+    numerical stability.
+    """
+    log_E, log_A, log_B, alpha, beta = x
+    terms = np.stack(
+        [
+            np.full_like(log_N, log_E),
+            log_A - alpha * log_N,
+            log_B - beta * log_D,
+        ]
+    )
+    pred = np.exp(logsumexp(terms, axis=0))
     return float(np.sum((L - pred) ** 2))
 
 
 def _surface_rss_grad(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> np.ndarray:
-    """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
-    E, A, B, alpha, beta = x
-    term_N = np.exp(-alpha * log_N)  # N^(-alpha)
-    term_D = np.exp(-beta * log_D)  # D^(-beta)
-    pred = E + A * term_N + B * term_D
-    resid = pred - L  # (pred - observed)
-    # d(RSS)/dx = 2 * sum(resid * d(pred)/dx)
-    grad_E = 2 * np.sum(resid)
-    grad_A = 2 * np.sum(resid * term_N)
-    grad_B = 2 * np.sum(resid * term_D)
-    grad_alpha = 2 * np.sum(resid * A * term_N * (-log_N))
-    grad_beta = 2 * np.sum(resid * B * term_D * (-log_D))
-    return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
+    """Analytical gradient of RSS for the LSE-parameterized loss surface.
+
+    Parameters are (log_E, log_A, log_B, alpha, beta).  The chain rule
+    through exp gives each coefficient gradient a factor of its own
+    exponential term.
+    """
+    log_E, log_A, log_B, alpha, beta = x
+    s_E = np.exp(log_E)
+    s_A = np.exp(log_A - alpha * log_N)
+    s_D = np.exp(log_B - beta * log_D)
+    pred = s_E + s_A + s_D
+    resid = pred - L
+    grad_log_E = 2 * np.sum(resid * s_E)
+    grad_log_A = 2 * np.sum(resid * s_A)
+    grad_log_B = 2 * np.sum(resid * s_D)
+    grad_alpha = 2 * np.sum(resid * s_A * (-log_N))
+    grad_beta = 2 * np.sum(resid * s_D * (-log_D))
+    return np.array([grad_log_E, grad_log_A, grad_log_B, grad_alpha, grad_beta])
 
 
 # =============================================================================
@@ -1227,21 +1245,26 @@ def fit_approach3(
     def rss_grad(x: np.ndarray) -> np.ndarray:
         return _surface_rss_grad(x, log_N, log_D, L)
 
-    bounds_list = bounds.to_list()
+    raw_bounds = bounds.to_list()
+    log_bounds = [(np.log(lo), np.log(hi)) for lo, hi in raw_bounds[:3]] + raw_bounds[
+        3:
+    ]
 
     if random_init:
         if rng is None:
             raise ValueError("rng is required when random_init=True")
-        best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in bounds_list])
+        best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in log_bounds])
     else:
-        best_x0, _ = _grid_search_5d(grid, log_N, log_D, L)
+        raw_x0, _ = _grid_search_5d(grid, log_N, log_D, L)
+        best_x0 = raw_x0.copy()
+        best_x0[:3] = np.log(best_x0[:3])
 
     result = minimize(
         rss,
         x0=best_x0,
         jac=rss_grad if use_grad else options.jac,
         method="L-BFGS-B",
-        bounds=bounds_list,
+        bounds=log_bounds,
         options=options.to_dict(),
     )
 
@@ -1263,9 +1286,12 @@ def fit_approach3(
                 f"Optimization failed: {result.message} " f"(iterations: {result.nit})"
             )
 
-    E, A, B, alpha, beta = result.x
+    log_E, log_A, log_B, alpha, beta = result.x
+    E = float(np.exp(log_E))
+    A = float(np.exp(log_A))
+    B = float(np.exp(log_B))
+    alpha, beta = float(alpha), float(beta)
     final_rss = float(result.fun)
-    E, A, B, alpha, beta = float(E), float(A), float(B), float(alpha), float(beta)
 
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=final_rss)
 
@@ -1274,7 +1300,7 @@ def fit_approach3(
         bound_msgs = [
             msg
             for name, val, (lo, hi) in zip(
-                param_names, [E, A, B, alpha, beta], bounds_list
+                param_names, [E, A, B, alpha, beta], raw_bounds
             )
             if (msg := _check_at_bounds(name, val, lo, hi)) is not None
         ]

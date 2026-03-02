@@ -13,6 +13,7 @@ from scaling_law_analysis.chinchilla import (
     _surface_rss,
     _surface_rss_grad,
     fit_approach2,
+    fit_approach3,
     fit_grid_search,
     fit_parabola,
     fit_vpnls,
@@ -263,18 +264,21 @@ class TestFitVPNLS:
         assert result.b == pytest.approx(expected_b, rel=1e-4)
 
 
-class TestSurfaceRssGrad:
-    """Test analytical gradient of surface RSS against finite differences."""
+class TestFitApproach3:
+    """Tests for Approach 3 (direct L-BFGS-B with LSE parameterization)."""
+
+    SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+    CHINCHILLA = DEFAULT_LOSS_SURFACE
 
     def test_gradient_matches_finite_differences(self):
         """Analytical gradient should match central finite differences to high precision."""
         rng = np.random.default_rng(42)
-        # Moderate scales keep all gradient components well-conditioned
         log_N = rng.uniform(1, 5, size=50)
         log_D = rng.uniform(1, 5, size=50)
         L = rng.uniform(2.0, 4.0, size=50)
 
-        x = np.array([1.5, 50.0, 30.0, 0.35, 0.28])
+        # LSE parameterization: (log_E, log_A, log_B, alpha, beta)
+        x = np.array([np.log(1.5), np.log(50.0), np.log(30.0), 0.35, 0.28])
 
         analytic = _surface_rss_grad(x, log_N, log_D, L)
 
@@ -294,6 +298,22 @@ class TestSurfaceRssGrad:
             ) / (2 * h)
 
         np.testing.assert_allclose(analytic, fd, rtol=1e-9)
+
+    @pytest.mark.parametrize(
+        "surface_name,surface",
+        [("symmetric", SYMMETRIC), ("chinchilla", CHINCHILLA)],
+    )
+    def test_recovers_parameters(self, surface_name, surface):
+        """fit_approach3 should recover surface parameters on noise-free data."""
+        N, D, L = _generate_isoflop_data(surface)
+        result = fit_approach3(N, D, L)
+
+        assert result.method == "approach3"
+        assert result.E == pytest.approx(surface.E, rel=1e-6)
+        assert result.A == pytest.approx(surface.A, rel=1e-6)
+        assert result.B == pytest.approx(surface.B, rel=1e-6)
+        assert result.alpha == pytest.approx(surface.alpha, rel=1e-6)
+        assert result.beta == pytest.approx(surface.beta, rel=1e-6)
 
 
 class TestCartesianProduct:
