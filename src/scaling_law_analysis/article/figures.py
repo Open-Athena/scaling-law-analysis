@@ -1324,10 +1324,10 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
             }
         )
 
-    # --- Sort by gmean descending (worst at top) ---
+    # --- Sort by max error descending (worst at top) ---
     def _sort_key(ms: dict) -> float:
-        g: float = ms["stats"]["gmean"]
-        return g if not np.isnan(g) else float("inf")
+        m: float = ms["stats"]["max"]
+        return m if not np.isnan(m) else float("inf")
 
     method_stats.sort(key=_sort_key, reverse=True)
 
@@ -1392,24 +1392,18 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                 va="top",
             )
 
-        # "Chinchilla Approach 3" callout for the 5D analytical grad method
-        if mc.label == "5D L-BFGS-B (analytical grad)" and not np.isnan(stats["gmean"]):
+        # Method family callouts
+        callout = {
+            "5D L-BFGS-B (analytical grad)": "Chinchilla Approach 3",
+            "2D L-BFGS-B (analytical grad)": "VPNLS [+\u2207]",
+            "2D Nelder-Mead (no grad)": "VPNLS [\u00ac\u2207]",
+        }.get(mc.label)
+        if callout and not np.isnan(stats["gmean"]):
+            # Center label between min and max (geometric mean in log-space)
+            bar_center = np.sqrt(stats["min"] * stats["max"])
             ax_dot.annotate(
-                "(Chinchilla Approach 3)",
-                xy=(stats["gmean"], y),
-                xytext=(0, 7),
-                textcoords="offset points",
-                fontsize=9,
-                color="#333333",
-                ha="center",
-                va="bottom",
-            )
-
-        # "VPNLS" callout for the 2D analytical grad method
-        if mc.label == "2D L-BFGS-B (analytical grad)" and not np.isnan(stats["gmean"]):
-            ax_dot.annotate(
-                "(VPNLS)",
-                xy=(stats["gmean"], y),
+                callout,
+                xy=(bar_center, y),
                 xytext=(0, 7),
                 textcoords="offset points",
                 fontsize=9,

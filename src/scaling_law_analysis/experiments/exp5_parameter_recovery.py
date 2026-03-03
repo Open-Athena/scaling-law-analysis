@@ -136,6 +136,8 @@ def compute_param_errors(
                     L,
                     grid=DEFAULT_PARAMETER_GRID,
                     use_grad=use_grad,
+                    use_lse=True,
+                    use_logloss=True,
                     options=a3_options,
                 )
             else:
@@ -315,7 +317,7 @@ METHOD_CONFIGS = [
         use_grad=False,
         jac="3-point",
     ),
-    MethodConfig("2D Nelder-Mead (gradient-free)", "#1565c0", "nelder-mead"),
+    MethodConfig("2D Nelder-Mead (no grad)", "#1565c0", "nelder-mead"),
     # Variable projection — 2D Grid (standalone, green)
     MethodConfig("2D Grid (256²)", "#2e7d32", "grid"),
 ]

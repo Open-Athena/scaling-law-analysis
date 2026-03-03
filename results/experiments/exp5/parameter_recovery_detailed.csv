@@ -1,19 +1,19 @@
 surface,method,jac,eps,label,failures,median_n_iter,max_n_iter,max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%
-symmetric,approach3,,,5D L-BFGS-B (analytical grad),0/20,65,88,1.44e-05,8.01e-05,8.01e-05,1.54e-05,1.53e-05
-symmetric,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,64,87,2.24e-04,1.56e-03,1.56e-03,2.95e-04,2.93e-04
+symmetric,approach3,,,5D L-BFGS-B (analytical grad),0/20,27,30,7.69e-08,5.05e-07,5.05e-07,2.09e-07,2.08e-07
+symmetric,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,27,32,1.17e-04,8.76e-04,8.76e-04,1.63e-04,1.64e-04
 symmetric,l-bfgs-b,,,2D L-BFGS-B (analytical grad),0/20,3,4,9.67e-08,6.37e-07,6.37e-07,1.22e-07,1.22e-07
 symmetric,l-bfgs-b,3-point,,2D L-BFGS-B (numerical grad),0/20,3,4,1.67e-08,5.30e-08,5.30e-08,1.21e-08,1.21e-08
-symmetric,nelder-mead,,,2D Nelder-Mead (gradient-free),0/20,63,66,9.51e-09,5.00e-08,6.13e-08,9.67e-09,1.22e-08
+symmetric,nelder-mead,,,2D Nelder-Mead (no grad),0/20,63,66,9.51e-09,5.00e-08,6.13e-08,9.67e-09,1.22e-08
 symmetric,grid,,,2D Grid (256²),0/20,0,0,5.22e-01,2.03e+00,2.03e+00,3.80e-01,3.80e-01
-chinchilla,approach3,,,5D L-BFGS-B (analytical grad),0/20,176,314,6.91e-02,7.53e-01,1.38e+00,1.49e-01,2.77e-01
-chinchilla,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,162,195,2.78e+01,2.36e+03,5.79e+01,6.63e+01,9.46e+00
+chinchilla,approach3,,,5D L-BFGS-B (analytical grad),0/20,92,112,1.09e-06,5.03e-06,6.57e-06,9.62e-07,1.33e-06
+chinchilla,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,90,115,1.39e-04,6.48e-04,1.46e-03,1.20e-04,2.82e-04
 chinchilla,l-bfgs-b,,,2D L-BFGS-B (analytical grad),0/20,5,6,1.39e-07,9.19e-07,8.65e-07,1.72e-07,1.68e-07
 chinchilla,l-bfgs-b,3-point,,2D L-BFGS-B (numerical grad),0/20,5,6,1.89e-08,6.37e-08,7.75e-08,1.29e-08,1.60e-08
-chinchilla,nelder-mead,,,2D Nelder-Mead (gradient-free),0/20,62,66,1.66e-08,6.28e-08,7.88e-08,1.25e-08,1.70e-08
+chinchilla,nelder-mead,,,2D Nelder-Mead (no grad),0/20,62,66,1.66e-08,6.28e-08,7.88e-08,1.25e-08,1.70e-08
 chinchilla,grid,,,2D Grid (256²),0/20,0,0,2.86e-01,9.25e-01,1.08e+00,1.73e-01,2.10e-01
-asymmetric,approach3,,,5D L-BFGS-B (analytical grad),0/20,167,279,3.34e-05,2.30e-05,3.78e-05,5.64e-06,1.15e-05
-asymmetric,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,159,295,3.90e+01,2.35e+03,2.57e+01,6.98e+01,9.61e+00
+asymmetric,approach3,,,5D L-BFGS-B (analytical grad),0/20,91,118,4.09e-06,1.74e-05,3.02e-06,3.96e-06,1.01e-06
+asymmetric,approach3,3-point,,5D L-BFGS-B (numerical grad),0/20,92,123,1.58e-03,1.20e-03,2.58e-03,2.74e-04,7.27e-04
 asymmetric,l-bfgs-b,,,2D L-BFGS-B (analytical grad),0/20,6,11,8.84e-09,3.41e-08,2.04e-08,7.90e-09,5.98e-09
 asymmetric,l-bfgs-b,3-point,,2D L-BFGS-B (numerical grad),0/20,6,11,8.27e-08,4.17e-08,6.37e-08,9.40e-09,2.04e-08
-asymmetric,nelder-mead,,,2D Nelder-Mead (gradient-free),0/20,66,72,5.25e-08,4.92e-08,6.58e-08,1.20e-08,2.01e-08
+asymmetric,nelder-mead,,,2D Nelder-Mead (no grad),0/20,66,72,5.25e-08,4.92e-08,6.58e-08,1.20e-08,2.01e-08
 asymmetric,grid,,,2D Grid (256²),0/20,0,0,2.58e+00,1.89e+00,2.00e+00,4.43e-01,5.69e-01

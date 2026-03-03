@@ -153,19 +153,42 @@ _EXP7_VPNLS_LBFGSB_OPTIONS = LBFGSBOptions(maxiter=1000)
 
 # ── Experiment ────────────────────────────────────────────────────────────────
 
-METHOD_NAMES = [
-    "Chinchilla Approach 2",
-    "Chinchilla Approach 3 (grid init)",
-    "Chinchilla Approach 3 (random init)",
-    "VPNLS",
-]
 
-METHOD_STYLES = {
-    "Chinchilla Approach 2": {"color": "#d62728", "marker": "s"},
-    "Chinchilla Approach 3 (grid init)": {"color": "#ff7f0e", "marker": "^"},
-    "Chinchilla Approach 3 (random init)": {"color": "#9467bd", "marker": "v"},
-    "VPNLS": {"color": "#1f77b4", "marker": "o"},
-}
+@dataclass(frozen=True)
+class MethodConfig:
+    """Configuration for a single fitting method."""
+
+    label: str
+    color: str
+    marker: str
+    fitter: str  # "approach2" | "approach3" | "vpnls"
+    random_init: bool = False  # approach3 only
+    use_lse: bool = False  # approach3 only
+    use_logloss: bool = False  # approach3 only
+    boxplot: bool = True  # include in the per-noise boxplot figure
+
+
+METHOD_CONFIGS = [
+    MethodConfig("Approach 2", "#d62728", "s", "approach2"),
+    MethodConfig(
+        "Naive Approach 3 [x₀∈rand, -LSE, -LL]",
+        "#9467bd",
+        "v",
+        "approach3",
+        random_init=True,
+        boxplot=False,
+    ),
+    MethodConfig("MLE Approach 3 [x₀∈grid, -LSE, -LL]", "#ff7f0e", "^", "approach3"),
+    MethodConfig(
+        "Approach 3 [x₀∈grid, +LSE, +LL]",
+        "#8c564b",
+        "P",
+        "approach3",
+        use_lse=True,
+        use_logloss=True,
+    ),
+    MethodConfig("VPNLS [+∇]", "#1f77b4", "o", "vpnls"),
+]
 
 
 def _run_single_repeat(
@@ -189,7 +212,7 @@ def _run_single_repeat(
     n_pts_len = len(n_points_range)
 
     results: dict[str, dict] = {
-        m: {
+        mc.label: {
             "a_errors": np.zeros(n_pts_len),
             "b_errors": np.zeros(n_pts_len),
             "maxiter": np.zeros(n_pts_len, dtype=bool),
@@ -197,7 +220,7 @@ def _run_single_repeat(
             "bound_hit": np.zeros(n_pts_len, dtype=bool),
             "fail": np.zeros(n_pts_len, dtype=bool),
         }
-        for m in METHOD_NAMES
+        for mc in METHOD_CONFIGS
     }
 
     rng = np.random.default_rng(seed + repeat_index)
@@ -218,51 +241,36 @@ def _run_single_repeat(
         C_per_point = np.repeat(compute_budgets, n_pts)
 
         a3_random_rng = rng.spawn(1)[0]
-        for method_name, fit_fn in [
-            (
-                "Chinchilla Approach 2",
-                lambda d: fit_approach2(d.N, d.D, d.L, C_per_point),
-            ),
-            (
-                "Chinchilla Approach 3 (grid init)",
-                lambda d: fit_approach3(
-                    d.N,
-                    d.D,
-                    d.L,
-                    grid=DEFAULT_PARAMETER_GRID,
-                    bounds=DEFAULT_SURFACE_BOUNDS,
-                    options=_EXP7_LBFGSB_OPTIONS,
-                ),
-            ),
-            (
-                "Chinchilla Approach 3 (random init)",
-                lambda d: fit_approach3(
-                    d.N,
-                    d.D,
-                    d.L,
-                    random_init=True,
-                    rng=a3_random_rng,
-                    grid=DEFAULT_PARAMETER_GRID,
-                    bounds=DEFAULT_SURFACE_BOUNDS,
-                    options=_EXP7_LBFGSB_OPTIONS,
-                ),
-            ),
-            (
-                "VPNLS",
-                lambda d: fit_vpnls(
-                    d.N,
-                    d.D,
-                    d.L,
-                    grid=DEFAULT_EXPONENT_GRID,
-                    bounds=DEFAULT_SURFACE_BOUNDS,
-                    method="l-bfgs-b",
-                    options=_EXP7_VPNLS_LBFGSB_OPTIONS,
-                ),
-            ),
-        ]:
-            res = results[method_name]
+        for mc in METHOD_CONFIGS:
+            res = results[mc.label]
             try:
-                est = fit_fn(data)
+                if mc.fitter == "approach2":
+                    est = fit_approach2(data.N, data.D, data.L, C_per_point)
+                elif mc.fitter == "approach3":
+                    est = fit_approach3(
+                        data.N,
+                        data.D,
+                        data.L,
+                        random_init=mc.random_init,
+                        rng=a3_random_rng if mc.random_init else None,
+                        grid=DEFAULT_PARAMETER_GRID,
+                        bounds=DEFAULT_SURFACE_BOUNDS,
+                        options=_EXP7_LBFGSB_OPTIONS,
+                        use_lse=mc.use_lse,
+                        use_logloss=mc.use_logloss,
+                    )
+                elif mc.fitter == "vpnls":
+                    est = fit_vpnls(
+                        data.N,
+                        data.D,
+                        data.L,
+                        grid=DEFAULT_EXPONENT_GRID,
+                        bounds=DEFAULT_SURFACE_BOUNDS,
+                        method="l-bfgs-b",
+                        options=_EXP7_VPNLS_LBFGSB_OPTIONS,
+                    )
+                else:
+                    raise ValueError(f"Unknown fitter: {mc.fitter!r}")
             except FitError:
                 res["fail"][i] = True
                 res["a_errors"][i] = np.nan
@@ -352,7 +360,7 @@ def compute_exponent_errors(
         repeat_results = [worker(r) for r in range(n_repeats)]
 
     results: dict[str, dict] = {
-        m: {
+        mc.label: {
             "a_errors": np.zeros((n_repeats, n_pts_len)),
             "b_errors": np.zeros((n_repeats, n_pts_len)),
             "maxiter": np.zeros((n_repeats, n_pts_len), dtype=bool),
@@ -360,12 +368,12 @@ def compute_exponent_errors(
             "bound_hit": np.zeros((n_repeats, n_pts_len), dtype=bool),
             "fail": np.zeros((n_repeats, n_pts_len), dtype=bool),
         }
-        for m in METHOD_NAMES
+        for mc in METHOD_CONFIGS
     }
     for r, single in enumerate(repeat_results):
-        for m in METHOD_NAMES:
+        for mc in METHOD_CONFIGS:
             for key in _ARRAY_KEYS:
-                results[m][key][r] = single[m][key]
+                results[mc.label][key][r] = single[mc.label][key]
 
     return results
 
@@ -400,7 +408,8 @@ def create_figure(
     shown_noise = [min(noise_std_levels), max(noise_std_levels)]
     n_shown = len(shown_noise)
     n_cols = 2 * n_shown
-    n_methods = len(METHOD_NAMES)
+    boxplot_configs = [mc for mc in METHOD_CONFIGS if mc.boxplot]
+    n_methods = len(boxplot_configs)
     log_positions = np.log2(n_points_range.astype(float))
     box_width = 0.15
     offsets = np.linspace(
@@ -426,9 +435,8 @@ def create_figure(
                 col = noise_idx * 2 + exp_idx
                 ax = axes[row, col]
 
-                for m_idx, method_name in enumerate(METHOD_NAMES):
-                    style = METHOD_STYLES[method_name]
-                    errors_2d = np.abs(results[method_name][err_key]) * 100
+                for m_idx, mc in enumerate(boxplot_configs):
+                    errors_2d = np.abs(results[mc.label][err_key]) * 100
                     positions = log_positions + offsets[m_idx]
 
                     ax.boxplot(
@@ -444,15 +452,15 @@ def create_figure(
                             "marker": ".",
                             "markersize": 2,
                             "alpha": 0.4,
-                            "markerfacecolor": style["color"],
+                            "markerfacecolor": mc.color,
                         },
                         medianprops={"color": "white", "linewidth": 0.8},
-                        whiskerprops={"color": style["color"], "linewidth": 0.6},
-                        capprops={"color": style["color"], "linewidth": 0.6},
+                        whiskerprops={"color": mc.color, "linewidth": 0.6},
+                        capprops={"color": mc.color, "linewidth": 0.6},
                         boxprops={
-                            "facecolor": style["color"],
+                            "facecolor": mc.color,
                             "alpha": 0.6,
-                            "edgecolor": style["color"],
+                            "edgecolor": mc.color,
                         },
                     )
 
@@ -499,13 +507,12 @@ def create_figure(
     )
 
     handles = [
-        Patch(facecolor=METHOD_STYLES[m]["color"], alpha=0.6, label=m)
-        for m in METHOD_NAMES
+        Patch(facecolor=mc.color, alpha=0.6, label=mc.label) for mc in boxplot_configs
     ]
     fig.legend(
         handles=handles,
         loc="lower center",
-        ncol=len(METHOD_NAMES),
+        ncol=len(boxplot_configs),
         fontsize=7,
         bbox_to_anchor=(0.5, -0.01),
         frameon=True,
@@ -734,7 +741,8 @@ def print_summary(
         all_results = noise_results[noise_std]
         for nb in n_budgets_range:
             results = all_results[nb]
-            for method_name in METHOD_NAMES:
+            for mc in METHOD_CONFIGS:
+                method_name = mc.label
                 res = results[method_name]
                 a_abs = np.abs(res["a_errors"]) * 100
                 b_abs = np.abs(res["b_errors"]) * 100
@@ -771,7 +779,8 @@ def _pool_method_errors(
 ) -> list[_ComparisonRow]:
     """Pool absolute relative errors across all noise levels, budgets, n_points, seeds."""
     row_data: list[_ComparisonRow] = []
-    for method_name in METHOD_NAMES:
+    for mc in METHOD_CONFIGS:
+        method_name = mc.label
         all_a: list[np.ndarray] = []
         all_b: list[np.ndarray] = []
 
@@ -1000,7 +1009,8 @@ def export_method_comparison_csv(
     errors, and metadata about what was aggregated over.
     """
     rows = []
-    for method_name in METHOD_NAMES:
+    for mc in METHOD_CONFIGS:
+        method_name = mc.label
         all_a: list[np.ndarray] = []
         all_b: list[np.ndarray] = []
         n_maxiter = 0

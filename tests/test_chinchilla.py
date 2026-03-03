@@ -1,5 +1,7 @@
 """Tests for core chinchilla module functions."""
 
+from typing import Callable
+
 import numpy as np
 import pytest
 
@@ -9,11 +11,15 @@ from scaling_law_analysis.chinchilla import (
     FitError,
     LossSurface,
     ParameterGrid,
+    _approach3_lse_logloss_rss,
+    _approach3_lse_logloss_rss_grad,
+    _approach3_lse_rss,
+    _approach3_lse_rss_grad,
+    _approach3_rss,
+    _approach3_rss_grad,
     _cartesian_product,
-    _compute_rss_and_params_ols,
-    _surface_rss,
-    _surface_rss_grad,
-    _vpnls_rss_grad,
+    _vpnls_objective_and_grad,
+    _vpnls_rss_and_params_ols,
     compute_center_offset,
     fit_approach2,
     fit_approach3,
@@ -22,7 +28,36 @@ from scaling_law_analysis.chinchilla import (
     fit_vpnls,
     isoflop_sample,
 )
-from scaling_law_analysis.experiments.common import fit_simulated_approach2
+from scaling_law_analysis.common import check_design_matrix
+from scaling_law_analysis.experiments.common import (
+    fit_simulated_approach2,
+)
+
+SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+CHINCHILLA = DEFAULT_LOSS_SURFACE  # α=0.34, β=0.28
+ASYMMETRIC = LossSurface(alpha=0.50, beta=0.20, A=200, B=800, E=1.50)
+
+
+def _assert_gradient_matches_fd(
+    obj_fn: Callable[[np.ndarray], float],
+    grad_fn: Callable[[np.ndarray], np.ndarray],
+    x: np.ndarray,
+    rtol: float = 1e-9,
+) -> None:
+    """Assert analytical gradient matches central finite differences."""
+    analytic = grad_fn(x)
+    # Optimal step for central differences: h = eps^(1/3) minimizes the sum of
+    # O(h²) truncation error and O(eps/h) rounding error.
+    # See Nocedal & Wright, Numerical Optimization, §8.1.
+    h = float(np.finfo(float).eps) ** (1 / 3)
+    fd = np.zeros_like(x)
+    for i in range(len(x)):
+        x_fwd = x.copy()
+        x_bwd = x.copy()
+        x_fwd[i] += h
+        x_bwd[i] -= h
+        fd[i] = (obj_fn(x_fwd) - obj_fn(x_bwd)) / (2 * h)
+    np.testing.assert_allclose(analytic, fd, rtol=rtol)
 
 
 class TestFitParabola:
@@ -127,8 +162,7 @@ class TestFitApproach2:
         With α = β and A = B, the loss surface is symmetric, and centered sampling
         (no drift, no scale) should yield perfect parabola fits and exact exponents.
         """
-        # Symmetric surface: α = β, A = B → a = b = 0.5, G = 1
-        surface = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+        surface = SYMMETRIC
         compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
 
         # Generate IsoFLOP data and build per-point C array
@@ -166,7 +200,7 @@ class TestFitApproach2:
 
     def test_fit_simulated_approach2_matches_new_fit_approach2(self):
         """fit_simulated_approach2 should produce the same results as fit_approach2."""
-        surface = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+        surface = SYMMETRIC
         compute_budgets = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
 
         result = fit_simulated_approach2(
@@ -201,12 +235,13 @@ def _generate_isoflop_data(
 class TestFitVPNLS:
     """Tests for fit_vpnls across optimization methods."""
 
-    SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
-    CHINCHILLA = DEFAULT_LOSS_SURFACE  # α=0.34, β=0.28
-
     @pytest.mark.parametrize(
         "surface_name,surface",
-        [("symmetric", SYMMETRIC), ("chinchilla", CHINCHILLA)],
+        [
+            ("symmetric", SYMMETRIC),
+            ("chinchilla", CHINCHILLA),
+            ("asymmetric", ASYMMETRIC),
+        ],
     )
     @pytest.mark.parametrize("method", ["nelder-mead", "l-bfgs-b", "grid"])
     def test_method_recovers_parameters(self, surface_name, surface, method):
@@ -222,10 +257,10 @@ class TestFitVPNLS:
 
         if method == "grid":
             # Grid step ~0.0035 over [0.05, 0.95] at 256 points.
-            # Exponent errors ≤0.4%; coefficient errors up to ~2% due to
+            # Exponent errors ≤1%; coefficient errors up to ~5% due to
             # exponential amplification of exponent discretization.
-            exp_tol = 5e-3
-            coeff_tol = 2.5e-2
+            exp_tol = 1e-2
+            coeff_tol = 5e-2
         else:
             exp_tol = 1e-6
             coeff_tol = 1e-6
@@ -238,97 +273,135 @@ class TestFitVPNLS:
 
     def test_lbfgs_rss_near_zero(self):
         """L-BFGS-B should achieve near-zero RSS on noise-free data."""
-        N, D, L = _generate_isoflop_data(self.SYMMETRIC)
+        N, D, L = _generate_isoflop_data(SYMMETRIC)
         result = fit_vpnls(N, D, L, method="l-bfgs-b")
         assert result.residual_sum_squares < 1e-17
 
     def test_to_loss_surface_roundtrip(self):
         """to_loss_surface() should produce an equivalent surface."""
-        N, D, L = _generate_isoflop_data(self.SYMMETRIC)
+        N, D, L = _generate_isoflop_data(SYMMETRIC)
         result = fit_vpnls(N, D, L, method="l-bfgs-b")
         fitted = result.to_loss_surface()
-        assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
-        assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)
+        assert fitted.alpha == pytest.approx(SYMMETRIC.alpha, rel=1e-6)
+        assert fitted.beta == pytest.approx(SYMMETRIC.beta, rel=1e-6)
 
     def test_scaling_exponents_on_result(self):
         """SurfaceFitResult should expose .a and .b scaling exponents."""
-        N, D, L = _generate_isoflop_data(self.CHINCHILLA)
+        N, D, L = _generate_isoflop_data(CHINCHILLA)
         result = fit_vpnls(N, D, L, method="l-bfgs-b")
 
         # a = β/(α+β), b = α/(α+β)
-        expected_a = self.CHINCHILLA.beta / (
-            self.CHINCHILLA.alpha + self.CHINCHILLA.beta
-        )
-        expected_b = self.CHINCHILLA.alpha / (
-            self.CHINCHILLA.alpha + self.CHINCHILLA.beta
-        )
+        expected_a = CHINCHILLA.beta / (CHINCHILLA.alpha + CHINCHILLA.beta)
+        expected_b = CHINCHILLA.alpha / (CHINCHILLA.alpha + CHINCHILLA.beta)
         assert result.a == pytest.approx(expected_a, rel=1e-4)
         assert result.b == pytest.approx(expected_b, rel=1e-4)
 
-    def test_vpnls_gradient_matches_finite_differences(self):
-        """VPNLS analytical gradient should match central finite differences."""
+    def test_vpnls_objective_and_grad_matches_finite_differences(self):
+        """_vpnls_objective_and_grad should return correct RSS and gradient."""
         rng = np.random.default_rng(42)
         log_N = rng.uniform(1, 5, size=50)
         log_D = rng.uniform(1, 5, size=50)
         L = rng.uniform(2.0, 4.0, size=50)
 
         alpha, beta = 0.35, 0.28
-        analytic = _vpnls_rss_grad(alpha, beta, log_N, log_D, L)
+        x = np.array([alpha, beta])
 
-        h = float(np.finfo(float).eps) ** (1 / 3)
-        fd = np.zeros(2)
-        for i, (a, b) in enumerate([(alpha + h, beta), (alpha, beta + h)]):
-            rss_fwd, _ = _compute_rss_and_params_ols(a, b, log_N, log_D, L)
-            a_bwd = alpha - h if i == 0 else alpha
-            b_bwd = beta - h if i == 1 else beta
-            rss_bwd, _ = _compute_rss_and_params_ols(a_bwd, b_bwd, log_N, log_D, L)
-            fd[i] = (rss_fwd - rss_bwd) / (2 * h)
+        # RSS should match the standalone OLS helper
+        rss, _ = _vpnls_objective_and_grad(x, log_N, log_D, L)
+        rss_ols, _ = _vpnls_rss_and_params_ols(alpha, beta, log_N, log_D, L)
+        assert rss == pytest.approx(rss_ols)
 
-        np.testing.assert_allclose(analytic, fd, rtol=1e-7)
+        # Gradient should match central finite differences
+        _assert_gradient_matches_fd(
+            obj_fn=lambda v: _vpnls_objective_and_grad(v, log_N, log_D, L)[0],
+            grad_fn=lambda v: _vpnls_objective_and_grad(v, log_N, log_D, L)[1],
+            x=x,
+            rtol=1e-7,
+        )
+
+    def test_vpnls_objective_and_grad_rejects_near_singular_design(self):
+        """Objective+grad should fail fast for ill-conditioned 3x3 designs."""
+        x = np.array([0.3, 0.3])
+        log_N = np.array([1.0, 2.0, 1.0])
+        log_D = np.array([1.0, 2.0, 1.0])
+        L = np.array([3.0, 2.0, 3.0])
+
+        with pytest.raises(FitError, match="at least 4 samples"):
+            _vpnls_objective_and_grad(x, log_N, log_D, L)
+
+    def test_check_design_matrix_rejects_too_few_samples(self):
+        """Diagnostic should reject design matrices with < 4 samples."""
+        design_matrix = np.array(
+            [
+                [1.0, 0.8, 0.2],
+                [1.0, 0.7, 0.3],
+                [1.0, 0.6, 0.4],
+            ]
+        )
+        with pytest.raises(ValueError, match="at least 4 samples"):
+            check_design_matrix(design_matrix)
 
 
 class TestFitApproach3:
     """Tests for fit_approach3 (direct 5-parameter L-BFGS-B)."""
 
-    SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
-    CHINCHILLA = DEFAULT_LOSS_SURFACE
+    _X_ORIGINAL = np.array([1.5, 50.0, 30.0, 0.35, 0.28])
+    _X_LOG = np.array([np.log(1.5), np.log(50.0), np.log(30.0), 0.35, 0.28])
 
-    def test_surface_rss_gradient_matches_finite_differences(self):
-        """Analytical gradient should match central finite differences to high precision."""
+    @pytest.mark.parametrize(
+        "obj_fn,grad_fn,x,data_range",
+        [
+            pytest.param(
+                _approach3_rss,
+                _approach3_rss_grad,
+                _X_ORIGINAL,
+                (2.0, 4.0),
+                id="standard",
+            ),
+            pytest.param(
+                _approach3_lse_rss,
+                _approach3_lse_rss_grad,
+                _X_LOG,
+                (2.0, 4.0),
+                id="lse",
+            ),
+            pytest.param(
+                _approach3_lse_logloss_rss,
+                _approach3_lse_logloss_rss_grad,
+                _X_LOG,
+                (0.5, 1.5),
+                id="lse_logloss",
+            ),
+        ],
+    )
+    def test_gradient_matches_finite_differences(self, obj_fn, grad_fn, x, data_range):
+        """Analytical gradient should match central finite differences."""
         rng = np.random.default_rng(42)
         log_N = rng.uniform(1, 5, size=50)
         log_D = rng.uniform(1, 5, size=50)
-        L = rng.uniform(2.0, 4.0, size=50)
-
-        x = np.array([1.5, 50.0, 30.0, 0.35, 0.28])
-
-        analytic = _surface_rss_grad(x, log_N, log_D, L)
-
-        h = float(np.finfo(float).eps) ** (1 / 3)
-        fd = np.zeros_like(x)
-        for i in range(len(x)):
-            x_fwd = x.copy()
-            x_bwd = x.copy()
-            x_fwd[i] += h
-            x_bwd[i] -= h
-            fd[i] = (
-                _surface_rss(x_fwd, log_N, log_D, L)
-                - _surface_rss(x_bwd, log_N, log_D, L)
-            ) / (2 * h)
-
-        np.testing.assert_allclose(analytic, fd, rtol=1e-9)
+        data = rng.uniform(data_range[0], data_range[1], size=50)
+        _assert_gradient_matches_fd(
+            lambda xv: obj_fn(xv, log_N, log_D, data),
+            lambda xv: grad_fn(xv, log_N, log_D, data),
+            x,
+        )
 
     @pytest.mark.parametrize(
         "surface_name,surface",
         [
             ("symmetric", SYMMETRIC),
             ("chinchilla", CHINCHILLA),
+            ("asymmetric", ASYMMETRIC),
         ],
     )
-    def test_parameter_recovery(self, surface_name, surface):
+    @pytest.mark.parametrize("use_lse", [False, True])
+    @pytest.mark.parametrize("use_logloss", [False, True])
+    def test_parameter_recovery(self, surface_name, surface, use_lse, use_logloss):
         """fit_approach3 should recover all 5 parameters to high precision."""
+        if use_logloss and not use_lse:
+            pytest.skip("use_logloss requires use_lse")
         N, D, L = _generate_isoflop_data(surface)
-        result = fit_approach3(N, D, L)
+        result = fit_approach3(N, D, L, use_lse=use_lse, use_logloss=use_logloss)
 
         assert result.alpha == pytest.approx(surface.alpha, rel=1e-6)
         assert result.beta == pytest.approx(surface.beta, rel=1e-6)

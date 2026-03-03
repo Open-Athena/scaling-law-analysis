@@ -16,6 +16,9 @@ from dataclasses import dataclass
 
 import numpy as np
 from scipy.optimize import minimize, nnls
+from scipy.special import logsumexp
+
+from scaling_law_analysis.common import check_design_matrix
 
 
 # =============================================================================
@@ -622,16 +625,6 @@ def _validate_ndl_inputs(
     return N, D, L
 
 
-def _check_at_grid_edge(name: str, idx: int, grid: np.ndarray) -> str | None:
-    """Return a message if index is at grid edge, else None."""
-    if idx == 0 or idx == len(grid) - 1:
-        return (
-            f"Best {name}={grid[idx]:.4f} is at grid edge "
-            f"[{grid[0]:.2f}, {grid[-1]:.2f}]."
-        )
-    return None
-
-
 def _check_at_bounds(
     name: str, val: float, lo: float, hi: float, tol: float = 1e-6
 ) -> str | None:
@@ -735,7 +728,7 @@ def fit_parabola(
     )
 
 
-def _compute_rss_and_params(
+def _vpnls_rss_and_params_nnls(
     alpha: float,
     beta: float,
     log_N: np.ndarray,
@@ -760,6 +753,7 @@ def _compute_rss_and_params(
             D_neg_beta,
         ]
     )
+    check_design_matrix(design_matrix, exception_cls=FitError)
 
     params, rnorm = nnls(design_matrix, L)
     # nnls returns the 2-norm ||Ax - b||, but we need RSS = ||Ax - b||^2.
@@ -771,7 +765,7 @@ def _compute_rss_and_params(
     return rss, params
 
 
-def _compute_rss_and_params_ols(
+def _vpnls_rss_and_params_ols(
     alpha: float,
     beta: float,
     log_N: np.ndarray,
@@ -780,7 +774,7 @@ def _compute_rss_and_params_ols(
 ) -> tuple[float, np.ndarray]:
     """Compute RSS and OLS parameters for given (α, β).
 
-    Like ``_compute_rss_and_params`` but uses ordinary least squares
+    Like ``_vpnls_rss_and_params_nnls`` but uses ordinary least squares
     (``np.linalg.lstsq``) instead of NNLS.  This makes the inner solve
     differentiable with respect to (α, β), enabling analytical gradients
     for the outer optimisation.
@@ -798,6 +792,7 @@ def _compute_rss_and_params_ols(
             D_neg_beta,
         ]
     )
+    check_design_matrix(design_matrix, exception_cls=FitError)
 
     params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
     # lstsq returns residuals only when m > n and rank == n; compute directly
@@ -805,40 +800,6 @@ def _compute_rss_and_params_ols(
     rss = float(np.sum((L - pred) ** 2))
 
     return rss, params
-
-
-def _vpnls_rss_grad(
-    alpha: float,
-    beta: float,
-    log_N: np.ndarray,
-    log_D: np.ndarray,
-    L: np.ndarray,
-) -> np.ndarray:
-    """Analytical gradient of VPNLS RSS w.r.t. (α, β).
-
-    Uses the envelope-theorem result: because (E, A, B) minimise RSS for
-    fixed (α, β), their implicit derivatives drop out and the gradient
-    depends only on the explicit partial derivatives of the design matrix.
-
-    Returns:
-        2-element array ``[∂RSS/∂α, ∂RSS/∂β]``
-    """
-    N_neg_alpha = np.exp(-alpha * log_N)
-    D_neg_beta = np.exp(-beta * log_D)
-
-    design_matrix = np.column_stack([np.ones(len(L)), N_neg_alpha, D_neg_beta])
-    params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
-    E, A, B = params
-
-    resid = L - (E + A * N_neg_alpha + B * D_neg_beta)
-
-    # ∂RSS/∂α = -2 · rᵀ · (∂pred/∂α) = -2 · rᵀ · A·(-log_N)·N^{-α}
-    #         = 2A · rᵀ(log_N ⊙ N^{-α})
-    grad_alpha = float(2 * A * np.dot(resid, log_N * N_neg_alpha))
-    # ∂RSS/∂β = 2B · rᵀ(log_D ⊙ D^{-β})
-    grad_beta = float(2 * B * np.dot(resid, log_D * D_neg_beta))
-
-    return np.array([grad_alpha, grad_beta])
 
 
 def _vpnls_objective_and_grad(
@@ -852,12 +813,29 @@ def _vpnls_objective_and_grad(
     Builds the design matrix once, solves OLS for (E, A, B), then returns
     both the RSS value and the 2-element gradient w.r.t. (α, β).  Suitable
     for ``scipy.optimize.minimize`` with ``jac=True``.
+
+    The gradient exploits the **envelope theorem**: because (E, A, B)
+    minimise RSS for fixed (α, β), their implicit derivatives vanish at the
+    optimum of the inner problem.  Only the *explicit* partial derivatives
+    of the design matrix columns w.r.t. α and β survive:
+
+        pred = E + A·N^{-α} + B·D^{-β}
+        ∂pred/∂α = A · ∂(N^{-α})/∂α = -A · log(N) · N^{-α}
+        ∂pred/∂β = -B · log(D) · D^{-β}
+
+    Applying the chain rule to RSS = Σ(L - pred)²:
+
+        ∂RSS/∂α = -2 · rᵀ · (∂pred/∂α) = 2A · rᵀ(log(N) ⊙ N^{-α})
+        ∂RSS/∂β = 2B · rᵀ(log(D) ⊙ D^{-β})
+
+    where r = L - pred is the residual vector.
     """
     alpha, beta = x
     N_neg_alpha = np.exp(-alpha * log_N)
     D_neg_beta = np.exp(-beta * log_D)
 
     design_matrix = np.column_stack([np.ones(len(L)), N_neg_alpha, D_neg_beta])
+    check_design_matrix(design_matrix, exception_cls=FitError)
     params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
     E, A, B = params
 
@@ -881,7 +859,7 @@ def _cartesian_product(*arrays: np.ndarray) -> np.ndarray:
     return result
 
 
-def _grid_search_2d(
+def _vpnls_grid_search_2d(
     alpha_grid: np.ndarray,
     beta_grid: np.ndarray,
     log_N: np.ndarray,
@@ -894,7 +872,7 @@ def _grid_search_2d(
 
     for i, alpha in enumerate(alpha_grid):
         for j, beta in enumerate(beta_grid):
-            rss, _ = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+            rss, _ = _vpnls_rss_and_params_nnls(alpha, beta, log_N, log_D, L)
             if rss < best_rss:
                 best_rss = rss
                 best_i, best_j = i, j
@@ -934,7 +912,7 @@ def _grid_search_5d(
     return cart[:, best_idx], float(rss_vals[best_idx])
 
 
-def _surface_rss(
+def _approach3_rss(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> float:
     """RSS objective for 5-parameter Chinchilla loss surface."""
@@ -943,7 +921,7 @@ def _surface_rss(
     return float(np.sum((L - pred) ** 2))
 
 
-def _surface_rss_grad(
+def _approach3_rss_grad(
     x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
 ) -> np.ndarray:
     """Analytical gradient of RSS for 5-parameter Chinchilla loss surface."""
@@ -959,6 +937,98 @@ def _surface_rss_grad(
     grad_alpha = 2 * np.sum(resid * A * term_N * (-log_N))
     grad_beta = 2 * np.sum(resid * B * term_D * (-log_D))
     return np.array([grad_E, grad_A, grad_B, grad_alpha, grad_beta])
+
+
+def _approach3_lse_rss(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> float:
+    """RSS objective with LSE parameterization in original loss space.
+
+    Parameters are (log_E, log_A, log_B, α, β).
+    Prediction: exp(log_E) + exp(log_A) · N^{-α} + exp(log_B) · D^{-β}.
+    """
+    log_E, log_A, log_B, alpha, beta = x
+    s_E = np.exp(log_E)
+    s_A = np.exp(log_A - alpha * log_N)
+    s_D = np.exp(log_B - beta * log_D)
+    pred = s_E + s_A + s_D
+    return float(np.sum((pred - L) ** 2))
+
+
+def _approach3_lse_rss_grad(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, L: np.ndarray
+) -> np.ndarray:
+    """Analytical gradient of LSE-parameterized RSS in original loss space.
+
+    Chain rule through exp gives each coefficient gradient a factor of its
+    own exponential term.
+    """
+    log_E, log_A, log_B, alpha, beta = x
+    s_E = np.exp(log_E)
+    s_A = np.exp(log_A - alpha * log_N)
+    s_D = np.exp(log_B - beta * log_D)
+    pred = s_E + s_A + s_D
+    resid = pred - L
+    grad_log_E = 2 * np.sum(resid * s_E)
+    grad_log_A = 2 * np.sum(resid * s_A)
+    grad_log_B = 2 * np.sum(resid * s_D)
+    grad_alpha = 2 * np.sum(resid * s_A * (-log_N))
+    grad_beta = 2 * np.sum(resid * s_D * (-log_D))
+    return np.array([grad_log_E, grad_log_A, grad_log_B, grad_alpha, grad_beta])
+
+
+def _approach3_lse_logloss_rss(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, log_L: np.ndarray
+) -> float:
+    """RSS objective on log-loss using LogSumExp parameterization.
+
+    Parameters are (e, a, b, α, β) where e=log(E), a=log(A), b=log(B).
+    Prediction: log_L_pred = logsumexp(e, a - α·log(N), b - β·log(D)).
+    Objective: sum((log_L_pred - log_L_obs)^2).
+    """
+    e, a, b, alpha, beta = x
+    terms = np.column_stack(
+        [
+            np.full(len(log_N), e),
+            a - alpha * log_N,
+            b - beta * log_D,
+        ]
+    )
+    log_pred = logsumexp(terms, axis=1)
+    return float(np.sum((log_pred - log_L) ** 2))
+
+
+def _approach3_lse_logloss_rss_grad(
+    x: np.ndarray, log_N: np.ndarray, log_D: np.ndarray, log_L: np.ndarray
+) -> np.ndarray:
+    """Analytical gradient of LSE-parameterized RSS on log-loss.
+
+    Parameters are (e, a, b, α, β) where e=log(E), a=log(A), b=log(B).
+    """
+    e, a, b, alpha, beta = x
+    t_e = np.full(len(log_N), e)
+    t_a = a - alpha * log_N
+    t_b = b - beta * log_D
+    terms = np.column_stack([t_e, t_a, t_b])
+
+    # logsumexp and softmax weights
+    log_pred = logsumexp(terms, axis=1)
+    # w_i = exp(t_i) / exp(log_pred) = softmax weight for each term
+    w_e = np.exp(t_e - log_pred)
+    w_a = np.exp(t_a - log_pred)
+    w_b = np.exp(t_b - log_pred)
+
+    resid = log_pred - log_L  # (pred - observed) in log space
+    two_resid = 2 * resid
+
+    # d(log_pred)/de = w_e, d(log_pred)/da = w_a, d(log_pred)/db = w_b
+    # d(log_pred)/dα = w_a · (-log_N), d(log_pred)/dβ = w_b · (-log_D)
+    grad_e = float(np.sum(two_resid * w_e))
+    grad_a = float(np.sum(two_resid * w_a))
+    grad_b = float(np.sum(two_resid * w_b))
+    grad_alpha = float(np.sum(two_resid * w_a * (-log_N)))
+    grad_beta = float(np.sum(two_resid * w_b * (-log_D)))
+    return np.array([grad_e, grad_a, grad_b, grad_alpha, grad_beta])
 
 
 # =============================================================================
@@ -1154,12 +1224,20 @@ def fit_vpnls(
 
     N, D, L = _validate_ndl_inputs(N, D, L)
 
+    def _check_at_grid_edge(name: str, idx: int, g: np.ndarray) -> str | None:
+        if idx == 0 or idx == len(g) - 1:
+            return (
+                f"Best {name}={g[idx]:.4f} is at grid edge "
+                f"[{g[0]:.2f}, {g[-1]:.2f}]."
+            )
+        return None
+
     alpha_grid = grid.alpha
     beta_grid = grid.beta
     log_N, log_D = np.log(N), np.log(D)
 
     # Stage 1: Grid search (initialization for local methods, or final for "grid")
-    best_i, best_j = _grid_search_2d(alpha_grid, beta_grid, log_N, log_D, L)
+    best_i, best_j = _vpnls_grid_search_2d(alpha_grid, beta_grid, log_N, log_D, L)
     grid_edge_msgs = [
         msg
         for msg in [
@@ -1196,7 +1274,7 @@ def fit_vpnls(
                 )
 
             def objective(x):
-                rss, _ = _compute_rss_and_params(x[0], x[1], log_N, log_D, L)
+                rss, _ = _vpnls_rss_and_params_nnls(x[0], x[1], log_N, log_D, L)
                 return rss
 
             result = minimize(
@@ -1227,7 +1305,7 @@ def fit_vpnls(
             else:
 
                 def objective_ols(x):
-                    rss, _ = _compute_rss_and_params_ols(x[0], x[1], log_N, log_D, L)
+                    rss, _ = _vpnls_rss_and_params_ols(x[0], x[1], log_N, log_D, L)
                     return rss
 
                 lbfgs_kwargs: dict = {
@@ -1264,9 +1342,9 @@ def fit_vpnls(
     # Extract final parameters at optimized (α, β)
     # L-BFGS-B uses OLS (differentiable); others use NNLS (non-negative)
     if method == "l-bfgs-b":
-        rss, (E, A, B) = _compute_rss_and_params_ols(alpha, beta, log_N, log_D, L)
+        rss, (E, A, B) = _vpnls_rss_and_params_ols(alpha, beta, log_N, log_D, L)
     else:
-        rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+        rss, (E, A, B) = _vpnls_rss_and_params_nnls(alpha, beta, log_N, log_D, L)
 
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=rss)
 
@@ -1315,6 +1393,8 @@ def fit_approach3(
     bounds: SurfaceBounds | None = None,
     options: LBFGSBOptions | None = None,
     use_grad: bool = True,
+    use_lse: bool = False,
+    use_logloss: bool = False,
     random_init: bool = False,
     rng: np.random.Generator | None = None,
 ) -> SurfaceFitResult:
@@ -1322,7 +1402,6 @@ def fit_approach3(
 
     This is the standard approach used in the Chinchilla paper and others:
     optimize E, A, B, α, β jointly without exploiting linear structure.
-    Uses RSS (not Huber loss) for direct comparison with variable projection.
 
     Initialization is via a coarse 5D grid search, or a single random point
     when ``random_init`` is True.
@@ -1338,6 +1417,12 @@ def fit_approach3(
             scheme (e.g. "3-point" for central differences).
         use_grad: If True (default), use analytical gradients. If False,
             use finite-difference gradients via ``options.jac``.
+        use_lse: If True, use LogSumExp parameterization. The optimizer
+            works in log-space for (E, A, B), enforcing positivity without
+            explicit bounds.
+        use_logloss: If True (requires use_lse), minimize MSE on log-loss
+            rather than on loss. Uses logsumexp for numerically stable
+            log-space prediction.
         random_init: If True, skip grid search and use a random starting
             point within bounds. Requires ``rng``.
         rng: Random generator (required when ``random_init`` is True).
@@ -1364,27 +1449,60 @@ def fit_approach3(
     log_N = np.log(N)
     log_D = np.log(D)
 
-    def rss(x: np.ndarray) -> float:
-        return _surface_rss(x, log_N, log_D, L)
-
-    def rss_grad(x: np.ndarray) -> np.ndarray:
-        return _surface_rss_grad(x, log_N, log_D, L)
-
     bounds_list = bounds.to_list()
+
+    if use_logloss and not use_lse:
+        raise ValueError("use_logloss requires use_lse=True")
+
+    if use_lse:
+        # Convert E, A, B bounds to log-space
+        opt_bounds = [
+            (np.log(lo), np.log(hi)) for lo, hi in bounds_list[:3]
+        ] + bounds_list[3:]
+
+        if use_logloss:
+            log_L = np.log(L)
+
+            def obj(x: np.ndarray) -> float:
+                return _approach3_lse_logloss_rss(x, log_N, log_D, log_L)
+
+            def obj_grad(x: np.ndarray) -> np.ndarray:
+                return _approach3_lse_logloss_rss_grad(x, log_N, log_D, log_L)
+
+        else:
+
+            def obj(x: np.ndarray) -> float:
+                return _approach3_lse_rss(x, log_N, log_D, L)
+
+            def obj_grad(x: np.ndarray) -> np.ndarray:
+                return _approach3_lse_rss_grad(x, log_N, log_D, L)
+
+    else:
+        opt_bounds = bounds_list
+
+        def obj(x: np.ndarray) -> float:
+            return _approach3_rss(x, log_N, log_D, L)
+
+        def obj_grad(x: np.ndarray) -> np.ndarray:
+            return _approach3_rss_grad(x, log_N, log_D, L)
 
     if random_init:
         if rng is None:
             raise ValueError("rng is required when random_init=True")
-        best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in bounds_list])
+        best_x0 = np.array([rng.uniform(lo, hi) for lo, hi in opt_bounds])
     else:
         best_x0, _ = _grid_search_5d(grid, log_N, log_D, L)
+        if use_lse:
+            # Convert E, A, B from grid search to log-space
+            best_x0 = best_x0.copy()
+            best_x0[:3] = np.log(best_x0[:3])
 
     result = minimize(
-        rss,
+        obj,
         x0=best_x0,
-        jac=rss_grad if use_grad else options.jac,
+        jac=obj_grad if use_grad else options.jac,
         method="L-BFGS-B",
-        bounds=bounds_list,
+        bounds=opt_bounds,
         options=options.to_dict(),
     )
 
@@ -1406,9 +1524,17 @@ def fit_approach3(
                 f"Optimization failed: {result.message} " f"(iterations: {result.nit})"
             )
 
-    E, A, B, alpha, beta = result.x
-    final_rss = float(result.fun)
-    E, A, B, alpha, beta = float(E), float(A), float(B), float(alpha), float(beta)
+    if use_lse:
+        e, a, b, alpha, beta = result.x
+        E, A, B = float(np.exp(e)), float(np.exp(a)), float(np.exp(b))
+        alpha, beta = float(alpha), float(beta)
+        # Compute RSS in original space for comparability
+        pred = E + A * np.exp(-alpha * log_N) + B * np.exp(-beta * log_D)
+        final_rss = float(np.sum((L - pred) ** 2))
+    else:
+        E, A, B, alpha, beta = result.x
+        final_rss = float(result.fun)
+        E, A, B, alpha, beta = float(E), float(A), float(B), float(alpha), float(beta)
 
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=final_rss)
 

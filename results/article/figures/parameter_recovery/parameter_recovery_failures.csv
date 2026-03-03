@@ -2,6 +2,6 @@ method,total_failures,total_fits,failure_rate,surfaces_with_failures,total_surfa
 "2D Grid (256²)",0,60,0.0000,0,3
 "5D L-BFGS-B (numerical grad)",0,60,0.0000,0,3
 "5D L-BFGS-B (analytical grad)",0,60,0.0000,0,3
-"2D L-BFGS-B (numerical grad)",0,60,0.0000,0,3
-"2D Nelder-Mead (gradient-free)",0,60,0.0000,0,3
 "2D L-BFGS-B (analytical grad)",0,60,0.0000,0,3
+"2D L-BFGS-B (numerical grad)",0,60,0.0000,0,3
+"2D Nelder-Mead (no grad)",0,60,0.0000,0,3

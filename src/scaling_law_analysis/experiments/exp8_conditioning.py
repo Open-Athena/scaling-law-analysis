@@ -19,9 +19,9 @@ from scaling_law_analysis.chinchilla import (
     DEFAULT_PARAMETER_GRID,
     DEFAULT_LBFGSB_OPTIONS,
     DEFAULT_EXPONENT_GRID,
-    _compute_rss_and_params,
-    _surface_rss,
-    _surface_rss_grad,
+    _vpnls_rss_and_params_nnls,
+    _approach3_rss,
+    _approach3_rss_grad,
     fit_approach3,
     fit_vpnls,
 )
@@ -44,7 +44,7 @@ def _vp_rss(
     L: np.ndarray,
 ) -> tuple[float, np.ndarray]:
     """Variable-projection RSS: for fixed (α, β), solve E/A/B via NNLS."""
-    return _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+    return _vpnls_rss_and_params_nnls(alpha, beta, log_N, log_D, L)
 
 
 def _hessian_5d(
@@ -59,7 +59,7 @@ def _hessian_5d(
     for i in range(n):
 
         def grad_i(xv: np.ndarray, idx: int = i) -> float:
-            return float(_surface_rss_grad(xv, log_N, log_D, L)[idx])
+            return float(_approach3_rss_grad(xv, log_N, log_D, L)[idx])
 
         H[i] = np.asarray(approx_fprime(x, grad_i, 1e-8))
     return (H + H.T) / 2
@@ -138,7 +138,7 @@ def main() -> str:
     N, D, L = sample_isoflop_data(ASYMMETRIC_CONFIG, COMPUTE_BUDGETS, np.log10(8), 15)
     log_N, log_D = np.log(N), np.log(D)
     true_x = np.array([loss.E, loss.A, loss.B, loss.alpha, loss.beta])
-    true_rss = _surface_rss(true_x, log_N, log_D, L)
+    true_rss = _approach3_rss(true_x, log_N, log_D, L)
 
     p(f"RSS at true parameters: {true_rss:.2e}")
     p(f"  (This should be ~0; any residual is floating-point noise.)")
@@ -262,7 +262,7 @@ def main() -> str:
     p()
 
     # -- Gradient at the true parameters --
-    grad_true = _surface_rss_grad(true_x, log_N, log_D, L)
+    grad_true = _approach3_rss_grad(true_x, log_N, log_D, L)
     p("Gradient at the TRUE parameters (should be ~0 everywhere):")
     for j, name in enumerate(param_names):
         p(f"  ∂RSS/∂{name:>1} = {grad_true[j]:+.2e}")
@@ -282,7 +282,7 @@ def main() -> str:
 
     # -- Gradient at the Approach 3 solution --
     a3_x = np.array([est_a3.E, est_a3.A, est_a3.B, est_a3.alpha, est_a3.beta])
-    grad_a3 = _surface_rss_grad(a3_x, log_N, log_D, L)
+    grad_a3 = _approach3_rss_grad(a3_x, log_N, log_D, L)
     p("Gradient at the Approach 3 converged solution:")
     for j, name in enumerate(param_names):
         p(f"  ∂RSS/∂{name:>1} = {grad_a3[j]:+.2e}")
@@ -323,7 +323,7 @@ def main() -> str:
     pert_norms = []
     for k in range(5):
         x_pert = true_x + delta * eigvecs_5d[:, k]
-        grad_pert = _surface_rss_grad(x_pert, log_N, log_D, L)
+        grad_pert = _approach3_rss_grad(x_pert, log_N, log_D, L)
         grad_norm = float(np.linalg.norm(grad_pert))
         pert_norms.append(grad_norm)
         p(f"  eigenvector {k+1} (λ={eigvals_5d[k]:.2e}): " f"|∇RSS| = {grad_norm:.2e}")
@@ -414,9 +414,9 @@ def main() -> str:
     p()
 
     result_true_init = minimize(
-        lambda x: _surface_rss(x, log_N, log_D, L),
+        lambda x: _approach3_rss(x, log_N, log_D, L),
         x0=true_x,
-        jac=lambda x: _surface_rss_grad(x, log_N, log_D, L),
+        jac=lambda x: _approach3_rss_grad(x, log_N, log_D, L),
         method="L-BFGS-B",
         bounds=[(1e-6, 1e6)] * 3 + [(0.01, 0.99)] * 2,
         options=DEFAULT_LBFGSB_OPTIONS.to_dict(),
@@ -454,7 +454,7 @@ def main() -> str:
                 for alpha_init in a3_grid.alpha:
                     for beta_init in a3_grid.beta:
                         x0 = np.array([E_init, A_init, B_init, alpha_init, beta_init])
-                        r = _surface_rss(x0, log_N, log_D, L)
+                        r = _approach3_rss(x0, log_N, log_D, L)
                         if r < best_rss_grid:
                             best_rss_grid = r
                             best_x0 = x0
@@ -464,7 +464,7 @@ def main() -> str:
     best_rss_vp = np.inf
     for alpha_g in vp_grid.alpha:
         for beta_g in vp_grid.beta:
-            rss_g, _ = _compute_rss_and_params(alpha_g, beta_g, log_N, log_D, L)
+            rss_g, _ = _vpnls_rss_and_params_nnls(alpha_g, beta_g, log_N, log_D, L)
             if rss_g < best_rss_vp:
                 best_rss_vp = rss_g
 
@@ -484,9 +484,9 @@ def main() -> str:
     p()
 
     result_ftol0 = minimize(
-        lambda x: _surface_rss(x, log_N, log_D, L),
+        lambda x: _approach3_rss(x, log_N, log_D, L),
         x0=best_x0,
-        jac=lambda x: _surface_rss_grad(x, log_N, log_D, L),
+        jac=lambda x: _approach3_rss_grad(x, log_N, log_D, L),
         method="L-BFGS-B",
         bounds=[(1e-6, 1e6)] * 3 + [(0.01, 0.99)] * 2,
         options={"ftol": 0, "gtol": 1e-15, "maxiter": 10000},
@@ -497,7 +497,7 @@ def main() -> str:
     ftol0_alpha_err = (alpha - loss.alpha) / loss.alpha
     ftol0_beta_err = (beta - loss.beta) / loss.beta
     grad_norm = float(
-        np.linalg.norm(_surface_rss_grad(result_ftol0.x, log_N, log_D, L))
+        np.linalg.norm(_approach3_rss_grad(result_ftol0.x, log_N, log_D, L))
     )
 
     p(f"L-BFGS-B with ftol=0 (grid search init):")
