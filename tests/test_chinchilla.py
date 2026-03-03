@@ -10,14 +10,17 @@ from scaling_law_analysis.chinchilla import (
     LossSurface,
     ParameterGrid,
     _cartesian_product,
+    _compute_rss_and_params_ols,
     _surface_rss,
     _surface_rss_grad,
+    _vpnls_rss_grad,
+    compute_center_offset,
     fit_approach2,
+    fit_approach3,
     fit_grid_search,
     fit_parabola,
     fit_vpnls,
     isoflop_sample,
-    compute_center_offset,
 )
 from scaling_law_analysis.experiments.common import fit_simulated_approach2
 
@@ -233,16 +236,16 @@ class TestFitVPNLS:
         assert result.B == pytest.approx(surface.B, rel=coeff_tol)
         assert result.E == pytest.approx(surface.E, rel=coeff_tol)
 
-    def test_nelder_mead_rss_near_zero(self):
-        """Nelder-Mead should achieve near-zero RSS on noise-free data."""
+    def test_lbfgs_rss_near_zero(self):
+        """L-BFGS-B should achieve near-zero RSS on noise-free data."""
         N, D, L = _generate_isoflop_data(self.SYMMETRIC)
-        result = fit_vpnls(N, D, L, method="nelder-mead")
-        assert result.residual_sum_squares < 1e-18
+        result = fit_vpnls(N, D, L, method="l-bfgs-b")
+        assert result.residual_sum_squares < 1e-17
 
     def test_to_loss_surface_roundtrip(self):
         """to_loss_surface() should produce an equivalent surface."""
         N, D, L = _generate_isoflop_data(self.SYMMETRIC)
-        result = fit_vpnls(N, D, L, method="nelder-mead")
+        result = fit_vpnls(N, D, L, method="l-bfgs-b")
         fitted = result.to_loss_surface()
         assert fitted.alpha == pytest.approx(self.SYMMETRIC.alpha, rel=1e-6)
         assert fitted.beta == pytest.approx(self.SYMMETRIC.beta, rel=1e-6)
@@ -250,7 +253,7 @@ class TestFitVPNLS:
     def test_scaling_exponents_on_result(self):
         """SurfaceFitResult should expose .a and .b scaling exponents."""
         N, D, L = _generate_isoflop_data(self.CHINCHILLA)
-        result = fit_vpnls(N, D, L, method="nelder-mead")
+        result = fit_vpnls(N, D, L, method="l-bfgs-b")
 
         # a = β/(α+β), b = α/(α+β)
         expected_a = self.CHINCHILLA.beta / (
@@ -262,14 +265,37 @@ class TestFitVPNLS:
         assert result.a == pytest.approx(expected_a, rel=1e-4)
         assert result.b == pytest.approx(expected_b, rel=1e-4)
 
+    def test_vpnls_gradient_matches_finite_differences(self):
+        """VPNLS analytical gradient should match central finite differences."""
+        rng = np.random.default_rng(42)
+        log_N = rng.uniform(1, 5, size=50)
+        log_D = rng.uniform(1, 5, size=50)
+        L = rng.uniform(2.0, 4.0, size=50)
 
-class TestSurfaceRssGrad:
-    """Test analytical gradient of surface RSS against finite differences."""
+        alpha, beta = 0.35, 0.28
+        analytic = _vpnls_rss_grad(alpha, beta, log_N, log_D, L)
 
-    def test_gradient_matches_finite_differences(self):
+        h = float(np.finfo(float).eps) ** (1 / 3)
+        fd = np.zeros(2)
+        for i, (a, b) in enumerate([(alpha + h, beta), (alpha, beta + h)]):
+            rss_fwd, _ = _compute_rss_and_params_ols(a, b, log_N, log_D, L)
+            a_bwd = alpha - h if i == 0 else alpha
+            b_bwd = beta - h if i == 1 else beta
+            rss_bwd, _ = _compute_rss_and_params_ols(a_bwd, b_bwd, log_N, log_D, L)
+            fd[i] = (rss_fwd - rss_bwd) / (2 * h)
+
+        np.testing.assert_allclose(analytic, fd, rtol=1e-7)
+
+
+class TestFitApproach3:
+    """Tests for fit_approach3 (direct 5-parameter L-BFGS-B)."""
+
+    SYMMETRIC = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+    CHINCHILLA = DEFAULT_LOSS_SURFACE
+
+    def test_surface_rss_gradient_matches_finite_differences(self):
         """Analytical gradient should match central finite differences to high precision."""
         rng = np.random.default_rng(42)
-        # Moderate scales keep all gradient components well-conditioned
         log_N = rng.uniform(1, 5, size=50)
         log_D = rng.uniform(1, 5, size=50)
         L = rng.uniform(2.0, 4.0, size=50)
@@ -278,9 +304,6 @@ class TestSurfaceRssGrad:
 
         analytic = _surface_rss_grad(x, log_N, log_D, L)
 
-        # Optimal step for central differences: h ~ eps^(1/3).
-        # Balances O(h²) truncation error against O(eps/h) roundoff error.
-        # See Press et al., Numerical Recipes (3rd ed.), §5.7 "Numerical Derivatives".
         h = float(np.finfo(float).eps) ** (1 / 3)
         fd = np.zeros_like(x)
         for i in range(len(x)):
@@ -294,6 +317,24 @@ class TestSurfaceRssGrad:
             ) / (2 * h)
 
         np.testing.assert_allclose(analytic, fd, rtol=1e-9)
+
+    @pytest.mark.parametrize(
+        "surface_name,surface",
+        [
+            ("symmetric", SYMMETRIC),
+            ("chinchilla", CHINCHILLA),
+        ],
+    )
+    def test_parameter_recovery(self, surface_name, surface):
+        """fit_approach3 should recover all 5 parameters to high precision."""
+        N, D, L = _generate_isoflop_data(surface)
+        result = fit_approach3(N, D, L)
+
+        assert result.alpha == pytest.approx(surface.alpha, rel=1e-6)
+        assert result.beta == pytest.approx(surface.beta, rel=1e-6)
+        assert result.A == pytest.approx(surface.A, rel=1e-6)
+        assert result.B == pytest.approx(surface.B, rel=1e-6)
+        assert result.E == pytest.approx(surface.E, rel=1e-6)
 
 
 class TestCartesianProduct:

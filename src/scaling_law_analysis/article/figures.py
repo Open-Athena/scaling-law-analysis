@@ -1405,38 +1405,55 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                 va="bottom",
             )
 
-    # Legend for marker shapes
-    legend_handles = [
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="black",
-            markerfacecolor="black",
-            markersize=7,
-            linestyle="None",
-            label=f"Converged on all fits ({n_ranges} grid widths, "
-            f"{n_surfaces} loss surfaces)",
-        ),
-        Line2D(
-            [0],
-            [0],
-            marker="o",
-            color="black",
-            markerfacecolor="none",
-            markersize=7,
-            markeredgewidth=1.5,
-            linestyle="None",
-            label="Failed to converge in at least one simulation",
-        ),
-    ]
-    ax_dot.legend(
-        handles=legend_handles,
-        fontsize=8.5,
-        loc="lower right",
-        framealpha=0.9,
-        edgecolor="#cccccc",
+        # "VPNLS" callout for the 2D analytical grad method
+        if mc.label == "2D L-BFGS-B (analytical grad)" and not np.isnan(stats["gmean"]):
+            ax_dot.annotate(
+                "(VPNLS)",
+                xy=(stats["gmean"], y),
+                xytext=(0, 7),
+                textcoords="offset points",
+                fontsize=9,
+                color="#333333",
+                ha="center",
+                va="bottom",
+            )
+
+    # Legend for marker shapes — only shown when there are failures
+    any_failures = any(
+        int(ms["total_failures"]) > 0 for ms in method_stats  # type: ignore[arg-type]
     )
+    if any_failures:
+        legend_handles = [
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="black",
+                markerfacecolor="black",
+                markersize=7,
+                linestyle="None",
+                label=f"Converged on all fits ({n_ranges} grid widths, "
+                f"{n_surfaces} loss surfaces)",
+            ),
+            Line2D(
+                [0],
+                [0],
+                marker="o",
+                color="black",
+                markerfacecolor="none",
+                markersize=7,
+                markeredgewidth=1.5,
+                linestyle="None",
+                label="Failed to converge in at least one simulation",
+            ),
+        ]
+        ax_dot.legend(
+            handles=legend_handles,
+            fontsize=8.5,
+            loc="lower right",
+            framealpha=0.9,
+            edgecolor="#cccccc",
+        )
 
     ax_dot.set_xscale("log")
     ax_dot.set_yticks(y_positions)
@@ -1546,12 +1563,17 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
             )
     print(f"Saved: {raw_csv_path}")
 
-    # --- Export CSV 2: Max error pivot (method × parameter) ---
-    max_err_csv_path = figure_dir / "parameter_recovery_max_errors.csv"
-    with open(max_err_csv_path, "w") as f:
-        f.write("method," + ",".join(f"max_{pk}_err_pct" for pk in param_keys) + "\n")
+    # --- Export CSV 2: Summary pivot (method × parameter max errors + iteration stats) ---
+    summary_csv_path = figure_dir / "parameter_recovery_summary.csv"
+    with open(summary_csv_path, "w") as f:
+        f.write(
+            "method,"
+            + ",".join(f"max_{pk}_err_pct" for pk in param_keys)
+            + ",min_n_iter,mean_n_iter,max_n_iter\n"
+        )
         for m_idx, mc in enumerate(METHOD_CONFIGS):
             max_errs = []
+            all_iters = []
             for pk in param_keys:
                 vals = []
                 for sname in surface_names:
@@ -1560,14 +1582,26 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
                     if succeeded.any():
                         vals.append(np.max(np.abs(results[pk][succeeded])) * 100)
                 max_errs.append(max(vals) if vals else "")
+            for sname in surface_names:
+                _, results = all_results[sname][m_idx]
+                succeeded = ~results["failed"]
+                if succeeded.any():
+                    all_iters.extend(results["n_iter"][succeeded].tolist())
+            if all_iters:
+                iter_arr = np.array(all_iters)
+                min_iter = int(iter_arr.min())
+                mean_iter = f"{iter_arr.mean():.1f}"
+                max_iter = int(iter_arr.max())
+            else:
+                min_iter, mean_iter, max_iter = "", "", ""  # type: ignore[assignment]
             f.write(
                 f'"{mc.label}",'
                 + ",".join(
                     f"{v:.6e}" if isinstance(v, float) else str(v) for v in max_errs
                 )
-                + "\n"
+                + f",{min_iter},{mean_iter},{max_iter}\n"
             )
-    print(f"Saved: {max_err_csv_path}")
+    print(f"Saved: {summary_csv_path}")
 
     # --- Export CSV 3: Failure counts pivot ---
     fail_csv_path = figure_dir / "parameter_recovery_failures.csv"

@@ -36,7 +36,6 @@ from scaling_law_analysis.chinchilla import (
     FitStatus,
     LBFGSBOptions,
     LossSurface,
-    NelderMeadOptions,
     SurfaceFitResult,
     fit_approach2,
     fit_approach3,
@@ -149,7 +148,7 @@ assert DEFAULT_PARAMETER_GRID.total_size == DEFAULT_EXPONENT_GRID.total_size, (
 )
 
 _EXP7_LBFGSB_OPTIONS = LBFGSBOptions(maxiter=1000)
-_EXP7_NELDER_MEAD_OPTIONS = NelderMeadOptions(xatol=1e-15, maxiter=1000)
+_EXP7_VPNLS_LBFGSB_OPTIONS = LBFGSBOptions(maxiter=1000)
 
 
 # ── Experiment ────────────────────────────────────────────────────────────────
@@ -256,7 +255,8 @@ def _run_single_repeat(
                     d.L,
                     grid=DEFAULT_EXPONENT_GRID,
                     bounds=DEFAULT_SURFACE_BOUNDS,
-                    options=_EXP7_NELDER_MEAD_OPTIONS,
+                    method="l-bfgs-b",
+                    options=_EXP7_VPNLS_LBFGSB_OPTIONS,
                 ),
             ),
         ]:

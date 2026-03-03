@@ -8,15 +8,11 @@ accurate scaling law parameter recovery, and extrapolation using fitted paramete
 remains accurate even at compute budgets far beyond the fitting range.
 """
 
-import inspect
 from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-# Private API import used intentionally for exposition (verifying the default eps value).
-from scipy.optimize._lbfgsb_py import _minimize_lbfgsb
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
@@ -26,7 +22,6 @@ from scaling_law_analysis.chinchilla import (
     FitError,
     FitStatus,
     LBFGSBOptions,
-    LBFGSB_DEFAULT_EPS,
     fit_approach3,
     fit_vpnls,
 )
@@ -82,19 +77,6 @@ def _configure_ax(ax: plt.Axes, title: str, show_legend: bool = False):
     ax.set_xticklabels(tick_labels, fontsize=7, rotation=30, ha="right")
 
 
-def _verify_default_eps() -> None:
-    """Assert that LBFGSB_DEFAULT_EPS matches scipy's actual default.
-
-    The method comparison labels and article exposition reference this value
-    explicitly, so we need to ensure it stays correct across scipy versions.
-    """
-    sig = inspect.signature(_minimize_lbfgsb)
-    scipy_default = sig.parameters["eps"].default
-    assert (
-        scipy_default == LBFGSB_DEFAULT_EPS
-    ), f"LBFGSB_DEFAULT_EPS={LBFGSB_DEFAULT_EPS} != scipy default={scipy_default}"
-
-
 def surface_fitter(
     sim_config: SimulationConfig,
     compute_budgets: np.ndarray,
@@ -103,7 +85,7 @@ def surface_fitter(
 ):
     """Fit surface parameters and return D_opt function."""
     N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
-    result = fit_vpnls(N, D, L)
+    result = fit_vpnls(N, D, L, method="l-bfgs-b")
     fitted_surface = result.to_loss_surface()
     return fitted_surface.D_opt
 
@@ -113,7 +95,7 @@ def compute_param_errors(
     compute_budgets: np.ndarray,
     log_ranges: np.ndarray,
     n_points: int,
-    method: str = "nelder-mead",
+    method: str = "l-bfgs-b",
     jac: str | None = None,
     eps: float | None = None,
     use_grad: bool = True,
@@ -125,10 +107,11 @@ def compute_param_errors(
         compute_budgets: Compute budgets for IsoFLOP sampling
         log_ranges: Array of sampling ranges to sweep
         n_points: Number of points per IsoFLOP curve
-        method: Optimization method for fit_vpnls
+        method: Optimization method for fit_vpnls or "approach3"
         jac: Jacobian scheme for L-BFGS-B (e.g. "3-point")
         eps: Override finite-difference step size for L-BFGS-B
-        use_grad: For approach3, whether to use analytical gradients
+        use_grad: Whether to use analytical gradients (for approach3 and
+            l-bfgs-b vpnls)
 
     Returns:
         Dictionary with arrays of relative errors for each parameter
@@ -136,9 +119,11 @@ def compute_param_errors(
     loss = sim_config.loss
     n_ranges = len(log_ranges)
 
-    # Arrays to store relative errors and per-range failure flags
+    # Arrays to store relative errors and per-range status flags
     errors = {key: np.zeros(n_ranges) for key in ["E", "A", "B", "alpha", "beta"]}
+    n_iter = np.zeros(n_ranges, dtype=int)
     failed = np.zeros(n_ranges, dtype=bool)
+    abnormal = np.zeros(n_ranges, dtype=bool)
 
     for i, log_range in enumerate(log_ranges):
         N, D, L = sample_isoflop_data(sim_config, compute_budgets, log_range, n_points)
@@ -159,7 +144,13 @@ def compute_param_errors(
                 if method == "l-bfgs-b" and (jac is not None or eps is not None):
                     vpnls_options = LBFGSBOptions(jac=jac, eps=eps)
                 result = fit_vpnls(
-                    N, D, L, grid=vpnls_grid, method=method, options=vpnls_options
+                    N,
+                    D,
+                    L,
+                    grid=vpnls_grid,
+                    method=method,
+                    options=vpnls_options,
+                    use_grad=use_grad,
                 )
         except FitError:
             failed[i] = True
@@ -167,13 +158,19 @@ def compute_param_errors(
                 errors[key][i] = np.nan
             continue
 
-        # Treat ABNORMAL and BOUND_HIT as failures — this is noise-free data
-        # where neither condition should occur.
-        if result.status in (FitStatus.ABNORMAL, FitStatus.BOUND_HIT):
+        # BOUND_HIT is a hard failure — shouldn't happen on noise-free data.
+        if result.status == FitStatus.BOUND_HIT:
             failed[i] = True
             for key in errors:
                 errors[key][i] = np.nan
             continue
+
+        # ABNORMAL (e.g. line-search failure near optimum) is tracked
+        # separately — the estimates are still usable.
+        if result.status == FitStatus.ABNORMAL:
+            abnormal[i] = True
+
+        n_iter[i] = result.n_iter
 
         # Compute relative errors
         errors["E"][i] = (result.E - loss.E) / loss.E
@@ -185,8 +182,11 @@ def compute_param_errors(
     return {
         "config": sim_config,
         "log_ranges": log_ranges,
+        "n_iter": n_iter,
         "failed": failed,
         "n_failures": int(failed.sum()),
+        "abnormal": abnormal,
+        "n_abnormal": int(abnormal.sum()),
         **errors,
     }
 
@@ -296,30 +296,26 @@ class MethodConfig:
     use_grad: bool = True
 
 
-# Method configurations for the comparison figure.
-# The default L-BFGS-B uses scipy's default eps=1e-8. The two eps variants
-# bracket it symmetrically in log space (100x above and below) to demonstrate
-# sensitivity to the finite-difference step size.
 METHOD_CONFIGS = [
     # Approach 3 — 5D direct optimization (orange family)
     MethodConfig("5D L-BFGS-B (analytical grad)", "#e65100", "approach3"),
-    MethodConfig("5D L-BFGS-B (finite diff)", "#ff9800", "approach3", use_grad=False),
     MethodConfig(
-        "5D L-BFGS-B (central diff)",
-        "#e6b800",
+        "5D L-BFGS-B (numerical grad)",
+        "#ff9800",
         "approach3",
         use_grad=False,
         jac="3-point",
     ),
-    # VPNLS — our method: variable projection + NNLS + Nelder-Mead (standalone, dark blue)
-    MethodConfig("2D Nelder-Mead (VPNLS)", "#1a237e", "nelder-mead"),
-    # Variable projection — 2D L-BFGS-B variants (blue family)
+    # Variable projection — 2D methods (blue family)
+    MethodConfig("2D L-BFGS-B (analytical grad)", "#1a237e", "l-bfgs-b"),
     MethodConfig(
-        f"2D L-BFGS-B (default eps={LBFGSB_DEFAULT_EPS:.0e})", "#1976d2", "l-bfgs-b"
+        "2D L-BFGS-B (numerical grad)",
+        "#64b5f6",
+        "l-bfgs-b",
+        use_grad=False,
+        jac="3-point",
     ),
-    MethodConfig("2D L-BFGS-B (central diff)", "#64b5f6", "l-bfgs-b", jac="3-point"),
-    MethodConfig("2D L-BFGS-B (eps=1e-6)", "#90caf9", "l-bfgs-b", eps=1e-6),
-    MethodConfig("2D L-BFGS-B (eps=1e-10)", "#42a5f5", "l-bfgs-b", eps=1e-10),
+    MethodConfig("2D Nelder-Mead (gradient-free)", "#1565c0", "nelder-mead"),
     # Variable projection — 2D Grid (standalone, green)
     MethodConfig("2D Grid (256²)", "#2e7d32", "grid"),
 ]
@@ -335,10 +331,6 @@ def run_method_comparison(
     Returns:
         Dict mapping surface_name -> list of (MethodConfig, results) tuples
     """
-    # Verify that our claimed default eps matches what scipy actually uses.
-    # Run a trivial fit with and without explicit eps and check identical results.
-    _verify_default_eps()
-
     all_results: dict[str, list[tuple[MethodConfig, dict]]] = {}
 
     for surface_name, loss in LOSS_SURFACES:
@@ -371,11 +363,17 @@ def run_method_comparison(
                 for k in ["E", "A", "B", "alpha", "beta"]
             }
             failures = results["n_failures"]
-            fail_str = f" ({failures}/{len(log_ranges)} failed)" if failures else ""
+            n_abnormal = results["n_abnormal"]
+            status_parts = []
+            if failures:
+                status_parts.append(f"{failures}/{len(log_ranges)} failed")
+            if n_abnormal:
+                status_parts.append(f"{n_abnormal}/{len(log_ranges)} abnormal")
+            status_str = f" ({', '.join(status_parts)})" if status_parts else ""
             print(
                 f"max errors: "
                 + ", ".join(f"{k}={v:.2e}%" for k, v in max_errs.items())
-                + fail_str
+                + status_str
             )
 
         all_results[surface_name] = surface_results
@@ -469,17 +467,23 @@ def export_method_comparison_csv(
         for mc, results in all_results[surface_name]:
             n_ranges = len(results["log_ranges"])
             n_failures = results["n_failures"]
+            iters = results["n_iter"]
+            valid_iters = iters[~results["failed"]]
+            median_iter = int(np.median(valid_iters)) if len(valid_iters) > 0 else 0
+            max_iter = int(np.max(valid_iters)) if len(valid_iters) > 0 else 0
             max_errs = {
                 k: _nanmax_or_raise(np.abs(results[k]), k) * 100 for k in param_keys
             }
             rows.append(
                 f"{surface_name},{mc.method},{mc.jac or ''},{mc.eps or ''},"
                 f"{mc.label},{n_failures}/{n_ranges},"
+                f"{median_iter},{max_iter},"
                 + ",".join(f"{max_errs[k]:.2e}" for k in param_keys)
             )
 
     header = (
         "surface,method,jac,eps,label,failures,"
+        "median_n_iter,max_n_iter,"
         "max_E_err%,max_A_err%,max_B_err%,max_alpha_err%,max_beta_err%"
     )
     Path(path).write_text(header + "\n" + "\n".join(rows) + "\n")

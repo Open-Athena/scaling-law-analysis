@@ -1,0 +1,7 @@
+method,max_E_err_pct,max_A_err_pct,max_B_err_pct,max_alpha_err_pct,max_beta_err_pct,min_n_iter,mean_n_iter,max_n_iter
+"5D L-BFGS-B (analytical grad)",6.908626e-02,7.531390e-01,1.382960e+00,1.493160e-01,2.769820e-01,56,144.7,314
+"5D L-BFGS-B (numerical grad)",3.901464e+01,2.360685e+03,5.786612e+01,6.975238e+01,9.612117e+00,53,126.6,295
+"2D L-BFGS-B (analytical grad)",1.394574e-07,9.190551e-07,8.653271e-07,1.721071e-07,1.677908e-07,2,5.0,11
+"2D L-BFGS-B (numerical grad)",8.269770e-08,6.369056e-08,7.748223e-08,1.289975e-08,2.040452e-08,3,5.0,11
+"2D Nelder-Mead (gradient-free)",5.247847e-08,6.281816e-08,7.876769e-08,1.245531e-08,2.007138e-08,61,64.0,72
+"2D Grid (256²)",2.583168e+00,2.034131e+00,2.034131e+00,4.427577e-01,5.692600e-01,0,0.0,0

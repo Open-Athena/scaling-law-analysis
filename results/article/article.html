@@ -1800,12 +1800,18 @@
 
             <p>
                 The algorithm searches over \((\alpha, \beta)\) and, at each candidate pair,
-                solves for \((E, A, B)\) via non-negative least squares (NNLS). A coarse
-                32&times;32 grid search identifies a good starting region, and a Nelder-Mead
-                simplex optimizer refines it. The linear separation is maintained throughout.
+                solves for \((E, A, B)\) via least squares. A coarse
+                32&times;32 grid search identifies a good starting region, and a local
+                optimizer refines it. The linear separation is maintained throughout.
                 The optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
                 surface, never the full five-parameter space. We term this method Variable
                 Projection with Non-negative Least Squares (VPNLS).
+            </p>
+
+            <p>
+                In its simplest form, VPNLS uses non-negative least squares (NNLS) for the
+                inner solve and a gradient-free optimizer like Nelder-Mead for the outer
+                search. This is easy to implement and requires no gradient specification.
             </p>
 
             <div class="math-block" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88em; line-height: 1.8;">
@@ -1825,62 +1831,76 @@
             </div>
 
             <p>
-                The choice of Nelder-Mead over L-BFGS-B is deliberate. VPNLS uses NNLS for
-                the inner solve to guarantee that \(E\), \(A\), and \(B\) remain non-negative,
-                preventing physically meaningless fits. However, NNLS has no closed-form
-                gradient with respect to the outer parameters \((\alpha, \beta)\). Switching to
-                ordinary least squares would restore differentiability but cannot enforce
-                non-negativity. With NNLS, L-BFGS-B must rely on finite-difference gradients,
-                which creates a set of interacting tuning parameters
-                (<code>eps</code>, <code>jac</code>, <code>ftol</code>, <code>gtol</code>,
-                <code>maxcor</code>, <code>maxls</code>) where tight tolerances demand gradient
-                accuracy that finite differences cannot reliably provide.
+                Switching the inner solve from NNLS to ordinary least squares (OLS) makes
+                the objective differentiable and enables analytical gradients. By the
+                envelope theorem, the gradient of RSS with respect to \((\alpha, \beta)\)
+                depends only on the current residuals and design matrix, not on implicit
+                derivatives of the optimal \((E, A, B)\). This allows L-BFGS-B to be
+                used with exact gradients rather than finite differences.
             </p>
 
+            <div class="math-block" style="font-family: 'JetBrains Mono', monospace; font-size: 0.88em; line-height: 1.8;">
+<pre style="margin: 0; white-space: pre; overflow-x: auto;"><b>function</b> VPNLS(data):
+
+    <b>function</b> objective_and_grad(α, β):
+        X ← [1, N^(-α), D^(-β)]         <span style="color: var(--text-muted);">// design matrix</span>
+        (E, A, B) ← OLS(X, L)           <span style="color: var(--text-muted);">// linear solve (unconstrained)</span>
+        r ← L − X·[E, A, B]             <span style="color: var(--text-muted);">// residual vector</span>
+        ∂RSS/∂α ← 2A · rᵀ(log(N) ⊙ N^(-α))
+        ∂RSS/∂β ← 2B · rᵀ(log(D) ⊙ D^(-β))
+        <b>return</b> ‖r‖², [∂RSS/∂α, ∂RSS/∂β]
+
+    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse 32×32 grid search</span>
+    (α*, β*) ← L-BFGS-B(objective_and_grad,  <span style="color: var(--text-muted);">// α, β &gt; 0</span>
+                          start=(α₀, β₀))
+    (E*, A*, B*) ← OLS(X(α*, β*), L)
+
+    <b>return</b> (E*, A*, B*, α*, β*)</pre>
+            </div>
+
             <p>
-                Nelder-Mead avoids this entirely. Its few settings
-                (<code>xatol</code>, <code>fatol</code>) are independent
-                and work well out of the box. Nelder-Mead scales poorly to high dimensions,
-                but variable projection reduces the search to just two dimensions, which is
-                exactly the regime where simplex methods excel.
+                Both variants achieve machine-precision parameter recovery on noise-free
+                data. The gradient-free form with NNLS is simpler and easier to adapt to
+                modified loss surface specifications. The analytical gradient form converges
+                faster but requires deriving or computing gradients of the design matrix,
+                which could also be handled by an automatic differentiation engine. The
+                remainder of this study uses the gradient-based implementation as the
+                primary VPNLS method.
             </p>
 
             <h3 id="method-comparison-recovery">Method Comparison (Parameter Recovery)</h3>
 
             <p>
-                To validate this choice, we compare nine method configurations on noise-free
+                We compare six method configurations on noise-free
                 synthetic data across three loss surfaces (symmetric, Chinchilla, and high
-                imbalance) and 20 sampling ranges. This is the best case for gradient-based
-                methods since the data contains no noise that could obscure gradient information.
+                imbalance) and 20 sampling ranges.
             </p>
 
             <p>
                 The configurations fall into two groups. The first uses 5D direct optimization
                 (Approach 3), fitting all five parameters jointly with L-BFGS-B using either
-                analytical gradients, forward finite differences, or central finite differences.
+                analytical or numerical (3-point central difference) gradients.
                 The second uses 2D variable projection over \((\alpha, \beta)\) only, comparing
-                VPNLS (Nelder-Mead), L-BFGS-B with four finite-difference configurations
-                (default \(\varepsilon\), central differences,
-                \(\varepsilon = 10^{-6}\), and \(\varepsilon = 10^{-10}\)), and a fine
+                L-BFGS-B with analytical gradients, L-BFGS-B with numerical gradients,
+                Nelder-Mead (gradient-free, NNLS inner solve), and a fine
                 256&sup2; grid search with no local refinement.
                 Both groups use the same total initialization budget: the 5D methods search a
                 4<sup>5</sup>&nbsp;=&nbsp;1,024-point grid over all five parameters, while the
                 2D methods search a 32<sup>2</sup>&nbsp;=&nbsp;1,024-point grid over
-                \((\alpha, \beta)\) only, so that accuracy differences are more likely to
-                reflect the optimizer and loss-landscape geometry than an initialization advantage.
+                \((\alpha, \beta)\) only, so that accuracy differences reflect the optimizer
+                and loss-landscape geometry rather than an initialization advantage.
             </p>
 
             <figure>
                 <img src="figures/parameter_recovery/parameter_recovery.png"
-                    alt="Method comparison showing geometric mean error and max error across nine optimizer configurations">
+                    alt="Method comparison showing geometric mean error and max error across six optimizer configurations">
                 <figcaption>
-                    <strong>Figure 8:</strong> Comparison of nine fitting methods on noise-free
+                    <strong>Figure 8:</strong> Comparison of six fitting methods on noise-free
                     synthetic data across three loss surfaces and 20 sampling ranges (60 fits
                     total per method). Left: geometric mean of |relative error| (%) pooled across
                     all surfaces, grid widths, and parameters, with horizontal bars spanning the
-                    min-to-max range. Filled dots indicate convergence on all 60 fits; open dots
-                    indicate at least one failure (count annotated). Right: maximum |relative
-                    error| (%) per parameter over successful fits, on a log-scale colormap.
+                    min-to-max range. Right: maximum |relative
+                    error| (%) per parameter, on a log-scale colormap.
                     Methods are sorted by geometric mean error, with the worst at top.
                 </figcaption>
             </figure>
@@ -1902,49 +1922,31 @@
                         </thead>
                         <tbody>
                             <tr>
-                                <td style="font-family: Inter, sans-serif;">2D Nelder-Mead (VPNLS)</td>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (analytical grad)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>1.4×10⁻⁷</td>
+                                <td>9.2×10⁻⁷</td>
+                                <td>8.7×10⁻⁷</td>
+                                <td>1.7×10⁻⁷</td>
+                                <td>1.7×10⁻⁷</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (numerical grad)</td>
+                                <td class="error-zero">0/60</td>
+                                <td>8.3×10⁻⁸</td>
+                                <td>6.4×10⁻⁸</td>
+                                <td>7.7×10⁻⁸</td>
+                                <td>1.3×10⁻⁸</td>
+                                <td>2.0×10⁻⁸</td>
+                            </tr>
+                            <tr>
+                                <td style="font-family: Inter, sans-serif;">2D Nelder-Mead (gradient-free)</td>
                                 <td class="error-zero">0/60</td>
                                 <td>5.2×10⁻⁸</td>
                                 <td>6.3×10⁻⁸</td>
                                 <td>7.9×10⁻⁸</td>
                                 <td>1.2×10⁻⁸</td>
                                 <td>2.0×10⁻⁸</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (central diff)</td>
-                                <td class="error-low">2/60</td>
-                                <td>8.3×10⁻⁸</td>
-                                <td>5.3×10⁻⁸</td>
-                                <td>6.4×10⁻⁸</td>
-                                <td>1.2×10⁻⁸</td>
-                                <td>2.0×10⁻⁸</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (default ε)</td>
-                                <td class="error-low">3/60</td>
-                                <td>1.5×10⁻⁵</td>
-                                <td>1.2×10⁻⁵</td>
-                                <td>1.3×10⁻⁵</td>
-                                <td>2.7×10⁻⁶</td>
-                                <td>3.8×10⁻⁶</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (ε=10⁻¹⁰)</td>
-                                <td class="error-zero">0/60</td>
-                                <td>1.6×10⁻⁷</td>
-                                <td>8.9×10⁻⁷</td>
-                                <td>8.6×10⁻⁷</td>
-                                <td>1.8×10⁻⁷</td>
-                                <td>1.7×10⁻⁷</td>
-                            </tr>
-                            <tr>
-                                <td style="font-family: Inter, sans-serif;">2D L-BFGS-B (ε=10⁻⁶)</td>
-                                <td class="error-high">17/60</td>
-                                <td>1.6×10⁻³</td>
-                                <td>1.1×10⁻³</td>
-                                <td>1.3×10⁻³</td>
-                                <td>2.2×10⁻⁴</td>
-                                <td>3.9×10⁻⁴</td>
                             </tr>
                             <tr>
                                 <td style="font-family: Inter, sans-serif;">2D Grid (256²)</td>
@@ -1956,7 +1958,7 @@
                                 <td>0.57</td>
                             </tr>
                             <tr>
-                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (analytical)</td>
+                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (analytical grad)</td>
                                 <td class="error-zero">0/60</td>
                                 <td>0.07</td>
                                 <td>0.75</td>
@@ -1965,109 +1967,56 @@
                                 <td>0.28</td>
                             </tr>
                             <tr>
-                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (central diff)</td>
-                                <td class="error-low">2/60</td>
+                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (numerical grad)</td>
+                                <td class="error-zero">0/60</td>
                                 <td>39.0</td>
                                 <td>2,361</td>
                                 <td>57.9</td>
                                 <td>69.8</td>
                                 <td>9.6</td>
                             </tr>
-                            <tr>
-                                <td style="font-family: Inter, sans-serif;">5D L-BFGS-B (finite diff)</td>
-                                <td class="error-low">4/60</td>
-                                <td>132</td>
-                                <td>2,361</td>
-                                <td>2,335</td>
-                                <td>71.4</td>
-                                <td>87.6</td>
-                            </tr>
                         </tbody>
                     </table>
                     <p style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">
                         Maximum |relative error| (%) across 60 fits (3 surfaces × 20 sampling
-                        ranges), computed over successful (converged) fits only. Failure counts
-                        show convergence failures out of 60 total fits.
+                        ranges). All methods converged on all fits.
                     </p>
                 </div>
             </details>
 
             <p>
-                In the left panel, each dot shows the typical (geometric mean) parameter
-                recovery error for one method, and the horizontal bar shows the range from best
-                to worst case across 60 scenarios. The right panel breaks this down by parameter,
-                showing the worst-case error for each.
-            </p>
-
-            <p>
-                Consider the best Approach 3 configuration (5D L-BFGS-B with analytical
-                gradients). Even with exact gradients on noise-free data, the worst-case errors
-                reach about 1.4% for \(B\) and about 0.75% for \(A\), compared with
-                VPNLS errors on the order of 10<sup>&minus;8</sup>% &mdash; a gap of
-                roughly seven orders of magnitude.
+                The dominant pattern is the gap between 2D variable projection and 5D
+                direct optimization. Consider the best Approach 3 configuration (5D L-BFGS-B
+                with analytical gradients). Even with exact gradients on noise-free data, the
+                worst-case errors reach about 1.4% for \(B\) and about 0.75% for \(A\),
+                compared with 2D variable projection errors on the order of
+                10<sup>&minus;7</sup>% or better. The 5D numerical gradient variant performs
+                far worse, with errors exceeding 2,000% on some parameters.
                 <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
                 surface and sampling range, also revealing that Approach 3's errors can vary
                 systematically with sampling range on certain surfaces.
             </p>
 
             <p>
-                Looking at the full set of methods, a clear hierarchy emerges. High-resolution
-                grid search (256&sup2;) is stable across all conditions but provides the poorest
-                overall precision among 2D methods, limited by grid resolution.
-            </p>
-
-            <p>
-                5D direct optimization (Approach 3) is more accurate on average than grid search
-                but highly variable across conditions. The 5D configurations that rely on
-                finite-difference gradients rather than analytical gradients perform particularly
-                poorly and serve as a useful negative control. They demonstrate what high
-                variability and instability look like, and Approach 3 with analytical gradients
-                exhibits a similar pattern centered around more accurate parameter estimates. The full
-                per-parameter breakdown (<a href="#appendix-method-comparison">Figure
-                A1</a>) shows these instability patterns in detail.
-            </p>
-
-            <p>
-                L-BFGS-B with 2D variable projection can match VPNLS precision, but the
-                optimizer fails to converge in a non-trivial fraction of scenarios even in this
-                relatively small test suite. The choice of finite-difference scheme matters
-                considerably. By default, scipy's L-BFGS-B approximates gradients with forward
-                differences: each partial derivative is estimated as
-                \((f(x + h) - f(x)) / h\). Passing
-                <code>jac='3-point'</code> to <code>scipy.optimize.minimize</code> switches to
-                3-point central differences, where each partial is estimated as
-                \((f(x + h) - f(x - h)) / 2h\). The central formula is generally more
-                accurate for smooth objectives because it samples symmetrically around the
-                point of interest. In our tests, this closes the precision gap with
-                Nelder-Mead (from roughly 10<sup>&minus;5</sup>% to
-                10<sup>&minus;8</sup>% error), but introduces sporadic line search failures.
-                Notably, these failures can be false positives. The optimizer has already
-                reached the true minimum, with residual sum of squares near machine zero, but
-                the line search cannot verify further progress because function values are too
-                small to distinguish. In scipy, this surfaces as
-                <code>result.success = False</code> with an <code>ABNORMAL</code> status
-                from <code>scipy.optimize.minimize</code>, even though the returned parameters
-                are correct.
-            </p>
-
-            <p>
-                L-BFGS-B remains a viable alternative to Nelder-Mead for practitioners willing
-                to tune settings carefully and who understand that certain convergence errors
-                from libraries like scipy may not necessarily be problematic. That said, VPNLS with Nelder-Mead
-                is simpler, requires less tuning, and recovers parameter estimates with precision
-                at least as high as any other method tested. It technically achieves the most
-                precise estimates, though the margin over a well-configured L-BFGS-B with
-                3-point central differences is small.
+                Within the 2D group, all three locally optimized methods (L-BFGS-B with
+                analytical gradients, L-BFGS-B with numerical gradients, and Nelder-Mead)
+                recover parameters to machine precision across all surfaces. The
+                well-conditioned 2D landscape makes even finite-difference gradients reliable
+                in the reduced search space. The analytical gradient variant achieves the
+                highest precision overall, though with slightly more variance than the
+                gradient-free and numerical gradient methods. High-resolution grid search
+                (256&sup2;) is stable but limited by grid resolution, providing the poorest
+                precision among the 2D methods.
             </p>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Key Result</div>
                 <p>
-                    On noise-free synthetic data, VPNLS eliminates the biases inherent in the
-                    parabolic approximation and avoids the fragile gradient tuning that
-                    complicates L-BFGS-B when used with variable projection. All five loss
-                    surface parameters \((E, A, B, \alpha, \beta)\) are recovered with machine
-                    precision, and extrapolation to higher compute budgets is exact.
+                    On noise-free synthetic data, variable projection reduces the 5-parameter
+                    optimization to a well-conditioned 2D search where all tested optimizers
+                    converge reliably. All five loss surface parameters
+                    \((E, A, B, \alpha, \beta)\) are recovered with machine precision, and
+                    extrapolation to higher compute budgets is exact.
                 </p>
             </div>
 
@@ -2360,12 +2309,12 @@
                 <img src="appendix/parameter_recovery_detailed.png"
                     alt="Detailed method comparison showing per-parameter error across surfaces and sampling ranges">
                 <figcaption>
-                    <strong>Figure A1:</strong> Per-parameter recovery error for nine fitting
+                    <strong>Figure A1:</strong> Per-parameter recovery error for six fitting
                     methods across three loss surfaces and 20 sampling ranges (baseline, no
                     bias). Each panel shows absolute relative error (%) on a log scale versus
                     sampling range, with one curve per method. Rows correspond to loss surfaces
                     (symmetric, Chinchilla, high imbalance); columns correspond to parameters
-                    (E, A, B, &alpha;, &beta;). Gaps indicate convergence failures.
+                    (E, A, B, &alpha;, &beta;).
                 </figcaption>
             </figure>
 

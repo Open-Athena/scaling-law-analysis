@@ -156,7 +156,7 @@ def main() -> str:
     p()
 
     est_a3 = fit_approach3(N, D, L)
-    est_vp = fit_vpnls(N, D, L)
+    est_vp = fit_vpnls(N, D, L, method="nelder-mead")
 
     a3_errs = {
         "E": (est_a3.E - loss.E) / loss.E,

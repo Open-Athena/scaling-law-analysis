@@ -541,6 +541,7 @@ class SurfaceFitResult:
         residual_sum_squares: Sum of squared residuals at optimal fit
         n_points: Number of data points used in fit
         method: Fitting method used (e.g. "nelder-mead", "approach3")
+        n_iter: Number of optimizer iterations (0 for grid-only methods)
         status: Outcome of the fitting procedure (see FitStatus)
         status_message: Human-readable detail when status is not CONVERGED
     """
@@ -553,6 +554,7 @@ class SurfaceFitResult:
     residual_sum_squares: float
     n_points: int
     method: str = "nelder-mead"
+    n_iter: int = 0
     status: FitStatus = FitStatus.CONVERGED
     status_message: str = ""
 
@@ -767,6 +769,105 @@ def _compute_rss_and_params(
     rss = rnorm**2
 
     return rss, params
+
+
+def _compute_rss_and_params_ols(
+    alpha: float,
+    beta: float,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> tuple[float, np.ndarray]:
+    """Compute RSS and OLS parameters for given (α, β).
+
+    Like ``_compute_rss_and_params`` but uses ordinary least squares
+    (``np.linalg.lstsq``) instead of NNLS.  This makes the inner solve
+    differentiable with respect to (α, β), enabling analytical gradients
+    for the outer optimisation.
+
+    Returns:
+        Tuple of (residual_sum_squares, params_array[E, A, B])
+    """
+    N_neg_alpha = np.exp(-alpha * log_N)
+    D_neg_beta = np.exp(-beta * log_D)
+
+    design_matrix = np.column_stack(
+        [
+            np.ones(len(L)),
+            N_neg_alpha,
+            D_neg_beta,
+        ]
+    )
+
+    params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
+    # lstsq returns residuals only when m > n and rank == n; compute directly
+    pred = design_matrix @ params
+    rss = float(np.sum((L - pred) ** 2))
+
+    return rss, params
+
+
+def _vpnls_rss_grad(
+    alpha: float,
+    beta: float,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> np.ndarray:
+    """Analytical gradient of VPNLS RSS w.r.t. (α, β).
+
+    Uses the envelope-theorem result: because (E, A, B) minimise RSS for
+    fixed (α, β), their implicit derivatives drop out and the gradient
+    depends only on the explicit partial derivatives of the design matrix.
+
+    Returns:
+        2-element array ``[∂RSS/∂α, ∂RSS/∂β]``
+    """
+    N_neg_alpha = np.exp(-alpha * log_N)
+    D_neg_beta = np.exp(-beta * log_D)
+
+    design_matrix = np.column_stack([np.ones(len(L)), N_neg_alpha, D_neg_beta])
+    params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
+    E, A, B = params
+
+    resid = L - (E + A * N_neg_alpha + B * D_neg_beta)
+
+    # ∂RSS/∂α = -2 · rᵀ · (∂pred/∂α) = -2 · rᵀ · A·(-log_N)·N^{-α}
+    #         = 2A · rᵀ(log_N ⊙ N^{-α})
+    grad_alpha = float(2 * A * np.dot(resid, log_N * N_neg_alpha))
+    # ∂RSS/∂β = 2B · rᵀ(log_D ⊙ D^{-β})
+    grad_beta = float(2 * B * np.dot(resid, log_D * D_neg_beta))
+
+    return np.array([grad_alpha, grad_beta])
+
+
+def _vpnls_objective_and_grad(
+    x: np.ndarray,
+    log_N: np.ndarray,
+    log_D: np.ndarray,
+    L: np.ndarray,
+) -> tuple[float, np.ndarray]:
+    """Combined RSS objective and analytical gradient for VPNLS.
+
+    Builds the design matrix once, solves OLS for (E, A, B), then returns
+    both the RSS value and the 2-element gradient w.r.t. (α, β).  Suitable
+    for ``scipy.optimize.minimize`` with ``jac=True``.
+    """
+    alpha, beta = x
+    N_neg_alpha = np.exp(-alpha * log_N)
+    D_neg_beta = np.exp(-beta * log_D)
+
+    design_matrix = np.column_stack([np.ones(len(L)), N_neg_alpha, D_neg_beta])
+    params, _, _, _ = np.linalg.lstsq(design_matrix, L, rcond=None)
+    E, A, B = params
+
+    resid = L - (E + A * N_neg_alpha + B * D_neg_beta)
+    rss = float(np.dot(resid, resid))
+
+    grad_alpha = float(2 * A * np.dot(resid, log_N * N_neg_alpha))
+    grad_beta = float(2 * B * np.dot(resid, log_D * D_neg_beta))
+
+    return rss, np.array([grad_alpha, grad_beta])
 
 
 def _cartesian_product(*arrays: np.ndarray) -> np.ndarray:
@@ -1000,17 +1101,20 @@ def fit_vpnls(
     bounds: SurfaceBounds | None = None,
     method: str = "nelder-mead",
     options: NelderMeadOptions | LBFGSBOptions | None = None,
+    use_grad: bool = True,
 ) -> SurfaceFitResult:
     """Fit the loss surface L(N, D) = E + A/N^α + B/D^β via variable projection.
 
-    All methods search only over (α, β) and solve (E, A, B) via NNLS at each
-    candidate, so comparisons isolate the optimizer rather than the parameterization.
+    All methods search only over (α, β) and solve (E, A, B) via an inner
+    linear solve at each candidate.
 
     Methods:
         - "nelder-mead": Coarse grid search for initialization, then Nelder-Mead
-          refinement. Gradient-free.
+          refinement. Gradient-free. Inner solve uses NNLS.
         - "l-bfgs-b": Coarse grid search for initialization, then L-BFGS-B
-          refinement. Gradient scheme and step size configurable via options.
+          refinement. Inner solve uses OLS (``lstsq``).  When ``use_grad=True``
+          (default), uses analytical gradients derived from the envelope
+          theorem; otherwise falls back to finite differences.
         - "grid": Grid search only with no local refinement. Pass a high-
           resolution grid (e.g. FINE_EXPONENT_GRID) for better precision.
 
@@ -1025,6 +1129,9 @@ def fit_vpnls(
         options: Optimizer options. Pass NelderMeadOptions for "nelder-mead",
             LBFGSBOptions for "l-bfgs-b". Ignored for "grid". If None, uses
             the default options for the chosen method.
+        use_grad: If True (default), use analytical gradients for L-BFGS-B.
+            If False, use finite differences via ``options.jac``.
+            Ignored for "nelder-mead" and "grid".
 
     Returns:
         SurfaceFitResult with fitted parameters.  Soft issues (max iterations,
@@ -1069,38 +1176,68 @@ def fit_vpnls(
     if method == "grid":
         alpha = float(alpha_grid[best_i])
         beta = float(beta_grid[best_j])
+        n_iter = 0
         if grid_edge_msgs:
             status = FitStatus.BOUND_HIT
             status_message = "; ".join(grid_edge_msgs)
 
     else:
-
-        def objective(x):
-            rss, _ = _compute_rss_and_params(x[0], x[1], log_N, log_D, L)
-            return rss
-
         x0 = [alpha_grid[best_i], beta_grid[best_j]]
 
         if method == "nelder-mead":
-            opts = options if options is not None else DEFAULT_NELDER_MEAD_OPTIONS
+            if options is None:
+                opts = DEFAULT_NELDER_MEAD_OPTIONS
+            elif isinstance(options, NelderMeadOptions):
+                opts = options
+            else:
+                raise ValueError(
+                    f"method='nelder-mead' requires NelderMeadOptions, "
+                    f"got {type(options).__name__}"
+                )
+
+            def objective(x):
+                rss, _ = _compute_rss_and_params(x[0], x[1], log_N, log_D, L)
+                return rss
+
             result = minimize(
                 objective, x0=x0, method="Nelder-Mead", options=opts.to_dict()
             )
         else:  # l-bfgs-b
-            lbfgs_opts: LBFGSBOptions = (
-                options
-                if isinstance(options, LBFGSBOptions)
-                else DEFAULT_LBFGSB_OPTIONS
-            )
+            if options is None:
+                lbfgs_opts = DEFAULT_LBFGSB_OPTIONS
+            elif isinstance(options, LBFGSBOptions):
+                lbfgs_opts = options
+            else:
+                raise ValueError(
+                    f"method='l-bfgs-b' requires LBFGSBOptions, "
+                    f"got {type(options).__name__}"
+                )
             opts = lbfgs_opts
-            lbfgs_kwargs: dict = {
-                "method": "L-BFGS-B",
-                "bounds": [bounds.alpha, bounds.beta],
-                "options": lbfgs_opts.to_dict(),
-            }
-            if lbfgs_opts.jac is not None:
-                lbfgs_kwargs["jac"] = lbfgs_opts.jac
-            result = minimize(objective, x0=x0, **lbfgs_kwargs)
+
+            if use_grad:
+                result = minimize(
+                    _vpnls_objective_and_grad,
+                    x0=x0,
+                    args=(log_N, log_D, L),
+                    jac=True,
+                    method="L-BFGS-B",
+                    bounds=[bounds.alpha, bounds.beta],
+                    options=lbfgs_opts.to_dict(),
+                )
+            else:
+
+                def objective_ols(x):
+                    rss, _ = _compute_rss_and_params_ols(x[0], x[1], log_N, log_D, L)
+                    return rss
+
+                lbfgs_kwargs: dict = {
+                    "method": "L-BFGS-B",
+                    "bounds": [bounds.alpha, bounds.beta],
+                    "options": lbfgs_opts.to_dict(),
+                }
+                if lbfgs_opts.jac is not None:
+                    lbfgs_kwargs["jac"] = lbfgs_opts.jac
+                result = minimize(objective_ols, x0=x0, **lbfgs_kwargs)
 
         if result is None:
             raise FitError("Optimizer returned None.")
@@ -1122,9 +1259,14 @@ def fit_vpnls(
                 )
 
         alpha, beta = float(result.x[0]), float(result.x[1])
+        n_iter = int(result.nit)
 
     # Extract final parameters at optimized (α, β)
-    rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
+    # L-BFGS-B uses OLS (differentiable); others use NNLS (non-negative)
+    if method == "l-bfgs-b":
+        rss, (E, A, B) = _compute_rss_and_params_ols(alpha, beta, log_N, log_D, L)
+    else:
+        rss, (E, A, B) = _compute_rss_and_params(alpha, beta, log_N, log_D, L)
 
     _check_finite(E=E, A=A, B=B, alpha=alpha, beta=beta, rss=rss)
 
@@ -1153,6 +1295,7 @@ def fit_vpnls(
         residual_sum_squares=rss,
         n_points=len(N),
         method=method,
+        n_iter=n_iter,
         status=status,
         status_message=status_message,
     )
@@ -1291,6 +1434,7 @@ def fit_approach3(
         residual_sum_squares=final_rss,
         n_points=len(N),
         method="approach3",
+        n_iter=int(result.nit),
         status=status,
         status_message=status_message,
     )
