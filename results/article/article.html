@@ -996,7 +996,7 @@
                 provided every advantage other than loss surface asymmetry. 
                 The data contains no measurement noise and the sampling is perfect, with IsoFLOP grids centered precisely at the true optimum
                 (something difficult or impossible to know in practice). And the loss surface parameters are
-                standard in the Chinchilla case, taken directly the Chinchilla paper.
+                standard in the Chinchilla case, taken directly from the Chinchilla paper.
             </p>
 
             <div class="callout key-point">
@@ -1354,7 +1354,7 @@
                     the model</li>
                 <li><strong>Wider grids amplify error:</strong> Moving from XS (±2x) to XL (±16x)
                     grids increases error from 0.3% to 5.1% on Chinchilla, and from 1.7% to 23% on the Asymmetric surface</li>
-                <li><strong>Asymmetry magnifies everything:</strong> The Asymmetric surface
+                <li><strong>Asymmetry further amplifies error:</strong> The Asymmetric surface
                     (\(\alpha/\beta = 3\)) shows roughly 4–5x larger errors than Chinchilla at each grid width</li>
             </ul>
 
@@ -1462,8 +1462,8 @@
             <h3 id="drifting-bias">Drifting Bias</h3>
 
             <p>
-                When the offset varies with compute budget, a qualitatively different failure
-                mode emerges. To illustrate this, we apply a linear drift. The sampling center
+                When the offset varies with compute budget, a different failure mode occurs,
+                and we illustrate this by applying a multiplicative drift. The sampling center
                 starts at the true optimum for the lowest budget and drifts to 3× the true
                 optimum at the highest budget, interpolating linearly in log-compute space.
             </p>
@@ -1493,7 +1493,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Message</div>
+                <div class="callout-title">✓ Key Result</div>
                 <p>
                     Constant bias preserves exponents; any compute-dependent bias pattern distorts
                     them. The distinction matters because exponent errors compound during extrapolation,
@@ -1764,7 +1764,7 @@
 
             <p>
                 These difficulties can be framed more concretely within the context of some of the simulations
-                discuseed in prior sections. For example, consider the
+                discussed in prior sections. For example, consider the
                 Hessian of the residual sum of squares (RSS) objective for a five-parameter
                 fit on noise-free data from the Asymmetric surface
                 (\(\alpha = 0.465\), \(\beta = 0.155\)), using five IsoFLOP contours from
@@ -2246,7 +2246,7 @@
             </p>
 
             <p>
-                VPNLS is at least as stable and accurate as more typical Approach&nbsp;3 implemenations 
+                VPNLS is at least as stable and accurate as more typical Approach&nbsp;3 implementations 
                 while being structurally simpler. Variable projection separates exponential from linear terms,
                 reducing the nonlinear search to the exponential terms only. This makes
                 dense grid search practical because the grid grows with the number of
@@ -2259,7 +2259,7 @@
                 This structural advantage extends naturally to richer loss surface
                 specifications. The analytical extensions discussed in the
                 <a href="#motivation">introduction</a> (epochs, data quality, MoE sparsity,
-                and others) often add linear terms that could be ommitted from direct optimization.
+                and others) often add linear terms that could be omitted from direct optimization.
                 This structural simplification may provide a more scalable foundation for future work.
             </p>
 

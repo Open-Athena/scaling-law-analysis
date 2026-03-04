@@ -46,13 +46,13 @@ The paper follows the article's structure with these renames and overrides:
 | *(title/subtitle)* | `\title` / `\begin{abstract}` | See Title and Abstract overrides above/below |
 | Motivation | Introduction | See Introduction override below |
 | Preliminaries: Loss Surface, Notation, and Fitting Methods | Preliminaries | Direct conversion |
-| The Happy Path: Symmetric Surfaces | The Happy Path: Symmetric Surfaces | Direct conversion |
+| Symmetric Surfaces: Unbiased Estimation in Ideal Conditions | Symmetric Surfaces: Unbiased Estimation in Ideal Conditions | Direct conversion |
 | Asymmetric Surfaces: Intercept and Extrapolation Errors | Asymmetric Surfaces: Intercept and Extrapolation Errors | Direct conversion |
 | Off-Center Sampling: Exponent and Extrapolation Errors | Off-Center Sampling: Exponent and Extrapolation Errors | Direct conversion |
-| IsoFLOP Curves in the Wild: Evidence from Published Studies | IsoFLOP Curves in the Wild | Direct conversion |
+| Real IsoFLOP Curves: Evidence from Published Studies | Real IsoFLOP Curves: Evidence from Published Studies | Direct conversion |
 | Robust Fits: Unbiased Estimation with Linear Separation | Robust Fits: Unbiased Estimation with Linear Separation | Direct conversion |
 | Conclusion | Conclusion | Direct conversion |
-| Appendix A, B | Appendix A, B | Direct conversion |
+| Appendix A–D | Appendix A–D | Direct conversion |
 
 ### Abstract (override)
 
