@@ -44,7 +44,11 @@
   - Three-step pipeline: (1) sample IsoFLOP contours at various (N, D) pairs for each compute budget, (2) fit parabolas and extract vertex N* for each budget, (3) regress log N* against log C to recover scaling exponent
   - Appeal is simplicity: only polynomial fits, no nonlinear optimization; parabolic approximation comes from Taylor expansion around the optimum
 - **Approach 3: Direct Surface Fitting**
-  - Fit all five parameters (E, A, B, α, β) simultaneously via nonlinear least squares
+  - Direct formulation: minimize Σ(L_i − L̂(N_i, D_i))² over all five parameters; show the RSS objective
+  - Practical issues with direct optimization: (1) E, A, B must remain positive for physical meaning, requiring box constraints; (2) the loss scale spans orders of magnitude, so errors at small loss values are underweighted
+  - Chinchilla's adapted formulation [chinchilla]: LSE reparameterization optimizes (e, a, b, α, β) where E=exp(e), A=exp(a), B=exp(b), enforcing positivity without explicit bounds; the predicted log-loss is computed via logsumexp(e, a−α·log N, b−β·log D) for numerical stability; the objective is Huber loss on log-predictions rather than MSE on predictions, which reweights errors more uniformly across the loss scale and is robust to outliers
+  - Show both objectives side by side (direct RSS, then LSE + Huber log-loss)
+  - We use MSE rather than Huber throughout because we evaluate methods on simulated data with known noise models and want MLE estimates in some configurations
   - Avoids the parabolic approximation entirely but is notoriously unstable: sensitive to initialization, prone to spurious local minima
 
 ---
@@ -165,14 +169,16 @@
   - Initialization is a major source of variability; common mitigations include (a) grid search over initializations, running the optimizer from each of thousands of starting points and keeping the best fit, (b) random sampling of starting points, (c) evaluating a coarse grid without optimization and seeding the optimizer from the best candidate only, or (d) initializing from previously published parameter values
     - These mitigations do not reliably solve the problem; the survey's own experiments show that full-grid optimization over 4500 starting points sometimes yields the worst fit among all strategies tested, evidence of "the difficulty of optimizing over this space, and the presence of many local minima"
   - A simpler alternative is log-linearization: take the log of both sides of the power law and fit with linear regression; however, this changes the error distribution and exaggerates errors at small loss values, biasing parameter estimates in a way that is easily observed in simulations like ours
+      - The canonical Chinchilla Approach 3 (LSE reparameterization with log-loss objective) is a more principled version of this idea: it minimizes MSE in log-space while using LogSumExp to handle the sum structure correctly; we evaluate this variant directly in the exponent inference comparison
       - The survey also finds that loss function choice (Log-Huber, Huber, MSE, MAE) affects fitted parameters unpredictably across datasets, and non-MSE objectives can introduce systematic bias in parameter estimates; our goal is to identify a method that is simple, stable, and efficient rather than to address outliers or other statistical concerns, so we use MSE for all fits
   - The survey's experimental analysis varies optimizer, loss function, and initialization strategy across three datasets; the overarching finding is that none of these choices reliably eliminates instability, and results shift unpredictably between datasets
-  - Segue: a key contributor to these problems is the high dimensionality of the joint 5-parameter optimization, which creates a complex loss landscape with many local minima and interacting sensitivities; variable projection reduces the nonlinear search to 2 dimensions (α, β), which shrinks the space enough to make simple grid-seeded optimization practical and greatly reduces (though does not eliminate) the risk of converging to poor local minima
+  - Segue: a key contributor to these problems is the high dimensionality of the joint optimization; variable projection reduces the nonlinear search to only the exponential terms (α, β), solving the linear coefficients (E, A, B) analytically at each candidate; this makes dense grid search practical because the grid grows only with the number of exponential terms, not all parameters
   - Concrete example from Experiment 8: Hessian of 5D RSS on the Asymmetric surface (α=0.465, β=0.155, five IsoFLOP contours 10¹⁷–10²¹, 15 points/curve) has eigenvalues spanning ~8×10⁻⁶ to ~3×10⁶ (κ ≈ 3.5×10¹¹); flattest directions are A and B (underdetermined near optimum), steepest are α and β; 2D landscape after variable projection has κ ≈ 11 [hessian_optimization]
 - **Variable Projection (VPNLS)**
 - Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
 - This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
 - **Algorithm**: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space; we call this method VPNLS (Variable Projection with Non-negative Least Squares)
+- **Grid search scalability**: because the nonlinear search is over exponential terms only, grid density scales with the number of exponential terms rather than the total number of parameters; a 32² grid over (α, β) provides 1,024 candidates with fine resolution, whereas the same budget in 5D gives only 4⁵ = 1,024 points spread thinly; extensions that add linear terms (e.g. epochs, data quality, MoE sparsity) increase the inner linear solve but do not enlarge the outer grid search
 - **Analytical gradients via the envelope theorem**: switching the inner solve from NNLS to OLS makes the objective differentiable; by the envelope theorem, the gradient of RSS with respect to (α, β) has a closed form that depends only on the current residuals and design matrix, not on implicit derivatives of the optimal (E, A, B)
 - **Optimizer choice**: both L-BFGS-B (with analytical gradients, OLS inner solve) and Nelder-Mead (gradient-free, NNLS inner solve) work well in the 2D (α, β) search space and achieve machine-precision parameter recovery; L-BFGS-B occasionally triggers spurious line-search failures near the optimum when the objective is too flat to verify further progress, but the returned parameters are correct in these cases
 - **Method Comparison (Parameter Recovery)**
@@ -181,25 +187,27 @@
     - 2D variable projection: L-BFGS-B with analytical gradients (VPNLS), L-BFGS-B with numerical gradients (3-point central differences), Nelder-Mead (gradient-free, NNLS inner solve), and a fine 256² grid search; grid-seeded from 32² = 1,024 starting points (same total grid budget as Approach 3, so accuracy differences reflect the optimizer and loss landscape, not initialization)
   - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) with "(Chinchilla Approach 3)" and "(VPNLS)" callouts on the respective analytical gradient methods; max-error heatmap (right) with columns {E, A, B, α, β}
   - Results:
-    - 5D direct optimization (Approach 3) is more accurate than grid search but highly variable; numerical gradients perform very poorly in the 5D landscape; analytical gradients are better but still exhibit meaningful errors on the Chinchilla surface
     - All three 2D variable projection methods with local optimization recover parameters to machine precision (~1e-7% or better) across all surfaces; the well-conditioned 2D landscape makes even finite-difference gradients reliable
-    - VPNLS with analytical gradients achieves the highest precision overall, though with slightly more variance than the gradient-free and finite-difference 2D methods; the key differentiator is the gap between 2D variable projection (all variants) and 5D direct optimization, not between 2D optimizer choices
-- Key message: variable projection reduces the 5-parameter optimization to a well-conditioned 2D search where all tested optimizers converge reliably; VPNLS with analytical gradients is the most efficient variant, and variable projection itself is the advantageous design choice
+    - 5D direct optimization (Approach 3) with analytical gradients is more accurate than grid search but exhibits larger errors than any 2D method in this noiseless setting, particularly on the Chinchilla surface; numerical gradients perform very poorly in the 5D landscape
+    - VPNLS with analytical gradients achieves the highest precision overall; the dominant pattern is the gap between 2D variable projection (all variants) and 5D direct optimization, not between 2D optimizer choices
+- Key message: variable projection reduces the nonlinear search to the exponential terms only, producing a well-conditioned 2D landscape where all tested optimizers converge reliably; the same grid budget that spreads thinly across 5D provides dense coverage in 2D
 - **Method Comparison (Exponent Inference)**
   - Parameter recovery on noiseless data demonstrates numerical instabilities inherent to the loss surface (see "Problems with Direct Surface Fitting" above) but is not representative of practical use
   - A more useful comparison incorporates training noise and varies the quantity of data available to each method; the focus shifts from all five surface parameters to the scaling exponents (a, b) that drive compute-optimal allocation, enabling direct comparison with Approach 2
   - Emphasize worst-case errors: a practitioner typically runs one scaling law study, not hundreds, so sporadic optimizer failures that produce large errors in a minority of fits are arguably the most consequential practical risk
   - **Setup**: extend the "Compounding Errors" scenario (Asymmetric surface, 3× drift, L grid) to a statistical setting
+    - Five methods: Approach 2; Naive Approach 3 (random init, MLE objective); MLE Approach 3 (grid init, MLE objective); canonical Approach 3 (grid init, LSE reparameterization + log-loss, matching the Chinchilla paper's formulation); VPNLS (L-BFGS-B with analytical gradients)
     - Sweep over noise levels, budget counts, points-per-curve, and independent noise realizations; report the total number of fits per method and overall
     - Gaussian noise on loss values; appendix IsoFLOP figure shows what the noisy samples look like at each noise level alongside the true surface and drifting sampling centers
   - **Figure** (1 × 2, same layout as the parameter recovery comparison): dot-range plot (left) showing geometric mean error with min-max bars, rug ticks, and KDE for each method, pooled across all conditions; max-error heatmap (right) with columns for exponents a and b; methods sorted by worst-case error descending
   - **Results**:
-    - Randomly initialized Approach 3 serves as a negative control: highly sensitive to starting point, worst overall
-    - Approach 2 has lower variance but consistently poor average accuracy, reflecting the structural bias documented in earlier sections; better than naive Approach 3, but for a qualitatively different reason (systematic approximation bias vs. optimizer fragility)
-    - Grid-initialized Approach 3 is substantially improved; as in the parameter recovery comparison, both methods use equal-sized initialization grids (4⁵ = 1,024 vs 32² = 1,024), so accuracy differences reflect the optimizer; despite similar typical accuracy, Approach 3's worst-case errors are considerably larger
-    - Approach 3 and VPNLS produce nearly identical typical accuracy but diverge sharply in the tails: Approach 3 exhibits sporadic large failures that VPNLS avoids
-      - These failures follow no clear pattern across dataset size, budget count, or noise level, making them difficult to anticipate or guard against in practice
-      - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
+    - Approach 2 has consistently poor average accuracy reflecting the structural bias documented in earlier sections
+    - Naive Approach 3 (single random init, no LSE) is worse still, confirming that without careful initialization and parameterization, 5D optimization is unreliable
+    - Canonical Approach 3 (LSE + log-loss, as specified in the Chinchilla paper) with grid initialization is a large improvement; LSE enforces positivity and log-loss stabilizes optimization, but introduces a slight bias under additive Gaussian noise since the objective is misspecified for the noise model
+    - MLE Approach 3 (grid init, original-space MSE) is unbiased for additive noise but in this experiment exhibited larger max errors than canonical Approach 3 or VPNLS
+    - VPNLS is roughly equivalent in typical accuracy to well-configured Approach 3 and produced the smallest max errors in this experiment
+    - Key practical takeaway: grid search initialization and LSE reparameterization are the critical ingredients for stable Approach 3 fits, yet [misfitting] documents that many published studies omit one or both
+    - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
 
 
 
@@ -207,11 +215,12 @@
 
 ## Conclusion
 
-- **These biases are structural, not statistical**: the errors documented here exist on noise-free data with perfect experimental conditions; real experiments, which contend with measurement noise and unknown optima, can only make them worse
+- **Approach 2 biases are structural, not statistical**: the errors documented here exist on noise-free data with perfect experimental conditions; real experiments can only make them worse
 - **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
-- **A practical alternative exists**: VPNLS recovers all five surface parameters with machine precision, uses the same intuitive linear separation that makes Approach 2 appealing, and is straightforward to implement
-- VPNLS may also provide a more precise foundation for the analytical extensions discussed in the Motivation; brief callback (not restated in full), noting they retain the partially linear structure and are a natural direction for future work
-- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when precision matters for extrapolation to large compute budgets, consider VPNLS as a robust alternative
+- **Well-configured Approach 3 works well**: with grid initialization and LSE reparameterization (as specified in the original Chinchilla paper), Approach 3 achieves typical accuracy comparable to VPNLS in our experiments; many published studies omit one or both of these ingredients [misfitting], which likely accounts for much of Approach 3's reputation for instability
+- **VPNLS is non-inferior and structurally simpler**: variable projection separates exponential from linear terms, reducing the nonlinear search to the exponential terms only; this makes dense grid search practical because the grid grows with the number of exponential terms rather than all parameters, enabling finer coverage to avoid local optima than is feasible in a joint 5D search
+- **VPNLS scales naturally to extensions**: analytical extensions to the Chinchilla surface (epochs, data quality, MoE sparsity, etc.) add linear terms that increase only the inner solve, not the outer nonlinear search dimension; this provides a more scalable foundation than joint optimization where each new term adds a dimension to the grid
+- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when fitting surfaces directly, ensure grid initialization and LSE reparameterization are used; VPNLS offers equivalent accuracy with a simpler optimization structure that scales to richer loss surface specifications
 
 ### Limitations
 
@@ -246,5 +255,6 @@
 ### D. Exponent Inference Error Breakdown
 
 - Detailed boxplots from the exponent inference comparison, broken down by noise level, number of compute budgets, and points per IsoFLOP curve
+- Shows 4 of 5 methods (excludes Naive Approach 3, which serves only as a negative control in the main figure)
 - Figure (n_budgets rows × 4 columns): columns group by noise level (lowest, highest) and exponent (a, b); each panel shows per-method boxplots at each points-per-curve setting
-- Reveals where Approach 3's sporadic large errors occur and shows that they do not concentrate in any single experimental condition
+- Reveals where the Approach 3 variants' sporadic large errors occur and shows that they do not concentrate in any single experimental condition
