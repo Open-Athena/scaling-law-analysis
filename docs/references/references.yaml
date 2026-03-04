@@ -140,3 +140,13 @@
   title: An Investigation into Neural Net Optimization via Hessian Eigenvalue Density
   venue: ArXiv
   url: https://arxiv.org/abs/1901.10159
+
+- key: optimizer_scaling
+  title: Towards Robust Scaling Laws for Optimizers
+  venue: ArXiv
+  url: https://arxiv.org/abs/2602.07712
+
+- key: pruning_scaling
+  title: "The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2501.12486
