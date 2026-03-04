@@ -45,22 +45,24 @@ Systematic Biases in IsoFLOP Parabola Fits}
 
 \begin{abstract}
 Chinchilla Approach~2 is arguably the most widely adopted method for fitting
-neural scaling laws in practice. The method fits parabolas to IsoFLOP
-loss curves and extracts scaling exponents through a sequence of simple
-polynomial and linear regressions. We show that this parabolic approximation
-introduces systematic biases in compute-optimal allocation estimates, even on
-noise-free synthetic data under ideal experimental conditions. Two independent
-bias sources are identified: surface asymmetry ($\alpha \neq \beta$), which
-shifts intercept estimates, and off-center sampling, which distorts intercepts
-or exponents depending on whether the offset is constant or varies with compute
-budget. These biases compound in practice and grow with sampling grid width. We
-show that exploiting the partially linear structure of the Chinchilla loss
-surface, by separating linear coefficients from nonlinear exponents, eliminates
-these biases. Our realization of this approach, Variable Projection
-with Non-negative Least Squares (VPNLS), recovers all five surface parameters
-with machine precision across all conditions tested, while offering comparable
-data efficiency to Approach~2, high stability with full parametric inference,
-and no dependence on specialized IsoFLOP experiment designs.
+neural scaling laws in practice. The method fits parabolas to IsoFLOP loss
+curves and extracts scaling exponents through a sequence of simple polynomial
+and linear regressions. We show that the parabolic approximation inherent to
+this method introduces systematic biases in compute-optimal allocation
+estimates, even on noise-free synthetic data under ideal experimental
+conditions. Two independent bias sources are identified: loss surface asymmetry
+($\alpha \neq \beta$), which shifts intercept estimates, and off-center
+sampling, which distorts intercepts or exponents depending on whether the offset
+is constant or varies with compute budget. Chinchilla Approach~3 eliminates
+these biases, but is often regarded as unstable, prone to local minima, less
+data-efficient and more complex to implement. We demonstrate that this is not
+true, especially when the partially linear structure of the Approach~3
+optimization objective is exploited through Variable Projection. This enables
+unbiased, parametric inference on all five loss surface parameters as a
+two-dimensional optimization that is well-conditioned, analytically
+differentiable and highly amenable to dense, or even exhaustive, grid search. It
+may serve as a more convenient replacement for Approach~2 or a more scalable
+alternative for adaptations of Approach~3 to richer scaling law formulations.
 \end{abstract}
 
 \section{Introduction}
