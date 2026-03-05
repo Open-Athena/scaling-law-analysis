@@ -3,21 +3,6 @@
 On article:
 
 - Primary:
-  - Code:
-    - Check bases for logs
-  - Mention that 2D optimization allows for much finer grid search rather than random initializations from many points
-    - Papers that do this include:
-      - [The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws](https://arxiv.org/pdf/2501.12486)
-      - [Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws](https://arxiv.org/pdf/2401.00448)
-        - "We use the L-BFGS algorithm to perform the minimization, initialized from a grid of starting points for each of the parameters"
-          - This is not actually that clear that they used multiple initializations but "The Journey Matters" cites it that way
-        - "We set the maximum number of L-BFGS iterations to 1000"
-        - "we follow the procedure described in the Sec. D.2 of the Chinchilla paper, minimizing the objective in Eq.4, where LSE is the log-sum-exp operator"
-      - Chinchilla itself on Approach 3: "We account for possible local minima by selecting the best fit from a grid of initialisations"
-      - From Misfitting scaling laws paper:
-        "One approach is to iteratively train with different initializations, selecting the best fit at the termination of the search. This is typically a grid search over choices for each parameter (Aghajanyan et al., 2023; Muennighoff et al., 2024), or a random sample from that grid (Frantar et al., 2023; Tao et al., 2024)."
-  - Cite papers for user of 1000 iterations
-    - Training Compute-Optimal Protein Language Models, Beyond Chinchilla-Optimal
   - More extension methods:
     - Add [Towards Robust Scaling Laws for Optimizers](https://arxiv.org/html/2602.07712v2) as a new kind of extensions
       - This adds multiplicative terms to measure how optimizers affect scaling rates (see 5.1)
@@ -25,7 +10,10 @@ On article:
       - Includes "average parameters" to incorporate pruning during pretraining
     - Best reference on MoE scaling:
       - [Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models](https://arxiv.org/abs/2507.17702)
-      - https://github.com/marin-community/marin/issues/2167#issuecomment-3962197868
+        - https://github.com/marin-community/marin/issues/2167#issuecomment-3962197868
+        - This isn't really an approach 3 extension 
+      - [Joint MoE Scaling Laws: Mixture of Experts Can Be Memory Efficient](https://arxiv.org/pdf/2502.05172)
+        - This IS an approach 3 extension (swap the refs used now)
   - Add limitations:
     - Add limitiaton on not comparing to Approach 3 w/ LSE
       - Mention LSE fiting approach in equation 11 of Chinchilla (https://arxiv.org/pdf/2203.15556 / "D. Details on the scaling analyses") and relationship to variable projection
@@ -54,7 +42,6 @@ On article:
       - "We fit a variant of the equation proposed by Kaplan et al"
       - It looks like they used Kaplan formula 1.5 exactly
     - SODA from Marin: https://arxiv.org/abs/2602.16687
-      
 - Secondary:
   - Validate the intercept error proof in greater detail manually
   - Pad out list of Approach 2 uses in first paragraph

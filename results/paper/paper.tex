@@ -115,18 +115,24 @@ This investigation is also motivated by a broader landscape of
 \emph{analytical} extensions to the Chinchilla loss surface. A growing body of
 work adds or modifies terms in the original functional form to account for
 additional training configuration choices such as data
-repetition~\citep{data_constrained,data_filtering_scaling},
+repetition~\citep{data_constrained},
 overfitting~\citep{mupt}, precision~\citep{precision_scaling},
 optimizers~\citep{optimizer_scaling}, MoE
-sparsity~\citep{moe_scaling},
+sparsity~\citep{moe_memory_scaling},
 pruning~\citep{pruning_scaling}, data quality~\citep{quality_scaling}, data
-mixtures~\citep{optimal_data_mixtures,redundancy_scaling,data_filtering_scaling},
+mixtures~\citep{optimal_data_mixtures,atlas_multilingual},
+model shape/context length~\citep{icr_scaling},
 non-embedding parameters~\citep{reconciling_scaling}, and downstream task
 performance~\citep{ai2_task_scaling}, to name a few. These extensions prescribe
 explicit functional forms rather than inferring scaling law structure
 automatically, and they build directly on the Chinchilla model as a foundation.
-A fitting method that recovers the base surface with higher precision may
-therefore offer a stronger starting point for these richer settings as well.
+Similar
+studies~\citep{redundancy_scaling,data_filtering_scaling,moe_scaling,subgroup_scaling}
+extend individual terms in isolation (e.g.\ token scaling terms alone) or
+propose modified Kaplan scaling laws~\citep{kaplan_scaling}, both of which
+would be relevant for comparable Chinchilla formulations as well. A fitting
+method that recovers the base surface with greater scalability and stability may
+therefore offer a stronger starting point for these adaptations.
 
 \section{Preliminaries}
 \label{sec:preliminaries}

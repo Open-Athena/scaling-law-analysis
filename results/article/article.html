@@ -662,22 +662,26 @@
                 surface. A growing body of work adds or modifies terms in the original
                 functional form to account for additional training configuration choices
                 such as data
-                repetition<sup><a href="#ref-data_constrained">[17]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                repetition<sup><a href="#ref-data_constrained">[17]</a></sup>,
                 overfitting<sup><a href="#ref-mupt">[18]</a></sup>,
                 precision<sup><a href="#ref-precision_scaling">[19]</a></sup>,
                 optimizers<sup><a href="#ref-optimizer_scaling">[29]</a></sup>,
-                MoE sparsity<sup><a href="#ref-moe_scaling">[24]</a></sup>,
+                MoE sparsity<sup><a href="#ref-moe_memory_scaling">[31]</a></sup>,
                 pruning<sup><a href="#ref-pruning_scaling">[30]</a></sup>,
                 data quality<sup><a href="#ref-quality_scaling">[21]</a></sup>,
-                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a></sup>,
+                data mixtures<sup><a href="#ref-optimal_data_mixtures">[22]</a>,<a href="#ref-atlas_multilingual">[32]</a></sup>,
+                model shape/context length<sup><a href="#ref-icr_scaling">[33]</a></sup>,
                 non-embedding parameters<sup><a href="#ref-reconciling_scaling">[20]</a></sup>,
-                and downstream task
-                performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
+                and downstream task performance<sup><a href="#ref-ai2_task_scaling">[25]</a></sup>,
                 to name a few. These extensions prescribe explicit functional forms rather
-                than inferring scaling law structure automatically, and they build directly
-                on the Chinchilla model as a foundation. A fitting method that recovers the
-                base surface with higher precision may therefore offer a stronger starting
-                point for these richer settings as well.
+                than inferring scaling law structure automatically, and they all build directly
+                on the Chinchilla model. 
+                Similar studies<sup><a href="#ref-redundancy_scaling">[23]</a>,<a href="#ref-data_filtering_scaling">[14]</a>,<a href="#ref-moe_scaling">[24]</a>,<a href="#ref-subgroup_scaling">[34]</a></sup>
+                extend individual terms in isolation (e.g. token scaling terms alone)
+                or propose modified Kaplan scaling laws<sup><a href="#ref-kaplan_scaling">[16]</a></sup>, both 
+                of which would be relevant for comparable Chinchilla formulations as well.
+                A fitting method that recovers the base surface with greater scalability and 
+                stability may therefore offer a stronger starting point for these adaptations.
             </p>
         </section>
 
@@ -2452,6 +2456,10 @@
             <li id="ref-hessian_optimization">"An Investigation into Neural Net Optimization via Hessian Eigenvalue Density," <em>ArXiv</em>. <a href="https://arxiv.org/abs/1901.10159">https://arxiv.org/abs/1901.10159</a></li>
             <li id="ref-optimizer_scaling">"Towards Robust Scaling Laws for Optimizers," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2602.07712">https://arxiv.org/abs/2602.07712</a></li>
             <li id="ref-pruning_scaling">"The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2501.12486">https://arxiv.org/abs/2501.12486</a></li>
+            <li id="ref-moe_memory_scaling">"Joint MoE Scaling Laws: Mixture of Experts Can Be Memory Efficient," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2502.05172">https://arxiv.org/abs/2502.05172</a></li>
+            <li id="ref-atlas_multilingual">"ATLAS: Adaptive Transfer Scaling Laws for Multilingual Pretraining, Finetuning, and Decoding the Curse of Multilinguality," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.22037">https://arxiv.org/abs/2510.22037</a></li>
+            <li id="ref-icr_scaling">"Theory of Scaling Laws for In-Context Regression: Depth, Width, Context and Time," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.01098">https://arxiv.org/abs/2510.01098</a></li>
+            <li id="ref-subgroup_scaling">"Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2103.03399">https://arxiv.org/abs/2103.03399</a></li>
             </ol>
         </section>
 

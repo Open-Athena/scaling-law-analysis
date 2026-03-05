@@ -150,3 +150,23 @@
   title: "The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws"
   venue: ArXiv
   url: https://arxiv.org/abs/2501.12486
+
+- key: moe_memory_scaling
+  title: "Joint MoE Scaling Laws: Mixture of Experts Can Be Memory Efficient"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2502.05172
+
+- key: atlas_multilingual
+  title: "ATLAS: Adaptive Transfer Scaling Laws for Multilingual Pretraining, Finetuning, and Decoding the Curse of Multilinguality"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2510.22037
+
+- key: icr_scaling
+  title: "Theory of Scaling Laws for In-Context Regression: Depth, Width, Context and Time"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2510.01098
+
+- key: subgroup_scaling
+  title: "Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2103.03399
