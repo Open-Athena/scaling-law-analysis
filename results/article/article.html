@@ -579,6 +579,7 @@
                         <li><a href="#vpnls">Variable Projection (VPNLS)</a></li>
                         <li><a href="#method-comparison-recovery">Method Comparison (Parameter Recovery)</a></li>
                         <li><a href="#method-comparison-inference">Method Comparison (Exponent Inference)</a></li>
+                        <li><a href="#method-comparison-efficiency">Method Comparison (Data Efficiency)</a></li>
                     </ol>
                 </li>
                 <li>
@@ -594,6 +595,7 @@
                         <li><a href="#appendix-combined-extrapolation">Combined Extrapolation Error by Compute Budget</a></li>
                         <li><a href="#appendix-noisy-isoflop">IsoFLOP Samples with Noise</a></li>
                         <li><a href="#appendix-exponent-errors">Exponent Inference Error Breakdown</a></li>
+                        <li><a href="#appendix-data-efficiency">Data Efficiency Error Breakdown</a></li>
                     </ol>
                 </li>
             </ol>
@@ -2215,6 +2217,51 @@
                 </p>
             </div>
 
+            <h3 id="method-comparison-efficiency">Method Comparison (Data Efficiency)</h3>
+
+            <p>
+                The <a href="#method-comparison-inference">exponent inference</a>
+                comparison above used an asymmetric surface with off-center sampling,
+                conditions designed to test structural biases. Here we do the opposite,
+                returning to the ideal conditions of the
+                <a href="#symmetric-surfaces">symmetric surfaces</a> section
+                (\(\alpha = \beta = 0.31\), perfectly centered sampling) where
+                Approach&nbsp;2 has no structural bias. All methods are unbiased in
+                this setting, so the relevant comparison is variance. For
+                unbiased estimators, statistical efficiency is proportional to the
+                inverse of variance, so lower variance means more precise
+                estimates for a given sample size. Even under
+                these ideal conditions, Figure&nbsp;12 shows that Approach&nbsp;2
+                recovers scaling exponents with roughly 8&times; higher variance than
+                Approach&nbsp;3 or VPNLS.
+            </p>
+
+            <figure>
+                <img src="figures/data_efficiency/data_efficiency.png"
+                    alt="Data efficiency comparison: variance of exponent estimates across methods and noise levels">
+                <figcaption>
+                    <strong>Figure 12:</strong> Estimator variance for the compute-optimal
+                    exponent \(b = \alpha/(\alpha+\beta)\) on a symmetric surface
+                    (\(\alpha = \beta = 0.31\), \(A = B = 400\), \(E = 1.69\), true
+                    \(b = 0.5\)) with perfectly centered IsoFLOP sampling. Left: overall
+                    variance pooled across noise levels. Right: variance by noise level.
+                    Sweep over points per curve &isin; {21, 31, 41},
+                    budget counts &isin; {3, 5, 7},
+                    log-widths &isin; {&plusmn;2&times;, &plusmn;4&times;, &plusmn;8&times;},
+                    noise levels &sigma; &isin; {0.01, 0.02, 0.05},
+                    with 10 trials per configuration.
+                    Lower variance is better.
+                    Approach&nbsp;3 and VPNLS achieve comparable precision; Approach&nbsp;2
+                    is consistently less efficient.
+                </figcaption>
+            </figure>
+
+            <p>
+                <a href="#appendix-data-efficiency">Figure&nbsp;A5</a> breaks these results
+                down by noise level, showing the full distribution of signed errors for each
+                method.
+            </p>
+
         </section>
 
         <!-- Section 7: Conclusion -->
@@ -2418,6 +2465,20 @@
                     panel, boxplots show absolute relative error (%) on a log scale for each
                     method at each points-per-curve setting (4, 8, 16, 32), over 256 noise
                     realizations.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-data-efficiency">E. Data Efficiency Error Breakdown</h3>
+
+            <figure>
+                <img src="appendix/data_efficiency_detailed.png"
+                    alt="Boxplots of data efficiency errors broken down by noise level for Approach 2, Approach 3, and VPNLS">
+                <figcaption>
+                    <strong>Figure A5:</strong> Per-noise-level breakdown of signed exponent
+                    errors from <a href="#method-comparison-efficiency">Figure&nbsp;12</a>.
+                    Boxplots show the distribution of \(\hat{b} - b_{\mathrm{true}}\) on a
+                    symlog scale for each method at each noise level. Pooled summary
+                    statistics (sample size, variance, IQR) are shown below each method group.
                 </figcaption>
             </figure>
         </section>

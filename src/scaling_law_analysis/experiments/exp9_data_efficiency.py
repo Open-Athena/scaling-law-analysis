@@ -217,25 +217,6 @@ def plot(errors: Errors, output_path: str | Path) -> None:
         bp["boxes"][i].set_facecolor(method_colors[method])
         bp["boxes"][i].set_alpha(0.7)
 
-    # Overlay mean ± 2σ error bars
-    for i, (method, noise) in enumerate([(m, s) for m in methods for s in NOISE_STDS]):
-        vals = np.array(errors[(method, noise)])
-        if len(vals) > 0:
-            mean = np.mean(vals)
-            std2 = 2 * np.std(vals)
-            ax.errorbar(
-                positions[i],
-                mean,
-                yerr=std2,
-                fmt="D",
-                color="black",
-                markersize=3,
-                capsize=4,
-                capthick=1,
-                linewidth=1,
-                zorder=5,
-            )
-
     ax.axhline(0, color="black", linewidth=0.5, alpha=0.4)
     ax.set_yscale("symlog", linthresh=0.01)
     # Tick labels: method name on center, noise σ under each box
@@ -266,12 +247,12 @@ def plot(errors: Errors, output_path: str | Path) -> None:
             all_vals.extend(errors[(method, noise)])
         vals = np.array(all_vals)
         n = len(vals)
-        std = np.std(vals)
+        var = np.var(vals)
         iqr = np.percentile(vals, 75) - np.percentile(vals, 25)
         ax.text(
             group_centers[gi],
             -0.18,
-            f"n={n}  \u03c3\u0302={std:.4f}  IQR={iqr:.4f}",
+            f"n={n}  $\\hat{{\\sigma}}^2$={var:.2e}  IQR={iqr:.4f}",
             fontsize=7,
             ha="center",
             va="top",
@@ -289,10 +270,6 @@ def plot(errors: Errors, output_path: str | Path) -> None:
         r"(true $b = 0.5$)"
         "\n"
         f"Centered IsoFLOP sampling  |  "
-        f"pts/curve \u2208 {{{', '.join(str(n) for n in N_POINTS_LIST)}}}  |  "
-        f"budgets \u2208 {{{', '.join(str(n) for n in N_BUDGETS_LIST)}}}  |  "
-        f"log-widths \u2208 {{\u00b12\u00d7, \u00b14\u00d7, \u00b18\u00d7}}\n"
-        f"{N_TRIALS} trials/config  |  "
         f"{total_estimates:,} total estimates  ($b$ exponent only)",
         fontsize=9,
         linespacing=1.5,

@@ -6,6 +6,7 @@ On article:
   - Add limitations:
     - Add limitation on the possibility of sampling grid errors canceling out
     - Add limitation on not exploring data efficiency (yet)
+  - Add exp6 validation for proof to appendix
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
     - https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e

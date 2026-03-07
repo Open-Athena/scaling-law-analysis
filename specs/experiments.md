@@ -278,3 +278,19 @@ A perturbation test confirms the scale of the problem: displacing by δ=10⁻⁴
 7. Explain why statistical noise masks the conditioning gap in practice.
 
 **Output**: Text report at `results/experiments/exp8/conditioning_analysis.txt`.
+
+
+## Experiment 9: Data Efficiency
+
+**Question**: How do Approach 2, Approach 3, and VPNLS compare in exponent recovery accuracy under noisy, data-limited conditions?
+
+**Method**: Reimplement the Monte Carlo comparison from `demo/chinchilla_fit_methods.py` using codebase utilities (`fit_approach2`, `fit_approach3`, `fit_vpnls`, `isoflop_sample`). Symmetric surface (α=β=0.31, A=B=400, E=1.69), perfectly centered sampling. Sweep:
+   - Noise: σ ∈ {0.05, 0.1, 0.2, 0.3}
+   - Points/curve: {21, 31, 41}
+   - Budgets: {3, 5, 7} (log-spaced 10¹⁷–10²¹)
+   - Widths: {±2×, ±4×, ±8×}
+   - 10 trials/condition (seeded RNG, advancing across trials)
+
+For each trial, fit all three methods and record signed exponent errors (â − a_true, b̂ − b_true). Pool across conditions.
+
+**Visualization**: Boxplot of signed errors per method (symlog scale) with summary stats (n, mean, std, median, IQR). Output: `results/experiments/exp9/data_efficiency.png`.

@@ -208,8 +208,11 @@
     - VPNLS is roughly equivalent in typical accuracy to well-configured Approach 3 and produced the smallest max errors in this experiment
     - Key practical takeaway: grid search initialization and LSE reparameterization are the critical ingredients for stable Approach 3 fits, yet [misfitting] documents that many published studies omit one or both
     - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
-
-
+- **Method Comparison (Data Efficiency)**
+  - Returns to symmetric surface with centered sampling (no structural bias); compares estimator variance
+  - Approach 2's variance is ~8× higher than Approach 3 / VPNLS even under ideal conditions
+  - Figure: bar chart of pooled variance + heatmap by noise level (Experiment 9)
+  - Appendix boxplot figure shows per-noise-level signed error distributions
 
 ---
 
