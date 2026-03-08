@@ -297,6 +297,24 @@
             font-size: 0.875em;
         }
 
+        
+        .comparison-table td.text-cell {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+        }
+
+        .table-notes {
+            margin-top: 0.75rem;
+            padding: 0 1rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .table-notes p {
+            margin: 0.2rem 0;
+        }
+
         .comparison-table tbody tr {
             transition: background 0.15s ease;
         }
@@ -596,6 +614,7 @@
                         <li><a href="#appendix-noisy-isoflop">IsoFLOP Samples with Noise</a></li>
                         <li><a href="#appendix-exponent-errors">Exponent Inference Error Breakdown</a></li>
                         <li><a href="#appendix-data-efficiency">Data Efficiency Error Breakdown</a></li>
+                        <li><a href="#appendix-published-exponents">Published Scaling Exponents</a></li>
                     </ol>
                 </li>
             </ol>
@@ -616,7 +635,8 @@
                 Microsoft<sup><a href="#ref-ehr_scaling">[4]</a></sup>,
                 Amazon<sup><a href="#ref-il_scaling">[6]</a></sup>,
                 Waymo<sup><a href="#ref-waymo_scaling">[8]</a></sup>, and
-                Arc Institute<sup><a href="#ref-evo">[5]</a></sup>, among others. It is also
+                Arc Institute<sup><a href="#ref-evo">[5]</a></sup>, among others
+                (see <a href="#table-published-exponents">Table&nbsp;A1</a>). It is also
                 a workhorse method for academic scaling law
                 studies<sup><a href="#ref-dit_scaling">[10]</a>,<a href="#ref-dlm_scaling">[11]</a>,<a href="#ref-biosignal_scaling">[12]</a></sup>
                 and high-profile practitioner <a href="https://github.com/karpathy/nanochat/discussions/420">tutorials</a> from researchers like Andrej Karpathy.
@@ -925,14 +945,15 @@
             </ul>
 
             <p>
-                This Asymmetric surface definition is not unrealistic. An exponent ratio of 3.0 is
-                comparable to what has been observed in practice, e.g. DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>
-                reports compute-optimal allocation exponents of \(a = 0.73\), \(b = 0.27\) for
+                This Asymmetric surface definition is on the high end of previously reported scaling statistics without
+                being unrealistic. An exponent ratio of 3.0 is comparable to what was observed in DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>,
+                which reports compute-optimal allocation exponents of \(a = 0.73\), \(b = 0.27\) for
                 an OpenWebText2 variant. This implies a loss surface exponent ratio of
                 \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
                 Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
                 of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
-                that drives the biases studied here.
+                that drives the biases studied here. See <a href="#table-published-exponents">Table&nbsp;A1</a> for other examples of reported imbalances, 
+                several of which indicate ratios in the 2-3 range (or even higher in one case<sup><a href="#ref-protein_plm_scaling">[38]</a></sup>). 
             </p>
 
             <figure id="fig-2">
@@ -1537,12 +1558,11 @@
 
             <p>
                 Published scaling law studies frequently report asymmetric loss
-                surfaces, as shown in (TODO: compile reported scaling exponents from
-                studies spanning text, images, proteins, and DNA). Some degree of
+                surfaces, as shown in <a href="#table-published-exponents">Table&nbsp;A1</a>. Some degree of
                 asymmetry is nearly universal across modalities, and several reported
                 exponent estimates reach the same levels of imbalance as the most
                 extreme configuration in our simulations. The related biases documented
-                in this article therefore apply broadly.
+                in this article are therefore likely to apply more broadly.
             </p>
 
             <p>
@@ -2479,6 +2499,270 @@
                     statistics (sample size, variance, IQR) are shown below each method group.
                 </figcaption>
             </figure>
+            <h3 id="appendix-published-exponents">F. Published Scaling Exponents</h3>
+
+            <p>
+                <a href="#table-published-exponents">Table&nbsp;A1</a> collects published
+                compute-allocation exponents \(a\) and \(b\) (where \(N^* \propto C^a\) and
+                \(D^* \propto C^b\)) from scaling law studies across a range of domains,
+                architectures, and fitting methods.
+            </p>
+
+            <figure id="table-published-exponents">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Domain</th>
+                            <th>Architecture / Config</th>
+                            <th>Method</th>
+                            <th style="text-transform: none;"><em>a</em></th>
+                            <th style="text-transform: none;"><em>b</em></th>
+                            <th style="text-transform: none;">\(\beta/\alpha\)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- DeepSeek -->
+                        <tr>
+                            <td class="text-cell" rowspan="5">DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup></td>
+                            <td class="text-cell" rowspan="5">Web text</td>
+                            <td class="text-cell">OpenAI repro. (OpenWebText2)</td>
+                            <td class="text-cell" rowspan="5">Approach 2</td>
+                            <td>0.73</td>
+                            <td>0.27</td>
+                            <td>2.7037</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Chinchilla repro. (MassiveText)</td>
+                            <td>0.49</td>
+                            <td>0.51</td>
+                            <td>0.9608</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">DeepSeek (early data)</td>
+                            <td>0.450</td>
+                            <td>0.550</td>
+                            <td>0.8182</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">DeepSeek (current data)</td>
+                            <td>0.524</td>
+                            <td>0.476</td>
+                            <td>1.1008</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">DeepSeek (OpenWebText2)</td>
+                            <td>0.578</td>
+                            <td>0.422</td>
+                            <td>1.3697</td>
+                        </tr>
+                        <!-- EHR -->
+                        <tr>
+                            <td class="text-cell">EHR Scaling<sup><a href="#ref-ehr_scaling">[4]</a></sup></td>
+                            <td class="text-cell">Electronic health records</td>
+                            <td class="text-cell">Transformer</td>
+                            <td class="text-cell">Approach 2</td>
+                            <td>0.58</td>
+                            <td>0.44</td>
+                            <td>1.3182</td>
+                        </tr>
+                        <!-- Evo -->
+                        <tr>
+                            <td class="text-cell" rowspan="4">Evo<sup><a href="#ref-evo">[5]</a></sup><sup>&dagger;</sup></td>
+                            <td class="text-cell" rowspan="4">DNA sequences</td>
+                            <td class="text-cell">Transformer++</td>
+                            <td class="text-cell" rowspan="4">Approach 2</td>
+                            <td>0.552</td>
+                            <td>0.551</td>
+                            <td>1.0018</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Mamba</td>
+                            <td>0.388</td>
+                            <td>0.487</td>
+                            <td>0.7967</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Hyena</td>
+                            <td>0.504</td>
+                            <td>0.499</td>
+                            <td>1.0100</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">StripedHyena</td>
+                            <td>0.483</td>
+                            <td>0.539</td>
+                            <td>0.8961</td>
+                        </tr>
+                        <!-- IL -->
+                        <tr>
+                            <td class="text-cell" rowspan="3">IL Scaling<sup><a href="#ref-il_scaling">[6]</a></sup></td>
+                            <td class="text-cell" rowspan="3">Atari game states (RL)</td>
+                            <td class="text-cell">NetHack</td>
+                            <td class="text-cell" rowspan="3">Approach 2</td>
+                            <td>0.61</td>
+                            <td>0.39</td>
+                            <td>1.5641</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Battle Zone</td>
+                            <td>0.58</td>
+                            <td>0.51</td>
+                            <td>1.1373</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Breakout</td>
+                            <td>0.74</td>
+                            <td>0.46</td>
+                            <td>1.6087</td>
+                        </tr>
+                        <!-- DiT -->
+                        <tr>
+                            <td class="text-cell">DiT Scaling<sup><a href="#ref-dit_scaling">[10]</a></sup></td>
+                            <td class="text-cell">Image-text pairs (LAION)</td>
+                            <td class="text-cell">Diffusion Transformer</td>
+                            <td class="text-cell">Approach 2</td>
+                            <td>0.5681</td>
+                            <td>0.4319</td>
+                            <td>1.3154</td>
+                        </tr>
+                        <!-- DLM -->
+                        <tr>
+                            <td class="text-cell">DLM Scaling<sup><a href="#ref-dlm_scaling">[11]</a></sup></td>
+                            <td class="text-cell">Web text (Nemotron-CC)</td>
+                            <td class="text-cell">Discrete diffusion</td>
+                            <td class="text-cell">Approach 2</td>
+                            <td>0.589</td>
+                            <td>0.411</td>
+                            <td>1.4331</td>
+                        </tr>
+                        <!-- Audio -->
+                        <tr>
+                            <td class="text-cell">Audio Scaling<sup><a href="#ref-audio_scaling">[36]</a></sup></td>
+                            <td class="text-cell">Audio + text tokens</td>
+                            <td class="text-cell">Transformer</td>
+                            <td class="text-cell">Approach 2</td>
+                            <td>0.367</td>
+                            <td>0.579</td>
+                            <td>0.6339</td>
+                        </tr>
+                        <!-- Protein PLM -->
+                        <tr>
+                            <td class="text-cell" rowspan="2">Protein PLM<sup><a href="#ref-protein_plm_scaling">[38]</a></sup></td>
+                            <td class="text-cell" rowspan="2">Protein sequences (UniRef)</td>
+                            <td class="text-cell">CLM</td>
+                            <td class="text-cell" rowspan="2">Approach 2</td>
+                            <td>0.578</td>
+                            <td>0.422</td>
+                            <td>1.3697</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">MLM</td>
+                            <td>0.776</td>
+                            <td>0.230</td>
+                            <td>3.3739</td>
+                        </tr>
+                        <!-- xLSTM -->
+                        <tr>
+                            <td class="text-cell" rowspan="2">xLSTM Scaling<sup><a href="#ref-xlstm_scaling">[40]</a></sup></td>
+                            <td class="text-cell" rowspan="2">Web text (DCLM)</td>
+                            <td class="text-cell">Transformer</td>
+                            <td class="text-cell" rowspan="2">Approach 2</td>
+                            <td>0.575</td>
+                            <td>0.424</td>
+                            <td>1.3561</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">xLSTM</td>
+                            <td>0.547</td>
+                            <td>0.417</td>
+                            <td>1.3118</td>
+                        </tr>
+                        <!-- NMM (Approach 3) -->
+                        <tr>
+                            <td class="text-cell" rowspan="3">NMM Scaling<sup><a href="#ref-nmm_scaling">[39]</a></sup></td>
+                            <td class="text-cell" rowspan="3">Multimodal (image + text)</td>
+                            <td class="text-cell">Early fusion (avg.)</td>
+                            <td class="text-cell" rowspan="3">Approach 3</td>
+                            <td>0.5262</td>
+                            <td>0.473</td>
+                            <td>1.1125</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Late fusion</td>
+                            <td>0.6358</td>
+                            <td>0.4619</td>
+                            <td>1.3765</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Sparse early fusion</td>
+                            <td>0.361</td>
+                            <td>0.656</td>
+                            <td>0.5503</td>
+                        </tr>
+                        <!-- OLMo Hybrid (Approach 3) -->
+                        <tr>
+                            <td class="text-cell" rowspan="3">OLMo Hybrid<sup><a href="#ref-olmo_hybrid">[41]</a></sup></td>
+                            <td class="text-cell" rowspan="3">Web text (Dolma 3)</td>
+                            <td class="text-cell">Transformer</td>
+                            <td class="text-cell" rowspan="3">Approach 3</td>
+                            <td>0.458</td>
+                            <td>0.542</td>
+                            <td>0.8452</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Hybrid</td>
+                            <td>0.492</td>
+                            <td>0.508</td>
+                            <td>0.9690</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Pure GDN</td>
+                            <td>0.554</td>
+                            <td>0.446</td>
+                            <td>1.2404</td>
+                        </tr>
+                        <!-- ProGen3 (Kaplan) -->
+                        <tr>
+                            <td class="text-cell">ProGen3<sup><a href="#ref-progen3">[35]</a></sup></td>
+                            <td class="text-cell">Protein sequences</td>
+                            <td class="text-cell">ProGen3</td>
+                            <td class="text-cell">Kaplan</td>
+                            <td></td>
+                            <td></td>
+                            <td>1.479<sup>*</sup></td>
+                        </tr>
+                        <!-- Dense Retrieval (Kaplan) -->
+                        <tr>
+                            <td class="text-cell">Dense Retrieval<sup><a href="#ref-dense_retrieval_scaling">[37]</a></sup></td>
+                            <td class="text-cell">Query-document pairs</td>
+                            <td class="text-cell">Transformer</td>
+                            <td class="text-cell">Kaplan</td>
+                            <td></td>
+                            <td></td>
+                            <td>2.3393<sup>*</sup></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="table-notes">
+                    <p><sup>*</sup> Reported directly. The Kaplan method estimates
+                        \(\alpha\) and \(\beta\) separately, so \(\beta/\alpha\) is
+                        obtained without assuming the Chinchilla functional form for
+                        \(a\) and \(b\).</p>
+                    <p><sup>&dagger;</sup> Exponents extracted from Figure S5 data;
+                        see <a href="https://github.com/eric-czech/evo-scaling-law-extraction">eric-czech/evo-scaling-law-extraction</a>.</p>
+                </div>
+                <figcaption>
+                    <strong>Table A1:</strong> Published compute-allocation exponents from
+                    scaling law studies across domains. Columns \(a\) and \(b\) are the
+                    allocation exponents governing optimal model size (\(N^* \propto C^a\))
+                    and dataset size (\(D^* \propto C^b\)). The \(\beta/\alpha\) column
+                    gives the ratio of loss-surface exponents, computed as \(a/b\) for
+                    Approach 2 and 3 estimates or reported directly for Kaplan estimates.
+                    Rows are grouped by fitting method: Approach 2 (IsoFLOP parabolic fitting),
+                    Approach 3 (parametric loss-surface fitting), and the Kaplan method.
+                </figcaption>
+            </figure>
         </section>
 
         <!-- References -->
@@ -2519,6 +2803,13 @@
             <li id="ref-atlas_multilingual">"ATLAS: Adaptive Transfer Scaling Laws for Multilingual Pretraining, Finetuning, and Decoding the Curse of Multilinguality," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.22037">https://arxiv.org/abs/2510.22037</a></li>
             <li id="ref-icr_scaling">"Theory of Scaling Laws for In-Context Regression: Depth, Width, Context and Time," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.01098">https://arxiv.org/abs/2510.01098</a></li>
             <li id="ref-subgroup_scaling">"Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2103.03399">https://arxiv.org/abs/2103.03399</a></li>
+            <li id="ref-progen3">"Scaling Unlocks Broader Generation and Deeper Functional Understanding of Proteins," <em>bioRxiv</em>. <a href="https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2">https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2</a></li>
+            <li id="ref-audio_scaling">"Scaling Open Discrete Audio Foundation Models with Interleaved Semantic, Acoustic, and Text Tokens," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2602.16687">https://arxiv.org/abs/2602.16687</a></li>
+            <li id="ref-dense_retrieval_scaling">"Scaling Laws For Dense Retrieval," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2403.18684">https://arxiv.org/abs/2403.18684</a></li>
+            <li id="ref-protein_plm_scaling">"Training Compute-Optimal Protein Language Models," <em>bioRxiv</em>. <a href="https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1">https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1</a></li>
+            <li id="ref-nmm_scaling">"Scaling Laws for Native Multimodal Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2504.07951">https://arxiv.org/abs/2504.07951</a></li>
+            <li id="ref-xlstm_scaling">"xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.02228">https://arxiv.org/abs/2510.02228</a></li>
+            <li id="ref-olmo_hybrid">"OLMo Hybrid: From Theory to Practice." <a href="https://allenai.org/papers/olmo-hybrid">https://allenai.org/papers/olmo-hybrid</a></li>
             </ol>
         </section>
 

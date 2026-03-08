@@ -50,10 +50,12 @@ curves and extracts scaling exponents through a sequence of simple polynomial
 and linear regressions. We show that the parabolic approximation inherent to
 this method introduces systematic biases in compute-optimal allocation
 estimates, even on noise-free synthetic data under ideal experimental
-conditions. Two independent bias sources are identified: loss surface asymmetry
-($\alpha \neq \beta$), which shifts intercept estimates, and off-center
-sampling, which distorts intercepts or exponents depending on whether the offset
-is constant or varies with compute budget. Chinchilla Approach~3 eliminates
+conditions. Three sources of error are examined: IsoFLOP sampling
+grid width, which affects Taylor approximation accuracy; uncentered IsoFLOP
+sampling, which distorts scaling intercepts or exponents depending on how offsets
+vary with compute budget; and loss surface asymmetry ($\alpha \neq \beta$),
+which attenuates or amplifies error depending on alignment with the direction of
+other biases. Chinchilla Approach~3 eliminates
 these biases, but is often regarded as unstable, prone to local minima, less
 data-efficient and more complex to implement. We demonstrate that this is not
 true, especially when the partially linear structure of the Approach~3

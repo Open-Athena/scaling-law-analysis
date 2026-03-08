@@ -170,3 +170,38 @@
   title: "Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data"
   venue: ArXiv
   url: https://arxiv.org/abs/2103.03399
+
+- key: progen3
+  title: Scaling Unlocks Broader Generation and Deeper Functional Understanding of Proteins
+  venue: bioRxiv
+  url: https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2
+
+- key: audio_scaling
+  title: "Scaling Open Discrete Audio Foundation Models with Interleaved Semantic, Acoustic, and Text Tokens"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2602.16687
+
+- key: dense_retrieval_scaling
+  title: Scaling Laws For Dense Retrieval
+  venue: ArXiv
+  url: https://arxiv.org/abs/2403.18684
+
+- key: protein_plm_scaling
+  title: Training Compute-Optimal Protein Language Models
+  venue: bioRxiv
+  url: https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1
+
+- key: nmm_scaling
+  title: Scaling Laws for Native Multimodal Models
+  venue: ArXiv
+  url: https://arxiv.org/abs/2504.07951
+
+- key: xlstm_scaling
+  title: "xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2510.02228
+
+- key: olmo_hybrid
+  title: "OLMo Hybrid: From Theory to Practice"
+  venue: Other
+  url: https://allenai.org/papers/olmo-hybrid
