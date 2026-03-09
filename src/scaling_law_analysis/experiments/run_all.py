@@ -9,6 +9,7 @@ from scaling_law_analysis.experiments import (
     exp6_analytical_error,
     exp7_exponent_inference,
     exp8_conditioning,
+    exp10_compounding_errors,
 )
 
 
@@ -40,6 +41,9 @@ def main():
 
     print("\n")
     exp8_conditioning.main()
+
+    print("\n")
+    exp10_compounding_errors.main()
 
     print("\n" + "=" * 80)
     print("ALL EXPERIMENTS COMPLETE")

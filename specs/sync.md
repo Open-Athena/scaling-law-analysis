@@ -23,7 +23,7 @@ When one implementation artifact changes, other artifacts that depend on it may 
 - **CSV data in article text**: The figure generator exports numerical results alongside each figure. Specific values from these CSVs are hardcoded in `results/article/article.html` in both prose and data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match. The mapping of CSVs to article sections is:
   - `results/article/figures/extrapolation_error/extrapolation_error_data.csv` → "Error Implications" (extrapolation bar chart, collapsible data table)
   - `results/article/figures/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)
-  - `results/article/figures/compounding_errors/compounding_errors_data.csv` → "Compounding Errors" (collapsible data table, prose error claims across surfaces/grids)
+  - `results/article/figures/compounding_errors/compounding_errors.csv` → "Compounding Errors" (collapsible data table, prose error claims across surfaces/grids)
   - `results/article/figures/parameter_recovery/parameter_recovery_summary.csv` → "Method Comparison (Parameter Recovery)" (prose error claims for Approach 3 and VPNLS, collapsible data table max-error columns)
   - `results/article/figures/parameter_recovery/parameter_recovery_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
   - `results/article/figures/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)

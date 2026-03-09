@@ -294,3 +294,12 @@ A perturbation test confirms the scale of the problem: displacing by δ=10⁻⁴
 For each trial, fit all three methods and record signed exponent errors (â − a_true, b̂ − b_true). Pool across conditions.
 
 **Visualization**: Boxplot of signed errors per method (symlog scale) with summary stats (n, mean, std, median, IQR). Output: `results/experiments/exp9/data_efficiency.png`.
+
+
+## Experiment 10: Compounding Errors
+
+**Hypothesis**: Individually small biases — loss surface asymmetry, narrow sampling grids, and off-center sampling — compound when extrapolating D* to compute budgets far beyond the fitting range.
+
+**Method**: For each combination of bias configuration (constant 3× offset, linear drift to 3×), loss surface (Symmetric, Chinchilla, Asymmetric), and grid width (±2× to ±16×), fit Approach 2 on 10¹⁷–10²¹ FLOPs and extrapolate D* to 10²⁴ FLOPs. Report relative error vs true D*.
+
+**Visualization**: 1×2 bar chart (one panel per bias configuration). X-axis: loss surface; bars grouped by grid width; y-axis: relative error in D* (%). Output: `results/experiments/exp10/compounding_errors.png`.
