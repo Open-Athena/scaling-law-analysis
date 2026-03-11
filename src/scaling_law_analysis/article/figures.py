@@ -22,9 +22,12 @@ from scaling_law_analysis.chinchilla import (
 from scaling_law_analysis.config import prepare_output_dir
 from scaling_law_analysis.experiments.common import (
     N_POINTS,
+    ASYMMETRIC_SURFACE,
+    CHINCHILLA_SURFACE,
     COMPUTE_BUDGETS as EXP_BUDGETS,
     LOG_RANGES,
     LOSS_SURFACES,
+    SYMMETRIC_SURFACE,
     fit_simulated_approach2,
 )
 from scaling_law_analysis.experiments.exp5_parameter_recovery import (
@@ -35,10 +38,9 @@ from scaling_law_analysis.experiments.exp5_parameter_recovery import (
 
 
 # =============================================================================
-# Symmetric Surface Configuration
+# Surface Configuration
 # =============================================================================
 
-SYMMETRIC_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
 COMPUTE_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
 LOG_RANGE = np.log10(16)  # Extra Large (XL) ±16× sampling grid
 
@@ -302,21 +304,6 @@ def format_comparison_table(data: dict) -> str:
 # =============================================================================
 # Section 3: Asymmetric Surface Configurations
 # =============================================================================
-
-# Loss surface configurations for asymmetric section
-CHINCHILLA_SURFACE = LossSurface(alpha=0.34, beta=0.28, A=406.4, B=410.7, E=1.69)
-
-
-# Asymmetric surface: ratio = 3 (α/β = 3, keeping α+β = 0.62)
-def _exponents_from_ratio(ratio: float) -> tuple[float, float]:
-    """Compute alpha and beta from ratio, keeping sum = 0.62."""
-    exponent_sum = 0.62
-    beta = exponent_sum / (1 + ratio)
-    alpha = exponent_sum * ratio / (1 + ratio)
-    return alpha, beta
-
-
-ASYMMETRIC_SURFACE = LossSurface.from_chinchilla(*_exponents_from_ratio(3))
 
 
 def create_asymmetric_figure(output_dir: Path) -> dict:

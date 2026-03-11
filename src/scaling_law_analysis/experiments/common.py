@@ -157,10 +157,22 @@ EXP2_CONFIGS = [
 # =============================================================================
 
 # Loss surfaces shared by Experiments 3 & 4
-SYMMETRIC_LOSS_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+SYMMETRIC_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
+
+# Chinchilla paper values (Table A3)
+CHINCHILLA_SURFACE = LossSurface(alpha=0.34, beta=0.28, A=406.4, B=410.7, E=1.69)
+
+# Source: arxiv:2602.16687v1 (SODA)
+SODA_SURFACE = LossSurface(alpha=0.684, beta=0.439, A=215886, B=4750, E=3.169)
+
+# Source: arxiv:2504.07951 (Sparse-NMM)
+SPARSE_NMM_SURFACE = LossSurface(alpha=0.710, beta=0.372, A=381773, B=4659, E=2.158)
+
+# Asymmetric surface: α/β ratio = 3, keeping α+β = 0.62
+ASYMMETRIC_SURFACE = LossSurface.from_chinchilla(*exponents_from_ratio(3))
 
 LOSS_SURFACES: list[tuple[str, LossSurface]] = [
-    ("symmetric", SYMMETRIC_LOSS_SURFACE),
+    ("symmetric", SYMMETRIC_SURFACE),
     ("chinchilla", DEFAULT_LOSS_SURFACE),
     ("asymmetric", ASYMMETRIC_CONFIG.loss),
 ]
@@ -183,12 +195,12 @@ DISPLAY_LOG_RANGE_NAMES = ["narrow", "medium", "wide"]
 
 
 # Legacy aliases for backward compatibility
-EXP3_LOSS_SURFACE = SYMMETRIC_LOSS_SURFACE
+EXP3_LOSS_SURFACE = SYMMETRIC_SURFACE
 
 EXP3_CONFIGS = [
     SimulationConfig(
         name=name,
-        loss=SYMMETRIC_LOSS_SURFACE,
+        loss=SYMMETRIC_SURFACE,
         drift_rate=drift_rate,
         center_scale=center_scale,
     )

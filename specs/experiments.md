@@ -2,6 +2,14 @@
 
 This document specifies all experiments for analyzing scaling law inference methods.
 
+## Experiment 0: Reproductions
+
+- Fit chinchilla data from https://github.com/apple/ml-scalefit/blob/ac4664af5db6c94e6ac7521a61dd3bbb0d91cc3a/data/chinchilla.csv
+  - See: https://github.com/apple/ml-scalefit/blob/ac4664af5db6c94e6ac7521a61dd3bbb0d91cc3a/examples/fit_chinchilla.py
+  - Note:
+    - compute = 6 * df["n_tokens"] * df["model_size"]
+    - train_mask = compute < 1e21
+
 ## Experiment 1: Empirical Error
 
 **Hypothesis**: The accuracy of Chinchilla Approach 2 is dependent on the validity of the parabolic approximation. Sampling farther from the optimum introduces systematic bias.

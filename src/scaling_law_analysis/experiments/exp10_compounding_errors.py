@@ -32,29 +32,14 @@ from scaling_law_analysis.chinchilla import (
     fit_vpnls,
 )
 from scaling_law_analysis.experiments.common import (
+    ASYMMETRIC_SURFACE,
+    CHINCHILLA_SURFACE,
+    SODA_SURFACE,
+    SPARSE_NMM_SURFACE,
+    SYMMETRIC_SURFACE,
     fit_simulated_approach2,
     prepare_output_dir,
 )
-
-# ── Surfaces ────────────────────────────────────────────────────────────────
-
-SYMMETRIC_SURFACE = LossSurface(alpha=0.31, beta=0.31, A=400, B=400, E=1.69)
-CHINCHILLA_SURFACE = LossSurface(alpha=0.34, beta=0.28, A=406.4, B=410.7, E=1.69)
-
-
-def _exponents_from_ratio(ratio: float) -> tuple[float, float]:
-    """Compute alpha and beta from ratio, keeping sum = 0.62."""
-    exponent_sum = 0.62
-    beta = exponent_sum / (1 + ratio)
-    alpha = exponent_sum * ratio / (1 + ratio)
-    return alpha, beta
-
-
-ASYMMETRIC_SURFACE = LossSurface.from_chinchilla(*_exponents_from_ratio(3))
-# Source: arxiv:2602.16687v1 (SODA)
-SODA_SURFACE = LossSurface(alpha=0.684, beta=0.439, A=215886, B=4750, E=3.169)
-# Source: arxiv:2504.07951 (Sparse-NMM)
-SPARSE_NMM_SURFACE = LossSurface(alpha=0.710, beta=0.372, A=381773, B=4659, E=2.158)
 
 # Llama 3 isoFLOP data (digitized from paper figure).
 # Source: https://github.com/eric-czech/llama3_isoflop_extraction
@@ -74,10 +59,16 @@ LLAMA3_FIT_GRID = ParameterGrid(
 )
 
 
-def _load_llama3_data() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Download Llama 3 isoFLOP data and return (N, D, L, C) arrays."""
+def _download_llama3_csv() -> str:
+    """Download Llama 3 isoFLOP CSV and return raw text."""
     with urllib.request.urlopen(LLAMA3_ISOFLOP_CSV_URL) as resp:
-        text = resp.read().decode("utf-8")
+        return resp.read().decode("utf-8")
+
+
+def _parse_llama3_data(
+    text: str, log_scale: bool
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Parse Llama 3 CSV text into (N, D, L, C) arrays."""
     reader = csv.DictReader(io.StringIO(text))
     C_list, D_list, L_list = [], [], []
     for row in reader:
@@ -87,7 +78,7 @@ def _load_llama3_data() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]
     C = np.array(C_list)
     D = np.array(D_list)
     L = np.array(L_list)
-    if LLAMA3_LOSS_LOG_SCALE:
+    if log_scale:
         L = np.exp(L)
     N = C / (6 * D)  # C = 6ND
     return N, D, L, C
@@ -202,6 +193,7 @@ SCENARIOS = {
         "eval_budget": 1e24,
         "file_stem": "compounding_errors",
         "surfaces": SURFACES,
+        "report": False,
     },
     "costs": {
         "eval_budget": LLAMA3_405B_FLOPS,
@@ -528,20 +520,23 @@ def _fmt_surface_result(d: dict, eval_budget: float) -> str:
     return "\n".join(lines)
 
 
+Llama3FitSet = tuple[bool, LossSurface, LossSurface, ParabolaFitResult]
+
+
 def save_report(
     output_path: str | Path,
     eval_budget: float,
     surfaces: SurfaceList = COST_REPORT_SURFACES,
-    llama3_comparison: tuple[LossSurface, LossSurface, ParabolaFitResult] | None = None,
+    llama3_comparisons: list[Llama3FitSet] | None = None,
 ) -> None:
     """Write a human-readable report for selected compounding error results.
 
     Computes results independently from the main run() so that the report
     can include surfaces not in the main SURFACES list.
 
-    If llama3_comparison is provided as (vpnls_surface, a3_surface, a2_result),
-    appends a section comparing all three fits on real Llama 3 isoFLOP data,
-    using VPNLS as the ground truth for wasted-compute calculations.
+    If llama3_comparisons is provided, appends a section comparing VPNLS and
+    Approach 3 fits on real Llama 3 isoFLOP data for each log-scale assumption.
+    Each entry is (log_scale, vpnls_surface, a3_surface, a2_result).
     """
     _, log_range = next(g for g in GRID_WIDTHS if g[0] == REPORT_GRID)
     drift_scale = 10**REPORT_DRIFT_RATE
@@ -592,49 +587,62 @@ def save_report(
         )
         w(
             f"{sname} (E={surface.E:.4f}, A={surface.A:.1f}, B={surface.B:.1f}, "
-            f"α={surface.alpha:.4f}, β={surface.beta:.4f})"
+            f"α={surface.alpha:.4f}, β={surface.beta:.4f}, "
+            f"a={surface.a:.4f}, b={surface.b:.4f})"
         )
         w("-" * 60)
         w(_fmt_surface_result(d, eval_budget))
         w("")
 
     # ── Section 2: Llama 3 fits comparison ──
-    if llama3_comparison is not None:
-        vpnls_surface, a3_surface, llama3_a2 = llama3_comparison
-        d = compare_allocations(vpnls_surface, llama3_a2, eval_budget)
-        n_curves = len(llama3_a2.parabola_fits_N)
+    if llama3_comparisons is not None:
         w("")
-        w("Llama 3: Approach 2 vs 3 on Real IsoFLOP Data")
+        w("Llama 3: Approach 2 vs Parametric Fits on Real IsoFLOP Data")
         w("=" * 60)
         w("")
-        w("VPNLS fit treated as ground truth; Approach 2 fit provides")
-        w("the inferred D* allocation, extrapolated to the same budget.")
+        # Use first entry to get n_curves (same data for all).
+        n_curves = len(llama3_comparisons[0][3].parabola_fits_N)
+        w("Each parametric fit is treated as ground truth in turn;")
+        w("Approach 2 fit provides the inferred D* allocation,")
+        w("extrapolated to the same budget.")
         w(f"Training data: {n_curves} isoFLOP curves from 6×10^18 to 10^22 FLOPs.")
         w("IsoFLOP points digitized from Llama 3 paper (Fig. 2), which plots")
         w("negative log-likelihood on a log-scale y-axis.")
-        if LLAMA3_LOSS_LOG_SCALE:
-            w("Assumption: raw extracted values are ln(loss), exponentiated to")
-            w("recover nats before fitting.")
-        else:
-            w("Assumption: raw extracted values are already in nats (no transform).")
-        w("")
-        w(
-            f"VPNLS surface (E={vpnls_surface.E:.4f}, "
-            f"A={vpnls_surface.A:.1f}, B={vpnls_surface.B:.1f}, "
-            f"α={vpnls_surface.alpha:.4f}, β={vpnls_surface.beta:.4f})"
-        )
-        w(
-            f"Approach 3 surface (E={a3_surface.E:.4f}, "
-            f"A={a3_surface.A:.1f}, B={a3_surface.B:.1f}, "
-            f"α={a3_surface.alpha:.4f}, β={a3_surface.beta:.4f})"
-        )
-        w(
-            f"Approach 2 power laws: a={llama3_a2.a:.4f}, b={llama3_a2.b:.4f} "
-            f"(N* ∝ C^a, D* ∝ C^b)"
-        )
-        w("-" * 60)
-        w(_fmt_surface_result(d, eval_budget))
-        w("")
+
+        for log_scale, vpnls_surface, a3_surface, llama3_a2 in llama3_comparisons:
+            if log_scale:
+                scale_label = "log-scale (exp transform)"
+            else:
+                scale_label = "raw nats (no transform)"
+            w("")
+            w(f"── {scale_label} ──")
+            w("")
+            w(
+                f"VPNLS surface (E={vpnls_surface.E:.4f}, "
+                f"A={vpnls_surface.A:.1f}, B={vpnls_surface.B:.1f}, "
+                f"α={vpnls_surface.alpha:.4f}, β={vpnls_surface.beta:.4f}, "
+                f"a={vpnls_surface.a:.4f}, b={vpnls_surface.b:.4f})"
+            )
+            w(
+                f"Approach 3 surface (E={a3_surface.E:.4f}, "
+                f"A={a3_surface.A:.1f}, B={a3_surface.B:.1f}, "
+                f"α={a3_surface.alpha:.4f}, β={a3_surface.beta:.4f}, "
+                f"a={a3_surface.a:.4f}, b={a3_surface.b:.4f})"
+            )
+            w(
+                f"Approach 2 power laws: a={llama3_a2.a:.4f}, b={llama3_a2.b:.4f} "
+                f"(N* ∝ C^a, D* ∝ C^b)"
+            )
+            w("")
+            for label, surface in [
+                ("VPNLS", vpnls_surface),
+                ("Approach 3", a3_surface),
+            ]:
+                d = compare_allocations(surface, llama3_a2, eval_budget)
+                w(f"Approach 2 vs {label}:")
+                w("-" * 60)
+                w(_fmt_surface_result(d, eval_budget))
+                w("")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -647,12 +655,22 @@ def save_report(
 def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp10")
 
-    # Fit Llama 3 isoFLOP data with all three approaches.
-    N, D, L, C = _load_llama3_data()
-    llama3_vpnls = fit_llama3_vpnls(N, D, L)
-    llama3_a3 = fit_llama3_surface(N, D, L)
-    llama3_a2 = fit_llama3_approach2(N, D, L, C)
-    cost_surfaces = COST_REPORT_SURFACES + [("Llama 3", llama3_vpnls)]
+    # Fit Llama 3 isoFLOP data under both log-scale assumptions.
+    csv_text = _download_llama3_csv()
+    llama3_comparisons: list[Llama3FitSet] = []
+    primary_vpnls: LossSurface | None = None
+    for log_scale in [True, False]:
+        label = "log-scale" if log_scale else "raw nats"
+        print(f"\n── Llama 3 fits ({label}) ──")
+        N, D, L, C = _parse_llama3_data(csv_text, log_scale=log_scale)
+        vpnls = fit_llama3_vpnls(N, D, L)
+        a3 = fit_llama3_surface(N, D, L)
+        a2 = fit_llama3_approach2(N, D, L, C)
+        llama3_comparisons.append((log_scale, vpnls, a3, a2))
+        if log_scale == LLAMA3_LOSS_LOG_SCALE:
+            primary_vpnls = vpnls
+    assert primary_vpnls is not None
+    cost_surfaces = COST_REPORT_SURFACES + [("Llama 3", primary_vpnls)]
 
     for name, scenario in SCENARIOS.items():
         eb = scenario["eval_budget"]
@@ -661,12 +679,12 @@ def main() -> None:
         results = run(eval_budget=eb, surfaces=surfs)
         plot(results, output_dir / f"{stem}.png", eval_budget=eb, surfaces=surfs)
         save_csv(results, output_dir / f"{stem}.csv", eval_budget=eb, surfaces=surfs)
-        if scenario.get("report"):
+        if scenario["report"]:
             save_report(
                 output_dir / f"{stem}.txt",
                 eval_budget=eb,
                 surfaces=surfs,
-                llama3_comparison=(llama3_vpnls, llama3_a3, llama3_a2),
+                llama3_comparisons=llama3_comparisons,
             )
 
 

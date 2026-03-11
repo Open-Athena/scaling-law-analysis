@@ -13,12 +13,12 @@ import matplotlib.pyplot as plt
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import LossSurface
 from scaling_law_analysis.experiments.common import (
+    ASYMMETRIC_SURFACE,
+    CHINCHILLA_SURFACE,
     COMPUTE_BUDGETS,
     LOG_RANGES,
     N_POINTS,
-    SYMMETRIC_LOSS_SURFACE,
-    DEFAULT_LOSS_SURFACE,
-    ASYMMETRIC_CONFIG,
+    SYMMETRIC_SURFACE,
     prepare_output_dir,
     fit_simulated_approach2,
 )
@@ -171,9 +171,9 @@ def run_validation() -> dict:
         Dictionary with validation results for each surface configuration
     """
     surfaces = [
-        ("symmetric", SYMMETRIC_LOSS_SURFACE),
-        ("chinchilla", DEFAULT_LOSS_SURFACE),
-        ("asymmetric", ASYMMETRIC_CONFIG.loss),
+        ("symmetric", SYMMETRIC_SURFACE),
+        ("chinchilla", CHINCHILLA_SURFACE),
+        ("asymmetric", ASYMMETRIC_SURFACE),
     ]
 
     results = {}

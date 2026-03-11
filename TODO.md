@@ -12,6 +12,8 @@ On article:
     - Add limitation on the possibility of sampling grid errors canceling out
     - Add limitation on not exploring data efficiency (yet)
     - Mention hardware discretization in extrapolations, re: https://openathena.slack.com/archives/C0884476QSC/p1773257160211219?thread_ts=1773062864.434009&cid=C0884476QSC
+  - Fix DeepSeek 2.7 reference (comes from Kaplan)
+  - Finish reproductions (experiment 0)
   - On abstract:
     - Emphasize data efficiency findings
     - Include error extrapolations on Olmo
