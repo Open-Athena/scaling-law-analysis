@@ -483,3 +483,15 @@ class TestFitGridSearch:
         assert result.beta == pytest.approx(beta, rel=1e-10)
         assert result.residual_sum_squares == pytest.approx(0.0, abs=1e-20)
         assert result.method == "grid-search"
+
+
+# ── loss_from_C / C_from_loss round-trip ───────────────────────────────────
+
+
+@pytest.mark.parametrize("surface", [SYMMETRIC, CHINCHILLA, ASYMMETRIC])
+@pytest.mark.parametrize("C", [1e18, 1e21, 1e24])
+def test_loss_C_round_trip(surface: LossSurface, C: float) -> None:
+    """C_from_loss(loss_from_C(C)) should recover the original C."""
+    loss = surface.loss_from_C(C)
+    recovered_C = surface.C_from_loss(loss)
+    assert recovered_C == pytest.approx(C, rel=1e-9)

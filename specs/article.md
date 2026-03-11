@@ -155,6 +155,33 @@
 - Cross-reference to appendix for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
 - Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone, even with the narrowest grid where the parabolic approximation is most accurate
 
+- **Error Cost Estimates**: estimate the cost of errors on an Olmo2-scale extrapolation in terms of tokens, loss, FLOPs ($) and quality
+- Preamble:
+  - Many modern applications of scaling laws are for research purposes like evaluating architectures, datasets, and training strategies at a smaller scale
+  - Making resource allocation decisions for large-scale training runs is typically limited to overtraining settings, rather than targeting compute-optimal models
+  - Approach 3, and variations on it, are far more common in planning for overtrained models
+  - However, it is still possible to contextualize Approach 2 extrapolation errors in terms of unintentional overtraining/undertraining
+    - Overtraining in this scenario means that FLOPS are utilized inefficiently and undertraining results in models of lower quality
+  - All simulations so far have involved extrapolation to the yotta FLOP scale (10²⁴ FLOPs), which is commensurate with open-weight models like Qwen-2.5-7B (8.2x10^23 FLOPS) and Olmo2-32B (1.3x10^24 FLOPS) [cite https://arxiv.org/abs/2501.00656]
+  - They have also focused on token allocation errors, but we can just as easily estimate errors in FLOPS
+  - For an extrapolation to the Olmo 2 scale specifically:
+    - Assume the same 3x drift as the compounding errors section to simulate a relatively large error in IsoFLOP experiment design
+    - Assume the Small grid width (±4×) to mitigate the effect of Taylor approximation errors
+    - Assume the Chinchilla (very low asymmetry) and Asymmetric (very high asymmetry) surfaces for lower and upper bound estimates in errors
+    - Extrapolate to 1.3x10^24 FLOPS rather than 1x10^24 FLOPS
+    - MFU:
+      - "MFU can be as low as ~1% for inference (Pope et al., 2022) but is typically 40-60% during training (Korthikanti et al., 2022)" (https://arxiv.org/abs/2401.00448)
+    - FLOPS -> dollars:
+      - "At a price of $2/H100 hour" (https://arxiv.org/abs/2512.13961)
+    - 
+- Assumptions:
+  - Errors in extrapolation from our simulation are representative of errors in real-world extrapolation
+  - The Chinchilla and Asymmetric surfaces are representative of the typical range of scaling law surfaces
+  - The Small grid width (±4×) is representative of the typical grid width used in scaling law experiments
+  - The 3x center offset is representative of the typical center offset used in scaling law experiments
+  - The 3x drift is representative of the typical drift used in scaling law experiments
+  - The Olmo2 scale is representative of the typical scale used in scaling law experiments
+  - The Olmo2 scale is representative of the typical scale used in scaling law experiments
 ---
 
 ## Robust Fits: Unbiased Estimation with Linear Separation

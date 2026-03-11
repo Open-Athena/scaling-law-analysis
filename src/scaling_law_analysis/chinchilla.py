@@ -214,6 +214,21 @@ class LossSurface:
         """
         return self.E + (self.A / (N**self.alpha)) + (self.B / (D**self.beta))
 
+    def loss_from_C(self, C: float) -> float:
+        """Compute the optimal loss achievable at compute budget C."""
+        return self.loss(self.N_opt(C), self.D_opt(C))
+
+    def C_from_loss(self, loss: float) -> float:
+        """Invert L_opt(C) to find the compute budget that achieves a given loss.
+
+        C = 6 · ((L - E) / K)^(-(α+β)/(αβ))
+        """
+        G = self.G
+        K = self.A / G**self.alpha + self.B * G**self.beta
+        ab = self.alpha * self.beta
+        ab_sum = self.alpha + self.beta
+        return 6 * ((loss - self.E) / K) ** (-ab_sum / ab)
+
     @classmethod
     def from_chinchilla(cls, alpha: float, beta: float) -> "LossSurface":
         """Create a LossSurface with Chinchilla paper A, B, E values.

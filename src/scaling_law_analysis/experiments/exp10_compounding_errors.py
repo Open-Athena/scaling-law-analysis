@@ -17,8 +17,20 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+import csv
+import io
+import urllib.request
+
 from scaling_law_analysis import config
-from scaling_law_analysis.chinchilla import LossSurface
+from scaling_law_analysis.chinchilla import (
+    ExponentGrid,
+    LossSurface,
+    ParameterGrid,
+    ParabolaFitResult,
+    fit_approach2,
+    fit_approach3,
+    fit_vpnls,
+)
 from scaling_law_analysis.experiments.common import (
     fit_simulated_approach2,
     prepare_output_dir,
@@ -39,11 +51,117 @@ def _exponents_from_ratio(ratio: float) -> tuple[float, float]:
 
 
 ASYMMETRIC_SURFACE = LossSurface.from_chinchilla(*_exponents_from_ratio(3))
+# Source: arxiv:2602.16687v1 (SODA)
+SODA_SURFACE = LossSurface(alpha=0.684, beta=0.439, A=215886, B=4750, E=3.169)
+# Source: arxiv:2504.07951 (Sparse-NMM)
+SPARSE_NMM_SURFACE = LossSurface(alpha=0.710, beta=0.372, A=381773, B=4659, E=2.158)
+
+# Llama 3 isoFLOP data (digitized from paper figure).
+# Source: https://github.com/eric-czech/llama3_isoflop_extraction
+LLAMA3_ISOFLOP_CSV_URL = (
+    "https://raw.githubusercontent.com/eric-czech/llama3_isoflop_extraction/"
+    "1bc1755b76e6ee55a911549c8ec52b71cb480320/isoflops_points.csv"
+)
+
+LLAMA3_LOSS_LOG_SCALE = True  # if True, interpret validation_loss as ln(loss)
+
+LLAMA3_FIT_GRID = ParameterGrid(
+    E=np.linspace(0.1, 5.0, 8),
+    A=np.logspace(1, 6, 8),
+    B=np.logspace(1, 6, 8),
+    alpha=np.linspace(0.05, 0.95, 8),
+    beta=np.linspace(0.05, 0.95, 8),
+)
+
+
+def _load_llama3_data() -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Download Llama 3 isoFLOP data and return (N, D, L, C) arrays."""
+    with urllib.request.urlopen(LLAMA3_ISOFLOP_CSV_URL) as resp:
+        text = resp.read().decode("utf-8")
+    reader = csv.DictReader(io.StringIO(text))
+    C_list, D_list, L_list = [], [], []
+    for row in reader:
+        C_list.append(float(row["compute_budget"]))
+        D_list.append(float(row["training_tokens"]))
+        L_list.append(float(row["validation_loss"]))
+    C = np.array(C_list)
+    D = np.array(D_list)
+    L = np.array(L_list)
+    if LLAMA3_LOSS_LOG_SCALE:
+        L = np.exp(L)
+    N = C / (6 * D)  # C = 6ND
+    return N, D, L, C
+
+
+def fit_llama3_surface(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+) -> LossSurface:
+    """Fit a loss surface to Llama 3 isoFLOP data via Approach 3."""
+    result = fit_approach3(
+        N, D, L, grid=LLAMA3_FIT_GRID, use_lse=True, use_logloss=True, use_grad=True
+    )
+    print(
+        f"Llama 3 Approach 3: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
+        f"α={result.alpha:.4f}, β={result.beta:.4f} "
+        f"(RSS={result.residual_sum_squares:.6f})"
+    )
+    return LossSurface(
+        alpha=result.alpha, beta=result.beta, A=result.A, B=result.B, E=result.E
+    )
+
+
+LLAMA3_VPNLS_GRID = ExponentGrid(
+    alpha=np.linspace(0.05, 0.95, 256),
+    beta=np.linspace(0.05, 0.95, 256),
+)
+
+
+def fit_llama3_vpnls(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+) -> LossSurface:
+    """Fit Llama 3 isoFLOP data via VPNLS with L-BFGS-B."""
+    result = fit_vpnls(
+        N, D, L, grid=LLAMA3_VPNLS_GRID, method="l-bfgs-b", use_grad=True
+    )
+    print(
+        f"Llama 3 VPNLS: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
+        f"α={result.alpha:.4f}, β={result.beta:.4f} "
+        f"(RSS={result.residual_sum_squares:.6f})"
+    )
+    return LossSurface(
+        alpha=result.alpha, beta=result.beta, A=result.A, B=result.B, E=result.E
+    )
+
+
+def fit_llama3_approach2(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    C: np.ndarray,
+) -> ParabolaFitResult:
+    """Fit Llama 3 isoFLOP data via Approach 2."""
+    result = fit_approach2(N, D, L, C)
+    print(
+        f"Llama 3 Approach 2: a={result.a:.4f}, b={result.b:.4f} "
+        f"(N* ∝ C^a, D* ∝ C^b)"
+    )
+    return result
+
 
 SURFACES = [
     ("Symmetric", SYMMETRIC_SURFACE),
     ("Chinchilla", CHINCHILLA_SURFACE),
     ("Asymmetric", ASYMMETRIC_SURFACE),
+]
+
+COST_REPORT_SURFACES = [
+    ("Chinchilla", CHINCHILLA_SURFACE),
+    ("SODA", SODA_SURFACE),
+    ("Sparse-NMM", SPARSE_NMM_SURFACE),
 ]
 
 # ── Sampling grids ──────────────────────────────────────────────────────────
@@ -55,8 +173,7 @@ GRID_WIDTHS = [
     ("XL (±16×)", np.log10(16)),
 ]
 
-TRAINING_BUDGETS = np.array([1e17, 1e18, 1e19, 1e20, 1e21])
-EVAL_BUDGET = 1e24
+TRAINING_BUDGETS = np.array([1e18, 1e19, 1e20, 1e21, 1e22])
 
 # ── Bias configurations ────────────────────────────────────────────────────
 
@@ -70,72 +187,135 @@ COMPOUNDING_CONFIGS = [
         "center_scale": OFF_CENTER_SCALE,
     },
     {
-        "label": f"Drift to {OFF_CENTER_SCALE:.0f}×",
+        "label": f"Drift to {10**OFF_CENTER_DRIFT_RATE:.0f}×",
         "drift_rate": OFF_CENTER_DRIFT_RATE,
         "center_scale": 1.0,
     },
 ]
 
+# ── Evaluation scenarios ───────────────────────────────────────────────────
+
+LLAMA3_405B_FLOPS = 3.8e25
+
+SCENARIOS = {
+    "default": {
+        "eval_budget": 1e24,
+        "file_stem": "compounding_errors",
+        "surfaces": SURFACES,
+    },
+    "costs": {
+        "eval_budget": LLAMA3_405B_FLOPS,
+        "file_stem": "compounding_error_costs",
+        "surfaces": COST_REPORT_SURFACES,
+        "report": True,
+    },
+}
+
+# ── Cost assumptions ──────────────────────────────────────────────────────
+
+# H100 SXM bf16 theoretical peak: 1,979 TFLOPS
+# Source: https://www.nvidia.com/en-us/data-center/h100
+H100_BF16_TFLOPS = 1979
+
+# Model FLOPs Utilization: 50%
+# Source: arxiv:2401.00448 (Beyond Chinchilla-Optimal)
+MFU = 0.50
+
+# Cloud GPU cost: $2/GPU-hour
+# Source: arxiv:2512.13961 (OLMo 3)
+GPU_COST_PER_HOUR = 2.0
+
+# Derived: dollars per FLOP
+DOLLARS_PER_FLOP = GPU_COST_PER_HOUR / (H100_BF16_TFLOPS * 1e12 * MFU * 3600)
+
 
 # ── Core computation ────────────────────────────────────────────────────────
 
 
-def compute_extrapolation_errors(
-    surface: LossSurface,
-    training_budgets: np.ndarray,
-    eval_budgets: np.ndarray,
-    log_range: float,
-    n_points: int = 15,
-    center_scale: float = 1.0,
-    drift_rate: float = 0.0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Compute D* errors at evaluation budgets.
+def compare_allocations(
+    surface: LossSurface, fit_result: ParabolaFitResult, eval_budget: float
+) -> dict:
+    """Compare true vs inferred optimal allocation at a given compute budget.
 
-    Returns:
-        Tuple of (true_D, inferred_D, abs_errors) arrays at each eval budget.
+    Returns dict with true/inferred N, D, loss, C, and derived errors.
+    The key FLOP metric is "equivalent_C": the budget that would achieve
+    the same (suboptimal) loss with optimal allocation. The difference
+    eval_budget - equivalent_C represents wasted compute.
     """
-    result = fit_simulated_approach2(
-        compute_budgets=training_budgets,
+    true_N = surface.N_opt(eval_budget)
+    true_D = surface.D_opt(eval_budget)
+    inf_N = fit_result.N_opt(eval_budget)
+    inf_D = fit_result.D_opt(eval_budget)
+    true_loss = surface.loss(true_N, true_D)
+    # Loss at the inferred allocation, constrained to the actual budget:
+    # N is forced by C = 6*N*D, so N = C / (6 * D_inferred)
+    constrained_N = eval_budget / (6 * inf_D)
+    inf_loss = surface.loss(constrained_N, inf_D)
+    # What budget would achieve inf_loss with optimal allocation?
+    equivalent_C = surface.C_from_loss(inf_loss)
+    wasted_flops = eval_budget - equivalent_C
+    return {
+        "true_N": true_N,
+        "true_D": true_D,
+        "inferred_N": constrained_N,
+        "inferred_D": inf_D,
+        "true_loss": true_loss,
+        "inferred_loss": inf_loss,
+        "equivalent_C": equivalent_C,
+        "rel_error_pct": (inf_D - true_D) / true_D * 100,
+        "loss_error_nats": inf_loss - true_loss,
+        "wasted_flops": wasted_flops,
+        "wasted_dollars": wasted_flops * DOLLARS_PER_FLOP,
+    }
+
+
+def fit_and_compare(
+    surface: LossSurface,
+    eval_budget: float,
+    *,
+    log_range: float,
+    center_scale: float,
+    drift_rate: float,
+) -> dict:
+    """Fit Approach 2 on training data and compare allocation at eval budget."""
+    fit_result = fit_simulated_approach2(
+        compute_budgets=TRAINING_BUDGETS,
         surface=surface,
         drift_rate=drift_rate,
         center_scale=center_scale,
-        n_points=n_points,
         log_range=log_range,
     )
-    true_D = np.array([surface.D_opt(C) for C in eval_budgets])
-    inferred_D = np.array([result.D_opt(C) for C in eval_budgets])
-    abs_errors = inferred_D - true_D
-    return true_D, inferred_D, abs_errors
+    return compare_allocations(surface, fit_result, eval_budget)
 
 
-def run() -> dict:
+SurfaceList = list[tuple[str, LossSurface]]
+
+
+def run(eval_budget: float, surfaces: SurfaceList = SURFACES) -> dict:
     """Run compounding errors analysis.
 
+    Args:
+        eval_budget: Compute budget (FLOPs) to extrapolate D* to.
+        surfaces: List of (name, LossSurface) pairs to evaluate.
+
     Returns:
-        Dict keyed by config label → surface key → grid name → error data.
+        Dict keyed by config label → surface key → grid name → comparison data.
     """
     results: dict = {}
-    for config_entry in COMPOUNDING_CONFIGS:
-        config_label = config_entry["label"]
+    for cfg in COMPOUNDING_CONFIGS:
+        config_label = cfg["label"]
         results[config_label] = {}
-        for surface_name, surface in SURFACES:
+        for surface_name, surface in surfaces:
             key = surface_name.lower().replace(" ", "_")
             results[config_label][key] = {}
             for grid_name, log_range in GRID_WIDTHS:
-                true_D, inferred_D, errors = compute_extrapolation_errors(
+                results[config_label][key][grid_name] = fit_and_compare(
                     surface=surface,
-                    training_budgets=TRAINING_BUDGETS,
-                    eval_budgets=np.array([EVAL_BUDGET]),
+                    eval_budget=eval_budget,
                     log_range=log_range,
-                    center_scale=config_entry["center_scale"],
-                    drift_rate=config_entry["drift_rate"],
+                    center_scale=cfg["center_scale"],
+                    drift_rate=cfg["drift_rate"],
                 )
-                rel_error = errors[0] / true_D[0] * 100
-                results[config_label][key][grid_name] = {
-                    "true_D": true_D[0],
-                    "inferred_D": inferred_D[0],
-                    "rel_error_pct": rel_error,
-                }
     return results
 
 
@@ -161,7 +341,12 @@ def setup_style() -> None:
     )
 
 
-def plot(results: dict, output_path: str | Path) -> None:
+def plot(
+    results: dict,
+    output_path: str | Path,
+    eval_budget: float,
+    surfaces: SurfaceList = SURFACES,
+) -> None:
     """Create the compounding errors bar chart figure."""
     setup_style()
     colors = ["#2ca02c", "#1f77b4", "#ff7f0e", "#d62728"]
@@ -171,7 +356,7 @@ def plot(results: dict, output_path: str | Path) -> None:
     if n_configs == 1:
         axes = [axes]
 
-    x_positions = np.arange(len(SURFACES))
+    x_positions = np.arange(len(surfaces))
     n_grids = len(GRID_WIDTHS)
     bar_width = 0.20
     offsets = [(i - (n_grids - 1) / 2) * bar_width for i in range(n_grids)]
@@ -184,7 +369,7 @@ def plot(results: dict, output_path: str | Path) -> None:
             zip(GRID_WIDTHS, colors, offsets)
         ):
             rel_errors = []
-            for surface_name, _surface in SURFACES:
+            for surface_name, _surface in surfaces:
                 key = surface_name.lower().replace(" ", "_")
                 rel_errors.append(
                     results[config_label][key][grid_name]["rel_error_pct"]
@@ -205,7 +390,7 @@ def plot(results: dict, output_path: str | Path) -> None:
             ax.set_xlabel("Loss Surface")
         ax.set_xticks(x_positions)
         ax.set_xticklabels(
-            [f"{name}\n(α={s.alpha:.2f}, β={s.beta:.2f})" for name, s in SURFACES],
+            [f"{name}\n(α={s.alpha:.2f}, β={s.beta:.2f})" for name, s in surfaces],
             fontsize=9,
         )
         ax.axhline(0, color="black", linewidth=0.8)
@@ -216,9 +401,13 @@ def plot(results: dict, output_path: str | Path) -> None:
             ax.set_ylabel("Relative Error in D* (%)")
             ax.legend(title="Sampling Grid", loc="upper left", fontsize=8)
 
+    if eval_budget == 1e24:
+        budget_str = "10²⁴"
+    else:
+        budget_str = f"{eval_budget:.1e}"
     fig.suptitle(
         "Compounding Errors: D* Prediction Error by Bias Configuration\n"
-        "(Fitting: 10¹⁷–10²¹ FLOPs → Extrapolating to 10²⁴ FLOPs)",
+        f"(Fitting: 10¹⁸–10²² FLOPs → Extrapolating to {budget_str} FLOPs)",
         fontsize=12,
         y=1.02,
     )
@@ -229,9 +418,14 @@ def plot(results: dict, output_path: str | Path) -> None:
     print(f"Saved: {output_path}")
 
 
-def save_csv(results: dict, csv_path: str | Path) -> None:
+def save_csv(
+    results: dict,
+    csv_path: str | Path,
+    eval_budget: float,
+    surfaces: SurfaceList = SURFACES,
+) -> None:
     """Export raw error data to CSV."""
-    TRAINING_RANGE = "1e17-1e21"
+    TRAINING_RANGE = "1e18-1e22"
     with open(csv_path, "w") as f:
         f.write(
             "config,drift_rate,center_scale,surface,alpha,beta,"
@@ -240,7 +434,7 @@ def save_csv(results: dict, csv_path: str | Path) -> None:
         )
         for cfg in COMPOUNDING_CONFIGS:
             config_label = cfg["label"]
-            for surface_name, surface in SURFACES:
+            for surface_name, surface in surfaces:
                 key = surface_name.lower().replace(" ", "_")
                 for grid_name, log_range in GRID_WIDTHS:
                     data = results[config_label][key][grid_name]
@@ -253,11 +447,198 @@ def save_csv(results: dict, csv_path: str | Path) -> None:
                         f'{cfg["center_scale"]},'
                         f"{surface_name},{surface.alpha},{surface.beta},"
                         f'"{grid_name}",{log_range},{TRAINING_RANGE},'
-                        f"{EVAL_BUDGET:.0e},"
+                        f"{eval_budget:.0e},"
                         f"{true_D:.15e},{inferred_D:.15e},"
                         f"{abs_error:.15e},{rel_error:.15f}\n"
                     )
     print(f"Saved: {csv_path}")
+
+
+# ── Report ──────────────────────────────────────────────────────────────────
+
+# Report configuration: which (config, surface, grid) combinations to include.
+# Report configuration: which (config, grid) to use for the .txt report.
+REPORT_DRIFT_RATE = np.log10(3)  # drift to 3×
+REPORT_GRID = "XS (±2×)"
+
+
+def _direction(value: float) -> str:
+    """Describe whether a signed error implies over- or under-utilization."""
+    if value > 0:
+        return "over"
+    elif value < 0:
+        return "under"
+    return "exact"
+
+
+def _fmt_flops(flops: float) -> str:
+    """Format a FLOP count in human-readable scientific notation."""
+    exp = int(np.floor(np.log10(abs(flops))))
+    mantissa = flops / 10**exp
+    return f"{mantissa:.2f}e{exp}"
+
+
+def _fmt_count(value: float) -> str:
+    """Format a large count with T/B/M/K suffix."""
+    v = abs(value)
+    if v >= 1e12:
+        return f"{value / 1e12:.1f}T"
+    if v >= 1e9:
+        return f"{value / 1e9:.1f}B"
+    if v >= 1e6:
+        return f"{value / 1e6:.0f}M"
+    if v >= 1e3:
+        return f"{value / 1e3:.0f}K"
+    return f"{value:.0f}"
+
+
+def _fmt_dollars(dollars: float) -> str:
+    """Format a dollar amount."""
+    v = abs(dollars)
+    if v >= 1e6:
+        return f"${v / 1e6:.1f}M"
+    if v >= 1e3:
+        return f"${v / 1e3:.0f}K"
+    if v >= 1:
+        return f"${v:.0f}"
+    if v >= 0.01:
+        return f"${v:.2f}"
+    return f"<$0.01"
+
+
+def _fmt_surface_result(d: dict, eval_budget: float) -> str:
+    """Format a single surface's comparison results."""
+    d_dir = _direction(d["inferred_D"] - d["true_D"])
+    n_dir = _direction(d["inferred_N"] - d["true_N"])
+    n_err_pct = abs(d["inferred_N"] - d["true_N"]) / d["true_N"] * 100
+    waste_pct = d["wasted_flops"] / eval_budget * 100
+    lines = [
+        f"  D* (tokens):  {_fmt_count(d['true_D']):>10s} true → "
+        f"{_fmt_count(d['inferred_D']):>10s} inferred  "
+        f"({d_dir}, {abs(d['rel_error_pct']):.1f}%)",
+        f"  N* (params):  {_fmt_count(d['true_N']):>10s} true → "
+        f"{_fmt_count(d['inferred_N']):>10s} inferred  "
+        f"({n_dir}, {n_err_pct:.1f}%)",
+        f"  Loss (nats):  {d['true_loss']:.6f} true → "
+        f"{d['inferred_loss']:.6f} inferred  "
+        f"(+{d['loss_error_nats']:.6f} penalty)",
+        f"  Wasted compute: {_fmt_flops(d['wasted_flops'])} FLOPs "
+        f"({waste_pct:.1f}% of budget, {_fmt_dollars(d['wasted_dollars'])})",
+    ]
+    return "\n".join(lines)
+
+
+def save_report(
+    output_path: str | Path,
+    eval_budget: float,
+    surfaces: SurfaceList = COST_REPORT_SURFACES,
+    llama3_comparison: tuple[LossSurface, LossSurface, ParabolaFitResult] | None = None,
+) -> None:
+    """Write a human-readable report for selected compounding error results.
+
+    Computes results independently from the main run() so that the report
+    can include surfaces not in the main SURFACES list.
+
+    If llama3_comparison is provided as (vpnls_surface, a3_surface, a2_result),
+    appends a section comparing all three fits on real Llama 3 isoFLOP data,
+    using VPNLS as the ground truth for wasted-compute calculations.
+    """
+    _, log_range = next(g for g in GRID_WIDTHS if g[0] == REPORT_GRID)
+    drift_scale = 10**REPORT_DRIFT_RATE
+    drift_label = (
+        f"Drift to {drift_scale:.1f}×"
+        if drift_scale < 1
+        else f"Drift to {drift_scale:.0f}×"
+    )
+
+    lines: list[str] = []
+    w = lines.append
+
+    # ── Section 1: Simulated compounding errors ──
+    w("Compounding Error Costs")
+    w("=" * 60)
+    w("")
+    w(
+        "Approach 2 fit on 10^18-10^22 FLOPs, extrapolated to "
+        f"{eval_budget:.1e} FLOPs."
+    )
+    w(f"Sampling: {REPORT_GRID} grid, {drift_label} bias.")
+    w("Loss: L(N,D) = E + A/N^α + B/D^β (nats, base e).")
+    w("")
+    w(
+        "Cost basis: H100 SXM bf16 ({} TFLOPS), {}% MFU, ${}/GPU-hr".format(
+            H100_BF16_TFLOPS, int(MFU * 100), GPU_COST_PER_HOUR
+        )
+    )
+    w("  TFLOPS: https://www.nvidia.com/en-us/data-center/h100")
+    w("  MFU:    arxiv:2401.00448")
+    w("  $/hr:   arxiv:2512.13961")
+    w("")
+    w("'over' = inferred exceeds true optimum; 'under' = falls short.")
+    w("")
+    w("Given inferred D*, actual N is forced by the budget: N = C/(6D).")
+    w("The resulting loss L(N,D) is suboptimal. 'Wasted compute' inverts")
+    w("L_opt(C) to find the smaller budget that would reach the same loss")
+    w("with optimal allocation; the difference is wasted.")
+    w("")
+
+    for sname, surface in surfaces:
+        d = fit_and_compare(
+            surface=surface,
+            eval_budget=eval_budget,
+            log_range=log_range,
+            center_scale=1.0,
+            drift_rate=REPORT_DRIFT_RATE,
+        )
+        w(
+            f"{sname} (E={surface.E:.4f}, A={surface.A:.1f}, B={surface.B:.1f}, "
+            f"α={surface.alpha:.4f}, β={surface.beta:.4f})"
+        )
+        w("-" * 60)
+        w(_fmt_surface_result(d, eval_budget))
+        w("")
+
+    # ── Section 2: Llama 3 fits comparison ──
+    if llama3_comparison is not None:
+        vpnls_surface, a3_surface, llama3_a2 = llama3_comparison
+        d = compare_allocations(vpnls_surface, llama3_a2, eval_budget)
+        n_curves = len(llama3_a2.parabola_fits_N)
+        w("")
+        w("Llama 3: Approach 2 vs 3 on Real IsoFLOP Data")
+        w("=" * 60)
+        w("")
+        w("VPNLS fit treated as ground truth; Approach 2 fit provides")
+        w("the inferred D* allocation, extrapolated to the same budget.")
+        w(f"Training data: {n_curves} isoFLOP curves from 6×10^18 to 10^22 FLOPs.")
+        w("IsoFLOP points digitized from Llama 3 paper (Fig. 2), which plots")
+        w("negative log-likelihood on a log-scale y-axis.")
+        if LLAMA3_LOSS_LOG_SCALE:
+            w("Assumption: raw extracted values are ln(loss), exponentiated to")
+            w("recover nats before fitting.")
+        else:
+            w("Assumption: raw extracted values are already in nats (no transform).")
+        w("")
+        w(
+            f"VPNLS surface (E={vpnls_surface.E:.4f}, "
+            f"A={vpnls_surface.A:.1f}, B={vpnls_surface.B:.1f}, "
+            f"α={vpnls_surface.alpha:.4f}, β={vpnls_surface.beta:.4f})"
+        )
+        w(
+            f"Approach 3 surface (E={a3_surface.E:.4f}, "
+            f"A={a3_surface.A:.1f}, B={a3_surface.B:.1f}, "
+            f"α={a3_surface.alpha:.4f}, β={a3_surface.beta:.4f})"
+        )
+        w(
+            f"Approach 2 power laws: a={llama3_a2.a:.4f}, b={llama3_a2.b:.4f} "
+            f"(N* ∝ C^a, D* ∝ C^b)"
+        )
+        w("-" * 60)
+        w(_fmt_surface_result(d, eval_budget))
+        w("")
+
+    with open(output_path, "w") as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"Saved: {output_path}")
 
 
 # ── Entry point ─────────────────────────────────────────────────────────────
@@ -265,9 +646,28 @@ def save_csv(results: dict, csv_path: str | Path) -> None:
 
 def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp10")
-    results = run()
-    plot(results, output_dir / "compounding_errors.png")
-    save_csv(results, output_dir / "compounding_errors.csv")
+
+    # Fit Llama 3 isoFLOP data with all three approaches.
+    N, D, L, C = _load_llama3_data()
+    llama3_vpnls = fit_llama3_vpnls(N, D, L)
+    llama3_a3 = fit_llama3_surface(N, D, L)
+    llama3_a2 = fit_llama3_approach2(N, D, L, C)
+    cost_surfaces = COST_REPORT_SURFACES + [("Llama 3", llama3_vpnls)]
+
+    for name, scenario in SCENARIOS.items():
+        eb = scenario["eval_budget"]
+        stem = scenario["file_stem"]
+        surfs = cost_surfaces if name == "costs" else scenario["surfaces"]
+        results = run(eval_budget=eb, surfaces=surfs)
+        plot(results, output_dir / f"{stem}.png", eval_budget=eb, surfaces=surfs)
+        save_csv(results, output_dir / f"{stem}.csv", eval_budget=eb, surfaces=surfs)
+        if scenario.get("report"):
+            save_report(
+                output_dir / f"{stem}.txt",
+                eval_budget=eb,
+                surfaces=surfs,
+                llama3_comparison=(llama3_vpnls, llama3_a3, llama3_a2),
+            )
 
 
 if __name__ == "__main__":

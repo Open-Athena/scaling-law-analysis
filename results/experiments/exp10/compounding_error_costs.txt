@@ -1,0 +1,68 @@
+Compounding Error Costs
+============================================================
+
+Approach 2 fit on 10^18-10^22 FLOPs, extrapolated to 3.8e+25 FLOPs.
+Sampling: XS (±2×) grid, Drift to 3× bias.
+Loss: L(N,D) = E + A/N^α + B/D^β (nats, base e).
+
+Cost basis: H100 SXM bf16 (1979 TFLOPS), 50% MFU, $2.0/GPU-hr
+  TFLOPS: https://www.nvidia.com/en-us/data-center/h100
+  MFU:    arxiv:2401.00448
+  $/hr:   arxiv:2512.13961
+
+'over' = inferred exceeds true optimum; 'under' = falls short.
+
+Given inferred D*, actual N is forced by the budget: N = C/(6D).
+The resulting loss L(N,D) is suboptimal. 'Wasted compute' inverts
+L_opt(C) to find the smaller budget that would reach the same loss
+with optimal allocation; the difference is wasted.
+
+Chinchilla (E=1.6900, A=406.4, B=410.7, α=0.3400, β=0.2800)
+------------------------------------------------------------
+  D* (tokens):       29.7T true →      33.5T inferred  (over, 12.8%)
+  N* (params):      213.5B true →     189.3B inferred  (under, 11.3%)
+  Loss (nats):  1.816533 true → 1.816620 inferred  (+0.000087 penalty)
+  Wasted compute: 1.70e23 FLOPs (0.4% of budget, $95K)
+
+SODA (E=3.1690, A=215886.0, B=4750.0, α=0.6840, β=0.4390)
+------------------------------------------------------------
+  D* (tokens):       28.8T true →      42.1T inferred  (over, 46.3%)
+  N* (params):      220.2B true →     150.5B inferred  (under, 31.7%)
+  Loss (nats):  3.178630 true → 3.178847 inferred  (+0.000217 penalty)
+  Wasted compute: 3.04e24 FLOPs (8.0% of budget, $1.7M)
+
+Sparse-NMM (E=2.1580, A=381773.0, B=4659.0, α=0.7100, β=0.3720)
+------------------------------------------------------------
+  D* (tokens):      176.5T true →     272.3T inferred  (over, 54.3%)
+  N* (params):       35.9B true →      23.3B inferred  (under, 35.2%)
+  Loss (nats):  2.193603 true → 2.194537 inferred  (+0.000934 penalty)
+  Wasted compute: 3.82e24 FLOPs (10.1% of budget, $2.1M)
+
+Llama 3 (E=1.8405, A=261.7, B=870.2, α=0.3481, β=0.3591)
+------------------------------------------------------------
+  D* (tokens):        9.2T true →       9.9T inferred  (over, 7.5%)
+  N* (params):      686.9B true →     638.9B inferred  (under, 7.0%)
+  Loss (nats):  1.879635 true → 1.879648 inferred  (+0.000013 penalty)
+  Wasted compute: 7.03e22 FLOPs (0.2% of budget, $39K)
+
+
+Llama 3: Approach 2 vs 3 on Real IsoFLOP Data
+============================================================
+
+VPNLS fit treated as ground truth; Approach 2 fit provides
+the inferred D* allocation, extrapolated to the same budget.
+Training data: 10 isoFLOP curves from 6×10^18 to 10^22 FLOPs.
+IsoFLOP points digitized from Llama 3 paper (Fig. 2), which plots
+negative log-likelihood on a log-scale y-axis.
+Assumption: raw extracted values are ln(loss), exponentiated to
+recover nats before fitting.
+
+VPNLS surface (E=1.8405, A=261.7, B=870.2, α=0.3481, β=0.3591)
+Approach 3 surface (E=1.8383, A=262.2, B=821.3, α=0.3481, β=0.3562)
+Approach 2 power laws: a=0.4631, b=0.5369 (N* ∝ C^a, D* ∝ C^b)
+------------------------------------------------------------
+  D* (tokens):        9.2T true →      16.1T inferred  (over, 74.7%)
+  N* (params):      686.9B true →     393.1B inferred  (under, 42.8%)
+  Loss (nats):  1.879635 true → 1.880397 inferred  (+0.000762 penalty)
+  Wasted compute: 3.93e24 FLOPs (10.3% of budget, $2.2M)
+
