@@ -1586,7 +1586,7 @@
 
             <p>
                 To be clear, this is not a criticism of these studies. These are among the most careful
-                and influential scaling law analyses published. The point is a more general one: the
+                and influential scaling law analyses yet published. The point is a more general one: the
                 conditions under which Approach 2's biases take effect, asymmetric surfaces and imperfect
                 sampling centers, appear to be the norm rather than the exception. The ideal
                 conditions of <a href="#symmetric-surfaces">Section 2</a> (symmetric surface, perfectly centered grids)
@@ -1730,8 +1730,8 @@
                 off-center sampling), and that the conditions driving these biases are visible
                 in published scaling law studies. The natural alternative is Approach 3, which fits all five
                 surface parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear
-                least squares. This avoids the parabolic approximation entirely but brings its
-                own set of problems.
+                least squares. This avoids the parabolic approximation but introduces
+                other problems.
             </p>
 
             <h3 id="approach-3-problems">Problems with Direct Surface Fitting</h3>
@@ -1750,41 +1750,30 @@
             <p>
                 The most common optimizers for scaling law fits are BFGS and L-BFGS. Some
                 studies use SGD-family optimizers like Adam and Adagrad, though these are noted
-                as sometimes poorly suited for curve fitting due to limited data efficiency. At
-                least one study<sup><a href="#ref-data_filtering_scaling">[14]</a></sup>
-                forgoes optimization entirely in favor of pure grid search
-                because fitted solutions are too unstable.
+                as sometimes poorly suited for curve fitting due to limited data efficiency.
+                This is because methods like BFGS incorporate second-order derivates (Hessian matrices)
+                directly for greater data efficiency at the expense of memory utilization and scalability. 
+                Pure grid search offers an even more extreme tradeoff in this direction, which the survey
+                notes as being employed by at least one study<sup><a href="#ref-data_filtering_scaling">[14]</a></sup>.
             </p>
 
             <p>
-                In practice, this instability takes several forms. Results are sensitive to
-                initialization: different starting points for the optimizer can lead to
-                substantially different fitted parameters. Results are also sensitive to
-                optimizer hyperparameters such as convergence tolerance and gradient estimation
-                method. And the optimizer frequently converges to local minima rather than the
-                global optimum.
+                A limitation common to all optimizers is sensitivity to intialization, which is primarily a
+                consequence of the "the difficulty of optimizing over this space, and the presence of 
+                many local minima.". Common mitigations for this include grid search over hundreds or thousands
+                of starting points (running the optimizer from each and keeping the best fit), random sampling 
+                of starting points, evaluating a coarse grid without optimization and seeding the optimizer from
+                the single best candidate, or initializing from previously published parameter values.
             </p>
 
             <p>
-                Initialization is the most studied source of variability. Common mitigations
-                include grid search over thousands of starting points (running the optimizer
-                from each and keeping the best fit), random sampling of starting points,
-                evaluating a coarse grid without optimization and seeding the optimizer from
-                the single best candidate, or initializing from previously published parameter
-                values. Yet the survey's own experiments
-                show that full-grid optimization over 4500 starting points can yield results that
-                diverge significantly from reported figures, evidence of "the difficulty of
-                optimizing over this space, and the presence of many local minima."
-            </p>
-
-            <p>
-                These difficulties can be framed more concretely within the context of some of the simulations
-                discussed in prior sections. For example, consider the
-                Hessian of the residual sum of squares (RSS) objective for a five-parameter
-                fit on noise-free data from the Asymmetric surface
+                Another significant issue is numerical stability, and this issue can be framed more concretely 
+                within the context of some of the simulations discussed in prior sections. For example, consider 
+                the Hessian of the residual sum of squares (RSS) objective for a five-parameter
+                fit on noise-free data from the hypothetical Asymmetric surface
                 (\(\alpha = 0.465\), \(\beta = 0.155\)), using five IsoFLOP contours from
                 \(10^{17}\) to \(10^{21}\) FLOPs with 15 points per curve.
-                Its eigenvalues reveal how sensitive the objective is to perturbations along
+                Its eigenvalues quantify how sensitive the objective is to perturbations along
                 each parameter direction<sup><a href="#ref-hessian_optimization">[28]</a></sup>,
                 and the condition number \(\kappa\) (the ratio of
                 the largest to the smallest eigenvalue) measures how difficult the landscape
@@ -1795,12 +1784,13 @@
                 linear coefficients \(A\) and \(B\). Near the optimum, perturbing either
                 coefficient barely changes the RSS, making them effectively underdetermined
                 by the data even when the data are perfect. The steepest directions are
-                dominated by the scaling exponents \(\alpha\) and \(\beta\).
+                dominated by the scaling exponents \(\alpha\) and \(\beta\), and this difference
+                in scale between exponents and linear coefficients is likely the primary source of 
+                numerical instability for most optimizers.
             </p>
 
             <p>
-                Quasi-Newton methods like L-BFGS, which are among the most common optimizers
-                for scaling law fits, build an approximate inverse Hessian to scale gradient
+                Quasi-Newton methods like L-BFGS, build an approximate inverse Hessian to scale gradient
                 steps across parameter directions. When eigenvalues span 12 orders of
                 magnitude, the gradient signal along the flat \(A\)/\(B\) directions is
                 negligible compared to the steep \(\alpha\)/\(\beta\) directions, and
