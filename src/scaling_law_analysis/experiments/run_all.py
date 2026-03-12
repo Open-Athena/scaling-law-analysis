@@ -1,6 +1,7 @@
 """Run all experiments."""
 
 from scaling_law_analysis.experiments import (
+    exp0_reproductions,
     exp1_empirical_error,
     exp2_exponent_imbalance,
     exp3_drift_sensitivity,
@@ -9,6 +10,7 @@ from scaling_law_analysis.experiments import (
     exp6_analytical_error,
     exp7_exponent_inference,
     exp8_conditioning,
+    exp9_data_efficiency,
     exp10_compounding_errors,
     exp11_cost_estimates,
 )
@@ -20,6 +22,9 @@ def main():
     print("RUNNING ALL EXPERIMENTS")
     print("=" * 80)
 
+    exp0_reproductions.main()
+
+    print("\n")
     exp1_empirical_error.main()
 
     print("\n")
@@ -42,6 +47,9 @@ def main():
 
     print("\n")
     exp8_conditioning.main()
+
+    print("\n")
+    exp9_data_efficiency.main()
 
     print("\n")
     exp10_compounding_errors.main()
