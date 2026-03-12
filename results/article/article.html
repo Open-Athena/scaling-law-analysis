@@ -1545,7 +1545,9 @@
                 trigger these biases, asymmetric loss surfaces and imperfectly centered sampling,
                 actually arise in practice. To get a sense of this, we can look at IsoFLOP curves
                 published in three of the most prominent scaling law
-                studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>.
+                studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>
+                in <a href="#fig-6">Figure&nbsp;6</a>
+                (<a href="https://docs.google.com/document/d/1Ab3cYJJYu7t_99Idj9gpHv2icZmRTPBJ_brJxsgnVA4">additional examples</a>).
             </p>
 
             <figure id="fig-6">
@@ -1585,10 +1587,10 @@
             <p>
                 To be clear, this is not a criticism of these studies. These are among the most careful
                 and influential scaling law analyses published. The point is a more general one: the
-                conditions under which Approach 2's biases activate, asymmetric surfaces and imperfect
-                sampling centers, appear to be the norm rather than the exception. The idealized
-                conditions of <a href="#symmetric-surfaces">Section 2</a> (symmetric surface, perfectly centered grids) are the
-                special case.
+                conditions under which Approach 2's biases take effect, asymmetric surfaces and imperfect
+                sampling centers, appear to be the norm rather than the exception. The ideal
+                conditions of <a href="#symmetric-surfaces">Section 2</a> (symmetric surface, perfectly centered grids)
+                occur rarely, if ever, in practice.
             </p>
 
             <h3 id="putting-it-together">Compounding Errors</h3>
@@ -2400,10 +2402,9 @@
                     Based on Llama&nbsp;3 IsoFLOP data, Approach&nbsp;2 overestimates
                     the compute-optimal token count by 58&ndash;75% at
                     3.8&times;10<sup>25</sup>&nbsp;FLOPs, wasting 6&ndash;10% of the
-                    training budget ($1.3&ndash;2.2M in H100 time). Multimodal and
-                    non-language loss surfaces, where exponent asymmetry is typically
-                    larger, exhibit similarly significant misallocation errors 
-                    (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
+                    training budget ($1.3&ndash;2.2M in H100 time). Multimodal loss surfaces, 
+                    where exponent asymmetry is typically larger, exhibit similarly significant misallocation 
+                    errors (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
                     for which Llama 3 errors reach only 0.2% waste. This suggests that designing IsoFLOP 
                     experiments to avoid Approach 2 biases is particularly important in those settings, or
                     that Approach 2 should not be used to fit data from them.
@@ -2421,20 +2422,20 @@
                 statistical. They exist on noise-free data with perfect experimental
                 conditions and, as the
                 <a href="#method-comparison-inference">noisy method comparison</a>
-                confirms, persist under realistic noise levels with varying amounts
+                shows, persist under realistic noise levels with varying amounts
                 of data.
             </p>
 
             <p>
-                At least two independent sources of error compound in practice. Surface asymmetry
-                (\(\alpha \neq \beta\)) biases intercepts, and off-center sampling biases
-                intercepts or exponents depending on whether the offset is constant or
-                varies with compute budget. Both act simultaneously in any real experiment,
-                and published scaling law studies frequently show clear signs of
-                off-center sampling and report high levels of asymmetry, at least
-                among those that publish IsoFLOP curves. At practical grid widths
-                with Chinchilla-like asymmetry, token count errors of 5% or more are
-                typical; on more asymmetric surfaces, the errors reach 20% or more.
+                At least three sources of Approach 2 error can compound in practice.
+                IsoFLOP sampling grid width, uncentered IsoFLOP sampling, and loss surface asymmetry
+                all bias inference and extrapolations in different ways.
+                Published IsoFLOP curves from
+                <a href="#real-isoflop-curves">prominent scaling law studies</a>
+                show clear signs of both asymmetry and off-center sampling.
+                At <a href="#error-costs">frontier compute scales</a>, we estimate that these biases
+                translate to a potential 6&ndash;10% decrease in training FLOPs ($1.3&ndash;2.2M) on Llama&nbsp;3 data and
+                potentially more on multimodal surfaces with greater asymmetry.
             </p>
 
             <p>
@@ -2462,15 +2463,19 @@
                 <a href="#motivation">introduction</a> (epochs, data quality, MoE sparsity,
                 and others) often add linear terms that could be omitted from direct optimization.
                 This structural simplification may provide a more scalable foundation for future work.
+                It also lends well to simple implementations of the Chinchilla loss model alone, e.g. it
+                is possible to express a <a href="https://gist.github.com/eric-czech/ebd9a80d58c7b5e9c40ba390ff884617">simplified version of the algorithm</a> 
+                that guarantees globally optimal solutions at a desired level of scaling exponent precision, 
+                uses only ~70 lines of javascript code, and requires no dependencies (no optimization or linear algebra libraries).
             </p>
 
             <p>
-                Practitioners using Approach&nbsp;2 should be aware that intercept estimates
-                carry a systematic bias that grows with loss surface asymmetry, sampling
-                center offsets and sampling grid width. When fitting surfaces directly as in Approach&nbsp;3,
-                grid initialization and LSE reparameterization should be used. VPNLS offers
+                Lastly, practitioners using Approach&nbsp;2 should be aware that scaling exponent estimates
+                carry a systematic bias that often grows with loss surface asymmetry, sampling
+                center offsets and sampling grid width. When fitting surfaces directly with Approach&nbsp;3 instead,
+                grid initialization and LSE reparameterization should be used. And VPNLS offers
                 equivalent accuracy with a simpler optimization structure to aid in scaling
-                this approach to richer formulations.
+                this approach to richer formulations, or as a simpler alternative to Approach&nbsp;2.
             </p>
 
             <h3 id="limitations">Limitations</h3>
