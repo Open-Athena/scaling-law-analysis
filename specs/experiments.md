@@ -9,6 +9,10 @@ This document specifies all experiments for analyzing scaling law inference meth
   - Note:
     - compute = 6 * df["n_tokens"] * df["model_size"]
     - train_mask = compute < 1e21
+  - Fit with vpnls (grad=True, method="l-bfgs-b") and approach 3 (grad=True, use_lse=True, use_logloss=True) and (grad=True, use_lse=True, use_logloss=False)
+  - Save results to text report file
+- For comparison:
+  - https://epoch.ai/blog/chinchilla-scaling-a-replication-attempt (equation 1)
 
 ## Experiment 1: Empirical Error
 

@@ -1,0 +1,27 @@
+scalefit Chinchilla Reproductions
+============================================================
+
+Data: data/chinchilla.csv (C < 1e21, 217 points)
+Model: bias + bias_size / (N/1e6)^pow_size + bias_tokens / (D/1e9)^pow_tokens
+n_starts=100, seed=42
+
+Parameters
+------------------------------------------------------------------------------------------
+config                              bias   bias_size    bias_tok    pow_size     pow_tok
+mse+lbfgs                         1.9051      4.0001      1.0509      0.3510      0.4588
+mse+basinhopping                  1.9051      4.0012      1.0510      0.3511      0.4587
+mse+basinhopping+bs10             1.8926      3.9928      1.0517      0.3500      0.4462
+huber+lbfgs                       1.8267      3.7066      1.0386      0.3240      0.4080
+huber+basinhopping                1.8250      3.6984      1.0396      0.3239      0.4058
+huber+basinhopping+bs10           1.8262      3.7451      1.0430      0.3285      0.4011
+
+Scores
+------------------------------------------------------------------------------------------
+config                                R²        MRE%         MAE
+mse+lbfgs                       0.996040        0.45    0.012207
+mse+basinhopping                0.996040        0.45    0.012208
+mse+basinhopping+bs10           0.995982        0.45    0.012036
+huber+lbfgs                     0.994747        0.42    0.011535
+huber+basinhopping              0.994694        0.42    0.011531
+huber+basinhopping+bs10         0.994564        0.42    0.011588
+

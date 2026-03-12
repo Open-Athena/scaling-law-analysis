@@ -1,0 +1,39 @@
+Chinchilla Scaling Law Reproductions
+======================================================================
+
+Data: https://raw.githubusercontent.com/apple/ml-scalefit/ac4664af5db6c94e6ac7521a61dd3bbb0d91cc3a/data/chinchilla.csv
+Compute: C = 6 * n_tokens * model_size
+Train mask: C < 1e+21 (217 points)
+Input normalization: N/1e6, D/1e9 (matches scalefit)
+
+Our Fits
+----------------------------------------------------------------------
+method                    E       A       B       α       β       a       b       RSS     
+------------------------  ------  ------  ------  ------  ------  ------  ------  --------
+Chinchilla (Table A3)     1.6900  406.4   410.7   0.3400  0.2800  0.4516  0.5484          
+VPNLS                     1.9051  4.0005  1.0509  0.3511  0.4587  0.5665  0.4335  0.062414
+Approach 3 (lse+logloss)  1.8926  4.0146  1.0571  0.3522  0.4430  0.5571  0.4429  0.063305
+Approach 3 (lse)          1.9051  4.0005  1.0509  0.3511  0.4587  0.5665  0.4335  0.062414
+
+Note: Chinchilla A/B use unnormalized inputs; not directly comparable to fitted A/B.
+
+scalefit Results (n_starts=100, seed=42)
+----------------------------------------------------------------------
+config                   E       A       B       α       β       a       b     
+-----------------------  ------  ------  ------  ------  ------  ------  ------
+mse+lbfgs                1.9051  4.0001  1.0509  0.3510  0.4588  0.5665  0.4335
+mse+basinhopping         1.9051  4.0012  1.0510  0.3511  0.4587  0.5665  0.4335
+mse+basinhopping+bs10    1.8926  3.9928  1.0517  0.3500  0.4462  0.5604  0.4396
+huber+lbfgs              1.8267  3.7066  1.0386  0.3240  0.4080  0.5573  0.4427
+huber+basinhopping       1.8250  3.6984  1.0396  0.3239  0.4058  0.5561  0.4439
+huber+basinhopping+bs10  1.8262  3.7451  1.0430  0.3285  0.4011  0.5498  0.4502
+
+config                   R²        MRE%  MAE     
+-----------------------  --------  ----  --------
+mse+lbfgs                0.996040  0.45  0.012207
+mse+basinhopping         0.996040  0.45  0.012208
+mse+basinhopping+bs10    0.995982  0.45  0.012036
+huber+lbfgs              0.994747  0.42  0.011535
+huber+basinhopping       0.994694  0.42  0.011531
+huber+basinhopping+bs10  0.994564  0.42  0.011588
+
