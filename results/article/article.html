@@ -601,6 +601,9 @@
                     </ol>
                 </li>
                 <li>
+                    <a href="#error-costs">Error Costs: Misallocation at Frontier Scale</a>
+                </li>
+                <li>
                     <a href="#conclusion">Conclusion</a>
                     <ol>
                         <li><a href="#limitations">Limitations</a></li>
@@ -903,7 +906,7 @@
             </table>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling,
                     Approach 2 recovers both exponents and intercepts with machine-precision
@@ -1029,7 +1032,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Even under unrealistically ideal conditions, Approach 2 produces biased intercepts for
                     asymmetric surfaces. The error is systematic, a property of the parabolic
@@ -1388,7 +1391,7 @@
             </ul>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Consider the Chinchilla surface with the Large grid (±8x), a practical sampling
                     range for real experiments. When extrapolating to 10²⁴ FLOPs, the true optimal
@@ -1474,7 +1477,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Consider the symmetric surface with the Large grid (±8×) and a 3× offset,
                     where every IsoFLOP grid is centered at three times the true optimal token count.
@@ -1522,7 +1525,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Constant bias preserves exponents; any compute-dependent bias pattern distorts
                     them. The distinction matters because exponent errors compound during extrapolation,
@@ -1717,7 +1720,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Multiple bias sources act simultaneously in any real experiment. Surface
                     asymmetry and off-center sampling each produce meaningful errors on their
@@ -2056,7 +2059,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     Variable projection reduces the nonlinear search to the exponential terms
                     only, producing a well-conditioned 2D landscape where all tested optimizers
@@ -2224,7 +2227,7 @@
             </p>
 
             <div class="callout key-point">
-                <div class="callout-title">✓ Key Result</div>
+                <div class="callout-title">✓ Summary</div>
                 <p>
                     On asymmetric loss surfaces with realistic noise, Approach&nbsp;2's
                     structural bias persists regardless of data quality. Naive Approach&nbsp;3
@@ -2284,7 +2287,132 @@
 
         </section>
 
-        <!-- Section 7: Conclusion -->
+        <!-- Section 7: Error Costs -->
+        <section id="error-costs">
+            <h2>Error Costs: Misallocation at Frontier Scale</h2>
+
+            <p>
+                Scaling laws serve at least two broad purposes in practice. At smaller scales they
+                guide research decisions like comparing architectures, datasets, and training
+                strategies before committing to a full run. For production models of small to
+                medium size, allocation planning typically targets deliberate overtraining
+                (training on more data than compute-optimal) rather than compute-optimality
+                itself, and Approach&nbsp;3 or variations on it are much more common in that
+                setting. The compute-optimal scaling laws studied in this article are
+                most directly relevant to the largest models in frontier families, which are
+                still frequently trained near compute-optimality. For these runs, the biases
+                documented in the preceding sections may translate directly into wasted compute.
+            </p>
+
+            <p>
+                To quantify this, we assess the cost of Approach&nbsp;2 misallocations at the
+                compute scale of Llama&nbsp;3 405B (3.8&times;10<sup>25</sup>
+                FLOPs)<sup><a href="#ref-llama3">[2]</a></sup>, which remains one of the most
+                compute-intensive open models trained as of early
+                2026<sup><a href="#ref-epochai_open_model_compute">[42]</a></sup>. We also
+                examine three additional loss surfaces with published Approach&nbsp;3 fit
+                statistics&mdash;the original Chinchilla
+                surface<sup><a href="#ref-chinchilla">[1]</a></sup>, and two multimodal models
+                for which scaling is substantially more asymmetric,
+                SODA<sup><a href="#ref-audio_scaling">[36]</a></sup> (interleaved audio-text)
+                and Sparse-NMM<sup><a href="#ref-nmm_scaling">[39]</a></sup> (native multimodal
+                with sparse mixture-of-experts). These surfaces span a range of exponent
+                asymmetry ratios (<i>b/a</i>) from near-unity to nearly 2:1, providing a
+                view of how the biases compound as the loss surface departs from the symmetric
+                case.
+            </p>
+
+            <p>
+                We measure misallocation in terms of <strong>Deadweight Compute Loss</strong>
+                (DCL), defined as the excess FLOPs consumed by training at the Approach&nbsp;2&ndash;inferred
+                allocation relative to the budget that would achieve the same loss under optimal
+                allocation. Given a compute budget <i>C</i> and an inferred data allocation
+                <i>D*</i>, the model size is forced by the constraint <i>N = C / (6D*)</i>. The
+                resulting loss <i>L(N, D*)</i> is suboptimal. Inverting the optimal loss
+                function <i>L<sub>opt</sub>(C)</i> yields the smaller budget
+                <i>C<sub>eq</sub></i> that would reach this same loss with optimal allocation;
+                DCL&nbsp;=&nbsp;<i>C</i>&nbsp;&minus;&nbsp;<i>C<sub>eq</sub></i>. This is
+                analogous to deadweight loss in economics, where dataset and model sizes define
+                a supply&ndash;demand tradeoff that maximizes a &ldquo;total surplus&rdquo;&mdash;or
+                equivalently, minimizes validation loss&mdash;only at the compute-optimal allocation.
+                Any departure from optimality wastes compute in the same sense that a price
+                distortion wastes economic surplus.
+            </p>
+
+            <p>
+                For Llama&nbsp;3, we digitize individual IsoFLOP data points from Figure&nbsp;2
+                of the original paper<sup><a href="#ref-llama3">[2]</a></sup> following the
+                SVG-coordinate extraction method of Besiroglu et
+                al.<sup><a href="#ref-epochai_chinchilla_replication">[43]</a></sup>, then fit
+                both Approach&nbsp;2 and two Approach&nbsp;3 implementations (VPNLS and direct
+                L-BFGS-B) to obtain competing allocations at the target budget. For Chinchilla,
+                SODA, and Sparse-NMM we take a simulated approach instead, generating synthetic
+                IsoFLOP data from each published loss surface, fitting Approach&nbsp;2 to it
+                under the same bias assumptions used in earlier sections (XS grid width,
+                3&times; sampling drift), and comparing the resulting extrapolations. We include
+                a simulated Llama&nbsp;3 condition as well, which provides an implicit measure
+                of how much of the empirical Llama&nbsp;3 error is attributable to the real
+                IsoFLOP experiment design versus the biases we introduce systematically. Dollar
+                costs are computed assuming 50% model FLOPs
+                utilization<sup><a href="#ref-beyond_chinchilla">[44]</a></sup> and $2 per
+                H100-hour<sup><a href="#ref-olmo3">[45]</a></sup>.
+            </p>
+
+            <figure id="fig-13">
+                <img src="figures/compute_allocation_errors/compute_allocation_errors.png"
+                    alt="Deadweight Compute Loss and allocation details for Approach 2 misallocations at frontier scale">
+                <figcaption>
+                    <strong>Figure 13:</strong> Approach&nbsp;2 misallocation costs extrapolated to
+                    3.8&times;10<sup>25</sup>&nbsp;FLOPs. Left: Deadweight Compute Loss (DCL) as a
+                    percentage of budget. Right: allocation details including true vs.&nbsp;inferred
+                    token counts and model sizes, loss penalty, and dollar cost.
+                    &ldquo;Empirical&rdquo; rows use Approach&nbsp;2 power laws fit to digitized
+                    Llama&nbsp;3 IsoFLOP data, evaluated against VPNLS and Approach&nbsp;3 surfaces.
+                    &ldquo;Simulated&rdquo; rows use synthetic IsoFLOP data generated from each
+                    published surface with XS grid and 3&times;&nbsp;drift bias.
+                </figcaption>
+            </figure>
+
+            <p>
+                <a href="#fig-13">Figure&nbsp;13</a> shows the results.
+                On the empirical Llama&nbsp;3 data, Approach&nbsp;2 overestimates the
+                compute-optimal token count by 58&ndash;75% depending on the reference
+                surface, yielding DCL of 6&ndash;10% of budget ($1.3&ndash;2.2M).
+                The simulated Llama&nbsp;3 condition, which isolates the systematic biases
+                from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
+                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This indicates that most of the empirical
+                error is likely attributable to the particular shape of the real IsoFLOP data rather
+                than to the biases modeled here.
+                Chinchilla (<i>b/a</i>&nbsp;&asymp;&nbsp;1.21) allocation errors remain similarly
+                small at 0.4% ($95K).
+                The multimodal surfaces show substantially higher costs as exponent asymmetry
+                increases: SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
+                and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
+                For domains with highly asymmetric scaling exponents, which are
+                more common in multimodal and non-language settings, Approach&nbsp;2
+                misallocations can waste a non-trivial fraction of a large
+                training budget.
+            </p>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Summary</div>
+                <p>
+                    Based on Llama&nbsp;3 IsoFLOP data, Approach&nbsp;2 overestimates
+                    the compute-optimal token count by 58&ndash;75% at
+                    3.8&times;10<sup>25</sup>&nbsp;FLOPs, wasting 6&ndash;10% of the
+                    training budget ($1.3&ndash;2.2M in H100 time). Multimodal and
+                    non-language loss surfaces, where exponent asymmetry is typically
+                    larger, exhibit similarly significant misallocation errors 
+                    (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
+                    for which Llama 3 errors reach only 0.2% waste. This suggests that designing IsoFLOP 
+                    experiments to avoid Approach 2 biases is particularly important in those settings, or
+                    that Approach 2 should not be used to fit data from them.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- Section 8: Conclusion -->
         <section id="conclusion">
             <h2>Conclusion</h2>
 
@@ -2810,6 +2938,10 @@
             <li id="ref-nmm_scaling">"Scaling Laws for Native Multimodal Models," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2504.07951">https://arxiv.org/abs/2504.07951</a></li>
             <li id="ref-xlstm_scaling">"xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2510.02228">https://arxiv.org/abs/2510.02228</a></li>
             <li id="ref-olmo_hybrid">"OLMo Hybrid: From Theory to Practice." <a href="https://allenai.org/papers/olmo-hybrid">https://allenai.org/papers/olmo-hybrid</a></li>
+            <li id="ref-epochai_open_model_compute">"Open Models Compute Threshold," <em>Epoch AI</em>. <a href="https://epoch.ai/data-insights/open-models-threshold">https://epoch.ai/data-insights/open-models-threshold</a></li>
+            <li id="ref-epochai_chinchilla_replication">"Chinchilla Scaling: A replication attempt," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2404.10102">https://arxiv.org/abs/2404.10102</a></li>
+            <li id="ref-beyond_chinchilla">"Beyond Chinchilla-Optimal -- Accounting for Inference in Language Model Scaling Laws," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2401.00448">https://arxiv.org/abs/2401.00448</a></li>
+            <li id="ref-olmo3">"OLMo 3: Open Language Models at Scale," <em>ArXiv</em>. <a href="https://arxiv.org/abs/2512.13961">https://arxiv.org/abs/2512.13961</a></li>
             </ol>
         </section>
 

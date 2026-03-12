@@ -1519,6 +1519,9 @@ def copy_experiment_outputs(output_dir: Path) -> None:
     compounding_dir = prepare_output_dir(output_dir / "figures" / "compounding_errors")
     inference_dir = prepare_output_dir(output_dir / "figures" / "exponent_inference")
     data_efficiency_dir = prepare_output_dir(output_dir / "figures" / "data_efficiency")
+    error_costs_dir = prepare_output_dir(
+        output_dir / "figures" / "compute_allocation_errors"
+    )
     main_copies = [
         (
             exp_dir / "exp10" / "compounding_errors.png",
@@ -1539,6 +1542,10 @@ def copy_experiment_outputs(output_dir: Path) -> None:
         (
             exp_dir / "exp9" / "data_efficiency.png",
             data_efficiency_dir / "data_efficiency.png",
+        ),
+        (
+            exp_dir / "exp11" / "compute_allocation_errors.png",
+            error_costs_dir / "compute_allocation_errors.png",
         ),
     ]
 

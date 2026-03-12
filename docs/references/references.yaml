@@ -205,3 +205,23 @@
   title: "OLMo Hybrid: From Theory to Practice"
   venue: Other
   url: https://allenai.org/papers/olmo-hybrid
+
+- key: epochai_open_model_compute
+  title: Open Models Compute Threshold
+  venue: Epoch AI
+  url: https://epoch.ai/data-insights/open-models-threshold
+
+- key: epochai_chinchilla_replication
+  title: "Chinchilla Scaling: A replication attempt"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2404.10102
+
+- key: beyond_chinchilla
+  title: Beyond Chinchilla-Optimal -- Accounting for Inference in Language Model Scaling Laws
+  venue: ArXiv
+  url: https://arxiv.org/abs/2401.00448
+
+- key: olmo3
+  title: "OLMo 3: Open Language Models at Scale"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2512.13961
