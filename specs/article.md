@@ -140,7 +140,7 @@
 
 ---
 
-## IsoFLOP Curves in the Wild: Evidence from Published Studies
+## Real IsoFLOP Curves: Evidence from Published Studies
 
 - Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
 - These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
@@ -155,33 +155,6 @@
 - Cross-reference to appendix for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
 - Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone, even with the narrowest grid where the parabolic approximation is most accurate
 
-- **Error Cost Estimates**: estimate the cost of errors on an Olmo2-scale extrapolation in terms of tokens, loss, FLOPs ($) and quality
-- Preamble:
-  - Many modern applications of scaling laws are for research purposes like evaluating architectures, datasets, and training strategies at a smaller scale
-  - Making resource allocation decisions for large-scale training runs is typically limited to overtraining settings, rather than targeting compute-optimal models
-  - Approach 3, and variations on it, are far more common in planning for overtrained models
-  - However, it is still possible to contextualize Approach 2 extrapolation errors in terms of unintentional overtraining/undertraining
-    - Overtraining in this scenario means that FLOPS are utilized inefficiently and undertraining results in models of lower quality
-  - All simulations so far have involved extrapolation to the yotta FLOP scale (10²⁴ FLOPs), which is commensurate with open-weight models like Qwen-2.5-7B (8.2x10^23 FLOPS) and Olmo2-32B (1.3x10^24 FLOPS) [cite https://arxiv.org/abs/2501.00656]
-  - They have also focused on token allocation errors, but we can just as easily estimate errors in FLOPS
-  - For an extrapolation to the Olmo 2 scale specifically:
-    - Assume the same 3x drift as the compounding errors section to simulate a relatively large error in IsoFLOP experiment design
-    - Assume the Small grid width (±4×) to mitigate the effect of Taylor approximation errors
-    - Assume the Chinchilla (very low asymmetry) and Asymmetric (very high asymmetry) surfaces for lower and upper bound estimates in errors
-    - Extrapolate to 1.3x10^24 FLOPS rather than 1x10^24 FLOPS
-    - MFU:
-      - "MFU can be as low as ~1% for inference (Pope et al., 2022) but is typically 40-60% during training (Korthikanti et al., 2022)" (https://arxiv.org/abs/2401.00448)
-    - FLOPS -> dollars:
-      - "At a price of $2/H100 hour" (https://arxiv.org/abs/2512.13961)
-    - 
-- Assumptions:
-  - Errors in extrapolation from our simulation are representative of errors in real-world extrapolation
-  - The Chinchilla and Asymmetric surfaces are representative of the typical range of scaling law surfaces
-  - The Small grid width (±4×) is representative of the typical grid width used in scaling law experiments
-  - The 3x center offset is representative of the typical center offset used in scaling law experiments
-  - The 3x drift is representative of the typical drift used in scaling law experiments
-  - The Olmo2 scale is representative of the typical scale used in scaling law experiments
-  - The Olmo2 scale is representative of the typical scale used in scaling law experiments
 ---
 
 ## Robust Fits: Unbiased Estimation with Linear Separation
@@ -240,6 +213,62 @@
   - Approach 2's variance is ~8× higher than Approach 3 / VPNLS even under ideal conditions
   - Figure: bar chart of pooled variance + heatmap by noise level (Experiment 9)
   - Appendix boxplot figure shows per-noise-level signed error distributions
+
+---
+
+## Error Costs: Misallocation at Frontier Scale
+
+- Overview
+  - Many modern applications of scaling laws are for research purposes like evaluating architectures, datasets, and training strategies at a smaller scale
+  - Resource allocation decisions for small to medium (typically dense) models are typically made with overtraining in mind, rather than being compute-optimal
+    - Approach 3, and variations on it, are far more common in this setting
+  - However, the largest models in many frontier model families are still frequently trained near compute-optimality
+  - In this section, we assess the costs of misallocating token/param ratios at the compute scale of Llama 3 405B (3.8x10^25 FLOPS)
+    - We also do this for Chinchilla and two other multimodal models for which scaling is more asymmetric: SODA [audio_scaling] and Sparse-NMM [nmm_scaling]
+    - We measure this in terms of Deadweight Compute Loss (DCL) defined as the FLOPS needed to reach an optimal allocation from one provided by Approach 2
+      - This is analogous to "deadweight loss" in economics where dataset and model sizes imply a supply-demand tradeoff that only maximize a "Total Surplus", or minimization of validation loss in this context, at compute-optimal allocations
+  - This model is still one of the most compute-intensive open models yet trained as of March 2026 [epochai_open_model_compute]
+    - TODO cite epochai_open_model_compute: https://epoch.ai/data-insights/open-models-threshold (code at https://colab.research.google.com/drive/1XQYTd6r6P_DN8huZ8cFM4h_aMSt7xzhA)
+      - Add docs/images/epochai_open_model_compute.png to appendix
+- Methods
+  - For Llama 3, our approach to estimating these costs is:
+    - Gather raw IsoFLOP data from Figure 2 of [llama3] following the method of [epochai_chinchilla_replication], in which individual data points are extracted from SVG coordinates
+      - TODO cite llama3: https://arxiv.org/abs/2404.10102
+      - TODO cite epochai_chinchilla_replication: https://arxiv.org/abs/2404.10102
+    - Fit both Approach 2 and several Approach 3 implementations to it
+    - Extrapolate to the target compute scale (3.8x10^25 FLOPS)
+    - Determine how many parameters and tokens *should* have been allocated by comparison to those suggested by Approach 2
+    - Calculate how many FLOPS could have been saved by reaching the same loss with an optimal allocation
+    - Convert this difference in FLOPS assuming 50% MFU [beyond_chinchilla] and $2/H100 hour [olmo3]
+      - TODO cite beyond_chinchilla: https://arxiv.org/abs/2401.00448
+      - TODO cite olmo3: https://arxiv.org/abs/2512.13961
+  - For Chinchilla, SODA, and Sparse-NMM, our approach is simpler:
+    - Gather Approach 3 fit statistics published for these models
+    - Simulate IsoFLOP data from these loss surfaces
+    - Fit that data using Approach 2
+    - Compare extrapolations 
+    - We include Llama 3 results for this approach as well
+      - This serves as an indication of the magnitude of Approach 2 biases that we are introducing systematically
+      - Comparing the resulting errors between these Llama 3 results and those from the direct method (fit to real Llama 3 IsoFLOP data), provides an implicit way to measure how problems in the Llama 3 IsoFLOP experiment design degrade the accuracy of Approach 2
+      - These problems in IsoFLOP experiment design for Llama 3 are discussed more in "Real IsoFLOP Curves: Evidence from Published Studies"
+- Figure:
+  - (1x2) subplots:
+    - horizonal bar chart of DCL for each model/dataset/fit (left, 60% width)
+    - heatmap/table of approach 2 / approach 3 token and param counts, loss differences in nats, dollar values for FLOP costs
+    - separate simulated vs real results with a dashed horizontal line in the bar chart
+- Results
+  - Approach 2 errors on Llama 3 extrapolations lead to significant misallocations, ranging from $X to $Y depending on the Approach 3 fit configuration
+  - The difference between the Llama 3 simulated misallocations ($X) and the those computed empirically on real IsoFLOP data ($Y) further substantiate the claim that the biases we are assuming in our simulations are realistic 
+    - The simulations in this case assume the XS (±2×) grid, which is actually impractically small but minimizes Taylor approximation error
+    - The greatest source of error comes from the assumption of a 3x drift in the sampling center, as detailed in previous sections
+  - The simulated results for multimodal models on loss surfaces with far greater asymmetry then demonstrate how this 3x drift compounds to significant misallocations, even though those misallocations are minimal for Llama 3 and Chinchilla
+    - This suggests that real scaling experiments on multimodal data with sampling biases comparable to those in the Llama 3 IsoFLOP sweep may be very significant, possibly far exceeding what our more optimistic simulation here implies
+- Summary
+  - Empirical Llama 3: Approach 2 overestimates D* by 58–75% and underestimates N* by 37–43% at 3.8×10^25 FLOPs, yielding DCL of 6–10% of budget ($1.3–2.2M)
+  - Simulated Llama 3 (b/a ≈ 0.97, near-symmetric): same biases produce only 0.2% DCL ($39K), implying that ~$1–2M of the empirical cost is attributable to Approach 2's poor fit to real isoFLOP data rather than surface asymmetry alone
+  - Asymmetric surfaces amplify errors sharply: SODA (b/a = 1.56) reaches 8% DCL ($1.7M) and Sparse-NMM (b/a = 1.91) reaches 10% DCL ($2.1M) under the same mild 3× drift bias
+  - Multimodal models tend to have more asymmetric loss surfaces (higher b/a), making Approach 2 misallocations potentially much larger than for text-only LLMs; real isoFLOP experiments on such data with sampling biases comparable to Llama 3 may waste considerably more than the $1.7–2.1M our conservative simulations imply
+
 
 ---
 

@@ -13,6 +13,7 @@ On article:
     - Add limitation on not exploring data efficiency (yet)
     - Mention hardware discretization in extrapolations, re: https://openathena.slack.com/archives/C0884476QSC/p1773257160211219?thread_ts=1773062864.434009&cid=C0884476QSC
   - Fix DeepSeek 2.7 reference (comes from Kaplan)
+  - Add appendix table on scalefit reproduction results and explain that
   - Add note advising against using logloss given bias in simulations and ml-scalefit reproduction
   - On abstract:
     - Emphasize data efficiency findings

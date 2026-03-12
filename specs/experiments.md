@@ -4,15 +4,11 @@ This document specifies all experiments for analyzing scaling law inference meth
 
 ## Experiment 0: Reproductions
 
-- Fit chinchilla data from https://github.com/apple/ml-scalefit/blob/ac4664af5db6c94e6ac7521a61dd3bbb0d91cc3a/data/chinchilla.csv
-  - See: https://github.com/apple/ml-scalefit/blob/ac4664af5db6c94e6ac7521a61dd3bbb0d91cc3a/examples/fit_chinchilla.py
-  - Note:
-    - compute = 6 * df["n_tokens"] * df["model_size"]
-    - train_mask = compute < 1e21
-  - Fit with vpnls (grad=True, method="l-bfgs-b") and approach 3 (grad=True, use_lse=True, use_logloss=True) and (grad=True, use_lse=True, use_logloss=False)
-  - Save results to text report file
-- For comparison:
-  - https://epoch.ai/blog/chinchilla-scaling-a-replication-attempt (equation 1)
+- Fit Chinchilla data from [ml-scalefit](https://github.com/apple/ml-scalefit) CSV (C < 1e21, 217 points)
+- Inputs normalized (N/1e6, D/1e9) to match scalefit convention so A/B are directly comparable
+- Three fits: VPNLS, Approach 3 (lse+logloss), Approach 3 (lse)
+- Loads saved scalefit results from `docs/reproductions/ml-scalefit/` (6 configs: MSE/Huber × L-BFGS/basinhopping + bootstrap variants, n_starts=100)
+- Tabular report comparing parameters (E, A, B, α, β, a, b) and scores across all methods
 
 ## Experiment 1: Empirical Error
 
@@ -310,8 +306,18 @@ For each trial, fit all three methods and record signed exponent errors (â − 
 
 ## Experiment 10: Compounding Errors
 
-**Hypothesis**: Individually small biases — loss surface asymmetry, narrow sampling grids, and off-center sampling — compound when extrapolating D* to compute budgets far beyond the fitting range.
+- Simulated Approach 2 fits on 10^17–10^21 FLOPs, extrapolated to 10^24
+- Two bias configs: constant 3× offset, linear drift to 3×
+- Four grid widths: ±2×, ±4×, ±8×, ±16×
+- Surfaces: Symmetric, Chinchilla, Asymmetric
+- Outputs: bar chart PNG and CSV
 
-**Method**: For each combination of bias configuration (constant 3× offset, linear drift to 3×), loss surface (Symmetric, Chinchilla, Asymmetric), and grid width (±2× to ±16×), fit Approach 2 on 10¹⁷–10²¹ FLOPs and extrapolate D* to 10²⁴ FLOPs. Report relative error vs true D*.
+## Experiment 11: Cost Estimates
 
-**Visualization**: 1×2 bar chart (one panel per bias configuration). X-axis: loss surface; bars grouped by grid width; y-axis: relative error in D* (%). Output: `results/experiments/exp10/compounding_errors.png`.
+- Simulated Approach 2 fits on 10^18–10^22 FLOPs, extrapolated to Llama 3 405B budget (3.8e25)
+- Surfaces: Llama 3 (VPNLS), Chinchilla, SODA, Sparse-NMM
+- Wasted FLOPs and dollar costs (H100 @ $2/GPU-hr, 50% MFU)
+- Llama 3 section: fits real isoFLOP data (digitized from paper) under log-scale and raw-nats assumptions
+  - VPNLS and Approach 3 as ground truth, Approach 2 as inferred — 4 comparisons total
+- Reuses `plot` and `save_csv` from exp10
+- Outputs: bar chart PNG, CSV, and cost report TXT

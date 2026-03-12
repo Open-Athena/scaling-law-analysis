@@ -1,4 +1,4 @@
-Compounding Error Costs
+Cost Estimates
 ============================================================
 
 Approach 2 fit on 10^18-10^22 FLOPs, extrapolated to 3.8e+25 FLOPs.
@@ -13,37 +13,41 @@ Cost basis: H100 SXM bf16 (1979 TFLOPS), 50% MFU, $2.0/GPU-hr
 'over' = inferred exceeds true optimum; 'under' = falls short.
 
 Given inferred D*, actual N is forced by the budget: N = C/(6D).
-The resulting loss L(N,D) is suboptimal. 'Wasted compute' inverts
-L_opt(C) to find the smaller budget that would reach the same loss
-with optimal allocation; the difference is wasted.
-
-Chinchilla (E=1.6900, A=406.4, B=410.7, α=0.3400, β=0.2800, a=0.4516, b=0.5484)
-------------------------------------------------------------
-  D* (tokens):       29.7T true →      33.5T inferred  (over, 12.8%)
-  N* (params):      213.5B true →     189.3B inferred  (under, 11.3%)
-  Loss (nats):  1.816533 true → 1.816620 inferred  (+0.000087 penalty)
-  Wasted compute: 1.70e23 FLOPs (0.4% of budget, $95K)
-
-SODA (E=3.1690, A=215886.0, B=4750.0, α=0.6840, β=0.4390, a=0.3909, b=0.6091)
-------------------------------------------------------------
-  D* (tokens):       28.8T true →      42.1T inferred  (over, 46.3%)
-  N* (params):      220.2B true →     150.5B inferred  (under, 31.7%)
-  Loss (nats):  3.178630 true → 3.178847 inferred  (+0.000217 penalty)
-  Wasted compute: 3.04e24 FLOPs (8.0% of budget, $1.7M)
-
-Sparse-NMM (E=2.1580, A=381773.0, B=4659.0, α=0.7100, β=0.3720, a=0.3438, b=0.6562)
-------------------------------------------------------------
-  D* (tokens):      176.5T true →     272.3T inferred  (over, 54.3%)
-  N* (params):       35.9B true →      23.3B inferred  (under, 35.2%)
-  Loss (nats):  2.193603 true → 2.194537 inferred  (+0.000934 penalty)
-  Wasted compute: 3.82e24 FLOPs (10.1% of budget, $2.1M)
+The resulting loss L(N,D) is suboptimal. Deadweight Compute Loss
+(DCL) inverts L_opt(C) to find the smaller budget that would reach
+the same loss with optimal allocation; DCL = budget − equivalent_C.
 
 Llama 3 (E=1.8405, A=261.7, B=870.2, α=0.3481, β=0.3591, a=0.5078, b=0.4922)
 ------------------------------------------------------------
   D* (tokens):        9.2T true →       9.9T inferred  (over, 7.5%)
   N* (params):      686.9B true →     638.9B inferred  (under, 7.0%)
+  D*/N* ratio:        13.4 true →       15.5 inferred
   Loss (nats):  1.879635 true → 1.879648 inferred  (+0.000013 penalty)
-  Wasted compute: 7.03e22 FLOPs (0.2% of budget, $39K)
+  DCL: 7.03e22 FLOPs (0.2% of budget, $39K)
+
+Chinchilla (E=1.6900, A=406.4, B=410.7, α=0.3400, β=0.2800, a=0.4516, b=0.5484)
+------------------------------------------------------------
+  D* (tokens):       29.7T true →      33.5T inferred  (over, 12.8%)
+  N* (params):      213.5B true →     189.3B inferred  (under, 11.3%)
+  D*/N* ratio:       139.0 true →      176.7 inferred
+  Loss (nats):  1.816533 true → 1.816620 inferred  (+0.000087 penalty)
+  DCL: 1.70e23 FLOPs (0.4% of budget, $95K)
+
+SODA (E=3.1690, A=215886.0, B=4750.0, α=0.6840, β=0.4390, a=0.3909, b=0.6091)
+------------------------------------------------------------
+  D* (tokens):       28.8T true →      42.1T inferred  (over, 46.3%)
+  N* (params):      220.2B true →     150.5B inferred  (under, 31.7%)
+  D*/N* ratio:       130.6 true →      279.6 inferred
+  Loss (nats):  3.178630 true → 3.178847 inferred  (+0.000217 penalty)
+  DCL: 3.04e24 FLOPs (8.0% of budget, $1.7M)
+
+Sparse-NMM (E=2.1580, A=381773.0, B=4659.0, α=0.7100, β=0.3720, a=0.3438, b=0.6562)
+------------------------------------------------------------
+  D* (tokens):      176.5T true →     272.3T inferred  (over, 54.3%)
+  N* (params):       35.9B true →      23.3B inferred  (under, 35.2%)
+  D*/N* ratio:      4917.8 true →    11710.2 inferred
+  Loss (nats):  2.193603 true → 2.194537 inferred  (+0.000934 penalty)
+  DCL: 3.82e24 FLOPs (10.1% of budget, $2.1M)
 
 
 Llama 3: Approach 2 vs Parametric Fits on Real IsoFLOP Data
@@ -66,15 +70,17 @@ Approach 2 vs VPNLS:
 ------------------------------------------------------------
   D* (tokens):        9.2T true →      16.1T inferred  (over, 74.7%)
   N* (params):      686.9B true →     393.1B inferred  (under, 42.8%)
+  D*/N* ratio:        13.4 true →       41.0 inferred
   Loss (nats):  1.879635 true → 1.880397 inferred  (+0.000762 penalty)
-  Wasted compute: 3.93e24 FLOPs (10.3% of budget, $2.2M)
+  DCL: 3.93e24 FLOPs (10.3% of budget, $2.2M)
 
 Approach 2 vs Approach 3:
 ------------------------------------------------------------
   D* (tokens):        9.5T true →      16.1T inferred  (over, 70.0%)
   N* (params):      668.4B true →     393.1B inferred  (under, 41.2%)
+  D*/N* ratio:        14.2 true →       41.0 inferred
   Loss (nats):  1.878015 true → 1.878709 inferred  (+0.000694 penalty)
-  Wasted compute: 3.57e24 FLOPs (9.4% of budget, $2.0M)
+  DCL: 3.57e24 FLOPs (9.4% of budget, $2.0M)
 
 
 ── raw nats (no transform) ──
@@ -87,13 +93,15 @@ Approach 2 vs VPNLS:
 ------------------------------------------------------------
   D* (tokens):       10.2T true →      16.1T inferred  (over, 58.0%)
   N* (params):      621.6B true →     393.3B inferred  (under, 36.7%)
+  D*/N* ratio:        16.4 true →       40.9 inferred
   Loss (nats):  0.630631 true → 0.630895 inferred  (+0.000265 penalty)
-  Wasted compute: 2.39e24 FLOPs (6.3% of budget, $1.3M)
+  DCL: 2.39e24 FLOPs (6.3% of budget, $1.3M)
 
 Approach 2 vs Approach 3:
 ------------------------------------------------------------
   D* (tokens):       10.1T true →      16.1T inferred  (over, 59.7%)
   N* (params):      628.3B true →     393.3B inferred  (under, 37.4%)
+  D*/N* ratio:        16.0 true →       40.9 inferred
   Loss (nats):  0.628918 true → 0.629199 inferred  (+0.000281 penalty)
-  Wasted compute: 2.48e24 FLOPs (6.5% of budget, $1.4M)
+  DCL: 2.48e24 FLOPs (6.5% of budget, $1.4M)
 
