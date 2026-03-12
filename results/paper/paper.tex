@@ -45,26 +45,31 @@ Systematic Biases in IsoFLOP Parabola Fits}
 
 \begin{abstract}
 Chinchilla Approach~2 is arguably the most widely adopted method for fitting
-neural scaling laws in practice. The method fits parabolas to IsoFLOP loss
-curves and extracts scaling exponents through a sequence of simple polynomial
-and linear regressions. We show that the parabolic approximation inherent to
-this method introduces systematic biases in compute-optimal allocation
-estimates, even on noise-free synthetic data under ideal experimental
-conditions. Three sources of error are examined: IsoFLOP sampling
-grid width, which affects Taylor approximation accuracy; uncentered IsoFLOP
-sampling, which distorts scaling intercepts or exponents depending on how offsets
-vary with compute budget; and loss surface asymmetry ($\alpha \neq \beta$),
-which attenuates or amplifies error depending on alignment with the direction of
-other biases. Chinchilla Approach~3 eliminates
-these biases, but is often regarded as unstable, prone to local minima, less
-data-efficient and more complex to implement. We demonstrate that this is not
-true, especially when the partially linear structure of the Approach~3
-optimization objective is exploited through Variable Projection. This enables
-unbiased, parametric inference on all five loss surface parameters as a
-two-dimensional optimization that is well-conditioned, analytically
-differentiable and highly amenable to dense, or even exhaustive, grid search. It
-may serve as a more convenient replacement for Approach~2 or a more scalable
-alternative for adaptations of Approach~3 to richer scaling law formulations.
+neural scaling laws in practice. The parabolic approximation inherent to this
+method introduces systematic biases in compute-optimal allocation estimates,
+even on noise-free synthetic data under ideal experimental conditions. Three
+sources of error are examined: IsoFLOP sampling grid width, which affects Taylor
+approximation accuracy of parabolic fits; uncentered IsoFLOP sampling, which
+distorts scaling intercepts or exponents depending on how offsets vary with
+compute budget; and loss surface asymmetry ($\alpha \neq \beta$), which
+attenuates or amplifies other biases. Effects of these errors are demonstrated
+as misallocations at open-model frontier compute scales. Namely, Approach~2
+extrapolations from published Llama~3 IsoFLOP data suggest an underallocation
+of parameters and that 6--10\% (\$1.3--2.2M USD) of the $3.8\times10^{25}$
+FLOPs training budget could have been saved to reach the same loss. Simulated
+misallocations for multimodal models are also presented and show an even greater
+potential for this kind of opportunity cost due to their more asymmetric loss
+surfaces. Chinchilla Approach~3 largely eliminates this potential, but is often
+regarded as less data-efficient, unstable, prone to local minima, and typically
+more complex to implement. Each of these concerns are shown to be unfounded or
+addressable,
+especially when the partially linear structure of the Approach~3 optimization
+objective is exploited through Variable Projection. This enables unbiased,
+parametric inference on all five loss surface parameters as a two-dimensional
+optimization that is well-conditioned, analytically differentiable, and highly
+amenable to dense, or even exhaustive, grid search. It may serve as a more
+convenient replacement for Approach~2 or a more scalable alternative for
+adaptations of Approach~3 to richer scaling law formulations.
 \end{abstract}
 
 \section{Introduction}
@@ -266,7 +271,7 @@ conditions are perturbed in controlled ways.
     \label{tab:happy_path}
 \end{table}
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling,
 Approach~2 recovers both exponents and intercepts with machine-precision
 accuracy. When $\alpha = \beta$, the parabola vertex shift is zero, so the
@@ -344,7 +349,7 @@ IsoFLOP grids centered precisely at the true optimum (something difficult or
 impossible to know in practice). And the loss surface parameters are standard
 in the Chinchilla case, taken directly from the Chinchilla paper.
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 Even under unrealistically ideal conditions, Approach~2 produces biased
 intercepts for asymmetric surfaces. The error is systematic, a property of the
 parabolic approximation, not statistical noise.
@@ -487,7 +492,7 @@ Appendix~\ref{sec:appendix_extrapolation_data}) are:
         Chinchilla at each grid width.
 \end{itemize}
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 Consider the Chinchilla surface with the Large grid ($\pm 8\times$), a
 practical sampling range for real experiments. When extrapolating to $10^{24}$
 FLOPs, the true optimal token count is 4.04 trillion, but Approach~2 predicts
@@ -557,7 +562,7 @@ overshoots) and decreases monotonically as the grid widens, reflecting how a
 wider sampling range brings more of the true loss curve's shape into the fit,
 partially compensating for the misplaced center.
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 Consider the symmetric surface with the Large grid ($\pm 8\times$) and a
 $3\times$ offset, where every IsoFLOP grid is centered at three times the true
 optimal token count. When extrapolating to $10^{24}$ FLOPs, the true optimal
@@ -592,13 +597,13 @@ affected.
     \label{fig:drifting_bias}
 \end{figure}
 
-Compare the bottom-left panels of Figures~\ref{fig:constant_bias}
-and~\ref{fig:drifting_bias}: constant bias produces a flat line at zero
-(exponent preserved), while drifting bias produces a non-zero exponent error
-that varies with grid width.
+The bottom-left panels of Figures~\ref{fig:constant_bias}
+and~\ref{fig:drifting_bias} show the most important difference between the two.
+Those plots demonstrate how constant offsets in sampling centers do not bias
+exponent inference while multiplicative offsets do.
 
-\paragraph{Key Result.}
-Constant bias preserves exponents; any compute-dependent bias pattern distorts
+\paragraph{Summary.}
+Constant bias preserves exponents and any compute-dependent bias pattern distorts
 them. The distinction matters because exponent errors compound during
 extrapolation, while intercept errors remain fixed.
 
@@ -610,7 +615,9 @@ Approach~2's biases under controlled conditions. A natural question is whether
 the conditions that trigger these biases, asymmetric loss surfaces and
 imperfectly centered sampling, actually arise in practice. To get a sense of
 this, we can look at IsoFLOP curves published in three of the most prominent
-scaling law studies~\citep{chinchilla,llama3,deepseek}.
+scaling law studies~\citep{chinchilla,llama3,deepseek}
+in Figure~\ref{fig:wild}; additional examples are collected
+separately\footnote{\url{https://docs.google.com/document/d/1Ab3cYJJYu7t_99Idj9gpHv2icZmRTPBJ_brJxsgnVA4}}.
 
 \begin{figure}[H]
     \centering
@@ -641,11 +648,11 @@ show visible signs of off-center sampling and drift:
 
 To be clear, this is not a criticism of these studies. These are among the most
 careful and influential scaling law analyses published. The point is a more
-general one: the conditions under which Approach~2's biases activate,
+general one: the conditions under which Approach~2's biases take effect,
 asymmetric surfaces and imperfect sampling centers, appear to be the norm
-rather than the exception. The idealized conditions of
-Section~\ref{sec:symmetric} (symmetric surface, perfectly centered grids) are
-the special case.
+rather than the exception. The ideal conditions of
+Section~\ref{sec:symmetric} (symmetric surface, perfectly centered grids)
+occur rarely, if ever, in practice.
 
 \subsection{Compounding Errors}
 \label{sec:compounding}
@@ -678,48 +685,34 @@ Comparing with the baseline in Figure~\ref{fig:extrapolation_error}, where
 asymmetry bias alone produces errors up to $-5$\% on Chinchilla and $-23$\% on
 the Asymmetric surface, the two bias sources interact in opposite directions.
 Off-center sampling pushes errors positive (overestimating $D^*$), while
-asymmetry bias pushes errors negative (underestimating). The net error depends
-on which source dominates. With narrow grids, asymmetry bias is negligible and
-the sampling bias determines the error: drift to $3\times$ produces $+6$\% on
-the symmetric surface and $+12$\% on Chinchilla. With wider grids, asymmetry
-bias grows and begins to offset the sampling bias. On Chinchilla with a
-constant $3\times$ offset, this cancellation is nearly perfect with the XL grid
-($+0.24$\%), but this is only coincidental.
+asymmetry bias pushes errors negative (underestimating). When the two sources
+reinforce rather than cancel, errors grow substantially---reaching $+35$\% at a
+maximum on the Asymmetric surface.
 
-On the Asymmetric surface, the drift configuration produces the largest errors
-in the figure: $+35$\% with the XS grid and still $+14$\% with XL. Even the
-constant offset configuration reaches $+19$\% with XS before the asymmetry
-bias partially offsets it with wider grids.
-
-These $3\times$ perturbations are representative of realistic conditions. The
-IsoFLOP curves they produce on the symmetric surface (top-left panels of
-Figures~\ref{fig:constant_bias} and~\ref{fig:drifting_bias}) show sampling
-centers that are visibly displaced from the curve minima, with the displacement
-either uniform across budgets (constant offset) or growing toward higher
-budgets (drift). Both patterns are qualitatively similar to what is observed in
-the published studies shown in Figure~\ref{fig:wild}, where sampling grids are
-not perfectly centered and the degree of off-centering varies across compute
-budgets. A $3\times$ factor means the sampling center sits at three times the
-true optimal token count, which is likely within the range of uncertainty
-practitioners face when choosing sampling centers before the optimum is known.
+We believe these $3\times$ perturbations are representative of realistic
+conditions. The
+IsoFLOP curves they produce (top-left panels of
+Figures~\ref{fig:constant_bias} and~\ref{fig:drifting_bias}) are qualitatively
+similar to those from the published studies in Figure~\ref{fig:wild}, where
+sampling grids are not perfectly centered and the degree of off-centering
+varies across compute budgets.
 
 Figure~\ref{fig:appendix_combined_extrapolation} in the appendix provides a
-more detailed view: it shows how $D^*$ extrapolation errors evolve across
-compute budgets from $10^{22}$ to $10^{25}$ FLOPs, revealing which bias
-sources produce errors that grow with extrapolation distance (drift) versus
-those that remain roughly constant (surface asymmetry and constant offsets),
-and how these patterns vary across multiple drift rates and center offset
+more detailed view of these results. It shows how $D^*$ extrapolation errors
+change across compute budgets, which sources of bias grow with extrapolation
+distance (drift), which remain constant (surface asymmetry and constant
+offsets), and how these patterns vary across two drift rates and center offset
 magnitudes.
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 Multiple bias sources act simultaneously in any real experiment. Surface
 asymmetry and off-center sampling each produce meaningful errors on their own.
 When they happen to act in the same direction, the combined error exceeds
-either one alone: on the Asymmetric surface with drift to $3\times$, errors
-reach 35\% even when using the narrowest grid, where the parabolic
-approximation is most accurate. When they oppose, partial cancellation can
-occur, but this depends on the specific combination of surface geometry, offset
-magnitude, and grid width, making it unreliable in practice.
+either one alone. On our hypothetical Asymmetric surface with drift to
+$3\times$, errors reach 35\% even when using the narrowest grid, where the
+parabolic approximation is most accurate. When they oppose, partial
+cancellation can occur, but this depends on the specific combination of surface
+geometry, offset magnitude, and grid width.
 
 \section{Robust Fits: Unbiased Estimation with Linear Separation}
 \label{sec:vpnls}
@@ -945,7 +938,7 @@ surface and sampling range.
 The full method comparison data is provided in
 Appendix~\ref{sec:appendix_method_data}.
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 Variable projection reduces the nonlinear search to the exponential terms
 only, producing a well-conditioned 2D landscape where all tested optimizers
 converge reliably. The same initialization budget that spreads thinly across
@@ -1053,7 +1046,7 @@ VPNLS produced the smallest maximum errors in this experiment (34\% on $a$,
 detailed breakdown in Figure~\ref{fig:appendix_exponent_errors} shows how
 errors distribute across noise levels, budget counts, and dataset sizes.
 
-\paragraph{Key Result.}
+\paragraph{Summary.}
 On asymmetric loss surfaces with realistic noise, Approach~2's structural bias
 persists regardless of data quality. Naive Approach~3 without careful
 initialization and parameterization performs even worse. With grid
@@ -1062,23 +1055,123 @@ paper), Approach~3 achieves typical accuracy comparable to VPNLS. VPNLS
 produced the smallest maximum errors in this experiment, though all
 well-configured direct fitting methods substantially outperform Approach~2.
 
+\section{Error Costs: Misallocation at Frontier Scale}
+\label{sec:error_costs}
+
+Scaling laws serve at least two broad purposes in practice. At smaller scales
+they guide research decisions like comparing architectures, datasets, and
+training strategies before committing to a full run. For production models of
+small to medium size, allocation planning typically targets deliberate
+overtraining (training on more data than compute-optimal) rather than
+compute-optimality itself, and Approach~3 or variations on it are much more
+common in that setting. The compute-optimal scaling laws studied in this paper
+are most directly relevant to the largest models in frontier families, which
+are still frequently trained near compute-optimality. For these runs, the
+biases documented in the preceding sections may translate directly into wasted
+compute.
+
+To quantify this, we assess the cost of Approach~2 misallocations at the
+compute scale of Llama~3 405B ($3.8\times10^{25}$
+FLOPs)~\citep{llama3}, which remains one of the most compute-intensive open
+models trained as of early
+2026~\citep{epochai_open_model_compute}. We also examine three additional loss
+surfaces with published Approach~3 fit statistics---the original Chinchilla
+surface~\citep{chinchilla}, and two multimodal models for which scaling is
+substantially more asymmetric,
+SODA~\citep{audio_scaling} (interleaved audio-text) and
+Sparse-NMM~\citep{nmm_scaling} (native multimodal with sparse
+mixture-of-experts). These surfaces span a range of exponent asymmetry ratios
+($\beta/\alpha$) from near-unity to nearly 2:1, providing a view of how the
+biases compound as the loss surface departs from the symmetric case.
+
+We measure misallocation in terms of \textbf{Deadweight Compute Loss} (DCL),
+defined as the excess FLOPs consumed by training at the
+Approach~2--inferred allocation relative to the budget that would achieve the
+same loss under optimal allocation. Given a compute budget $C$ and an inferred
+data allocation $D^*$, the model size is forced by the constraint
+$N = C / (6D^*)$. The resulting loss $L(N, D^*)$ is suboptimal. Inverting the
+optimal loss function $L_{\mathrm{opt}}(C)$ yields the smaller budget
+$C_{\mathrm{eq}}$ that would reach this same loss with optimal allocation;
+$\mathrm{DCL} = C - C_{\mathrm{eq}}$. This is analogous to deadweight loss in
+economics, where dataset and model sizes define a supply--demand tradeoff that
+maximizes a ``total surplus''---or equivalently, minimizes validation
+loss---only at the compute-optimal allocation. Any departure from optimality
+wastes compute in the same sense that a price distortion wastes economic
+surplus.
+
+For Llama~3, we digitize individual IsoFLOP data points from Figure~2 of the
+original paper~\citep{llama3} following the SVG-coordinate extraction method
+of Besiroglu et al.~\citep{epochai_chinchilla_replication}, then fit both
+Approach~2 and two Approach~3 implementations (VPNLS and direct L-BFGS-B) to
+obtain competing allocations at the target budget. For Chinchilla, SODA, and
+Sparse-NMM we take a simulated approach instead, generating synthetic IsoFLOP
+data from each published loss surface, fitting Approach~2 to it under the same
+bias assumptions used in earlier sections (XS grid width, $3\times$ sampling
+drift), and comparing the resulting extrapolations. We include a simulated
+Llama~3 condition as well, which provides an implicit measure of how much of
+the empirical Llama~3 error is attributable to the real IsoFLOP experiment
+design versus the biases we introduce systematically. Dollar costs are computed
+assuming 50\% model FLOPs utilization~\citep{beyond_chinchilla} and \$2 per
+H100-hour~\citep{olmo3}.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/compute_allocation_errors.png}
+    \caption{Approach~2 misallocation costs extrapolated to
+    $3.8\times10^{25}$~FLOPs. Left: Deadweight Compute Loss (DCL) as a
+    percentage of budget. Right: allocation details including true
+    vs.\ inferred token counts and model sizes, loss penalty, and dollar cost.
+    ``Empirical'' rows use Approach~2 power laws fit to digitized Llama~3
+    IsoFLOP data, evaluated against VPNLS and Approach~3 surfaces.
+    ``Simulated'' rows use synthetic IsoFLOP data generated from each
+    published surface with XS grid and $3\times$~drift bias.}
+    \label{fig:dcl}
+\end{figure}
+
+Figure~\ref{fig:dcl} shows the results. On the empirical Llama~3 data,
+Approach~2 overestimates the compute-optimal token count by 58--75\% depending
+on the reference surface, yielding DCL of 6--10\% of budget (\$1.3--2.2M).
+The simulated Llama~3 condition, which isolates the systematic biases from the
+IsoFLOP experiment design, produces only 0.2\% DCL (\$39K) at
+$\beta/\alpha \approx 0.97$. This indicates that most of the empirical error
+is likely attributable to the particular shape of the real IsoFLOP data rather
+than to the biases modeled here. Chinchilla
+($\beta/\alpha \approx 1.21$) allocation errors remain similarly small at
+0.4\% (\$95K). The multimodal surfaces show substantially higher costs as
+exponent asymmetry increases: SODA ($\beta/\alpha \approx 1.56$) reaches
+8.0\% DCL (\$1.7M) and Sparse-NMM ($\beta/\alpha \approx 1.91$) reaches
+10.1\% (\$2.1M). For domains with highly asymmetric scaling exponents, which
+are more common in multimodal and non-language settings, Approach~2
+misallocations can waste a non-trivial fraction of a large training budget.
+
+\paragraph{Summary.}
+Based on Llama~3 IsoFLOP data, Approach~2 overestimates the compute-optimal
+token count by 58--75\% at $3.8\times10^{25}$~FLOPs, wasting 6--10\% of the
+training budget (\$1.3--2.2M in H100 time). Multimodal loss surfaces, where
+exponent asymmetry is typically larger, exhibit similarly significant
+misallocation errors (8--10\% of budget costing \$1.7--2.1M) under the same
+simulation conditions for which Llama~3 errors reach only 0.2\% waste. This
+suggests that designing IsoFLOP experiments to avoid Approach~2 biases is
+particularly important in those settings, or that Approach~2 should not be
+used to fit data from them.
+
 \section{Conclusion}
 \label{sec:conclusion}
 
 The Approach~2 biases documented in this paper are structural, not statistical.
 They exist on noise-free data with perfect experimental conditions and, as the
 noisy method comparison (Section~\ref{sec:method_comparison_inference})
-confirms, persist under realistic noise levels with varying amounts of data.
+shows, persist under realistic noise levels with varying amounts of data.
 
-At least two independent sources of error compound in practice. Surface
-asymmetry ($\alpha \neq \beta$) biases intercepts, and off-center sampling
-biases intercepts or exponents depending on whether the offset is constant or
-varies with compute budget. Both act simultaneously in any real experiment, and
-published scaling law studies frequently show clear signs of off-center sampling
-and report high levels of asymmetry, at least among those that publish IsoFLOP
-curves. At practical grid widths with Chinchilla-like asymmetry, token count
-errors of 5\% or more are typical; on more asymmetric surfaces, the errors
-reach 20\% or more.
+At least three sources of Approach~2 error can compound in practice. IsoFLOP
+sampling grid width, uncentered IsoFLOP sampling, and loss surface asymmetry
+all bias inference and extrapolations in different ways. Published IsoFLOP
+curves from prominent scaling law studies
+(Section~\ref{sec:real_isoflop}) show clear signs of both asymmetry and
+off-center sampling. At frontier compute scales
+(Section~\ref{sec:error_costs}), we estimate that these biases translate to a
+potential 6--10\% decrease in training FLOPs (\$1.3--2.2M) on Llama~3 data
+and potentially more on multimodal surfaces with greater asymmetry.
 
 Approach~3 eliminates these biases. With grid initialization and LSE
 reparameterization (as specified in the original Chinchilla
@@ -1099,14 +1192,20 @@ specifications. The analytical extensions discussed in the introduction
 (Section~\ref{sec:introduction}), such as epochs, data quality, and MoE
 sparsity, often add linear terms that could be omitted from direct
 optimization. This structural simplification may provide a more scalable
-foundation for future work.
+foundation for future work. It also lends well to simple implementations of
+the Chinchilla loss model alone, e.g.\ it is possible to express a simplified
+version of the algorithm\footnote{\url{https://gist.github.com/eric-czech/ebd9a80d58c7b5e9c40ba390ff884617}}
+that guarantees globally optimal solutions at a desired level of scaling
+exponent precision, uses only ${\sim}70$ lines of JavaScript code, and
+requires no dependencies (no optimization or linear algebra libraries).
 
-Practitioners using Approach~2 should be aware that intercept estimates carry a
-systematic bias that grows with loss surface asymmetry, sampling center offsets,
-and sampling grid width. When fitting surfaces directly as in Approach~3, grid
-initialization and LSE reparameterization should be used. VPNLS offers
-equivalent accuracy with a simpler optimization structure to aid in scaling this
-approach to richer formulations.
+Lastly, practitioners using Approach~2 should be aware that scaling exponent
+estimates carry a systematic bias that often grows with loss surface asymmetry,
+sampling center offsets, and sampling grid width. When fitting surfaces
+directly with Approach~3 instead, grid initialization and LSE
+reparameterization should be used. And VPNLS offers equivalent accuracy with a
+simpler optimization structure to aid in scaling this approach to richer
+formulations, or as a simpler alternative to Approach~2.
 
 \subsection{Limitations}
 \label{sec:limitations}
@@ -1124,14 +1223,6 @@ Several limitations scope the conclusions of this study.
         relevant to practitioners working in a regime where downstream model
         quality can still effectively be informed by scaling law extrapolations
         per the Chinchilla model.
-
-    \item \textbf{No quantification of downstream cost.} We do not connect
-        token extrapolation error to under- or over-training, model performance,
-        or the ultimate cost of Approach~2's errors in FLOPs or dollars. We
-        avoid this because it is difficult to do well, alternatives to
-        Approach~2 can be justified by theory and simulation alone, and those
-        alternatives are easy to implement at effectively no extra computational
-        cost.
 
     \item \textbf{Assumed correctness of the Chinchilla loss surface.} We
         assume the Chinchilla loss surface model

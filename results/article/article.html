@@ -1519,15 +1519,15 @@
             </figure>
 
             <p>
-                Compare the bottom-left panels of Figures <a href="#fig-4">4</a> and <a href="#fig-5">5</a>: constant bias produces a
-                flat line at zero (exponent preserved), while drifting bias produces
-                a non-zero exponent error that varies with grid width.
+                The bottom-left panels of <a href="#fig-4">Figure&nbsp;4</a> and <a href="#fig-5">Figure&nbsp;5</a>
+                show the most important difference between the two. Those plots demonstrate how constant 
+                offsets in sampling centers do not bias exponent inference while multiplicative offsets do.
             </p>
 
             <div class="callout key-point">
                 <div class="callout-title">✓ Summary</div>
                 <p>
-                    Constant bias preserves exponents; any compute-dependent bias pattern distorts
+                    Constant bias preserves exponents and any compute-dependent bias pattern distorts
                     them. The distinction matters because exponent errors compound during extrapolation,
                     while intercept errors remain fixed.
                 </p>
@@ -1682,42 +1682,25 @@
                 errors up to −5% on Chinchilla and −23% on the Asymmetric surface, the two
                 bias sources interact in opposite directions. Off-center sampling pushes
                 errors positive (overestimating \(D^*\)), while asymmetry bias pushes errors
-                negative (underestimating). The net error depends on which source dominates.
-                With narrow grids, asymmetry bias is negligible and the sampling bias determines
-                the error: drift to 3× produces +6% on the symmetric surface and +12% on
-                Chinchilla. With wider grids, asymmetry bias grows and begins to offset the
-                sampling bias. On Chinchilla with a constant 3× offset, this cancellation
-                is nearly perfect with the XL grid (+0.24%), but this is only coincidental.
+                negative (underestimating). When the two sources reinforce rather than cancel,
+                errors grow substantially&mdash;reaching +35% at a maximum on the Asymmetric surface.
             </p>
 
             <p>
-                On the Asymmetric surface, the drift configuration produces the largest errors
-                in the figure: +35% with the XS grid and still +14% with XL. Even the
-                constant offset configuration reaches +19% with XS before the asymmetry
-                bias partially offsets it with wider grids.
-            </p>
-
-            <p>
-                These 3× perturbations are representative of realistic conditions. The IsoFLOP curves they
-                produce on the symmetric surface (top-left panels of Figures <a href="#fig-4">4</a> and <a href="#fig-5">5</a>) show
-                sampling centers that are visibly displaced from the curve minima, with the
-                displacement either uniform across budgets (constant offset) or growing toward
-                higher budgets (drift). Both patterns are qualitatively similar to what is
-                observed in the published studies shown in <a href="#fig-6">Figure 6</a>, where sampling grids
-                are not perfectly centered and the degree of off-centering varies across
-                compute budgets. A 3× factor means the sampling center sits at three times
-                the true optimal token count, which is likely within the range of uncertainty
-                practitioners face when choosing sampling centers before the optimum is
-                known.
+                We believe these 3× perturbations are representative of realistic conditions.
+                The IsoFLOP curves they produce (top-left panels of
+                Figures <a href="#fig-4">4</a> and <a href="#fig-5">5</a>)
+                are qualitatively similar to those from the published studies in
+                <a href="#fig-6">Figure 6</a>, where sampling grids are not perfectly
+                centered and the degree of off-centering varies across compute budgets.
             </p>
 
             <p>
                 <a href="#appendix-combined-extrapolation">Figure A2</a> provides a more
-                detailed view: it shows how \(D^*\) extrapolation errors evolve across
-                compute budgets from 10<sup>22</sup> to 10<sup>25</sup> FLOPs, revealing
-                which bias sources produce errors that grow with extrapolation distance
-                (drift) versus those that remain roughly constant (surface asymmetry and
-                constant offsets), and how these patterns vary across multiple drift rates
+                detailed view of these results. It shows how \(D^*\) extrapolation errors change across
+                compute budgets, which sources of bias grow with extrapolation distance
+                (drift), which remain constant (surface asymmetry and
+                constant offsets), and how these patterns vary across two drift rates
                 and center offset magnitudes.
             </p>
 
@@ -1727,12 +1710,11 @@
                     Multiple bias sources act simultaneously in any real experiment. Surface
                     asymmetry and off-center sampling each produce meaningful errors on their
                     own. When they happen to act in the same direction, the combined error
-                    exceeds either one alone: on the Asymmetric surface with drift to 3×,
+                    exceeds either one alone. On our hypothetical Asymmetric surface with drift to 3×,
                     errors reach 35% even when using the narrowest grid, where the parabolic
                     approximation is most accurate. When they oppose, partial cancellation
                     can occur, but this depends on the specific combination of surface
-                    geometry, offset magnitude, and grid width, making it unreliable in
-                    practice.
+                    geometry, offset magnitude, and grid width.
                 </p>
             </div>
 
