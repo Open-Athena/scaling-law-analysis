@@ -20,7 +20,9 @@ On article:
   - Add exp6 validation for proof to appendix
   - Make a reference implementation
 - Secondary:
+  - Look for IsoFLOP data in https://arxiv.org/abs/2502.06857
   - Consider https://arxiv.org/abs/2603.06603 as another citation for methods that "extend individual terms in isolation (e.g. token scaling terms alone)"
+  - Cite [Gemstones: A Model Suite for Multi-Faceted Scaling Laws](https://arxiv.org/pdf/2502.06857) on how C=6ND breaks down w/ model shape
   - Cite [Scaling Laws for Native Multimodal Models](https://arxiv.org/pdf/2504.07951) on PlantCAD issue for empirical C ~ D^b method (see C. Scaling Laws)
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
