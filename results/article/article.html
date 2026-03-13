@@ -1024,7 +1024,7 @@
 
             <p>
                 Figure 2 shows the results from this simulation, with relative errors in the tables above.
-                A few percent error in the intercept might seem minor, but consider that this simulation
+                A few percent error in the intercept might seem minor, but this simulation
                 provided every advantage other than loss surface asymmetry. 
                 The data contains no measurement noise and the sampling is perfect, with IsoFLOP grids centered precisely at the true optimum
                 (something difficult or impossible to know in practice). And the loss surface parameters are
@@ -1087,7 +1087,7 @@
                 where \(\delta w = f(\alpha, \beta, W, n)\) depends only on the surface exponents
                 and the sampling grid (width \(W\) in log-space, number of points \(n\) per IsoFLOP curve), not on \(C\), \(E\),
                 \(A\), or \(B\). Here \(W\) spans \(10^{-W/2}\) to \(10^{W/2}\) times the optimal \(N^*\),
-                so \(W = 2.41\) (the XL grid) means sampling from \(\frac{1}{16}\times\) to \(16\times\) the optimum.
+                so \(W = 2.41\) (a ±16x grid) means sampling from 1/16x to 16x the optimum.
                 And \(n = 15\) means 15 model sizes per compute budget. Key properties:
             </p>
 
@@ -1099,8 +1099,8 @@
 
             <p>
                 For example, with the Chinchilla parameters (\(\alpha = 0.34\), \(\beta = 0.28\)):
-                the XS grid (\(W = 0.60\)) yields 0.3% intercept error, while the XL grid
-                (\(W = 2.41\)) yields 4.1% error.
+                a ±2x grid (\(W = 0.60\)) yields 0.3% intercept error, while a
+                ±16x grid (\(W = 2.41\)) yields 4.1% error.
             </p>
 
             <p>
@@ -1381,8 +1381,7 @@
                 <li><strong>Symmetric surfaces are unaffected:</strong> When \(\alpha = \beta\), all grid
                     widths produce zero error</li>
                 <li><strong>Asymmetric surfaces underestimate:</strong> Negative errors mean the inferred
-                    \(D^*\) is smaller than the true \(D^*\). Following these predictions would undertrain
-                    the model</li>
+                    \(D^*\) is smaller than the true \(D^*\)</li>
                 <li><strong>Wider grids amplify error:</strong> Moving from XS (±2x) to XL (±16x)
                     grids increases error from 0.3% to 5.1% on Chinchilla, and from 1.7% to 23% on the Asymmetric surface</li>
                 <li><strong>Asymmetry further amplifies error:</strong> The Asymmetric surface
@@ -1396,7 +1395,7 @@
                     range for real experiments. When extrapolating to 10²⁴ FLOPs, the true optimal
                     token count is 4.04 trillion, but Approach 2 predicts only 3.92 trillion: a 2.9%
                     underestimate, or roughly 117 billion fewer tokens than optimal. While 2.9% may
-                    seem modest, recall that this simulation uses unrealistically ideal conditions:
+                    seem modest, keep in mind that we are still assuming unrealistically ideal conditions:
                     perfectly centered sampling grids at every compute budget and zero measurement
                     noise. Real experiments, where the true optimum is unknown, data is noisy,
                     and the scaling exponent imbalance may be larger than Chinchilla's modest
@@ -1421,7 +1420,7 @@
                 This is a distinct source of error from the asymmetry bias examined earlier. Asymmetry
                 errors arise from the shape of the loss surface (\(\alpha \neq \beta\)); off-center
                 errors arise from where you place the sampling grid. To isolate this new effect, we
-                return to the symmetric surface (\(\alpha = \beta = 0.31\)) where asymmetry bias is
+                use the symmetric surface (\(\alpha = \beta = 0.31\)) again where asymmetry bias is
                 zero by construction.
             </p>
 
@@ -1554,8 +1553,8 @@
                     alt="IsoFLOP curves from Chinchilla, Llama 3, and DeepSeek scaling law papers">
                 <figcaption>
                     <strong>Figure 6:</strong> IsoFLOP curves from three published scaling law studies.
-                    Left: Chinchilla (training loss vs parameters). Center: Llama 3 (validation loss vs
-                    training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each panel shows
+                    Left: Chinchilla (loss vs parameters). Center: Llama 3 (loss vs
+                    tokens). Right: DeepSeek (bits-per-byte vs parameters). Each panel shows
                     curves at multiple compute budgets, fit using Approach 2.
                 </figcaption>
             </figure>
@@ -1677,21 +1676,22 @@
             </details>
 
             <p>
-                Comparing with the baseline in <a href="#fig-3">Figure 3</a>, where asymmetry bias alone produces
+                Results from this simulation are shown in <a href="#fig-7">Figure 7</a>. Compared to the baseline in <a href="#fig-3">Figure 3</a>, where asymmetry bias alone produces
                 errors up to −5% on Chinchilla and −23% on the Asymmetric surface, the two
                 bias sources interact in opposite directions. Off-center sampling pushes
                 errors positive (overestimating \(D^*\)), while asymmetry bias pushes errors
                 negative (underestimating). When the two sources reinforce rather than cancel,
-                errors grow substantially&mdash;reaching +35% at a maximum on the Asymmetric surface.
+                errors grow substantially&mdash;reaching nearly +35% at a maximum on the Asymmetric surface.
             </p>
 
             <p>
-                We believe these 3× perturbations are representative of realistic conditions.
+                We believe these 3× perturbations and the large errors they can cause are representative of realistic conditions.
                 The IsoFLOP curves they produce (top-left panels of
                 Figures <a href="#fig-4">4</a> and <a href="#fig-5">5</a>)
                 are qualitatively similar to those from the published studies in
                 <a href="#fig-6">Figure 6</a>, where sampling grids are not perfectly
                 centered and the degree of off-centering varies across compute budgets.
+                This is substantiated in more detail in <a href="#error-costs">Error Costs</a>.
             </p>
 
             <p>
@@ -1817,7 +1817,7 @@
             <p>
                 The algorithm searches over \((\alpha, \beta)\) and, at each candidate pair,
                 solves for \((E, A, B)\) via least squares. A coarse
-                32&times;32 grid search identifies a good starting region, and a local
+                \(k \times k\) grid search identifies a good starting region, and a local
                 optimizer refines it. The linear separation is maintained throughout.
                 The optimizer only ever navigates the two-dimensional \((\alpha, \beta)\)
                 surface, never the full five-parameter space. We term this method Variable
@@ -1838,7 +1838,7 @@
         (E, A, B) ← NNLS(X, L)          <span style="color: var(--text-muted);">// linear solve with E, A, B ≥ 0</span>
         <b>return</b> ‖L − X·[E, A, B]‖²
 
-    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse 32×32 grid search</span>
+    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse k×k grid search</span>
     (α*, β*) ← NelderMead(objective,    <span style="color: var(--text-muted);">// refine in 2D only</span>
                            start=(α₀, β₀))
     (E*, A*, B*) ← NNLS(X(α*, β*), L)  <span style="color: var(--text-muted);">// recover linear params at solution</span>
@@ -1866,7 +1866,7 @@
         ∂RSS/∂β ← 2B · rᵀ(log(D) ⊙ D^(-β))
         <b>return</b> ‖r‖², [∂RSS/∂α, ∂RSS/∂β]
 
-    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse 32×32 grid search</span>
+    (α₀, β₀) ← argmin objective(α, β)  <span style="color: var(--text-muted);">// coarse k×k grid search</span>
     (α*, β*) ← L-BFGS-B(objective_and_grad,  <span style="color: var(--text-muted);">// α, β &gt; 0</span>
                           start=(α₀, β₀))
     (E*, A*, B*) ← OLS(X(α*, β*), L)
@@ -1874,15 +1874,7 @@
     <b>return</b> (E*, A*, B*, α*, β*)</pre>
             </div>
 
-            <p>
-                Both variants achieve machine-precision parameter recovery on noise-free
-                data. The gradient-free form with NNLS is simpler and easier to adapt to
-                modified loss surface specifications. The analytical gradient form converges
-                faster but requires deriving or computing gradients of the design matrix,
-                which could also be handled by an automatic differentiation framework. The
-                remainder of this study uses the gradient-based implementation as the
-                primary VPNLS method.
-            </p>
+
 
             <p>
                 Because the nonlinear search is over exponential terms only, grid density
@@ -1897,7 +1889,7 @@
             <p>
                 We compare six method configurations on noise-free
                 synthetic data across three loss surfaces (symmetric, Chinchilla, and high
-                imbalance) and 20 sampling ranges.
+                imbalance) and 20 sampling ranges in <a href="#fig-8">Figure 8</a>.
             </p>
 
             <p>
@@ -2024,8 +2016,7 @@
             <p>
                 5D direct optimization (Approach 3) with analytical gradients also achieves
                 high precision in this noiseless setting (errors on the order of
-                10<sup>&minus;5</sup>%), though with larger errors than any 2D method,
-                particularly on the Chinchilla surface. The 5D numerical gradient variant
+                10<sup>&minus;5</sup>%), though with larger errors than any 2D method, particularly on the Asymmetric surface. The 5D numerical gradient variant
                 performs worse, with errors on the order of 10<sup>&minus;3</sup>%.
                 <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
                 surface and sampling range.
@@ -2070,7 +2061,7 @@
             </p>
 
             <p>
-                Five methods are compared. Approach&nbsp;2 uses the parabolic IsoFLOP
+                Five methods are compared in <a href="#fig-9">Figure 9</a>. Approach&nbsp;2 uses the parabolic IsoFLOP
                 pipeline. Naive Approach&nbsp;3 uses a single random initialization without
                 LSE reparameterization. MLE Approach&nbsp;3 uses grid initialization with
                 the direct MSE objective (the maximum likelihood estimator under additive
@@ -2313,7 +2304,7 @@
             </p>
 
             <p>
-                For Llama&nbsp;3, we digitize individual IsoFLOP data points from Figure&nbsp;2
+                For Llama&nbsp;3, we <a href="https://github.com/eric-czech/llama3_isoflop_extraction">digitize individual IsoFLOP data points</a> from Figure&nbsp;2
                 of the original paper<sup><a href="#ref-llama3">[2]</a></sup> following the
                 SVG-coordinate extraction method of Besiroglu et
                 al.<sup><a href="#ref-epochai_chinchilla_replication">[43]</a></sup>, then fit
@@ -2362,7 +2353,7 @@
                 increases: SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
                 and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
                 For domains with highly asymmetric scaling exponents, which are
-                more common in multimodal and non-language settings, Approach&nbsp;2
+                more common in multimodal settings, Approach&nbsp;2
                 misallocations can waste a non-trivial fraction of a large
                 training budget.
             </p>
@@ -2468,15 +2459,6 @@
                     only relevant to practitioners working in a regime where downstream model
                     quality can still effectively be informed by scaling law extrapolations
                     per the Chinchilla model.
-                </li>
-                <li>
-                    <strong>No quantification of downstream cost.</strong>
-                    We do not connect token extrapolation error to under- or over-training,
-                    model performance, or the ultimate cost of Approach 2's errors in FLOPs
-                    or dollars. We avoid this because it is difficult to do well, alternatives
-                    to Approach 2 can be justified by theory and simulation alone, and those
-                    alternatives are easy to implement at effectively no extra computational
-                    cost.
                 </li>
                 <li>
                     <strong>Assumed correctness of the Chinchilla loss surface.</strong>
@@ -2630,14 +2612,14 @@
                         <tr>
                             <td class="text-cell" rowspan="5">DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup></td>
                             <td class="text-cell" rowspan="5">Web text</td>
-                            <td class="text-cell">OpenAI repro. (OpenWebText2)</td>
+                            <td class="text-cell">OpenWebText2<sup>&ddagger;</sup></td>
                             <td class="text-cell" rowspan="5">Approach 2</td>
                             <td>0.73</td>
                             <td>0.27</td>
                             <td>2.7037</td>
                         </tr>
                         <tr>
-                            <td class="text-cell">Chinchilla repro. (MassiveText)</td>
+                            <td class="text-cell">MassiveText<sup>&ddagger;</sup></td>
                             <td>0.49</td>
                             <td>0.51</td>
                             <td>0.9608</td>
@@ -2855,6 +2837,7 @@
                         \(a\) and \(b\).</p>
                     <p><sup>&dagger;</sup> Exponents extracted from Figure S5 data;
                         see <a href="https://github.com/eric-czech/evo-scaling-law-extraction">eric-czech/evo-scaling-law-extraction</a>.</p>
+                    <p><sup>&ddagger;</sup> Exponents originally from Kaplan et al.<sup><a href="#ref-kaplan_scaling">[14]</a></sup> (OpenWebText2) and Hoffmann et al.<sup><a href="#ref-chinchilla">[1]</a></sup> (MassiveText), as reported in DeepSeek.</p>
                 </div>
                 <figcaption>
                     <strong>Table A1:</strong> Published compute-allocation exponents from

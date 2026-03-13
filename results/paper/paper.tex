@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{url}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{float}
 \usepackage{caption}
 \captionsetup{font=small, labelfont=bf}
@@ -301,7 +302,8 @@ DeepSeek~\citep{deepseek}). This implies a loss surface exponent ratio of $\beta
 the opposite direction from our Asymmetric surface ($\beta > \alpha$ rather
 than $\alpha > \beta$), but the degree of imbalance is similar, and it is the
 magnitude of the imbalance, not its direction, that drives the biases studied
-here.
+here. See Table~\ref{tab:published_exponents} for other examples of reported
+imbalances, several of which indicate ratios in the 2--3 range.
 
 \begin{figure}[ht]
     \centering
@@ -343,7 +345,7 @@ here.
 Figure~\ref{fig:asymmetric} shows the results from this simulation, with
 relative errors in Tables~\ref{tab:chinchilla_surface}
 and~\ref{tab:asymmetric_surface}.
-A few percent error in the intercept might seem minor, but consider that this
+A few percent error in the intercept might seem minor, but this
 simulation provided every advantage other than loss surface asymmetry.
 The data contains no measurement noise and the sampling is perfect, with
 IsoFLOP grids centered precisely at the true optimum (something difficult or
@@ -391,8 +393,8 @@ vertex shifts by $\delta w$ (in log-space), giving an intercept error of:
 where $\delta w = f(\alpha, \beta, W, n)$ depends only on the surface exponents
 and the sampling grid (width $W$ in log-space, number of points $n$ per
 IsoFLOP curve), not on $C$, $E$, $A$, or $B$. Here $W$ spans $10^{-W/2}$ to
-$10^{W/2}$ times the optimal $N^*$, so $W = 2.41$ (the XL grid) means sampling
-from $\frac{1}{16}\times$ to $16\times$ the optimum. Key properties:
+$10^{W/2}$ times the optimal $N^*$, so $W = 2.41$ (a $\pm 16\times$ grid) means
+sampling from $\frac{1}{16}\times$ to $16\times$ the optimum. Key properties:
 \begin{itemize}
     \item $\delta w = 0$ when $\alpha = \beta$ (symmetric surfaces have no error)
     \item $\delta w$ grows with $|\alpha - \beta|$ (more asymmetry, more error)
@@ -400,8 +402,8 @@ from $\frac{1}{16}\times$ to $16\times$ the optimum. Key properties:
 \end{itemize}
 
 For example, with the Chinchilla parameters ($\alpha = 0.34$,
-$\beta = 0.28$): the XS grid ($W = 0.60$) yields 0.3\% intercept error, while
-the XL grid ($W = 2.41$) yields 4.1\% error.
+$\beta = 0.28$): a $\pm 2\times$ grid ($W = 0.60$) yields 0.3\% intercept
+error, while a $\pm 16\times$ grid ($W = 2.41$) yields 4.1\% error.
 
 The full
 derivation\footnote{\url{https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/article/static/scaling_parameter_errors.pdf}}
@@ -483,8 +485,7 @@ Appendix~\ref{sec:appendix_extrapolation_data}) are:
     \item \textbf{Symmetric surfaces are unaffected:} When $\alpha = \beta$,
         all grid widths produce zero error.
     \item \textbf{Asymmetric surfaces underestimate:} Negative errors mean the
-        inferred $D^*$ is smaller than the true $D^*$. Following these
-        predictions would undertrain the model.
+        inferred $D^*$ is smaller than the true $D^*$.
     \item \textbf{Wider grids amplify error:} Moving from XS ($\pm 2\times$) to
         XL ($\pm 16\times$) grids increases error from 0.3\% to 5.1\% on
         Chinchilla, and from 1.7\% to 23\% on the Asymmetric surface.
@@ -498,9 +499,9 @@ Consider the Chinchilla surface with the Large grid ($\pm 8\times$), a
 practical sampling range for real experiments. When extrapolating to $10^{24}$
 FLOPs, the true optimal token count is 4.04 trillion, but Approach~2 predicts
 only 3.92 trillion: a 2.9\% underestimate, or roughly 117 billion fewer tokens
-than optimal. While 2.9\% may seem modest, recall that this simulation uses
-unrealistically ideal conditions: perfectly centered sampling grids at every
-compute budget and zero measurement noise. Real experiments, where the true
+than optimal. While 2.9\% may seem modest, keep in mind that we are still
+assuming unrealistically ideal conditions: perfectly centered sampling grids at
+every compute budget and zero measurement noise. Real experiments, where the true
 optimum is unknown, data is noisy, and the scaling exponent imbalance may be
 larger than Chinchilla's modest $\alpha/\beta \approx 1.2$, can only do worse.
 
@@ -516,8 +517,8 @@ some amount.
 This is a distinct source of error from the asymmetry bias examined earlier.
 Asymmetry errors arise from the shape of the loss surface
 ($\alpha \neq \beta$); off-center errors arise from where the sampling grid is
-placed. To isolate this new effect, we return to the symmetric surface
-($\alpha = \beta = 0.31$) where asymmetry bias is zero by construction.
+placed. To isolate this new effect, we use the symmetric surface
+($\alpha = \beta = 0.31$) again where asymmetry bias is zero by construction.
 
 \subsection{Constant Multiplicative Bias}
 \label{sec:constant_bias}
@@ -615,26 +616,26 @@ The previous sections used synthetic, noise-free simulations to isolate
 Approach~2's biases under controlled conditions. A natural question is whether
 the conditions that trigger these biases, asymmetric loss surfaces and
 imperfectly centered sampling, actually arise in practice. To get a sense of
-this, we can look at IsoFLOP curves published in three of the most prominent
+this, we can look at IsoFLOP curves published in three\footnote{These three and 10+ more can be found at \url{https://docs.google.com/document/d/1Ab3cYJJYu7t_99Idj9gpHv2icZmRTPBJ_brJxsgnVA4}.} of the most prominent
 scaling law studies~\citep{chinchilla,llama3,deepseek}
-in Figure~\ref{fig:wild}; additional examples are collected
-separately\footnote{\url{https://docs.google.com/document/d/1Ab3cYJJYu7t_99Idj9gpHv2icZmRTPBJ_brJxsgnVA4}}.
+in Figure~\ref{fig:wild}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/static/isoflop_curve_examples.png}
     \caption{IsoFLOP curves from three published scaling law studies. Left:
-    Chinchilla (training loss vs parameters). Center: Llama~3 (validation loss
-    vs training tokens). Right: DeepSeek (bits-per-byte vs FLOPs/token). Each
+    Chinchilla (loss vs parameters). Center: Llama~3 (loss
+    vs tokens). Right: DeepSeek (bits-per-byte vs parameters). Each
     panel shows curves at multiple compute budgets, fit using Approach~2.}
     \label{fig:wild}
 \end{figure}
 
-Published scaling law studies frequently report asymmetric loss surfaces. Some
-degree of asymmetry is nearly universal across modalities, and several reported
-exponent estimates reach the same levels of imbalance as the most extreme
-configuration in our simulations. The related biases documented in this paper
-therefore apply broadly.
+Published scaling law studies frequently report asymmetric loss surfaces, as
+shown in Table~\ref{tab:published_exponents}. Some degree of asymmetry is
+nearly universal across modalities, and several reported exponent estimates
+reach the same levels of imbalance as the most extreme configuration in our
+simulations. The related biases documented in this paper therefore apply
+broadly.
 
 Beyond surface asymmetry, the IsoFLOP curves in Figure~\ref{fig:wild} also
 show visible signs of off-center sampling and drift:
@@ -682,21 +683,23 @@ all four grid widths.
     \label{fig:compounding}
 \end{figure}
 
-Comparing with the baseline in Figure~\ref{fig:extrapolation_error}, where
+Results from this simulation are shown in Figure~\ref{fig:compounding}.
+Compared to the baseline in Figure~\ref{fig:extrapolation_error}, where
 asymmetry bias alone produces errors up to $-5$\% on Chinchilla and $-23$\% on
 the Asymmetric surface, the two bias sources interact in opposite directions.
 Off-center sampling pushes errors positive (overestimating $D^*$), while
 asymmetry bias pushes errors negative (underestimating). When the two sources
-reinforce rather than cancel, errors grow substantially---reaching $+35$\% at a
+reinforce rather than cancel, errors grow substantially---reaching nearly $+35$\% at a
 maximum on the Asymmetric surface.
 
-We believe these $3\times$ perturbations are representative of realistic
+We believe these $3\times$ perturbations and the large errors they can cause are representative of realistic
 conditions. The
 IsoFLOP curves they produce (top-left panels of
 Figures~\ref{fig:constant_bias} and~\ref{fig:drifting_bias}) are qualitatively
 similar to those from the published studies in Figure~\ref{fig:wild}, where
 sampling grids are not perfectly centered and the degree of off-centering
-varies across compute budgets.
+varies across compute budgets. This is substantiated in more detail in
+Section~\ref{sec:error_costs}.
 
 Figure~\ref{fig:appendix_combined_extrapolation} in the appendix provides a
 more detailed view of these results. It shows how $D^*$ extrapolation errors
@@ -801,7 +804,7 @@ Approach~2 (optimizing exponential terms separately from linear terms), but
 applied here without the parabolic approximation.
 
 The algorithm searches over $(\alpha, \beta)$ and, at each candidate pair,
-solves for $(E, A, B)$ via least squares. A coarse $32 \times 32$ grid search
+solves for $(E, A, B)$ via least squares. A coarse $k \times k$ grid search
 identifies a good starting region, and a local optimizer refines it. The
 linear separation is maintained throughout. The optimizer only ever navigates
 the two-dimensional $(\alpha, \beta)$ surface, never the full five-parameter
@@ -824,7 +827,7 @@ search:
     & \textit{// linear solve, $E, A, B \geq 0$} \\
 \hspace*{2em}\textbf{return} $\|L - \mathbf{X} \cdot [E, A, B]\|^2$ & \\[4pt]
 \hspace*{1em}$(\alpha_0, \beta_0) \leftarrow \arg\min$ objective($\alpha$, $\beta$)
-    & \textit{// coarse $32 \times 32$ grid} \\
+    & \textit{// coarse $k \times k$ grid} \\
 \hspace*{1em}$(\alpha^*, \beta^*) \leftarrow \text{NelderMead}(\text{objective},\;
     \text{start}{=}(\alpha_0, \beta_0))$
     & \textit{// refine in 2D} \\
@@ -860,7 +863,7 @@ rather than finite differences:
 \hspace*{2em}\textbf{return} $\|r\|^2$, $[\partial\text{RSS}/\partial\alpha,\;
     \partial\text{RSS}/\partial\beta]$ & \\[4pt]
 \hspace*{1em}$(\alpha_0, \beta_0) \leftarrow \arg\min$ objective($\alpha$, $\beta$)
-    & \textit{// coarse $32 \times 32$ grid} \\
+    & \textit{// coarse $k \times k$ grid} \\
 \hspace*{1em}$(\alpha^*, \beta^*) \leftarrow \text{L-BFGS-B}
     (\text{objective\_and\_grad},\; \text{start}{=}(\alpha_0, \beta_0))$
     & \textit{// $\alpha, \beta > 0$} \\
@@ -870,13 +873,6 @@ rather than finite differences:
 \hspace*{1em}\textbf{return} $(E^*, A^*, B^*, \alpha^*, \beta^*)$ & \\
 \end{tabular}}
 \end{figure}
-
-Both variants achieve machine-precision parameter recovery on noise-free data.
-The gradient-free form with NNLS is simpler and easier to adapt to modified
-loss surface specifications. The analytical gradient form converges faster but
-requires deriving or computing gradients of the design matrix, which could also
-be handled by an automatic differentiation framework. The remainder of this
-study uses the gradient-based implementation as the primary VPNLS method.
 
 Because the nonlinear search is over exponential terms only, grid density
 scales with the number of exponential terms rather than the total number of
@@ -889,7 +885,7 @@ $4^5 = 1{,}024$ points spread thinly across all parameters.
 
 We compare six method configurations on noise-free synthetic data across three
 loss surfaces (symmetric, Chinchilla, and high imbalance) and 20 sampling
-ranges.
+ranges in Figure~\ref{fig:parameter_recovery}.
 
 The configurations fall into two groups. The first uses 5D direct optimization
 (Approach~3), fitting all five parameters jointly with L-BFGS-B using either
@@ -915,7 +911,7 @@ geometry rather than an initialization advantage.
     geometric mean error, with the worst at top. VPNLS [$+\nabla$] uses
     analytical gradients (L-BFGS-B with OLS inner solve); VPNLS
     [$\lnot\nabla$] is gradient-free (Nelder-Mead with NNLS inner solve).}
-    \label{fig:method_comparison}
+    \label{fig:parameter_recovery}
 \end{figure}
 
 All three locally optimized 2D variable projection methods (L-BFGS-B with
@@ -928,8 +924,7 @@ precision among the 2D methods.
 
 5D direct optimization (Approach~3) with analytical gradients also achieves
 high precision in this noiseless setting (errors on the order of
-$10^{-5}$\%), though with larger errors than any 2D method, particularly on
-the Chinchilla surface. The 5D numerical gradient variant performs worse, with
+$10^{-5}$\%), though with larger errors than any 2D method, particularly on the Asymmetric surface. The 5D numerical gradient variant performs worse, with
 errors on the order of $10^{-3}$\%.
 Figure~\ref{fig:appendix_method_detail} in the appendix breaks this down by
 surface and sampling range.
@@ -966,7 +961,7 @@ of times, sporadic optimizer failures that produce large errors in a minority
 of fits are arguably the most consequential practical risk. The comparison
 below emphasizes maximum errors alongside typical accuracy for this reason.
 
-Five methods are compared. Approach~2 uses the parabolic IsoFLOP pipeline.
+Five methods are compared in Figure~\ref{fig:exponent_inference}. Approach~2 uses the parabolic IsoFLOP pipeline.
 Naive Approach~3 uses a single random initialization without LSE
 reparameterization. MLE Approach~3 uses grid initialization with the direct MSE
 objective (the maximum likelihood estimator under additive Gaussian noise). The
@@ -997,26 +992,6 @@ experimental conditions.
     grid, compute budgets $10^{17}$--$10^{21}$~FLOPs.}
     \label{fig:exponent_inference}
 \end{figure}
-
-\begin{table}[ht]
-    \centering
-    \begin{tabular}{lccc}
-        \toprule
-        Method & GMean err\% & Max $a$ err\% & Max $b$ err\% \\
-        \midrule
-        VPNLS [$+\nabla$] & 1.09 & 34.2 & 11.4 \\
-        MLE Approach~3 [grid, $-$LSE, $-$LL] & 1.11 & 73.6 & 24.5 \\
-        Approach~3 [grid, $+$LSE, $+$LL] & 1.26 & 44.2 & 14.7 \\
-        Approach~2 & 4.84 & 715.5 & 238.5 \\
-        Naive Approach~3 [rand, $-$LSE, $-$LL] & 16.2 & 296.0 & 98.7 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Geometric mean and maximum $|\text{relative error}|$ (\%) on
-    scaling exponents $a$ and $b$, pooled across 3 noise levels $\times$ 3
-    budget counts $\times$ 4 points-per-curve settings $\times$ 256 seeds =
-    9{,}216 fits per method.}
-    \label{tab:exponent_inference}
-\end{table}
 
 Approach~2 has the largest maximum errors overall (716\% on $a$, 239\% on
 $b$), reflecting the structural bias from the parabolic approximation
@@ -1098,7 +1073,7 @@ loss---only at the compute-optimal allocation. Any departure from optimality
 wastes compute in the same sense that a price distortion wastes economic
 surplus.
 
-For Llama~3, we digitize individual IsoFLOP data points from Figure~2 of the
+For Llama~3, we digitize individual IsoFLOP data points\footnote{\url{https://github.com/eric-czech/llama3_isoflop_extraction}} from Figure~2 of the
 original paper~\citep{llama3} following the SVG-coordinate extraction method
 of Besiroglu et al.~\citep{epochai_chinchilla_replication}, then fit both
 Approach~2 and two Approach~3 implementations (VPNLS and direct L-BFGS-B) to
@@ -1140,7 +1115,7 @@ than to the biases modeled here. Chinchilla
 exponent asymmetry increases: SODA ($\beta/\alpha \approx 1.56$) reaches
 8.0\% DCL (\$1.7M) and Sparse-NMM ($\beta/\alpha \approx 1.91$) reaches
 10.1\% (\$2.1M). For domains with highly asymmetric scaling exponents, which
-are more common in multimodal and non-language settings, Approach~2
+are more common in multimodal settings, Approach~2
 misallocations can waste a non-trivial fraction of a large training budget.
 
 \paragraph{Summary.}
@@ -1346,11 +1321,31 @@ Several limitations scope the conclusions of this study.
         5D L-BFGS-B (numerical) & 0/60 & $1.6 \!\times\! 10^{-3}$ & $1.2 \!\times\! 10^{-3}$ & $2.6 \!\times\! 10^{-3}$ & $2.7 \!\times\! 10^{-4}$ & $7.3 \!\times\! 10^{-4}$ \\
         \bottomrule
     \end{tabular}
-    \caption{Method comparison: maximum $|\text{relative error}|$ (\%) per
-    parameter across 60 fits (3 surfaces $\times$ 20 sampling ranges). All
-    methods converged on all fits. Methods sorted by precision (best to
-    worst).}
-    \label{tab:method_comparison}
+    \caption{Aggregate data from Figure~\ref{fig:parameter_recovery}: maximum
+    $|\text{relative error}|$ (\%) per parameter across 60 fits (3 surfaces
+    $\times$ 20 sampling ranges). All methods converged on all fits. Methods
+    sorted by precision (best to worst).}
+    \label{tab:parameter_recovery}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lccc}
+        \toprule
+        Method & GMean err\% & Max $a$ err\% & Max $b$ err\% \\
+        \midrule
+        VPNLS [$+\nabla$] & 1.09 & 34.2 & 11.4 \\
+        MLE Approach~3 [grid, $-$LSE, $-$LL] & 1.11 & 73.6 & 24.5 \\
+        Approach~3 [grid, $+$LSE, $+$LL] & 1.26 & 44.2 & 14.7 \\
+        Approach~2 & 4.84 & 715.5 & 238.5 \\
+        Naive Approach~3 [rand, $-$LSE, $-$LL] & 16.2 & 296.0 & 98.7 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Data from Figure~\ref{fig:exponent_inference}: geometric mean and
+    maximum $|\text{relative error}|$ (\%) on scaling exponents $a$ and $b$,
+    pooled across 3 noise levels $\times$ 3 budget counts $\times$ 4
+    points-per-curve settings $\times$ 256 seeds = 9{,}216 fits per method.}
+    \label{tab:exponent_inference}
 \end{table}
 
 \section{Detailed Method Comparison}
@@ -1421,5 +1416,110 @@ ranges, loss surfaces, and bias configurations.
     over 256 noise realizations.}
     \label{fig:appendix_exponent_errors}
 \end{figure}
+
+\section{Published Scaling Exponents}
+\label{sec:appendix_published_exponents}
+
+Table~\ref{tab:published_exponents} collects published compute-allocation
+exponents $a$ and $b$ (where $N^* \propto C^a$ and $D^* \propto C^b$) from
+scaling law studies across a range of domains, architectures, and fitting
+methods.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \begin{tabular}{llllccc}
+        \toprule
+        Source & Domain & Config & Method & $a$ & $b$ & $\beta/\alpha$ \\
+        \midrule
+        \multirow{5}{*}{DeepSeek~\citep{deepseek}}
+            & \multirow{5}{*}{Web text}
+            & OpenWebText2\textsuperscript{\textdaggerdbl} & \multirow{5}{*}{Appr.~2}
+            & 0.73 & 0.27 & 2.70 \\
+        & & MassiveText\textsuperscript{\textdaggerdbl} & & 0.49 & 0.51 & 0.96 \\
+        & & DeepSeek (early) & & 0.450 & 0.550 & 0.82 \\
+        & & DeepSeek (current) & & 0.524 & 0.476 & 1.10 \\
+        & & DeepSeek (OWT2) & & 0.578 & 0.422 & 1.37 \\
+        \midrule
+        EHR~\citep{ehr_scaling} & Health records & Transformer & Appr.~2
+            & 0.58 & 0.44 & 1.32 \\
+        \midrule
+        \multirow{4}{*}{Evo~\citep{evo}\textsuperscript{\textdagger}}
+            & \multirow{4}{*}{DNA sequences}
+            & Transformer++ & \multirow{4}{*}{Appr.~2}
+            & 0.552 & 0.551 & 1.00 \\
+        & & Mamba & & 0.388 & 0.487 & 0.80 \\
+        & & Hyena & & 0.504 & 0.499 & 1.01 \\
+        & & StripedHyena & & 0.483 & 0.539 & 0.90 \\
+        \midrule
+        \multirow{3}{*}{IL~\citep{il_scaling}}
+            & \multirow{3}{*}{Atari (RL)}
+            & NetHack & \multirow{3}{*}{Appr.~2}
+            & 0.61 & 0.39 & 1.56 \\
+        & & Battle Zone & & 0.58 & 0.51 & 1.14 \\
+        & & Breakout & & 0.74 & 0.46 & 1.61 \\
+        \midrule
+        DiT~\citep{dit_scaling} & Image-text & Diffusion Trans. & Appr.~2
+            & 0.568 & 0.432 & 1.32 \\
+        \midrule
+        DLM~\citep{dlm_scaling} & Web text & Discrete diffusion & Appr.~2
+            & 0.589 & 0.411 & 1.43 \\
+        \midrule
+        Audio~\citep{audio_scaling} & Audio + text & Transformer & Appr.~2
+            & 0.367 & 0.579 & 0.63 \\
+        \midrule
+        \multirow{2}{*}{Protein PLM~\citep{protein_plm_scaling}}
+            & \multirow{2}{*}{Protein seq.}
+            & CLM & \multirow{2}{*}{Appr.~2}
+            & 0.578 & 0.422 & 1.37 \\
+        & & MLM & & 0.776 & 0.230 & 3.37 \\
+        \midrule
+        \multirow{2}{*}{xLSTM~\citep{xlstm_scaling}}
+            & \multirow{2}{*}{Web text}
+            & Transformer & \multirow{2}{*}{Appr.~2}
+            & 0.575 & 0.424 & 1.36 \\
+        & & xLSTM & & 0.547 & 0.417 & 1.31 \\
+        \midrule
+        \multirow{3}{*}{NMM~\citep{nmm_scaling}}
+            & \multirow{3}{*}{Multimodal}
+            & Early fusion (avg.) & \multirow{3}{*}{Appr.~3}
+            & 0.526 & 0.473 & 1.11 \\
+        & & Late fusion & & 0.636 & 0.462 & 1.38 \\
+        & & Sparse early fusion & & 0.361 & 0.656 & 0.55 \\
+        \midrule
+        \multirow{3}{*}{OLMo~\citep{olmo_hybrid}}
+            & \multirow{3}{*}{Web text}
+            & Transformer & \multirow{3}{*}{Appr.~3}
+            & 0.458 & 0.542 & 0.85 \\
+        & & Hybrid & & 0.492 & 0.508 & 0.97 \\
+        & & Pure GDN & & 0.554 & 0.446 & 1.24 \\
+        \midrule
+        ProGen3~\citep{progen3} & Protein seq. & ProGen3 & Kaplan
+            & & & 1.48\textsuperscript{*} \\
+        \midrule
+        Dense Retrieval~\citep{dense_retrieval_scaling} & Query-doc pairs & Transformer & Kaplan
+            & & & 2.34\textsuperscript{*} \\
+        \bottomrule
+    \end{tabular}
+    \vspace{4pt}
+
+    {\footnotesize
+    \textsuperscript{*} Reported directly. The Kaplan method estimates
+    $\alpha$ and $\beta$ separately, so $\beta/\alpha$ is obtained without
+    assuming the Chinchilla functional form for $a$ and $b$.\\
+    \textsuperscript{\textdagger} Exponents extracted from Figure S5
+    data.\footnote{\url{https://github.com/eric-czech/evo-scaling-law-extraction}}\\
+    \textsuperscript{\textdaggerdbl} Exponents originally from
+    Kaplan et al.~\citep{kaplan_scaling} (OpenWebText2) and
+    Hoffmann et al.~\citep{chinchilla} (MassiveText), as reported in DeepSeek.
+    }
+    \caption{Published compute-allocation exponents from scaling law studies
+    across domains. Columns $a$ and $b$ are the allocation exponents governing
+    optimal model size ($N^* \propto C^a$) and dataset size
+    ($D^* \propto C^b$). The $\beta/\alpha$ column gives the ratio of
+    loss-surface exponents, computed as $a/b$ for Approach~2 and~3 estimates
+    or reported directly for Kaplan estimates.}
+    \label{tab:published_exponents}
+\end{table}
 
 \end{document}
