@@ -45,39 +45,33 @@ Systematic Biases in IsoFLOP Parabola Fits}
 \maketitle
 
 \begin{abstract}
-Chinchilla Approach~2 is arguably the most widely adopted method for fitting
-neural scaling laws in practice. The parabolic approximation inherent to this
-method introduces systematic biases in compute-optimal allocation estimates,
-even on noise-free synthetic data under ideal experimental conditions. Three
-sources of error are examined: IsoFLOP sampling grid width, which affects Taylor
-approximation accuracy of parabolic fits; uncentered IsoFLOP sampling, which
-distorts scaling intercepts or exponents depending on how offsets vary with
-compute budget; and loss surface asymmetry ($\alpha \neq \beta$), which
-attenuates or amplifies other biases. Effects of these errors are demonstrated
-as misallocations at open-model frontier compute scales. Namely, Approach~2
-extrapolations from published Llama~3 IsoFLOP data suggest an underallocation
-of parameters and that 6--10\% (\$1.3--2.2M USD) of the $3.8\times10^{25}$
-FLOPs training budget could have been saved to reach the same loss. Simulated
-misallocations for multimodal models are also presented and show an even greater
-potential for this kind of opportunity cost due to their more asymmetric loss
-surfaces. Chinchilla Approach~3 largely eliminates this potential, but is often
-regarded as less data-efficient, unstable, prone to local minima, and typically
-more complex to implement. Each of these concerns are shown to be unfounded or
-addressable,
-especially when the partially linear structure of the Approach~3 optimization
-objective is exploited through Variable Projection. This enables unbiased,
-parametric inference on all five loss surface parameters as a two-dimensional
-optimization that is well-conditioned, analytically differentiable, and highly
-amenable to dense, or even exhaustive, grid search. It may serve as a more
-convenient replacement for Approach~2 or a more scalable alternative for
-adaptations of Approach~3 to richer scaling law formulations.
+Chinchilla Approach~2 is among the most widely used methods for fitting neural
+scaling laws. Its parabolic approximation introduces systematic biases in
+compute-optimal allocation estimates, even on noise-free synthetic data. Three
+sources of error are examined: IsoFLOP sampling grid width (Taylor
+approximation accuracy), uncentered IsoFLOP sampling, and loss surface
+asymmetry ($\alpha \neq \beta$). Effects of these errors are demonstrated as
+misallocations at open frontier compute scales. Applied to published Llama~3
+IsoFLOP data, these biases imply a parameter underallocation corresponding to
+6--10\% of the $3.8\times10^{25}$ FLOP training budget (valued at
+\$1.3--2.2M). Simulated multimodal model misallocations show even greater opportunity
+costs due to higher loss surface asymmetry. Chinchilla Approach~3 largely eliminates these
+biases but is often regarded as less data-efficient, numerically unstable,
+prone to local minima, and harder to implement. Each concern is shown to be
+unfounded or addressable, especially when the partially linear structure of the
+objective is exploited via Variable Projection, enabling unbiased inference on
+all five loss surface parameters through a two-dimensional optimization that is
+well-conditioned, analytically differentiable, and amenable to dense, or even
+exhaustive, grid search. It may serve as a more convenient replacement for
+Approach~2 or a more scalable alternative for adaptations of Approach~3 to
+richer scaling law formulations.
 \end{abstract}
 
 \section{Introduction}
 \label{sec:introduction}
 
 The Chinchilla paper~\citep{chinchilla} introduced three approaches to scaling
-law estimation, and of these, Approach~2 appears to have seen the broadest
+law estimation, and of these, Approach~2 has arguably seen the broadest
 adoption. It has been used by leading AI labs including
 DeepMind~\citep{chinchilla,sovit} (its creators),
 Meta~\citep{llama3,optibert}, DeepSeek~\citep{deepseek},
@@ -93,10 +87,10 @@ nonlinear optimization over all loss surface parameters. Rather than fitting
 all five parameters of the loss surface simultaneously, Approach~2 targets only
 the two scaling exponents, relying on second-order Taylor approximations that
 reduce each IsoFLOP curve to a simple parabola. This sacrifices recovery
-of the full loss surface but makes estimation simple and stable, 
-letting practitioners extract the most actionable quantities
-for compute allocation planning through a sequence of straightforward
-polynomial and linear fits, without ever needing a nonlinear optimizer.
+of the full loss surface but makes estimation simple, and enables extraction
+of what are typically viewed as the most actionable scaling properties of a model and dataset. It does this
+through a sequence of straightforward quadratic and linear fits, which frequently requires far more than 5 parameters
+to be estimated (at least 3 per compute budget and 2 for the final power law), but elides the need for a nonlinear optimizer.
 
 Despite this broad adoption, the sensitivity of the method's core
 approximations and its behavior on loss surfaces that are less symmetric than
@@ -214,9 +208,11 @@ the Huber function provides robustness to outliers from noisy training runs.
 
 Because we evaluate methods on simulated data with known noise models and
 want maximum likelihood estimates in some configurations, we use MSE rather
-than Huber throughout this study. The LSE reparameterization and log-space
-objective are evaluated directly in the exponent inference comparison
-(Section~\ref{sec:method_comparison_inference}).
+than the Huber objective throughout this study. More details on these
+differences and how they relate to common implementations are discussed in
+Appendix~\ref{sec:appendix_vpnls_validation}. The LSE reparameterization and
+log-space objective, however, are evaluated directly in the exponent inference
+comparison (Section~\ref{sec:method_comparison_exponent_inference}).
 
 \section{Symmetric Surfaces: Unbiased Estimation in Ideal Conditions}
 \label{sec:symmetric}
@@ -458,7 +454,7 @@ used in this analysis.
         Extra Large (XL) & $\pm 16\times$ & $\frac{1}{16}\times$ to $16\times$ & $256\times$ & 2.41 \\
         \bottomrule
     \end{tabular}
-    \caption{Sampling grid widths used throughout this paper. Real experiments
+    \caption{Sampling grid widths used in simulations. Real experiments
     typically span 1--2 decades, placing the Small and Large grids within the
     realistic range. The Extra Large grid ($\pm 16\times$, $\sim$2.4 decades) is
     the default used in all single-grid analyses in the preceding sections.}
@@ -880,8 +876,12 @@ parameters. A $32^2$ grid over $(\alpha, \beta)$ provides 1,024 candidates
 with fine resolution, whereas the same budget in 5D gives only
 $4^5 = 1{,}024$ points spread thinly across all parameters.
 
+The implementation of this algorithm used in the remainder of this work was
+validated against \texttt{ml-scalefit}~\citep{optimal_data_mixtures}. See
+Appendix~\ref{sec:appendix_vpnls_validation} for details.
+
 \subsection{Method Comparison (Parameter Recovery)}
-\label{sec:method_comparison}
+\label{sec:method_comparison_parameter_recovery}
 
 We compare six method configurations on noise-free synthetic data across three
 loss surfaces (symmetric, Chinchilla, and high imbalance) and 20 sampling
@@ -943,7 +943,7 @@ orders of magnitude, making grid search over the reduced space especially
 effective.
 
 \subsection{Method Comparison (Exponent Inference)}
-\label{sec:method_comparison_inference}
+\label{sec:method_comparison_exponent_inference}
 
 The parameter recovery results above are noise-free, which is obviously not
 representative of practice. We now extend the compounding errors scenario
@@ -970,7 +970,7 @@ reparameterization and log-loss objective, matching the formulation in the
 Chinchilla paper~\citep{chinchilla}. VPNLS uses L-BFGS-B with analytical
 gradients.
 
-The parameter recovery comparison (Section~\ref{sec:method_comparison})
+The parameter recovery comparison (Section~\ref{sec:method_comparison_parameter_recovery})
 evaluated all five surface parameters, but Approach~2 does not estimate them
 individually. Here we focus on the scaling exponents $a = \beta / (\alpha +
 \beta)$ and $b = \alpha / (\alpha + \beta)$, which determine compute-optimal
@@ -1028,6 +1028,39 @@ initialization and LSE reparameterization (as specified in the Chinchilla
 paper), Approach~3 achieves typical accuracy comparable to VPNLS. VPNLS
 produced the smallest maximum errors in this experiment, though all
 well-configured direct fitting methods substantially outperform Approach~2.
+
+\subsection{Method Comparison (Data Efficiency)}
+\label{sec:method_comparison_data_efficiency}
+
+The exponent inference comparison above used an asymmetric surface with
+off-center sampling, conditions designed to test structural biases. Here we do
+the opposite, returning to the ideal conditions of the symmetric surfaces
+section ($\alpha = \beta = 0.31$, perfectly centered sampling) where Approach~2
+has no structural bias. All methods are unbiased in this setting, so the
+relevant comparison is variance. For unbiased estimators, statistical efficiency
+is proportional to the inverse of variance, so lower variance means more
+precise estimates for a given sample size. Even under these ideal conditions,
+Figure~\ref{fig:data_efficiency} shows that Approach~2 recovers scaling
+exponents with roughly $8\times$ higher variance than Approach~3 or VPNLS.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/figures/data_efficiency/data_efficiency.png}
+    \caption{Estimator variance for the compute-optimal exponent
+    $b = \alpha/(\alpha+\beta)$ on a symmetric surface
+    ($\alpha = \beta = 0.31$, $A = B = 400$, $E = 1.69$, true $b = 0.5$) with
+    perfectly centered IsoFLOP sampling. Left: overall variance pooled across
+    noise levels. Right: variance by noise level. Sweep over points per curve
+    $\in \{21, 31, 41\}$, budget counts $\in \{3, 5, 7\}$, log-widths
+    $\in \{\pm 2\times, \pm 4\times, \pm 8\times\}$, noise levels
+    $\sigma \in \{0.01, 0.02, 0.05\}$, with 10 trials per configuration.
+    Lower variance is better. Approach~3 and VPNLS achieve comparable precision;
+    Approach~2 is consistently less efficient.}
+    \label{fig:data_efficiency}
+\end{figure}
+
+Figure~\ref{fig:appendix_data_efficiency} breaks these results down by noise
+level, showing the full distribution of signed errors for each method.
 
 \section{Error Costs: Misallocation at Frontier Scale}
 \label{sec:error_costs}
@@ -1134,7 +1167,7 @@ used to fit data from them.
 
 The Approach~2 biases documented in this paper are structural, not statistical.
 They exist on noise-free data with perfect experimental conditions and, as the
-noisy method comparison (Section~\ref{sec:method_comparison_inference})
+noisy method comparison (Section~\ref{sec:method_comparison_exponent_inference})
 shows, persist under realistic noise levels with varying amounts of data.
 
 At least three sources of Approach~2 error can compound in practice. IsoFLOP
@@ -1416,6 +1449,66 @@ ranges, loss surfaces, and bias configurations.
     over 256 noise realizations.}
     \label{fig:appendix_exponent_errors}
 \end{figure}
+
+\section{Data Efficiency Error Breakdown}
+\label{sec:appendix_data_efficiency}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.png}
+    \caption{Per-noise-level breakdown of signed exponent errors from
+    Figure~\ref{fig:data_efficiency}. Boxplots show the distribution of
+    $\hat{b} - b_{\mathrm{true}}$ on a symlog scale for each method at each
+    noise level. Pooled summary statistics (sample size, variance, IQR) are
+    shown below each method group.}
+    \label{fig:appendix_data_efficiency}
+\end{figure}
+
+\section{VPNLS Implementation Validation}
+\label{sec:appendix_vpnls_validation}
+
+We validated our VPNLS implementation against
+\texttt{ml-scalefit}~\citep{optimal_data_mixtures}.
+Both were run on the Chinchilla dataset (217 training points
+with $C < 10^{21}$, inputs normalized by $N/10^6$ and $D/10^9$).
+Table~\ref{tab:vpnls_validation} shows the fitted parameters.
+
+Both Approach~3 variants use log-sum-exp (LSE) reparameterization to ensure
+non-negativity of the additive loss components. They differ only in whether the
+objective is evaluated on raw loss values (linear) or their logarithm
+(log-scaled), as specified in the original Chinchilla formulation.
+
+The \texttt{ml-scalefit} MSE configuration matches VPNLS to three decimal
+places ($1 \times 10^{-3}$). Approach~3 with LSE
+reparameterization but without log-scaled loss also produces identical results.
+Only when log-scaled loss is used do the estimates diverge. This highlights
+that both VPNLS and \texttt{ml-scalefit} (with MSE) are maximum likelihood
+estimators under additive Gaussian error on the raw loss, not a multiplicative
+error model as implied by the original Chinchilla Approach~3 log-loss
+formulation. The Huber variant down-weights outliers and produces modestly
+different estimates.
+
+\begin{table}[ht]
+    \centering
+    \small
+    \begin{tabular}{lccccccc}
+        \toprule
+        Method & $E$ & $A$ & $B$ & $\alpha$ & $\beta$ & $a$ & $b$ \\
+        \midrule
+        VPNLS & 1.9051 & 4.0005 & 1.0509 & 0.3511 & 0.4587 & 0.5665 & 0.4335 \\
+        Approach~3 (log-scaled loss) & 1.8926 & 4.0146 & 1.0571 & 0.3522 & 0.4430 & 0.5571 & 0.4429 \\
+        Approach~3 (linear loss) & 1.9051 & 4.0005 & 1.0509 & 0.3511 & 0.4587 & 0.5665 & 0.4335 \\
+        \midrule
+        \texttt{ml-scalefit} (MSE) & 1.9051 & 4.0001 & 1.0509 & 0.3510 & 0.4588 & 0.5665 & 0.4335 \\
+        \texttt{ml-scalefit} (Huber) & 1.8267 & 3.7066 & 1.0386 & 0.3240 & 0.4080 & 0.5573 & 0.4427 \\
+        \bottomrule
+    \end{tabular}
+    \caption{VPNLS validation against \texttt{ml-scalefit} on the Chinchilla
+    dataset. VPNLS and \texttt{ml-scalefit} (MSE) agree to three decimal places ($1 \times 10^{-3}$).
+    Approach~3 with linear loss is identical to VPNLS; only the log-scaled loss
+    variant diverges.}
+    \label{tab:vpnls_validation}
+\end{table}
 
 \section{Published Scaling Exponents}
 \label{sec:appendix_published_exponents}

@@ -28,13 +28,8 @@ When one implementation artifact changes, other artifacts that depend on it may 
   - `results/article/figures/parameter_recovery/parameter_recovery_failures.csv` → "Method Comparison (Parameter Recovery)" (collapsible data table failure counts)
   - `results/article/figures/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)
   - `results/experiments/exp8/conditioning_analysis.txt` → "Problems with Direct Surface Fitting" (experimental setup: surface parameters, compute budgets, points per curve; Hessian eigenvalue ranges, condition numbers κ ≈ 3.5×10¹¹ and κ ≈ 11, underdetermined parameter directions)
-- **Experiment outputs copied to article**: the figure generator's `copy_experiment_outputs` copies several experiment results directly into the article directory tree. Re-run step 2 after re-running experiments.
-  - `results/experiments/exp5/parameter_recovery_detailed.png` → `results/article/appendix/parameter_recovery_detailed.png`
-  - `results/experiments/exp4/extrapolation_error.png` → `results/article/appendix/combined_extrapolation_error.png`
-  - `results/experiments/exp7/isoflop_curves.png` → `results/article/appendix/isoflop_curves_noisy.png`
-  - `results/experiments/exp7/exponent_inference_errors.png` → `results/article/appendix/exponent_inference_errors.png`
-  - `results/experiments/exp7/exponent_inference.png` → `results/article/figures/exponent_inference/exponent_inference.png`
-  - `results/experiments/exp7/exponent_inference.csv` → `results/article/figures/exponent_inference/exponent_inference.csv`
+  - `results/experiments/exp0/reproductions.txt` → "VPNLS Implementation Validation" appendix (fitted parameter values for VPNLS, Approach 3 variants, and ml-scalefit configurations)
+- **Experiment outputs copied to article**: the figure generator's `copy_experiment_outputs` in `src/scaling_law_analysis/article/figures.py` copies experiment results directly into the article directory tree. See that function for the authoritative list of copied files. Re-run step 2 after re-running experiments.
 
 ## Spec → Spec
 

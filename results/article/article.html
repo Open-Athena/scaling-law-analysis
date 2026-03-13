@@ -617,6 +617,7 @@
                         <li><a href="#appendix-noisy-isoflop">IsoFLOP Samples with Noise</a></li>
                         <li><a href="#appendix-exponent-errors">Exponent Inference Error Breakdown</a></li>
                         <li><a href="#appendix-data-efficiency">Data Efficiency Error Breakdown</a></li>
+                        <li><a href="#appendix-vpnls-validation">VPNLS Implementation Validation</a></li>
                         <li><a href="#appendix-published-exponents">Published Scaling Exponents</a></li>
                     </ol>
                 </li>
@@ -651,10 +652,10 @@
                 all five parameters of the loss surface simultaneously, Approach 2 targets
                 only the two scaling exponents, relying on second-order Taylor approximations
                 that reduce each IsoFLOP curve to a simple parabola. This sacrifices recovery
-                of the full loss surface but makes estimation simple and stable, 
-                letting practitioners extract the most actionable quantities
-                for compute allocation planning through a sequence of straightforward
-                polynomial and linear fits, without ever needing a nonlinear optimizer.
+                of the full loss surface but makes estimation simple, and enables extraction
+                of what are typically viewed as the most actionable scaling properties of a model and dataset. It does this
+                through a sequence of straightforward quadratic and linear fits, which frequently requires far more than 5 parameters
+                to be estimated (at least 3 per compute budget and 2 for the final power law), but elides the need for a nonlinear optimizer.
             </p>
 
             <p>
@@ -825,9 +826,11 @@
             <p>
                 Because we evaluate methods on simulated data with known noise models and
                 want maximum likelihood estimates in some configurations, we use MSE rather
-                than Huber throughout this study. The LSE reparameterization and log-space
-                objective are evaluated directly in the
-                <a href="#method-comparison-inference">exponent inference comparison</a>.
+                than the Huber objective throughout this study. More details on these
+                differences and how they relate to common implementations are discussed in
+                <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a>. The LSE
+                reparameterization and log-space objective, however, are evaluated directly
+                in the <a href="#method-comparison-inference">exponent inference comparison</a>.
             </p>
         </section>
 
@@ -1884,6 +1887,12 @@
                 4<sup>5</sup>&nbsp;=&nbsp;1,024 points spread thinly across all parameters.
             </p>
 
+            <p>
+                The implementation of this algorithm used in the remainder of this work was
+                validated against <code>ml-scalefit</code> <sup><a href="#ref-optimal_data_mixtures">[22]</a></sup>.
+                See <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a> for details.
+            </p>
+
             <h3 id="method-comparison-recovery">Method Comparison (Parameter Recovery)</h3>
 
             <p>
@@ -2585,7 +2594,111 @@
                     statistics (sample size, variance, IQR) are shown below each method group.
                 </figcaption>
             </figure>
-            <h3 id="appendix-published-exponents">F. Published Scaling Exponents</h3>
+            <h3 id="appendix-vpnls-validation">F. VPNLS Implementation Validation</h3>
+
+            <p>
+                We validated our VPNLS implementation against
+                <code>ml-scalefit</code> <sup><a href="#ref-optimal_data_mixtures">[22]</a></sup>. 
+                Both were run on the Chinchilla dataset (217 training points with \(C < 10^{21}\), 
+                inputs normalized by \(N/10^6\) and \(D/10^9\)).
+                <a href="#table-vpnls-validation">Table&nbsp;A2</a> shows the fitted parameters.
+            </p>
+
+            <p>
+                Both Approach 3 variants use log-sum-exp (LSE) reparameterization to ensure
+                non-negativity of the additive loss components. They differ only in whether
+                the objective is evaluated on raw loss values (linear) or their logarithm
+                (log-scaled), as specified in the original Chinchilla formulation.
+            </p>
+
+            <p>
+                The <code>ml-scalefit</code> MSE configuration matches VPNLS to three decimal
+                places (\(1 \times 10^{-3}\)). Approach 3 with LSE
+                reparameterization but without log-scaled loss also produces identical results.
+                Only when log-scaled loss is used do the estimates diverge. This highlights
+                that both VPNLS and <code>ml-scalefit</code> (with MSE) are maximum likelihood
+                estimators under additive Gaussian error on the raw loss, not a multiplicative
+                error model as implied by the original Chinchilla Approach 3 log-loss
+                formulation. The Huber variant down-weights outliers and produces modestly
+                different estimates.
+            </p>
+
+            <figure id="table-vpnls-validation">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th style="text-transform: none;"><em>E</em></th>
+                            <th style="text-transform: none;"><em>A</em></th>
+                            <th style="text-transform: none;"><em>B</em></th>
+                            <th style="text-transform: none;">\(\alpha\)</th>
+                            <th style="text-transform: none;">\(\beta\)</th>
+                            <th style="text-transform: none;"><em>a</em></th>
+                            <th style="text-transform: none;"><em>b</em></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="text-cell">VPNLS</td>
+                            <td>1.9051</td>
+                            <td>4.0005</td>
+                            <td>1.0509</td>
+                            <td>0.3511</td>
+                            <td>0.4587</td>
+                            <td>0.5665</td>
+                            <td>0.4335</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Approach 3 (log-scaled loss)</td>
+                            <td>1.8926</td>
+                            <td>4.0146</td>
+                            <td>1.0571</td>
+                            <td>0.3522</td>
+                            <td>0.4430</td>
+                            <td>0.5571</td>
+                            <td>0.4429</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell">Approach 3 (linear loss)</td>
+                            <td>1.9051</td>
+                            <td>4.0005</td>
+                            <td>1.0509</td>
+                            <td>0.3511</td>
+                            <td>0.4587</td>
+                            <td>0.5665</td>
+                            <td>0.4335</td>
+                        </tr>
+                        <tr style="border-top: 2px solid var(--border);">
+                            <td class="text-cell"><code>ml-scalefit</code> (MSE)</td>
+                            <td>1.9051</td>
+                            <td>4.0001</td>
+                            <td>1.0509</td>
+                            <td>0.3510</td>
+                            <td>0.4588</td>
+                            <td>0.5665</td>
+                            <td>0.4335</td>
+                        </tr>
+                        <tr>
+                            <td class="text-cell"><code>ml-scalefit</code> (Huber)</td>
+                            <td>1.8267</td>
+                            <td>3.7066</td>
+                            <td>1.0386</td>
+                            <td>0.3240</td>
+                            <td>0.4080</td>
+                            <td>0.5573</td>
+                            <td>0.4427</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <figcaption>
+                    <strong>Table A2:</strong> VPNLS validation against <code>ml-scalefit</code>
+                    on the Chinchilla dataset. VPNLS and <code>ml-scalefit</code> (MSE) agree
+                    to three decimal places (\(1 \times 10^{-3}\)). Approach 3 with linear loss is identical to VPNLS;
+                    only the log-scaled loss variant diverges.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-published-exponents">G. Published Scaling Exponents</h3>
 
             <p>
                 <a href="#table-published-exponents">Table&nbsp;A1</a> collects published

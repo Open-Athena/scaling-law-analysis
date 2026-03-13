@@ -20,6 +20,7 @@ On article:
   - Add exp6 validation for proof to appendix
   - Make a reference implementation
 - Secondary:
+  - Consider https://arxiv.org/abs/2603.06603 as another citation for methods that "extend individual terms in isolation (e.g. token scaling terms alone)"
   - Cite [Scaling Laws for Native Multimodal Models](https://arxiv.org/pdf/2504.07951) on PlantCAD issue for empirical C ~ D^b method (see C. Scaling Laws)
   - Mention the demo prompt examples for making your own simulator; examples:
     - https://gemini.google.com/share/6b5b3e9b3e0b
