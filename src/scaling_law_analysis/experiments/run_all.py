@@ -13,6 +13,7 @@ from scaling_law_analysis.experiments import (
     exp9_data_efficiency,
     exp10_compounding_errors,
     exp11_cost_estimates,
+    exp12_residual_distributions,
 )
 
 
@@ -56,6 +57,9 @@ def main():
 
     print("\n")
     exp11_cost_estimates.main()
+
+    print("\n")
+    exp12_residual_distributions.main()
 
     print("\n" + "=" * 80)
     print("ALL EXPERIMENTS COMPLETE")
