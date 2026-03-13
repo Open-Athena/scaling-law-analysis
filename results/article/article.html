@@ -642,11 +642,11 @@
                 (see <a href="#table-published-exponents">Table&nbsp;A1</a>). It is also
                 a workhorse method for academic scaling law
                 studies<sup><a href="#ref-dit_scaling">[10]</a>,<a href="#ref-dlm_scaling">[11]</a>,<a href="#ref-biosignal_scaling">[12]</a></sup>
-                and high-profile practitioner <a href="https://github.com/karpathy/nanochat/discussions/420">tutorials</a> from researchers like Andrej Karpathy.
+                and <a href="https://github.com/karpathy/nanochat/discussions/420">tutorials</a> like those from Andrej Karpathy.
             </p>
 
             <p>
-                The method's appeal lies in its stability and data efficiency relative to
+                The method's appeal lies in its putative stability and data efficiency relative to
                 nonlinear optimization over all loss surface parameters. Rather than fitting
                 all five parameters of the loss surface simultaneously, Approach 2 targets
                 only the two scaling exponents, relying on second-order Taylor approximations
@@ -663,15 +663,14 @@
                 the original Chinchilla form (where parameter and token scaling exponents are
                 roughly equal) have not, to our knowledge, been studied in detail. Here we
                 revisit the basics of how to apply a simple model like Chinchilla with high
-                precision and stability, to validation loss alone, before considering more
-                advanced extensions. We investigate through noise-free synthetic simulations
-                that isolate systematic biases inherent to the method itself by eliminating
+                precision and stability. We investigate this through noise-free synthetic simulations
+                that isolate systematic biases inherent to Approach 2 by eliminating
                 all sources of statistical noise.
             </p>
 
             <p>
-                We show how these biases affect downstream decisions like dataset size
-                selection for final training runs at large compute budgets. We show how
+                We show how these biases affect allocation planning
+                for final training runs at large compute budgets. We show how
                 extrapolation errors trace back to suboptimal IsoFLOP experiment design, and
                 that pathologies in these designs can be observed in real, high-profile
                 scaling law studies even if they are difficult to quantify precisely. Finally,
@@ -745,16 +744,16 @@
             </div>
 
             <p>
-                Recovering the exponents \(a\) and \(b\) from empirical training runs is crucial
-                for planning efficient large-scale training. Two canonical approaches exist:
+                Recovering just the exponents \(a\) and \(b\) from empirical training runs is
+                useful for a variety of purposes. Two canonical approaches for this exist:
             </p>
 
             <h3 id="approach-2">Approach 2: IsoFLOP Parabolic Fitting</h3>
 
             <p>
-                This method is presented in the Chinchilla paper. The key insight is that
-                along a fixed-compute contour (IsoFLOP curve), loss as a function of \(\log N\)
-                is approximately parabolic near the optimum.
+                This approach takes advantage of the fact that along a fixed-compute contour
+                (IsoFLOP curve), loss as a function of \(\log N\) is approximately parabolic
+                near the optimum.
             </p>
 
             <div class="process-steps">
@@ -800,7 +799,7 @@
                 and \(B\) must remain positive for the surface to be physically meaningful,
                 requiring box constraints. Second, the prediction involves a sum of
                 exponentials that can span many orders of magnitude, creating numerical
-                difficulties for the optimizer.
+                optimization difficulties.
             </p>
 
             <p>
@@ -862,9 +861,8 @@
             <p>
                 We sample five IsoFLOP contours spanning \(10^{17}\) to \(10^{21}\) FLOPs,
                 with 15 model sizes per curve, fit parabolas to each, and extract
-                the optimal token count \(D^*\). All simulations throughout this
-                article use these same five compute budgets and 15 points per
-                IsoFLOP curve.
+                the optimal token count \(D^*\). Most simulations in this study use these same five compute budgets and 15
+                points per IsoFLOP curve, unless stated otherwise.
             </p>
 
             <figure id="fig-1">
@@ -949,9 +947,10 @@
 
             <p>
                 This Asymmetric surface definition is on the high end of previously reported scaling statistics without
-                being unrealistic. An exponent ratio of 3.0 is comparable to what was observed in DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>,
-                which reports compute-optimal allocation exponents of \(a = 0.73\), \(b = 0.27\) for
-                an OpenWebText2 variant. This implies a loss surface exponent ratio of
+                being unrealistic. An exponent ratio of 3.0 is comparable to what has been observed in practice.
+                Kaplan et al.<sup><a href="#ref-kaplan_scaling">[14]</a></sup> reported compute-optimal
+                allocation exponents of \(a = 0.73\), \(b = 0.27\) (as cited in
+                DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>). This implies a loss surface exponent ratio of
                 \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
                 Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
                 of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
@@ -1024,6 +1023,7 @@
             </table>
 
             <p>
+                Figure 2 shows the results from this simulation, with relative errors in the tables above.
                 A few percent error in the intercept might seem minor, but consider that this simulation
                 provided every advantage other than loss surface asymmetry. 
                 The data contains no measurement noise and the sampling is perfect, with IsoFLOP grids centered precisely at the true optimum
@@ -1055,8 +1055,7 @@
                 Because the IsoFLOP parabola is fit in \(\log N\) space (as described in the
                 Approach 2 procedure), the vertex shift directly biases \(N^*\). Since
                 \(C = 6ND\), analyzing the bias in either \(N^*\) or \(D^*\) is
-                sufficient; we focus on \(N^*\) here since that is where the parabolic
-                fit typically operates.
+                sufficient, and we focus on \(N^*\) below.
             </p>
 
             <p>
