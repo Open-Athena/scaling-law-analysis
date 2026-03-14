@@ -366,4 +366,21 @@ def detect_outliers(
                     edf.loc[ix, "outlier"] = True
                     edf.loc[ix, "reason"] = R.SPLINE
 
+    # Invariant checks
+    assert (
+        edf["outlier"].notna().all()
+    ), "outlier column has NA values"  # pyrefly: ignore
+    assert (
+        edf["reason"].notna().all()  # pyrefly: ignore
+        and (edf["reason"] != "").all()  # pyrefly: ignore
+    ), "reason column has empty/NA values"
+    bad_clean = edf.loc[~edf["outlier"] & (edf["reason"] != R.NONE)]
+    assert (
+        bad_clean.empty
+    ), f"outlier=False with non-none reason:\n{bad_clean[['outlier', 'reason']]}"
+    bad_flagged = edf.loc[edf["outlier"] & (edf["reason"] == R.NONE)]
+    assert (
+        bad_flagged.empty
+    ), f"outlier=True with reason=none:\n{bad_flagged[['outlier', 'reason']]}"
+
     return edf

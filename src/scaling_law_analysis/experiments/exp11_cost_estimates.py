@@ -71,6 +71,8 @@ LLAMA3_VPNLS_GRID = ExponentGrid(
 )
 
 
+FILTER_OUTLIERS = False
+
 _LLAMA3_EXPERIMENT = {
     True: "llama3__llama_3__exp_loss",
     False: "llama3__llama_3__raw_loss",
@@ -86,6 +88,8 @@ def _load_llama3_data(
     """
     df = pd.read_csv(ISOFLOPS_CSV)
     edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[log_scale]]
+    if FILTER_OUTLIERS:
+        edf = edf[~edf["outlier"]]
     N = edf["params"].to_numpy()
     D = edf["tokens"].to_numpy()
     L = edf["loss"].to_numpy()
