@@ -11,14 +11,12 @@ Usage:
 
 from __future__ import annotations
 
-import csv
-import io
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
@@ -55,12 +53,7 @@ from scaling_law_analysis.experiments.exp10_compounding_errors import (
 
 # ── Llama 3 data ─────────────────────────────────────────────────────────────
 
-# Llama 3 isoFLOP data (digitized from paper figure).
-# Source: https://github.com/eric-czech/llama3_isoflop_extraction
-LLAMA3_ISOFLOP_CSV_URL = (
-    "https://raw.githubusercontent.com/eric-czech/llama3_isoflop_extraction/"
-    "1bc1755b76e6ee55a911549c8ec52b71cb480320/isoflops_points.csv"
-)
+from scaling_law_analysis.data.common import ISOFLOPS_CSV
 
 LLAMA3_LOSS_LOG_SCALE = True  # if True, interpret validation_loss as ln(loss)
 
@@ -78,28 +71,25 @@ LLAMA3_VPNLS_GRID = ExponentGrid(
 )
 
 
-def _download_llama3_csv() -> str:
-    """Download Llama 3 isoFLOP CSV and return raw text."""
-    with urllib.request.urlopen(LLAMA3_ISOFLOP_CSV_URL) as resp:
-        return resp.read().decode("utf-8")
+_LLAMA3_EXPERIMENT = {
+    True: "llama3__llama_3__exp_loss",
+    False: "llama3__llama_3__raw_loss",
+}
 
 
-def _parse_llama3_data(
-    text: str, log_scale: bool
+def _load_llama3_data(
+    log_scale: bool,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Parse Llama 3 CSV text into (N, D, L, C) arrays."""
-    reader = csv.DictReader(io.StringIO(text))
-    C_list, D_list, L_list = [], [], []
-    for row in reader:
-        C_list.append(float(row["compute_budget"]))
-        D_list.append(float(row["training_tokens"]))
-        L_list.append(float(row["validation_loss"]))
-    C = np.array(C_list)
-    D = np.array(D_list)
-    L = np.array(L_list)
-    if log_scale:
-        L = np.exp(L)
-    N = C / (6 * D)  # C = 6ND
+    """Load Llama 3 isoFLOP data from the data pipeline CSV.
+
+    Returns (N, D, L, C) arrays.
+    """
+    df = pd.read_csv(ISOFLOPS_CSV)
+    edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[log_scale]]
+    N = edf["params"].to_numpy()
+    D = edf["tokens"].to_numpy()
+    L = edf["loss"].to_numpy()
+    C = edf["budget"].to_numpy()
     return N, D, L, C
 
 
@@ -697,13 +687,12 @@ def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp11")
 
     # Fit Llama 3 isoFLOP data under both log-scale assumptions.
-    csv_text = _download_llama3_csv()
     llama3_comparisons: list[Llama3FitSet] = []
     primary_vpnls: LossSurface | None = None
     for log_scale in [True, False]:
         label = "log-scale" if log_scale else "raw nats"
         print(f"\n── Llama 3 fits ({label}) ──")
-        N, D, L, C = _parse_llama3_data(csv_text, log_scale=log_scale)
+        N, D, L, C = _load_llama3_data(log_scale=log_scale)
         vpnls = _fit_llama3_vpnls(N, D, L)
         a3 = _fit_llama3_a3(N, D, L)
         a2 = _fit_llama3_a2(N, D, L, C)
