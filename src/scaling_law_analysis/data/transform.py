@@ -28,8 +28,8 @@ def experiment_name(
 ) -> str:
     """Build experiment name from constituent parts, deduplicating adjacent repeats.
 
-    For example, ``("llama3", "llama_3", "llama_3", "exp_loss")`` becomes
-    ``"llama3__llama_3__exp_loss"`` instead of ``"llama3__llama_3__llama_3__exp_loss"``.
+    For example, ``("llama_3", "llama_3", "llama_3", "exp_loss")`` becomes
+    ``"llama_3__exp_loss"`` instead of ``"llama_3__llama_3__llama_3__exp_loss"``.
     """
     parts = [source, dataset, model]
     if condition is not None:
@@ -47,8 +47,8 @@ def experiment_name(
 EXPERIMENT_ORDER: list[str] = [
     "epochai_chinchilla__massivetext__chinchilla",
     "ml_scalefit__massivetext__chinchilla",
-    "llama3__llama_3__exp_loss",
-    "llama3__llama_3__raw_loss",
+    "llama_3__exp_loss",
+    "llama_3__raw_loss",
     "marin_202603__comma__llama_2",
     "marin_202603__dclm__llama_2",
     "marin_202603__nemotron__llama_2",
@@ -58,8 +58,8 @@ EXPERIMENT_ORDER: list[str] = [
 EXPERIMENT_DISPLAY_NAMES: dict[str, str] = {
     "epochai_chinchilla__massivetext__chinchilla": "Epoch AI / Chinchilla",
     "ml_scalefit__massivetext__chinchilla": "ML-Scalefit / Chinchilla",
-    "llama3__llama_3__exp_loss": "Llama 3 (exp loss)",
-    "llama3__llama_3__raw_loss": "Llama 3 (raw loss)",
+    "llama_3__exp_loss": "Llama 3 (exp loss)",
+    "llama_3__raw_loss": "Llama 3 (raw loss)",
     "marin_202603__comma__llama_2": "Marin / CoMMA",
     "marin_202603__dclm__llama_2": "Marin / DCLM",
     "marin_202603__nemotron__llama_2": "Marin / Nemotron",

@@ -370,8 +370,8 @@ def fetch_llama3() -> pd.DataFrame:
     ]:
         dfs.append(
             make_df(
-                source="llama3",
-                provenance="llama3",
+                source="llama_3",
+                provenance="llama_3",
                 dataset="llama_3",
                 model="llama_3",
                 condition=condition,
@@ -490,6 +490,6 @@ FETCH_FUNCTIONS: list[tuple[str, Callable[[], pd.DataFrame]]] = [
     ("ml_scalefit", fetch_ml_scalefit),
     ("epochai_chinchilla", fetch_epochai_chinchilla),
     ("misfitting", fetch_misfitting),
-    ("llama3", fetch_llama3),
+    ("llama_3", fetch_llama3),
     ("marin_202603", fetch_marin_202603),
 ]

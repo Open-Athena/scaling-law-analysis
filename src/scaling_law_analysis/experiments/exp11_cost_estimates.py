@@ -74,8 +74,8 @@ LLAMA3_VPNLS_GRID = ExponentGrid(
 FILTER_OUTLIERS = False
 
 _LLAMA3_EXPERIMENT = {
-    True: "llama3__llama_3__exp_loss",
-    False: "llama3__llama_3__raw_loss",
+    True: "llama_3__exp_loss",
+    False: "llama_3__raw_loss",
 }
 
 
