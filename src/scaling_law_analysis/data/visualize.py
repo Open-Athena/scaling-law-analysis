@@ -82,7 +82,9 @@ def plot_isoflops(
                 ax.annotate(
                     fmt_budget(budget),
                     (n_mid, l_mid),
-                    fontsize=5,
+                    textcoords="offset points",
+                    xytext=(0, 6),
+                    fontsize=7,
                     ha="center",
                     va="bottom",
                     color="black",

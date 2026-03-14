@@ -18,6 +18,7 @@ On article:
     - Cite https://arxiv.org/pdf/2406.19146 when discussing WLS adjustments based on noise at different budgets
       - See 2.3 Data analysis
   - Add exp6 validation for proof to appendix
+  - Emphasize that b matches for Llama 3 approach 2
   - Make a reference implementation
 - Secondary:
   - Look for IsoFLOP data in https://arxiv.org/abs/2502.06857
