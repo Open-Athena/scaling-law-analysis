@@ -399,18 +399,46 @@ _MARIN_EXPERIMENTS: list[tuple[str, str, str]] = [
 def fetch_marin_202603() -> pd.DataFrame:
     """Marin scaling ladder isoFLOP data.
 
-    Budget is parsed from the run Name field.
+    Budget is parsed from the run Name field and corrected to total FLOPs.
+
+    The Marin data has two naming conventions:
+      - Regular runs: budget in name ≈ 2ND (forward-pass FLOPs only).
+        Empirically, 6ND/parsed_budget ≈ 3.0 across 258 runs.
+      - "validation-optimal" runs (one per budget, comma & nemotron only):
+        budget in name ≈ 6ND (already total FLOPs).
+        Empirically, 6ND/parsed_budget ≈ 1.0 across 15 runs.
+
+    We multiply parsed budgets by 3 (converting forward-pass to total FLOPs)
+    and exclude the "validation-optimal" runs (1 per budget, comma & nemotron
+    only) which use a different FLOPs convention and would create duplicates.
+    After correction we validate that budget ≈ 6ND within 40%.
     """
     print("marin_202603: loading vendored CSVs ...")
     raw_dir = DATA_DIR / "marin_202603" / "raw"
     dfs: list[pd.DataFrame] = []
     for csv_name, dataset, model in _MARIN_EXPERIMENTS:
         raw = pd.read_csv(raw_dir / csv_name)
-        raw["budget_flops"] = raw["Name"].astype(str).apply(_parse_budget_from_name)
+
+        # Exclude "validation-optimal" runs: these use a different FLOPs
+        # convention (budget ≈ 6ND already) and would collide with regular
+        # runs after 3x correction.  There is at most 1 per budget.
+        is_optimal = raw["Name"].str.contains("validation-optimal")
+        n_optimal = is_optimal.sum()
+        if n_optimal > 0:
+            print(f"  {csv_name}: dropping {n_optimal} validation-optimal runs")
+        raw = raw[~is_optimal].copy()
+
+        raw["budget_parsed"] = raw["Name"].astype(str).apply(_parse_budget_from_name)
         n = raw["parameter_count"].to_numpy(dtype=float)
         d = raw["throughput/total_tokens"].to_numpy(dtype=float)
         loss = raw["eval/paloma/macro_loss"].to_numpy(dtype=float)
-        c = raw["budget_flops"].to_numpy(dtype=float)
+        budget_parsed = raw["budget_parsed"].to_numpy(dtype=float)
+
+        # Parsed budget is forward-pass FLOPs (≈ 2ND).  Multiply by 3 to
+        # convert to total FLOPs (≈ 6ND).  Empirically, 6ND/parsed_budget
+        # ≈ 3.0 across all 258 regular runs.
+        c = budget_parsed * 3.0
+
         # Standardize: drop non-positive / NaN
         mask = (
             (n > 0)
@@ -422,7 +450,25 @@ def fetch_marin_202603() -> pd.DataFrame:
             & np.isfinite(c)
             & np.isfinite(loss)
         )
+
+        # Validate: corrected budget should be within 40% of C = 6ND
+        c6nd = _budget_6nd(n[mask], d[mask])
+        ratio = c6nd / c[mask]
+        bad = np.abs(ratio - 1) > 0.40
+        if bad.any():
+            names = raw["Name"].to_numpy()[mask]
+            for idx in np.where(bad)[0]:
+                print(
+                    f"  WARNING {csv_name}: 6ND/budget={ratio[idx]:.2f} for "
+                    f"{names[idx]} (budget={c[mask][idx]:.2e}, 6ND={c6nd[idx]:.2e})"
+                )
+            print(
+                f"  {bad.sum()}/{mask.sum()} rows exceed 40% tolerance in {csv_name} "
+                f"(keeping all rows — outlier detection is downstream)"
+            )
+
         n, d, c, loss = n[mask], d[mask], c[mask], loss[mask]
+        print(f"  {csv_name}: {len(n)} rows")
         dfs.append(
             make_df(
                 source="marin_202603",
