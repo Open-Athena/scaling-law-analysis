@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from scaling_law_analysis.data.transform import display_name, ordered_experiments
+
 
 def fmt_budget(b: float) -> str:
     """Format a FLOP budget for annotation labels, e.g. 6e+18 -> 6e18."""
@@ -24,14 +26,19 @@ def plot_isoflops(
     Draws fitted parabolas (valid only) over the data range at each budget
     and annotates the compute budget at the geometric midpoint of the param range.
     """
-    panel_keys = sorted(
+    # Build (source, experiment) pairs in canonical order
+    pairs = (
         df[["source", "experiment"]]
         .drop_duplicates()
         .itertuples(index=False, name=None)
     )
+    exp_to_source = {exp: src for src, exp in pairs}
+    panel_exps = ordered_experiments(exp_to_source.keys())
+    panel_keys = [(exp_to_source[e], e) for e in panel_exps]
+
     n_panels = len(panel_keys)
-    ncols = 3
-    nrows = (n_panels + ncols - 1) // ncols
+    ncols = 4
+    nrows = 2
     fig, axes = plt.subplots(
         nrows, ncols, figsize=(5 * ncols, 4 * nrows), squeeze=False
     )
@@ -94,8 +101,7 @@ def plot_isoflops(
         ax.set_xscale("log")
         ax.set_xlabel("Params (N)")
         ax.set_ylabel("Loss")
-        title = experiment if source == experiment else f"{source} / {experiment}"
-        ax.set_title(title, fontsize=8)
+        ax.set_title(display_name(experiment), fontsize=8)
         ax.grid(True, alpha=0.3)
 
     for idx in range(n_panels, nrows * ncols):

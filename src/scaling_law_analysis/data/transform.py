@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
+
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, field_validator
@@ -60,11 +62,67 @@ def experiment_name(
     model: str,
     condition: str | None = None,
 ) -> str:
-    """Build experiment name from constituent parts: source__dataset__model[__condition]."""
+    """Build experiment name from constituent parts, deduplicating adjacent repeats.
+
+    For example, ``("llama3", "llama_3", "llama_3", "exp_loss")`` becomes
+    ``"llama3__llama_3__exp_loss"`` instead of ``"llama3__llama_3__llama_3__exp_loss"``.
+    """
     parts = [source, dataset, model]
     if condition is not None:
         parts.append(condition)
-    return "__".join(parts)
+    # Deduplicate adjacent identical parts
+    deduped = [parts[0]]
+    for p in parts[1:]:
+        if p != deduped[-1]:
+            deduped.append(p)
+    return "__".join(deduped)
+
+
+# ── Canonical experiment ordering & display names ────────────────────────────
+
+EXPERIMENT_ORDER: list[str] = [
+    "epochai_chinchilla__massivetext__chinchilla",
+    "ml_scalefit__massivetext__chinchilla",
+    "llama3__llama_3__exp_loss",
+    "llama3__llama_3__raw_loss",
+    "marin_202603__comma__llama_2",
+    "marin_202603__dclm__llama_2",
+    "marin_202603__nemotron__llama_2",
+    "misfitting__fineweb_c4__transformer",
+]
+
+EXPERIMENT_DISPLAY_NAMES: dict[str, str] = {
+    "epochai_chinchilla__massivetext__chinchilla": "Epoch AI / Chinchilla",
+    "ml_scalefit__massivetext__chinchilla": "ML-Scalefit / Chinchilla",
+    "llama3__llama_3__exp_loss": "Llama 3 (exp loss)",
+    "llama3__llama_3__raw_loss": "Llama 3 (raw loss)",
+    "marin_202603__comma__llama_2": "Marin / CoMMA",
+    "marin_202603__dclm__llama_2": "Marin / DCLM",
+    "marin_202603__nemotron__llama_2": "Marin / Nemotron",
+    "misfitting__fineweb_c4__transformer": "Misfitting / FineWeb-C4",
+}
+
+
+def ordered_experiments(experiments: Iterable[str]) -> list[str]:
+    """Return experiments in canonical order, raising on unknown names."""
+    exp_set = set(experiments)
+    unknown = exp_set - set(EXPERIMENT_ORDER)
+    if unknown:
+        raise ValueError(
+            f"Unknown experiment(s): {sorted(unknown)}. "
+            f"Add them to EXPERIMENT_ORDER and EXPERIMENT_DISPLAY_NAMES in transform.py."
+        )
+    return [e for e in EXPERIMENT_ORDER if e in exp_set]
+
+
+def display_name(experiment: str) -> str:
+    """Return the human-readable display name for an experiment."""
+    if experiment not in EXPERIMENT_DISPLAY_NAMES:
+        raise ValueError(
+            f"Unknown experiment: {experiment!r}. "
+            f"Add it to EXPERIMENT_DISPLAY_NAMES in transform.py."
+        )
+    return EXPERIMENT_DISPLAY_NAMES[experiment]
 
 
 def make_df(

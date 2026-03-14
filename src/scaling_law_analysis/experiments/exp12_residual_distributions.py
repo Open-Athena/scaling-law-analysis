@@ -30,6 +30,7 @@ from scaling_law_analysis.chinchilla import (
     SurfaceFitResult,
     fit_approach3,
 )
+from scaling_law_analysis.data.transform import display_name, ordered_experiments
 from scaling_law_analysis.experiments.common import prepare_output_dir
 from scaling_law_analysis.experiments.exp10_compounding_errors import setup_style
 
@@ -63,30 +64,6 @@ REASON_SPLINE = "spline_outlier"
 
 # Minimum points required to draw a KDE.
 MIN_KDE_POINTS = 5
-
-# Plot order: Chinchilla first, then Llama, then the rest.
-# Row 1 = Chinchilla + Llama, Row 2 = Marin + Misfitting.
-EXPERIMENT_ORDER: list[str] = [
-    "epochai_chinchilla__massivetext__chinchilla",
-    "ml_scalefit__massivetext__chinchilla",
-    "llama3__llama_3__llama_3__exp_loss",
-    "llama3__llama_3__llama_3__raw_loss",
-    "marin_202603__comma__llama_2",
-    "marin_202603__dclm__llama_2",
-    "marin_202603__nemotron__llama_2",
-    "misfitting__fineweb_c4__transformer",
-]
-
-EXPERIMENT_SHORT_NAMES: dict[str, str] = {
-    "epochai_chinchilla__massivetext__chinchilla": "Epoch AI / Chinchilla",
-    "ml_scalefit__massivetext__chinchilla": "ML-Scalefit / Chinchilla",
-    "llama3__llama_3__llama_3__exp_loss": "Llama 3 (exp loss)",
-    "llama3__llama_3__llama_3__raw_loss": "Llama 3 (raw loss)",
-    "marin_202603__comma__llama_2": "Marin / CoMMA",
-    "marin_202603__dclm__llama_2": "Marin / DCLM",
-    "marin_202603__nemotron__llama_2": "Marin / Nemotron",
-    "misfitting__fineweb_c4__transformer": "Misfitting / FineWeb-C4",
-}
 
 OUTLIER_COLOR = "#d62728"
 
@@ -300,41 +277,6 @@ def _fit_experiment(
     )
 
 
-def _akima_loo_predictions(edf: pd.DataFrame) -> np.ndarray:
-    """Per-budget Akima LOO predictions (clean points only).
-
-    For each clean point, removes it, fits Akima on the remaining clean
-    points in the same budget, and predicts at the held-out point.  This
-    matches the LOO methodology used in outlier detection (stage 3).
-    """
-    predictions = pd.Series(np.nan, index=edf.index)
-
-    for budget in edf["budget"].unique():
-        bmask = edf["budget"] == budget
-        bdf = edf.loc[bmask]
-        cmask = ~bdf["outlier"]
-        cdf = bdf[cmask].sort_values("params")
-
-        if len(cdf) < 2:
-            continue
-
-        log_n = np.log(cdf["params"].to_numpy())
-        loss = cdf["loss"].to_numpy()
-        n = len(cdf)
-
-        for j in range(n):
-            rest = np.delete(np.arange(n), j)
-            if len(rest) < 2:
-                continue
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                interp = Akima1DInterpolator(log_n[rest], loss[rest])
-                interp.extrapolate = True
-            predictions.loc[cdf.index[j]] = float(interp(log_n[j], extrapolate=True))
-
-    return predictions.to_numpy()
-
-
 def _flop_factor_predictions(
     edf: pd.DataFrame, surface: LossSurface
 ) -> tuple[np.ndarray, dict[float, float]]:
@@ -519,9 +461,7 @@ def plot_residual_distributions(
     """Create the multi-panel residual distribution figure."""
     setup_style()
 
-    experiments = [e for e in EXPERIMENT_ORDER if e in results] + sorted(
-        set(results) - set(EXPERIMENT_ORDER)
-    )
+    experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
     n_cols = 4
     n_rows = (n_exp + n_cols - 1) // n_cols
@@ -587,7 +527,7 @@ def plot_residual_distributions(
         ax.grid(True, axis="x", alpha=0.2)
 
         # Title
-        short = EXPERIMENT_SHORT_NAMES.get(experiment, experiment)
+        short = display_name(experiment)
         if fit is not None:
             s = fit.to_loss_surface()
             ax.set_title(
@@ -658,9 +598,7 @@ def plot_isoflop_curves(
     """
     setup_style()
 
-    experiments = [e for e in EXPERIMENT_ORDER if e in results] + sorted(
-        set(results) - set(EXPERIMENT_ORDER)
-    )
+    experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
     n_cols = 4
     n_rows_grid = (n_exp + n_cols - 1) // n_cols
@@ -813,7 +751,7 @@ def plot_isoflop_curves(
                     spike_lo = l_lo - 2 * l_range
                     spike_hi = l_hi + 2 * l_range
                     if l_spline.min() < spike_lo or l_spline.max() > spike_hi:
-                        short = EXPERIMENT_SHORT_NAMES.get(experiment, experiment)
+                        short = display_name(experiment)
                         raise RuntimeError(
                             f"Akima spike detected in {short}, "
                             f"budget={budget:.2e}: spline range "
@@ -859,7 +797,7 @@ def plot_isoflop_curves(
         ax.set_ylabel("Loss (nats)", fontsize=9)
         ax.grid(True, alpha=0.2)
 
-        short = EXPERIMENT_SHORT_NAMES.get(experiment, experiment)
+        short = display_name(experiment)
         if fit is not None:
             s = fit.to_loss_surface()
             ax.set_title(
@@ -972,9 +910,7 @@ def plot_flop_factors(
     """Plot per-budget FLOP factor k vs compute budget for each experiment."""
     setup_style()
 
-    experiments = [e for e in EXPERIMENT_ORDER if e in results] + sorted(
-        set(results) - set(EXPERIMENT_ORDER)
-    )
+    experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
     n_cols = 4
     n_rows = (n_exp + n_cols - 1) // n_cols
@@ -1002,7 +938,7 @@ def plot_flop_factors(
         ax.set_ylabel("k  (C = k·N·D)", fontsize=9)
         ax.grid(True, alpha=0.2)
 
-        short = EXPERIMENT_SHORT_NAMES.get(experiment, experiment)
+        short = display_name(experiment)
         if len(ks) > 0:
             ax.set_title(f"{short}\nmedian k = {np.median(ks):.3f}", fontsize=9)
         else:
@@ -1024,9 +960,7 @@ def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp12")
     df = pd.read_csv(ISOFLOPS_CSV)
     all_experiments = set(df["experiment"].unique())
-    experiments = [e for e in EXPERIMENT_ORDER if e in all_experiments] + sorted(
-        all_experiments - set(EXPERIMENT_ORDER)
-    )
+    experiments = ordered_experiments(all_experiments)
 
     # Pre-compute outlier detection (independent of fit method)
     print("Pre-fit outlier detection")
@@ -1110,39 +1044,12 @@ def main() -> None:
             method="approach3",
         )
 
-    # ── Akima predictions ──────────────────────────────────────────────
-    print(f"\n{'=' * 60}")
-    print("Akima predictions")
-    print(f"{'=' * 60}")
-
+    # ── Akima isoflop curves (no residual plot) ────────────────────
     results_akima: dict[str, dict] = {}
     for experiment in experiments:
         edf = experiment_edfs[experiment].copy()
-        clean = edf[~edf["outlier"]]
-
-        if len(clean) == 0:
-            print(f"\n  {experiment}: no clean points, skipping")
-            continue
-
-        predictions = _akima_loo_predictions(edf)
-        edf["residual"] = edf["loss"].to_numpy() - predictions
-
-        valid_clean = ~np.isnan(predictions) & ~edf["outlier"].to_numpy()
-        clean_resid = edf.loc[valid_clean, "residual"].to_numpy()
-        print(
-            f"\n  {experiment}"
-            f"\n    Residuals (clean): mean={clean_resid.mean():.6f}, "
-            f"std={clean_resid.std():.6f}"
-        )
-
-        results_akima[experiment] = {"df": edf}
-
-    plot_residual_distributions(
-        results_akima,
-        output_dir / "residuals_akima.png",
-        use_logloss=False,
-        title="Akima Residual Distributions by Compute Budget",
-    )
+        if (~edf["outlier"]).any():
+            results_akima[experiment] = {"df": edf}
 
     plot_isoflop_curves(
         results_akima,
