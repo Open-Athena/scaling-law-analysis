@@ -63,6 +63,8 @@ class OutlierReason(StrEnum):
     NEG_CURVATURE = "negative_curvature"
     WEAK_CURVATURE = "weak_curvature"
     SPLINE = "spline_outlier"
+    OFF_CENTER = "off_center"
+    TOO_FEW_POST_QC = "too_few_post_qc"
 
 
 class IsoFlopAnnotatedRecord(IsoFlopRecord):

@@ -190,6 +190,9 @@ NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binni
 # Confidence level for the curvature parameter CI.  Higher → wider CI → more
 # budgets flagged as having insignificant curvature.  Set to 0.0 to disable.
 CURVATURE_CI = 0.95
+# Fractional margin added to the off-center symmetric radius.  A value of 0.25
+# means a point can be up to 25% beyond the min half-distance and still be kept.
+OFF_CENTER_MARGIN = 0.50
 
 # Per-experiment overrides for outlier detection thresholds.
 # Keys: experiment name → dict with optional "min_budget_points" and/or "loo_zscore_threshold".
@@ -205,6 +208,7 @@ def detect_outliers(
     min_budget_points: int = MIN_BUDGET_POINTS,
     loo_zscore_threshold: float = LOO_ZSCORE_THRESHOLD,
     curvature_ci: float = CURVATURE_CI,
+    off_center_margin: float = OFF_CENTER_MARGIN,
 ) -> pd.DataFrame:
     """Pre-fit outlier detection. Adds ``outlier`` and ``reason`` columns.
 
@@ -215,6 +219,9 @@ def detect_outliers(
     Stage 2b — weak curvature: CI for quadratic coefficient includes zero at
                *curvature_ci* confidence level (0.0 to disable).
     Stage 3  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
+    Stage 4  — off-center: trim to symmetric window around parabola minimum,
+               with *off_center_margin* fractional slack (0.25 = 25% beyond).
+    Stage 5  — post-QC too-few-points recheck (must be last).
     """
     R = OutlierReason
 
@@ -365,6 +372,54 @@ def detect_outliers(
                 if z > loo_zscore_threshold:
                     edf.loc[ix, "outlier"] = True
                     edf.loc[ix, "reason"] = R.SPLINE
+
+    # Stage 4: off-center — trim to a symmetric window around the parabola
+    # minimum N*.  For each budget, fit a parabola to clean points in log-log
+    # space, find N*, then compute the log-distance from N* to the nearest
+    # clean point on each side.  The shorter side defines the symmetric radius;
+    # any clean points beyond that radius are flagged.  If all clean points
+    # fall on one side of N* (minimum is extrapolated), flag the entire budget.
+    surviving_budgets = [
+        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+    ]
+    for budget in surviving_budgets:
+        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
+        log_n = np.log(clean["params"].to_numpy())
+        log_l = np.log(clean["loss"].to_numpy())
+        if len(log_n) < 3:
+            continue
+        coeffs = np.polyfit(log_n, log_l, 2)
+        if coeffs[0] <= 0:
+            # No valid minimum (negative/zero curvature) — skip
+            continue
+        log_n_star = -coeffs[1] / (2 * coeffs[0])
+        left = log_n[log_n <= log_n_star]
+        right = log_n[log_n >= log_n_star]
+        if len(left) == 0 or len(right) == 0:
+            # All points on one side — flag entire budget
+            unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+            edf.loc[unflagged, "outlier"] = True
+            edf.loc[unflagged, "reason"] = R.OFF_CENTER
+            continue
+        # Symmetric radius = min distance from N* to the nearest edge,
+        # plus a fractional margin to allow slight overshoot.
+        radius = min(log_n_star - left.min(), right.max() - log_n_star)
+        radius *= 1.0 + off_center_margin
+        outside = (log_n < log_n_star - radius) | (log_n > log_n_star + radius)
+        if outside.any():
+            flag_idx = clean.index[outside]
+            edf.loc[flag_idx, "outlier"] = True
+            edf.loc[flag_idx, "reason"] = R.OFF_CENTER
+
+    # Stage 5: post-QC too-few-points recheck.  Earlier stages may have reduced
+    # surviving budgets below the minimum.  This MUST be the last stage so that
+    # it catches any budget left under-supported after all other filters.
+    for budget in budgets:
+        mask = (edf["budget"] == budget) & ~edf["outlier"]
+        if 0 < mask.sum() < min_budget_points:
+            unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+            edf.loc[unflagged, "outlier"] = True
+            edf.loc[unflagged, "reason"] = R.TOO_FEW_POST_QC
 
     # Invariant checks
     assert (

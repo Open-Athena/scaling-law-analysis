@@ -16,6 +16,48 @@ from scaling_law_analysis.data.transform import display_name, ordered_experiment
 
 OUTLIER_COLOR = "#d62728"
 
+R = OutlierReason
+
+# Canonical mapping from outlier reason to (marker, scatter kwargs).
+# Every non-NONE OutlierReason MUST have an entry here; the module-level
+# check below enforces this so new reasons can't be silently dropped.
+REASON_MARKER_MAP: dict[OutlierReason, tuple[str, dict]] = {
+    R.EXACT_DUP: ("s", dict(facecolors="none", edgecolors=OUTLIER_COLOR)),
+    R.DUP_PARAMS: ("+", dict(color=OUTLIER_COLOR)),
+    R.TOO_FEW: ("x", dict(color=OUTLIER_COLOR)),
+    R.NEG_CURVATURE: ("v", dict(facecolors="none", edgecolors=OUTLIER_COLOR)),
+    R.WEAK_CURVATURE: ("D", dict(facecolors="none", edgecolors=OUTLIER_COLOR)),
+    R.SPLINE: ("o", dict(facecolors="none", edgecolors=OUTLIER_COLOR)),
+    R.OFF_CENTER: ("<", dict(facecolors="none", edgecolors=OUTLIER_COLOR)),
+    R.TOO_FEW_POST_QC: ("x", dict(color=OUTLIER_COLOR)),
+}
+
+_EXPECTED_REASONS = {r for r in OutlierReason if r != R.NONE}
+_MAPPED_REASONS = set(REASON_MARKER_MAP.keys())
+if _EXPECTED_REASONS != _MAPPED_REASONS:
+    _missing = _EXPECTED_REASONS - _MAPPED_REASONS
+    _extra = _MAPPED_REASONS - _EXPECTED_REASONS
+    raise RuntimeError(
+        f"REASON_MARKER_MAP out of sync with OutlierReason: "
+        f"missing={_missing}, extra={_extra}"
+    )
+
+# Display labels for the legend, keyed by OutlierReason.
+REASON_LABELS: dict[OutlierReason, str] = {
+    R.EXACT_DUP: "Exact duplicate",
+    R.DUP_PARAMS: "Near-duplicate params",
+    R.TOO_FEW: "Too few points",
+    R.NEG_CURVATURE: "Negative curvature",
+    R.WEAK_CURVATURE: "Weak curvature",
+    R.SPLINE: "Spline outlier",
+    R.OFF_CENTER: "Off center",
+    R.TOO_FEW_POST_QC: "Too few (post-QC)",
+}
+
+if set(REASON_LABELS.keys()) != _EXPECTED_REASONS:
+    _missing = _EXPECTED_REASONS - set(REASON_LABELS.keys())
+    raise RuntimeError(f"REASON_LABELS missing entries: {_missing}")
+
 
 def setup_style() -> None:
     """Configure matplotlib for publication-quality figures."""
@@ -216,27 +258,7 @@ def plot_isoflops_akima(
                     edgecolors=color,
                 )
 
-            _reason_marker_map = {
-                R.EXACT_DUP: (
-                    "s",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                R.DUP_PARAMS: ("+", dict(color=OUTLIER_COLOR)),
-                R.TOO_FEW: ("x", dict(color=OUTLIER_COLOR)),
-                R.NEG_CURVATURE: (
-                    "v",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                R.WEAK_CURVATURE: (
-                    "D",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                R.SPLINE: (
-                    "o",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-            }
-            for reason, (marker, style) in _reason_marker_map.items():
+            for reason, (marker, style) in REASON_MARKER_MAP.items():
                 rmask = reasons == reason
                 if rmask.any():
                     ax.scatter(
@@ -331,7 +353,7 @@ def plot_isoflops_akima(
     for idx in range(n_exp, n_rows_grid * n_cols):
         axes[idx // n_cols, idx % n_cols].set_visible(False)
 
-    # Legend
+    # Legend — built from the shared REASON_MARKER_MAP / REASON_LABELS
     legend_handles = [
         Line2D(
             [],
@@ -343,64 +365,26 @@ def plot_isoflops_akima(
             markerfacecolor="grey",
             label="Clean",
         ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="s",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Exact duplicate",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="+",
-            linestyle="None",
-            markersize=7,
-            label="Near-duplicate params",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="x",
-            linestyle="None",
-            markersize=7,
-            label="Too few points",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="v",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Negative curvature",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="d",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Weak curvature",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="o",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Spline outlier",
-        ),
+    ]
+    for reason, (marker, style) in REASON_MARKER_MAP.items():
+        legend_handles.append(
+            Line2D(
+                [],
+                [],
+                color=style.get("color", OUTLIER_COLOR),
+                marker=marker,
+                linestyle="None",
+                markersize=7,
+                markerfacecolor=style.get(
+                    "facecolors", style.get("color", OUTLIER_COLOR)
+                ),
+                markeredgecolor=style.get(
+                    "edgecolors", style.get("color", OUTLIER_COLOR)
+                ),
+                label=REASON_LABELS[reason],
+            ),
+        )
+    legend_handles += [
         Line2D(
             [], [], color="grey", linestyle="--", linewidth=1.0, label="Parabolic fit"
         ),

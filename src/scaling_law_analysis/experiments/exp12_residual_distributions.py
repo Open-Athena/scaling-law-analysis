@@ -30,7 +30,12 @@ from scaling_law_analysis import config
 from scaling_law_analysis.data.common import ISOFLOPS_CSV
 from scaling_law_analysis.data.schema import OutlierReason
 from scaling_law_analysis.data.transform import display_name, ordered_experiments
-from scaling_law_analysis.data.visualize import OUTLIER_COLOR, setup_style
+from scaling_law_analysis.data.visualize import (
+    OUTLIER_COLOR,
+    REASON_LABELS,
+    REASON_MARKER_MAP,
+    setup_style,
+)
 from scaling_law_analysis.experiments.common import prepare_output_dir
 
 # ── Constants ────────────────────────────────────────────────────────────────
@@ -452,27 +457,7 @@ def plot_isoflop_curves(
                     edgecolors=color,
                 )
 
-            _reason_marker_map = {
-                OutlierReason.EXACT_DUP: (
-                    "s",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                OutlierReason.DUP_PARAMS: ("+", dict(color=OUTLIER_COLOR)),
-                OutlierReason.TOO_FEW: ("x", dict(color=OUTLIER_COLOR)),
-                OutlierReason.NEG_CURVATURE: (
-                    "v",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                OutlierReason.WEAK_CURVATURE: (
-                    "D",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-                OutlierReason.SPLINE: (
-                    "o",
-                    dict(facecolors="none", edgecolors=OUTLIER_COLOR),
-                ),
-            }
-            for reason, (marker, style) in _reason_marker_map.items():
+            for reason, (marker, style) in REASON_MARKER_MAP.items():
                 rmask = reasons == reason
                 if rmask.any():
                     ax.scatter(
@@ -577,7 +562,7 @@ def plot_isoflop_curves(
     for idx in range(n_exp, n_rows_grid * n_cols):
         axes[idx // n_cols, idx % n_cols].set_visible(False)
 
-    # Legend
+    # Legend — built from the shared REASON_MARKER_MAP / REASON_LABELS
     legend_handles = [
         Line2D(
             [],
@@ -589,64 +574,26 @@ def plot_isoflop_curves(
             markerfacecolor="grey",
             label="Clean",
         ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="s",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Exact duplicate",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="+",
-            linestyle="None",
-            markersize=7,
-            label="Near-duplicate params",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="x",
-            linestyle="None",
-            markersize=7,
-            label="Too few points",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="v",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Negative curvature",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="d",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Weak curvature",
-        ),
-        Line2D(
-            [],
-            [],
-            color=OUTLIER_COLOR,
-            marker="o",
-            linestyle="None",
-            markersize=7,
-            markerfacecolor="none",
-            label="Spline outlier",
-        ),
+    ]
+    for reason, (marker, style) in REASON_MARKER_MAP.items():
+        legend_handles.append(
+            Line2D(
+                [],
+                [],
+                color=style.get("color", OUTLIER_COLOR),
+                marker=marker,
+                linestyle="None",
+                markersize=7,
+                markerfacecolor=style.get(
+                    "facecolors", style.get("color", OUTLIER_COLOR)
+                ),
+                markeredgecolor=style.get(
+                    "edgecolors", style.get("color", OUTLIER_COLOR)
+                ),
+                label=REASON_LABELS[reason],
+            ),
+        )
+    legend_handles += [
         Line2D(
             [], [], color="grey", linestyle="--", linewidth=1.0, label="Parabolic fit"
         ),
@@ -743,6 +690,8 @@ def main() -> None:
             OutlierReason.NEG_CURVATURE,
             OutlierReason.WEAK_CURVATURE,
             OutlierReason.SPLINE,
+            OutlierReason.OFF_CENTER,
+            OutlierReason.TOO_FEW_POST_QC,
         ]:
             cnt = (edf["reason"] == reason).sum()
             if cnt > 0:
