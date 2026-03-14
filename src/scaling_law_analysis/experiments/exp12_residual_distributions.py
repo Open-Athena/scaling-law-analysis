@@ -20,11 +20,12 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
-from scipy.interpolate import Akima1DInterpolator, UnivariateSpline
+from scipy.interpolate import Akima1DInterpolator
 from scipy.stats import gaussian_kde, t as t_dist  # pyrefly: ignore
 
 from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
+    LossSurface,
     ParameterGrid,
     SurfaceFitResult,
     fit_approach3,
@@ -334,31 +335,26 @@ def _akima_loo_predictions(edf: pd.DataFrame) -> np.ndarray:
     return predictions.to_numpy()
 
 
-def _smooth_spline_fit(
-    log_n: np.ndarray,
-    loss: np.ndarray,
-    xvals: np.ndarray | None = None,
-) -> np.ndarray:
-    """Fit a smoothing spline in log(N) → loss space.
+def _flop_factor_predictions(
+    edf: pd.DataFrame, surface: LossSurface
+) -> tuple[np.ndarray, dict[float, float]]:
+    """Per-budget FLOP-factor (k) estimation (clean points only).
 
-    Parameters
-    ----------
-    log_n, loss : training data (must be sorted by log_n).
-    xvals : where to evaluate.  ``None`` → evaluate at *log_n* (for residuals).
+    Given a global fit ``L = E + A·N^(-α) + B·D^(-β)`` with ``D = C/(k·N)``,
+    estimates the per-budget k that best explains the data.  When k = 6 the
+    standard C ≈ 6ND assumption holds.
+
+    The substitution ``κ = k^β`` makes the problem linear:
+        ``min_κ  Σᵢ (Lᵢ - E - A·Nᵢ^(-α) - κ·B·Nᵢ^β/C^β)²``
+
+    Returns predictions array and a dict mapping budget → fitted k.
     """
-    spline = UnivariateSpline(log_n, loss, k=3, s=1.0)
-    if xvals is not None:
-        return np.asarray(spline(xvals))
-    return np.asarray(spline(log_n))
 
-
-def _smooth_spline_predictions(edf: pd.DataFrame) -> np.ndarray:
-    """Per-budget smoothing-spline predictions (clean points only).
-
-    Fits a smoothing spline in log(N) → loss space for each budget using only
-    clean points, then predicts at each clean point.  Non-clean points get NaN.
-    """
     predictions = pd.Series(np.nan, index=edf.index)
+    k_values: dict[float, float] = {}
+
+    E, A, B = surface.E, surface.A, surface.B
+    alpha, beta = surface.alpha, surface.beta
 
     for budget in edf["budget"].unique():
         bmask = edf["budget"] == budget
@@ -366,15 +362,33 @@ def _smooth_spline_predictions(edf: pd.DataFrame) -> np.ndarray:
         cmask = ~bdf["outlier"]
         cdf = bdf[cmask].sort_values("params")
 
-        if len(cdf) < 4:
+        if len(cdf) < 2:
             continue
 
-        log_n = np.log(cdf["params"].to_numpy())
-        loss = cdf["loss"].to_numpy()
+        N = cdf["params"].to_numpy()
+        L = cdf["loss"].to_numpy()
 
-        predictions.loc[cdf.index] = _smooth_spline_fit(log_n, loss)
+        # Residual after subtracting E and the param term
+        r = L - E - A * N ** (-alpha)
+        # Basis vector for the data term: g = B·N^β / C^β
+        g = B * N**beta / budget**beta
 
-    return predictions.to_numpy()
+        # OLS for κ = k^β:  κ = Σ(rᵢ·gᵢ) / Σ(gᵢ²)
+        kappa = float(np.dot(r, g) / np.dot(g, g))
+        if kappa <= 0:
+            raise ValueError(
+                f"Negative κ={kappa:.6f} for budget {budget:.2e}: "
+                f"the global fit cannot explain this budget's data term"
+            )
+        k = kappa ** (1 / beta)
+
+        k_values[budget] = k
+
+        # Predict with the fitted k: D = C/(k·N)
+        D = budget / (k * N)
+        predictions.loc[cdf.index] = surface.loss(N, D)  # pyrefly: ignore
+
+    return predictions.to_numpy(), k_values
 
 
 def _compute_residuals(
@@ -388,8 +402,7 @@ def _compute_residuals(
     ``to_loss_surface().loss()`` always returns predictions in natural scale
     (E + A/N^α + B/D^β) regardless of whether the fit used log-loss.
     """
-    surface = fit.to_loss_surface()
-    predicted = surface.E + surface.A / N**surface.alpha + surface.B / D**surface.beta
+    predicted = fit.to_loss_surface().loss(N, D)  # pyrefly: ignore
     return L - predicted
 
 
@@ -769,7 +782,7 @@ def plot_isoflop_curves(
                     200,
                 )
                 d_range = budget / (6 * n_range)
-                l_pred = s.E + s.A / n_range**s.alpha + s.B / d_range**s.beta
+                l_pred = s.loss(n_range, d_range)  # pyrefly: ignore
                 ax.plot(
                     n_range,
                     l_pred,
@@ -818,25 +831,27 @@ def plot_isoflop_curves(
                         alpha=0.8,
                         zorder=4,
                     )
-            elif method == "spline" and len(N_clean) >= 4:
-                order = np.argsort(N_clean)
-                log_n_sorted = np.log(N_clean[order])
-                l_sorted = L_clean[order]
-                n_sweep = np.linspace(
-                    log_n_sorted.min(),
-                    log_n_sorted.max(),
-                    200,
-                )
-                l_smooth = _smooth_spline_fit(log_n_sorted, l_sorted, xvals=n_sweep)
-                ax.plot(
-                    np.exp(n_sweep),
-                    l_smooth,
-                    color=color,
-                    linestyle="-",
-                    linewidth=1.2,
-                    alpha=0.8,
-                    zorder=4,
-                )
+            elif method == "flop_factor":
+                surface = results[experiment].get("surface")
+                k_values = results[experiment].get("k_values", {})
+                k = k_values.get(budget)
+                if surface is not None and k is not None and len(N_clean) >= 2:
+                    n_range = np.logspace(
+                        np.log10(N_clean.min()),
+                        np.log10(N_clean.max()),
+                        200,
+                    )
+                    d_range = budget / (k * n_range)
+                    l_pred = surface.loss(n_range, d_range)
+                    ax.plot(
+                        n_range,
+                        l_pred,
+                        color=color,
+                        linestyle="-",
+                        linewidth=1.2,
+                        alpha=0.8,
+                        zorder=4,
+                    )
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -950,6 +965,58 @@ def plot_isoflop_curves(
     print(f"Saved: {output_path}")
 
 
+def plot_flop_factors(
+    results: dict[str, dict],
+    output_path: Path,
+) -> None:
+    """Plot per-budget FLOP factor k vs compute budget for each experiment."""
+    setup_style()
+
+    experiments = [e for e in EXPERIMENT_ORDER if e in results] + sorted(
+        set(results) - set(EXPERIMENT_ORDER)
+    )
+    n_exp = len(experiments)
+    n_cols = 4
+    n_rows = (n_exp + n_cols - 1) // n_cols
+
+    fig, axes = plt.subplots(
+        n_rows,
+        n_cols,
+        figsize=(24, 5 * n_rows),
+        layout="constrained",
+    )
+    axes = np.atleast_2d(axes)
+
+    for idx, experiment in enumerate(experiments):
+        ax = axes[idx // n_cols, idx % n_cols]
+        k_values: dict[float, float] = results[experiment].get("k_values", {})
+
+        budgets = np.array(sorted(k_values.keys()))
+        ks = np.array([k_values[b] for b in budgets])
+
+        ax.plot(budgets, ks, "o-", color="steelblue", markersize=5, linewidth=1.2)
+        ax.axhline(6.0, color="grey", linestyle="--", linewidth=0.8, label="k = 6")
+
+        ax.set_xscale("log")
+        ax.set_xlabel("Compute budget C (FLOPs)", fontsize=9)
+        ax.set_ylabel("k  (C = k·N·D)", fontsize=9)
+        ax.grid(True, alpha=0.2)
+
+        short = EXPERIMENT_SHORT_NAMES.get(experiment, experiment)
+        if len(ks) > 0:
+            ax.set_title(f"{short}\nmedian k = {np.median(ks):.3f}", fontsize=9)
+        else:
+            ax.set_title(short, fontsize=9)
+
+    for idx in range(n_exp, n_rows * n_cols):
+        axes[idx // n_cols, idx % n_cols].set_visible(False)
+
+    fig.suptitle("Per-Budget FLOP Factor k (C = k·N·D)", fontsize=13)
+    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"Saved: {output_path}")
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────
 
 
@@ -986,6 +1053,7 @@ def main() -> None:
         experiment_edfs[experiment] = edf
 
     # ── Approach 3 fits (raw-loss and log-loss) ──────────────────────────
+    global_fits: dict[str, SurfaceFitResult] = {}  # from logloss=False
     for use_logloss in [False, True]:
         logloss_tag = "true" if use_logloss else "false"
         print(f"\n{'=' * 60}")
@@ -1025,6 +1093,8 @@ def main() -> None:
             )
 
             results[experiment] = {"fit": fit, "df": edf}
+            if not use_logloss:
+                global_fits[experiment] = fit
 
         plot_residual_distributions(
             results,
@@ -1081,45 +1151,57 @@ def main() -> None:
         method="akima",
     )
 
-    # ── Smoothing spline residuals ───────────────────────────────────
+    # ── Per-budget FLOP factor (k) estimation ──────────────────────
     print(f"\n{'=' * 60}")
-    print("Smoothing spline predictions")
+    print("Per-budget FLOP factor estimation (k in C = k·N·D)")
     print(f"{'=' * 60}")
 
-    results_spline: dict[str, dict] = {}
+    results_kfactor: dict[str, dict] = {}
     for experiment in experiments:
         edf = experiment_edfs[experiment].copy()
         clean = edf[~edf["outlier"]]
 
-        if len(clean) == 0:
-            print(f"\n  {experiment}: no clean points, skipping")
+        if len(clean) == 0 or experiment not in global_fits:
+            print(f"\n  {experiment}: no clean points or no global fit, skipping")
             continue
 
-        predictions = _smooth_spline_predictions(edf)
+        surface = global_fits[experiment].to_loss_surface()
+        predictions, k_values = _flop_factor_predictions(edf, surface)
         edf["residual"] = edf["loss"].to_numpy() - predictions
 
         valid_clean = ~np.isnan(predictions) & ~edf["outlier"].to_numpy()
         clean_resid = edf.loc[valid_clean, "residual"].to_numpy()
+        print(f"\n  {experiment}")
+        for budget in sorted(k_values):
+            print(f"    C={budget:.2e}: k={k_values[budget]:.4f}")
         print(
-            f"\n  {experiment}"
-            f"\n    Residuals (clean): mean={clean_resid.mean():.6f}, "
+            f"    Residuals (clean): mean={clean_resid.mean():.6f}, "
             f"std={clean_resid.std():.6f}"
         )
 
-        results_spline[experiment] = {"df": edf}
+        results_kfactor[experiment] = {
+            "df": edf,
+            "surface": surface,
+            "k_values": k_values,
+        }
 
     plot_residual_distributions(
-        results_spline,
-        output_dir / "residuals_spline.png",
+        results_kfactor,
+        output_dir / "residuals_flop_factor.png",
         use_logloss=False,
-        title="Smoothing Spline Residual Distributions by Compute Budget",
+        title="Per-Budget FLOP Factor Residuals (k in C = k·N·D)",
     )
 
     plot_isoflop_curves(
-        results_spline,
-        output_dir / "isoflops_spline.png",
-        title="IsoFLOP Curves — Smoothing Spline",
-        method="spline",
+        results_kfactor,
+        output_dir / "isoflops_flop_factor.png",
+        title="Per-Budget FLOP Factor Curves (k in C = k·N·D)",
+        method="flop_factor",
+    )
+
+    plot_flop_factors(
+        results_kfactor,
+        output_dir / "flop_factors.png",
     )
 
 
