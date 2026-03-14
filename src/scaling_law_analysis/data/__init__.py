@@ -10,7 +10,3 @@ Sources:
 Usage:
     uv run python -m scaling_law_analysis.data
 """
-
-from scaling_law_analysis import config
-
-DATA_DIR = config.PROJECT_ROOT / "data" / "isoflops"

@@ -11,7 +11,7 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from scaling_law_analysis.data import DATA_DIR
+from scaling_law_analysis.data.common import EXTRACT_DIR
 from scaling_law_analysis.data.transform import make_df
 
 # ── Shared helpers ───────────────────────────────────────────────────────────
@@ -414,7 +414,7 @@ def fetch_marin_202603() -> pd.DataFrame:
     After correction we validate that budget ≈ 6ND within 40%.
     """
     print("marin_202603: loading vendored CSVs ...")
-    raw_dir = DATA_DIR / "marin_202603" / "raw"
+    raw_dir = EXTRACT_DIR / "marin_202603" / "raw"
     dfs: list[pd.DataFrame] = []
     for csv_name, dataset, model in _MARIN_EXPERIMENTS:
         raw = pd.read_csv(raw_dir / csv_name)

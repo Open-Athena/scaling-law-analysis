@@ -2,56 +2,20 @@
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import Iterable
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, field_validator
+from scipy.interpolate import Akima1DInterpolator
+from scipy.stats import t as t_dist  # pyrefly: ignore
 
-# ── Schema ───────────────────────────────────────────────────────────────────
+from scaling_law_analysis.data.schema import (
+    UNIQUE_KEY,
+    IsoFlopRecord,
+    OutlierReason,
+)
 
-UNIQUE_KEY: list[str] = ["source", "experiment", "tokens", "params", "budget"]
-
-
-class IsoFlopRecord(BaseModel):
-    """Validated schema for a single isoflop data point."""
-
-    source: str
-    provenance: str
-    dataset: str
-    model: str
-    condition: str | None = None
-    experiment: str
-    tokens: float
-    params: float
-    budget: float
-    loss: float
-
-    @field_validator("tokens", "params", "budget", "loss")
-    @classmethod
-    def must_be_positive_finite(cls, v: float) -> float:
-        if not (v > 0 and np.isfinite(v)):
-            raise ValueError(f"must be positive and finite, got {v}")
-        return v
-
-    @field_validator("dataset", "model", "experiment", "condition")
-    @classmethod
-    def must_be_lowercase(cls, v: str | None) -> str | None:
-        if v is not None and v != v.lower():
-            raise ValueError(f"must be lowercase, got {v!r}")
-        return v
-
-    @field_validator("experiment")
-    @classmethod
-    def must_be_snake_case(cls, v: str) -> str:
-        if " " in v:
-            raise ValueError(f"experiment must be snake_case, got {v!r}")
-        if v.startswith(".") or v.endswith(".") or ".." in v:
-            raise ValueError(f"experiment has invalid dot placement, got {v!r}")
-        return v
-
-
-SCHEMA_COLS = list(IsoFlopRecord.model_fields.keys())
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -215,3 +179,191 @@ def fit_parabolas(
     print(f"  {n_valid}/{len(fits)} budgets have valid parabola fits")
 
     return fits
+
+
+# ── Pre-fit outlier detection ────────────────────────────────────────────────
+
+# Detection threshold constants
+MIN_BUDGET_POINTS = 6
+LOO_ZSCORE_THRESHOLD = 6.0
+NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binning
+# Confidence level for the curvature parameter CI.  Higher → wider CI → more
+# budgets flagged as having insignificant curvature.  Set to 0.0 to disable.
+CURVATURE_CI = 0.95
+
+# Per-experiment overrides for outlier detection thresholds.
+# Keys: experiment name → dict with optional "min_budget_points" and/or "loo_zscore_threshold".
+EXPERIMENT_OVERRIDES: dict[str, dict] = {
+    # Effectively disables LOO spline outlier detection for misfitting.
+    "misfitting__fineweb_c4__transformer": {"loo_zscore_threshold": 100.0},
+}
+
+
+def detect_outliers(
+    edf: pd.DataFrame,
+    *,
+    min_budget_points: int = MIN_BUDGET_POINTS,
+    loo_zscore_threshold: float = LOO_ZSCORE_THRESHOLD,
+    curvature_ci: float = CURVATURE_CI,
+) -> pd.DataFrame:
+    """Pre-fit outlier detection. Adds ``outlier`` and ``reason`` columns.
+
+    Stage 0a — exact duplicate params: keep point closest to nominal budget.
+    Stage 0b — near-duplicate params: same, within log(N) tolerance.
+    Stage 1  — too few points: budgets with < *min_budget_points* are flagged.
+    Stage 2a — negative curvature: quadratic fit log(L) ~ log(N)^2 with a <= 0.
+    Stage 2b — weak curvature: CI for quadratic coefficient includes zero at
+               *curvature_ci* confidence level (0.0 to disable).
+    Stage 3  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
+    """
+    R = OutlierReason
+
+    edf = edf.copy()
+    edf["outlier"] = pd.Series(False, index=edf.index, dtype=bool)
+    edf["reason"] = R.NONE
+
+    budgets = edf["budget"].unique()
+
+    # Stage 0a: exact duplicate params within a budget — keep the point whose
+    # implied compute (6·N·D) is closest to the nominal budget, ties by loss.
+    for budget in budgets:
+        mask = edf["budget"] == budget
+        bdf = edf.loc[mask]
+        dup_mask = bdf.duplicated(subset="params", keep=False)
+        if dup_mask.any():
+            for _, grp in bdf[dup_mask].groupby("params"):
+                implied_c = 6 * grp["params"] * grp["tokens"]
+                c_err = (implied_c - budget).abs()
+                keep_idx = (
+                    grp.assign(_c_err=c_err).sort_values(["_c_err", "loss"]).index[0]
+                )
+                flag_idx = grp.index.difference([keep_idx])
+                edf.loc[flag_idx, "outlier"] = True
+                edf.loc[flag_idx, "reason"] = R.EXACT_DUP
+
+    # Stage 0b: near-duplicate params within a budget — keep the point whose
+    # implied compute (6·N·D) is closest to the nominal budget.  Ties broken
+    # by lowest loss.  Two points are "near-duplicates" if their log(N) values
+    # differ by less than NEAR_DUP_LOG_TOL.  Only considers unflagged rows.
+    for budget in budgets:
+        mask = (edf["budget"] == budget) & ~edf["outlier"]
+        bdf = edf.loc[mask].sort_values("params")
+        log_n = np.log(bdf["params"].to_numpy())
+        indices = bdf.index.tolist()
+        # Greedy binning: walk sorted log(N), start a new bin when gap > tol
+        bins: list[list[int]] = []
+        current_bin: list[int] = [0]
+        for i in range(1, len(log_n)):
+            if log_n[i] - log_n[current_bin[0]] <= NEAR_DUP_LOG_TOL:
+                current_bin.append(i)
+            else:
+                bins.append(current_bin)
+                current_bin = [i]
+        bins.append(current_bin)
+        for b in bins:
+            if len(b) < 2:
+                continue
+            grp_idx = [indices[i] for i in b]
+            grp = edf.loc[grp_idx]
+            implied_c = 6 * grp["params"] * grp["tokens"]
+            c_err = (implied_c - budget).abs()
+            # Keep the point closest to nominal budget; break ties by loss
+            keep_idx = grp.assign(_c_err=c_err).sort_values(["_c_err", "loss"]).index[0]
+            flag_idx = [ix for ix in grp_idx if ix != keep_idx]
+            edf.loc[flag_idx, "outlier"] = True
+            edf.loc[flag_idx, "reason"] = R.DUP_PARAMS
+
+    # Stage 1: too few clean points
+    for budget in budgets:
+        mask = (edf["budget"] == budget) & ~edf["outlier"]
+        if mask.sum() < min_budget_points:
+            budget_mask = edf["budget"] == budget
+            # Only flag rows not already flagged by an earlier stage
+            unflagged = budget_mask & ~edf["outlier"]
+            edf.loc[unflagged, "outlier"] = True
+            edf.loc[unflagged, "reason"] = R.TOO_FEW
+
+    # Stage 2a: negative curvature (only clean rows in surviving budgets)
+    surviving_budgets = [
+        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+    ]
+    for budget in surviving_budgets:
+        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
+        log_n = np.log(clean["params"].to_numpy())
+        log_l = np.log(clean["loss"].to_numpy())
+        if len(log_n) >= 3:
+            coeffs = np.polyfit(log_n, log_l, 2)
+            if coeffs[0] <= 0:
+                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+                edf.loc[unflagged, "outlier"] = True
+                edf.loc[unflagged, "reason"] = R.NEG_CURVATURE
+
+    # Stage 2b: weak curvature — CI for the quadratic coefficient `a` includes
+    # zero at the requested confidence level.  The point estimate â may be
+    # positive (passed stage 2a) but statistically indistinguishable from zero,
+    # meaning the isoflop curve is too flat to reliably locate an optimum.
+    # Skipped when curvature_ci <= 0.
+    if curvature_ci > 0:
+        surviving_budgets = [
+            b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+        ]
+        for budget in surviving_budgets:
+            clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
+            log_n = np.log(clean["params"].to_numpy())
+            log_l = np.log(clean["loss"].to_numpy())
+            n_pts = len(log_n)
+            if n_pts < 4:
+                # Need at least 4 points for df = n-3 >= 1
+                continue
+            coeffs, cov = np.polyfit(log_n, log_l, 2, cov=True)
+            a_hat = coeffs[0]
+            if a_hat <= 0:
+                # Already caught by stage 2a
+                continue
+            se_a = float(np.sqrt(cov[0, 0]))
+            df = n_pts - 3
+            t_crit = float(t_dist.ppf((1 + curvature_ci) / 2, df))
+            ci_lower = a_hat - t_crit * se_a
+            if ci_lower <= 0:
+                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+                edf.loc[unflagged, "outlier"] = True
+                edf.loc[unflagged, "reason"] = R.WEAK_CURVATURE
+
+    # Stage 3: Akima LOO (only clean rows in surviving budgets)
+    surviving_budgets = [
+        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+    ]
+    # Collect LOO residuals for all surviving (clean) points
+    loo_residuals: dict[int, float] = {}  # index -> residual
+    for budget in surviving_budgets:
+        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]].sort_values(
+            "params"
+        )
+        log_n = np.log(clean["params"].to_numpy())
+        loss = clean["loss"].to_numpy()
+        indices = clean.index.tolist()
+        for i in range(len(indices)):
+            rest = np.delete(np.arange(len(indices)), i)
+            if len(rest) < 2:
+                continue
+            log_n_rest = log_n[rest]
+            l_rest = loss[rest]
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                interp = Akima1DInterpolator(log_n_rest, l_rest)
+                interp.extrapolate = True
+            predicted = float(interp(log_n[i], extrapolate=True))
+            loo_residuals[indices[i]] = loss[i] - predicted
+
+    if loo_residuals:
+        resid_arr = np.array(list(loo_residuals.values()))
+        med = np.median(resid_arr)
+        mad = np.median(np.abs(resid_arr - med))
+        if mad > 0:
+            for ix, r in loo_residuals.items():
+                z = 0.6745 * abs(r - med) / mad
+                if z > loo_zscore_threshold:
+                    edf.loc[ix, "outlier"] = True
+                    edf.loc[ix, "reason"] = R.SPLINE
+
+    return edf

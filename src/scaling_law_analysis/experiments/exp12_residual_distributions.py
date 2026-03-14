@@ -2,9 +2,8 @@
 
 Fits Approach 3 (with and without log-loss) to each experiment in the unified
 isoFLOP dataset, then visualises per-budget residual distributions as layered
-rug + boxplot + KDE plots.  Outliers are detected *before* fitting using a
-three-stage pipeline: minimum-budget-size, negative-curvature, and Akima
-leave-one-out spline checks.
+rug + boxplot + KDE plots.  Outliers are pre-computed in the data pipeline
+(``scaling_law_analysis.data``).
 
 Usage:
     uv run python -m scaling_law_analysis.experiments.exp12_residual_distributions
@@ -12,7 +11,6 @@ Usage:
 
 from __future__ import annotations
 
-import warnings
 from pathlib import Path
 
 import matplotlib.colors as mcolors
@@ -20,23 +18,22 @@ import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
 import numpy as np
 import pandas as pd
-from scipy.interpolate import Akima1DInterpolator
-from scipy.stats import gaussian_kde, t as t_dist  # pyrefly: ignore
+from scipy.stats import gaussian_kde  # pyrefly: ignore
 
-from scaling_law_analysis import config
 from scaling_law_analysis.chinchilla import (
     LossSurface,
     ParameterGrid,
     SurfaceFitResult,
     fit_approach3,
 )
+from scaling_law_analysis import config
+from scaling_law_analysis.data.common import ISOFLOPS_CSV
+from scaling_law_analysis.data.schema import OutlierReason
 from scaling_law_analysis.data.transform import display_name, ordered_experiments
+from scaling_law_analysis.data.visualize import OUTLIER_COLOR, setup_style
 from scaling_law_analysis.experiments.common import prepare_output_dir
-from scaling_law_analysis.experiments.exp10_compounding_errors import setup_style
 
 # ── Constants ────────────────────────────────────────────────────────────────
-
-ISOFLOPS_CSV = config.PROJECT_ROOT / "data" / "isoflops" / "isoflops.csv"
 
 RESIDUAL_FIT_GRID = ParameterGrid(
     E=np.linspace(0.1, 5.0, 8),
@@ -46,204 +43,11 @@ RESIDUAL_FIT_GRID = ParameterGrid(
     beta=np.linspace(0.05, 0.95, 8),
 )
 
-# Pre-fit outlier detection constants.
-MIN_BUDGET_POINTS = 6
-LOO_ZSCORE_THRESHOLD = 6.0
-NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binning
-# Confidence level for the curvature parameter CI.  Higher → wider CI → more
-# budgets flagged as having insignificant curvature.  Set to 0.0 to disable.
-CURVATURE_CI = 0.95
-
-REASON_NONE = ""
-REASON_EXACT_DUP = "exact_duplicate"
-REASON_DUP_PARAMS = "near_duplicate_params"
-REASON_TOO_FEW = "too_few_points"
-REASON_NEG_CURVATURE = "negative_curvature"
-REASON_WEAK_CURVATURE = "weak_curvature"
-REASON_SPLINE = "spline_outlier"
-
 # Minimum points required to draw a KDE.
 MIN_KDE_POINTS = 5
 
-OUTLIER_COLOR = "#d62728"
-
-# Per-experiment overrides for outlier detection thresholds.
-# Keys: experiment name → dict with optional "min_budget_points" and/or "loo_zscore_threshold".
-EXPERIMENT_OVERRIDES: dict[str, dict] = {
-    # Effectively disables LOO spline outlier detection for misfitting.
-    "misfitting__fineweb_c4__transformer": {"loo_zscore_threshold": 100.0},
-}
-
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
-
-
-def detect_outliers(
-    edf: pd.DataFrame,
-    *,
-    min_budget_points: int = MIN_BUDGET_POINTS,
-    loo_zscore_threshold: float = LOO_ZSCORE_THRESHOLD,
-    curvature_ci: float = CURVATURE_CI,
-) -> pd.DataFrame:
-    """Pre-fit outlier detection. Adds ``outlier`` and ``reason`` columns.
-
-    Stage 0a — exact duplicate params: keep point closest to nominal budget.
-    Stage 0b — near-duplicate params: same, within log(N) tolerance.
-    Stage 1  — too few points: budgets with < *min_budget_points* are flagged.
-    Stage 2a — negative curvature: quadratic fit log(L) ~ log(N)^2 with a <= 0.
-    Stage 2b — weak curvature: CI for quadratic coefficient includes zero at
-               *curvature_ci* confidence level (0.0 to disable).
-    Stage 3  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
-    """
-    edf = edf.copy()
-    edf["outlier"] = pd.Series(False, index=edf.index, dtype=bool)
-    edf["reason"] = REASON_NONE
-
-    budgets = edf["budget"].unique()
-
-    # Stage 0a: exact duplicate params within a budget — keep the point whose
-    # implied compute (6·N·D) is closest to the nominal budget, ties by loss.
-    for budget in budgets:
-        mask = edf["budget"] == budget
-        bdf = edf.loc[mask]
-        dup_mask = bdf.duplicated(subset="params", keep=False)
-        if dup_mask.any():
-            for _, grp in bdf[dup_mask].groupby("params"):
-                implied_c = 6 * grp["params"] * grp["tokens"]
-                c_err = (implied_c - budget).abs()
-                keep_idx = (
-                    grp.assign(_c_err=c_err).sort_values(["_c_err", "loss"]).index[0]
-                )
-                flag_idx = grp.index.difference([keep_idx])
-                edf.loc[flag_idx, "outlier"] = True
-                edf.loc[flag_idx, "reason"] = REASON_EXACT_DUP
-
-    # Stage 0b: near-duplicate params within a budget — keep the point whose
-    # implied compute (6·N·D) is closest to the nominal budget.  Ties broken
-    # by lowest loss.  Two points are "near-duplicates" if their log(N) values
-    # differ by less than NEAR_DUP_LOG_TOL.  Only considers unflagged rows.
-    for budget in budgets:
-        mask = (edf["budget"] == budget) & ~edf["outlier"]
-        bdf = edf.loc[mask].sort_values("params")
-        log_n = np.log(bdf["params"].to_numpy())
-        indices = bdf.index.tolist()
-        # Greedy binning: walk sorted log(N), start a new bin when gap > tol
-        bins: list[list[int]] = []
-        current_bin: list[int] = [0]
-        for i in range(1, len(log_n)):
-            if log_n[i] - log_n[current_bin[0]] <= NEAR_DUP_LOG_TOL:
-                current_bin.append(i)
-            else:
-                bins.append(current_bin)
-                current_bin = [i]
-        bins.append(current_bin)
-        for b in bins:
-            if len(b) < 2:
-                continue
-            grp_idx = [indices[i] for i in b]
-            grp = edf.loc[grp_idx]
-            implied_c = 6 * grp["params"] * grp["tokens"]
-            c_err = (implied_c - budget).abs()
-            # Keep the point closest to nominal budget; break ties by loss
-            keep_idx = grp.assign(_c_err=c_err).sort_values(["_c_err", "loss"]).index[0]
-            flag_idx = [ix for ix in grp_idx if ix != keep_idx]
-            edf.loc[flag_idx, "outlier"] = True
-            edf.loc[flag_idx, "reason"] = REASON_DUP_PARAMS
-
-    # Stage 1: too few clean points
-    for budget in budgets:
-        mask = (edf["budget"] == budget) & ~edf["outlier"]
-        if mask.sum() < min_budget_points:
-            budget_mask = edf["budget"] == budget
-            # Only flag rows not already flagged by an earlier stage
-            unflagged = budget_mask & ~edf["outlier"]
-            edf.loc[unflagged, "outlier"] = True
-            edf.loc[unflagged, "reason"] = REASON_TOO_FEW
-
-    # Stage 2a: negative curvature (only clean rows in surviving budgets)
-    surviving_budgets = [
-        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
-    ]
-    for budget in surviving_budgets:
-        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
-        log_n = np.log(clean["params"].to_numpy())
-        log_l = np.log(clean["loss"].to_numpy())
-        if len(log_n) >= 3:
-            coeffs = np.polyfit(log_n, log_l, 2)
-            if coeffs[0] <= 0:
-                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
-                edf.loc[unflagged, "outlier"] = True
-                edf.loc[unflagged, "reason"] = REASON_NEG_CURVATURE
-
-    # Stage 2b: weak curvature — CI for the quadratic coefficient `a` includes
-    # zero at the requested confidence level.  The point estimate â may be
-    # positive (passed stage 2a) but statistically indistinguishable from zero,
-    # meaning the isoflop curve is too flat to reliably locate an optimum.
-    # Skipped when curvature_ci <= 0.
-    if curvature_ci > 0:
-        surviving_budgets = [
-            b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
-        ]
-        for budget in surviving_budgets:
-            clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
-            log_n = np.log(clean["params"].to_numpy())
-            log_l = np.log(clean["loss"].to_numpy())
-            n_pts = len(log_n)
-            if n_pts < 4:
-                # Need at least 4 points for df = n-3 >= 1
-                continue
-            coeffs, cov = np.polyfit(log_n, log_l, 2, cov=True)
-            a_hat = coeffs[0]
-            if a_hat <= 0:
-                # Already caught by stage 2a
-                continue
-            se_a = float(np.sqrt(cov[0, 0]))
-            df = n_pts - 3
-            t_crit = float(t_dist.ppf((1 + curvature_ci) / 2, df))
-            ci_lower = a_hat - t_crit * se_a
-            if ci_lower <= 0:
-                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
-                edf.loc[unflagged, "outlier"] = True
-                edf.loc[unflagged, "reason"] = REASON_WEAK_CURVATURE
-
-    # Stage 3: Akima LOO (only clean rows in surviving budgets)
-    surviving_budgets = [
-        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
-    ]
-    # Collect LOO residuals for all surviving (clean) points
-    loo_residuals: dict[int, float] = {}  # index -> residual
-    for budget in surviving_budgets:
-        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]].sort_values(
-            "params"
-        )
-        log_n = np.log(clean["params"].to_numpy())
-        loss = clean["loss"].to_numpy()
-        indices = clean.index.tolist()
-        for i in range(len(indices)):
-            rest = np.delete(np.arange(len(indices)), i)
-            if len(rest) < 2:
-                continue
-            log_n_rest = log_n[rest]
-            l_rest = loss[rest]
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                interp = Akima1DInterpolator(log_n_rest, l_rest)
-                interp.extrapolate = True
-            predicted = float(interp(log_n[i], extrapolate=True))
-            loo_residuals[indices[i]] = loss[i] - predicted
-
-    if loo_residuals:
-        resid_arr = np.array(list(loo_residuals.values()))
-        med = np.median(resid_arr)
-        mad = np.median(np.abs(resid_arr - med))
-        if mad > 0:
-            for ix, r in loo_residuals.items():
-                z = 0.6745 * abs(r - med) / mad
-                if z > loo_zscore_threshold:
-                    edf.loc[ix, "outlier"] = True
-                    edf.loc[ix, "reason"] = REASON_SPLINE
-
-    return edf
 
 
 def _fmt_budget(budget: float) -> str:
@@ -361,7 +165,7 @@ def _draw_budget_row(
     """Draw rug + boxplot + KDE for one compute-budget row (clean points only)."""
     clean = residuals
 
-    # ── Rug (bottom slice of the row) ────────────────────────────────────
+    # ── Rug (bottom slice of the row) ────────────────────────────────
     rug_y = y - 0.30 * row_height
     rug_h = 0.12 * row_height
 
@@ -376,7 +180,7 @@ def _draw_budget_row(
             zorder=1,
         )
 
-    # ── Boxplot (middle slice) ───────────────────────────────────────────
+    # ── Boxplot (middle slice) ───────────────────────────────────────
     if len(clean) >= 2:
         q1, med, q3 = np.percentile(clean, [25, 50, 75])
         iqr = q3 - q1
@@ -421,7 +225,7 @@ def _draw_budget_row(
             zorder=4,
         )
 
-    # ── KDE (top slice) — clean points only ──────────────────────────────
+    # ── KDE (top slice) — clean points only ──────────────────────────
     if len(clean) >= MIN_KDE_POINTS:
         try:
             kde = gaussian_kde(clean, bw_method="silverman")
@@ -487,7 +291,7 @@ def plot_residual_distributions(
         all_colors = cmap(np.linspace(0.15, 0.85, n_all_budgets))
 
         # Only draw rows for budgets that have at least one clean point
-        clean_edf = edf[edf["reason"] == REASON_NONE]
+        clean_edf = edf[edf["reason"] == OutlierReason.NONE]
         drawn_budgets: list[tuple[float, str]] = []  # (budget, hex color)
         for bi, budget in enumerate(all_budgets):
             if (clean_edf["budget"] == budget).any():
@@ -594,7 +398,7 @@ def plot_isoflop_curves(
 
     Parameters
     ----------
-    method : ``"approach3"`` or ``"akima"``
+    method : ``"approach3"`` or ``"flop_factor"``
     """
     setup_style()
 
@@ -631,7 +435,7 @@ def plot_isoflop_curves(
             L = bdf["loss"].to_numpy()
             reasons = bdf["reason"].to_numpy()
 
-            clean_mask = reasons == REASON_NONE
+            clean_mask = reasons == OutlierReason.NONE
             N_clean = N[clean_mask]
             L_clean = L[clean_mask]
 
@@ -649,21 +453,21 @@ def plot_isoflop_curves(
                 )
 
             _reason_marker_map = {
-                REASON_EXACT_DUP: (
+                OutlierReason.EXACT_DUP: (
                     "s",
                     dict(facecolors="none", edgecolors=OUTLIER_COLOR),
                 ),
-                REASON_DUP_PARAMS: ("+", dict(color=OUTLIER_COLOR)),
-                REASON_TOO_FEW: ("x", dict(color=OUTLIER_COLOR)),
-                REASON_NEG_CURVATURE: (
+                OutlierReason.DUP_PARAMS: ("+", dict(color=OUTLIER_COLOR)),
+                OutlierReason.TOO_FEW: ("x", dict(color=OUTLIER_COLOR)),
+                OutlierReason.NEG_CURVATURE: (
                     "v",
                     dict(facecolors="none", edgecolors=OUTLIER_COLOR),
                 ),
-                REASON_WEAK_CURVATURE: (
+                OutlierReason.WEAK_CURVATURE: (
                     "D",
                     dict(facecolors="none", edgecolors=OUTLIER_COLOR),
                 ),
-                REASON_SPLINE: (
+                OutlierReason.SPLINE: (
                     "o",
                     dict(facecolors="none", edgecolors=OUTLIER_COLOR),
                 ),
@@ -730,45 +534,6 @@ def plot_isoflop_curves(
                     alpha=0.8,
                     zorder=4,
                 )
-            elif method == "akima" and len(N_clean) >= 2:
-                order = np.argsort(N_clean)
-                log_n_sorted = np.log(N_clean[order])
-                l_sorted = L_clean[order]
-                if len(np.unique(log_n_sorted)) == len(log_n_sorted):
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore")
-                        interp = Akima1DInterpolator(log_n_sorted, l_sorted)
-                    n_sweep = np.linspace(
-                        log_n_sorted.min(),
-                        log_n_sorted.max(),
-                        200,
-                    )
-                    l_spline = interp(n_sweep)
-                    # Detect spikes: spline should stay within a
-                    # reasonable multiple of the data range
-                    l_lo, l_hi = L_clean.min(), L_clean.max()
-                    l_range = l_hi - l_lo if l_hi > l_lo else l_hi
-                    spike_lo = l_lo - 2 * l_range
-                    spike_hi = l_hi + 2 * l_range
-                    if l_spline.min() < spike_lo or l_spline.max() > spike_hi:
-                        short = display_name(experiment)
-                        raise RuntimeError(
-                            f"Akima spike detected in {short}, "
-                            f"budget={budget:.2e}: spline range "
-                            f"[{l_spline.min():.4f}, {l_spline.max():.4f}] "
-                            f"exceeds data range "
-                            f"[{l_lo:.4f}, {l_hi:.4f}] by >2x. "
-                            f"Near-duplicate params likely survived binning."
-                        )
-                    ax.plot(
-                        np.exp(n_sweep),
-                        l_spline,
-                        color=color,
-                        linestyle="-",
-                        linewidth=1.2,
-                        alpha=0.8,
-                        zorder=4,
-                    )
             elif method == "flop_factor":
                 surface = results[experiment].get("surface")
                 k_values = results[experiment].get("k_values", {})
@@ -959,26 +724,25 @@ def plot_flop_factors(
 def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp12")
     df = pd.read_csv(ISOFLOPS_CSV)
+    df["reason"] = df["reason"].fillna(OutlierReason.NONE)
     all_experiments = set(df["experiment"].unique())
     experiments = ordered_experiments(all_experiments)
 
-    # Pre-compute outlier detection (independent of fit method)
-    print("Pre-fit outlier detection")
+    # Outlier columns are pre-computed by the data pipeline
+    print("Using pre-computed outlier annotations from data pipeline")
     print("=" * 60)
     experiment_edfs: dict[str, pd.DataFrame] = {}
     for experiment in experiments:
         edf = df[df["experiment"] == experiment].copy()
-        overrides = EXPERIMENT_OVERRIDES.get(experiment, {})
-        edf = detect_outliers(edf, **overrides)
         clean = edf[~edf["outlier"]]
         print(f"\n  {experiment} ({len(edf)} points)")
         for reason in [
-            REASON_EXACT_DUP,
-            REASON_DUP_PARAMS,
-            REASON_TOO_FEW,
-            REASON_NEG_CURVATURE,
-            REASON_WEAK_CURVATURE,
-            REASON_SPLINE,
+            OutlierReason.EXACT_DUP,
+            OutlierReason.DUP_PARAMS,
+            OutlierReason.TOO_FEW,
+            OutlierReason.NEG_CURVATURE,
+            OutlierReason.WEAK_CURVATURE,
+            OutlierReason.SPLINE,
         ]:
             cnt = (edf["reason"] == reason).sum()
             if cnt > 0:
@@ -1043,20 +807,6 @@ def main() -> None:
             title=f"IsoFLOP Curves — Approach 3 ({logloss_label})",
             method="approach3",
         )
-
-    # ── Akima isoflop curves (no residual plot) ────────────────────
-    results_akima: dict[str, dict] = {}
-    for experiment in experiments:
-        edf = experiment_edfs[experiment].copy()
-        if (~edf["outlier"]).any():
-            results_akima[experiment] = {"df": edf}
-
-    plot_isoflop_curves(
-        results_akima,
-        output_dir / "isoflops_akima.png",
-        title="IsoFLOP Curves — Akima",
-        method="akima",
-    )
 
     # ── Per-budget FLOP factor (k) estimation ──────────────────────
     print(f"\n{'=' * 60}")
