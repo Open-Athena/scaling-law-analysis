@@ -370,12 +370,12 @@ def plot_progressive_filter(
 
     # $ annotations to the right of Approach 2 dots
     for idx, (pct, dollars) in enumerate(zip(dcl_pcts, dcl_dollars)):
-        if pct < 1.0:
-            # Near-zero DCL: place to the left of the Approach 3 line
+        if results[idx].label == "+Weak Curvature" and pct < 1.0:
+            # Place to the left of the Approach 3 line
             x_off, y_off, ha = -6, 4, "right"
         elif results[idx].label == "+Off Center":
             # Shift down to avoid overlap with neighboring annotations
-            x_off, y_off, ha = 6, -8, "left"
+            x_off, y_off, ha = 6, -2, "left"
         else:
             x_off, y_off, ha = 6, 4, "left"
         ax_bar.annotate(
@@ -559,7 +559,16 @@ def plot_progressive_filter(
         zorder=3,
     )
 
-    fig.suptitle(title, fontsize=12)
+    if show_convergence_annotation:
+        fig.suptitle(title, fontsize=12)
+    else:
+        eval_exp = int(np.floor(np.log10(eval_budget)))
+        eval_mantissa = eval_budget / 10**eval_exp
+        eval_latex = rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$"
+        fig.suptitle(
+            f"{title}\n(Extrapolated to {eval_latex} FLOPs)",
+            fontsize=12,
+        )
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {output_path}")
@@ -574,15 +583,15 @@ def _flops_to_dollars(flops: float) -> float:
 
 
 def _fmt_dollars_2dp(dollars: float) -> str:
-    """Format a dollar amount with 0 decimal places for table display."""
+    """Format a dollar amount with 1 decimal place for table display."""
     v = abs(dollars)
     if v >= 1e6:
-        return f"${v / 1e6:.0f}M"
+        return f"${v / 1e6:.1f}M"
     if v >= 1e3:
-        return f"${v / 1e3:.0f}K"
+        return f"${v / 1e3:.1f}K"
     if v >= 1:
-        return f"${v:.0f}"
-    return f"${v:.0f}"
+        return f"${v:.1f}"
+    return f"${v:.1f}"
 
 
 # ── Configuration ────────────────────────────────────────────────────────────
