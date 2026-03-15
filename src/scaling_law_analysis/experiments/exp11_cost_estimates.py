@@ -291,7 +291,7 @@ def plot_progressive_filter(
     dcl_dollars = [_flops_to_dollars(r.dcl_flops) for r in results]
     dcl_pcts = [r.dcl_flops / eval_budget * 100 for r in results]
 
-    fig_height = max(0.5 * n_rows + 1.5, 4.5)
+    fig_height = max(0.45 * n_rows + 1.2, 3.5)
     fig, (ax_bar, ax_tbl) = plt.subplots(
         1,
         2,
@@ -1159,7 +1159,7 @@ def main() -> None:
     plot_progressive_filter(
         a3_results,
         output_dir / "progressive_filter_a3.png",
-        "DCL: Approach 2 vs Approach 3 \u2014 Progressive Filtering (Llama 3, raw nats)",
+        "Deadweight Compute Loss: Approach 2 vs Approach 3 Progressive Filtering (Llama 3)",
         LLAMA3_405B_FLOPS,
     )
 
@@ -1173,7 +1173,7 @@ def main() -> None:
     plot_progressive_filter(
         vpnls_results,
         output_dir / "progressive_filter_vpnls.png",
-        "DCL: Approach 2 vs VPNLS — Progressive Filtering (Llama 3, raw nats)",
+        "Deadweight Compute Loss: Approach 2 vs VPNLS Progressive Filtering (Llama 3)",
         LLAMA3_405B_FLOPS,
     )
 
