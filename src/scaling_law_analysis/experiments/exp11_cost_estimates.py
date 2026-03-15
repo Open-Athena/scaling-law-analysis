@@ -96,9 +96,6 @@ CHINCHILLA_MODEL = IsoFlopModelConfig(
 )
 
 
-FILTER_OUTLIERS = False
-
-
 def _load_isoflop_data(
     experiment: str,
     filter_outliers: bool = False,
@@ -228,15 +225,14 @@ class _FilterLevel:
 def _progressive_filter_dcl(
     surface: LossSurface,
     eval_budget: float,
-    experiment: str,
+    edf: pd.DataFrame,
 ) -> list[_FilterLevel]:
     """Compute DCL and data statistics at each cumulative filter level.
 
     *surface* is the ground-truth surface (A3 or VPNLS, fit on raw data).
+    *edf* is the experiment's rows from the isoflops CSV.
     Returns list of _FilterLevel starting with "Raw" (no filter).
     """
-    df = pd.read_csv(ISOFLOPS_CSV)
-    edf = df[df["experiment"] == experiment].copy()
 
     results: list[_FilterLevel] = []
     total_pts = len(edf)
@@ -456,7 +452,7 @@ def plot_progressive_filter(
                 delta_bdg,
                 str(r.budgets_remaining),
                 f"{dcl_pcts[i]:.2f}%",
-                _fmt_dollars_2dp(dcl_dollars[i]),
+                _fmt_dollars_short(dcl_dollars[i]),
             ]
         )
 
@@ -583,7 +579,7 @@ def _flops_to_dollars(flops: float) -> float:
     return hours * GPU_COST_PER_HOUR
 
 
-def _fmt_dollars_2dp(dollars: float) -> str:
+def _fmt_dollars_short(dollars: float) -> str:
     """Format a dollar amount with 1 decimal place for table display."""
     v = abs(dollars)
     if v >= 1e6:
@@ -710,7 +706,7 @@ def _collect_dcl_rows(
 
     # Real Llama 3 fits (VPNLS/A3)
     for vpnls_surface, a3_surface, llama3_a2 in llama3_comparisons:
-        a3_ba = a3_surface.b / a3_surface.a
+        a3_ba = a3_surface.imbalance_ratio
         for method_label, surface in [
             ("VPNLS", vpnls_surface),
             ("Approach 3", a3_surface),
@@ -748,7 +744,7 @@ def _collect_dcl_rows(
                 d=d,
                 surface=surface,
                 eval_budget=eval_budget,
-                ba_ratio=surface.b / surface.a,
+                ba_ratio=surface.imbalance_ratio,
             )
         )
 
@@ -1214,7 +1210,11 @@ def save_report(
 
 def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None:
     """Fit A3/VPNLS on raw data and run progressive filter analysis for *model*."""
-    N, D, L, _ = _load_isoflop_data(model.experiment)
+    df = pd.read_csv(ISOFLOPS_CSV)
+    edf = df[df["experiment"] == model.experiment].copy()
+    N = edf["params"].to_numpy()
+    D = edf["tokens"].to_numpy()
+    L = edf["loss"].to_numpy()
     raw_a3 = _fit_a3(model.name, N, D, L)
     raw_vpnls = _fit_vpnls(model.name, N, D, L)
 
@@ -1223,7 +1223,7 @@ def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None
         ("VPNLS", raw_vpnls, "vpnls"),
     ]:
         print(f"\n── Progressive filter ({model.name}): DCL vs {method_label} ──")
-        results = _progressive_filter_dcl(surface, model.eval_budget, model.experiment)
+        results = _progressive_filter_dcl(surface, model.eval_budget, edf)
         for r in results:
             print(
                 f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
@@ -1248,7 +1248,7 @@ def main() -> None:
     # Fit Llama 3 isoFLOP data.
     print("\n── Llama 3 fits ──")
     experiment = LLAMA3_MODEL.experiment
-    N, D, L, C = _load_isoflop_data(experiment, filter_outliers=FILTER_OUTLIERS)
+    N, D, L, C = _load_isoflop_data(experiment)
     vpnls = _fit_vpnls("Llama 3", N, D, L)
     a3 = _fit_a3("Llama 3", N, D, L)
     a2 = _fit_a2("Llama 3", N, D, L, C)

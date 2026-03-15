@@ -185,15 +185,13 @@ def _draw_budget_row(
     row_height: float,
 ) -> None:
     """Draw rug + boxplot + KDE for one compute-budget row (clean points only)."""
-    clean = residuals
-
     # ── Rug (bottom slice of the row) ────────────────────────────────
     rug_y = y - 0.30 * row_height
     rug_h = 0.12 * row_height
 
-    if len(clean) > 0:
+    if len(residuals) > 0:
         ax.vlines(
-            clean,
+            residuals,
             rug_y - rug_h / 2,
             rug_y + rug_h / 2,
             colors=color,
@@ -203,12 +201,12 @@ def _draw_budget_row(
         )
 
     # ── Boxplot (middle slice) ───────────────────────────────────────
-    if len(clean) >= 2:
-        q1, med, q3 = np.percentile(clean, [25, 50, 75])
+    if len(residuals) >= 2:
+        q1, med, q3 = np.percentile(residuals, [25, 50, 75])
         iqr = q3 - q1
-        whislo = clean[clean >= q1 - 1.5 * iqr]
+        whislo = residuals[residuals >= q1 - 1.5 * iqr]
         whislo = float(whislo.min()) if len(whislo) > 0 else float(q1)
-        whishi = clean[clean <= q3 + 1.5 * iqr]
+        whishi = residuals[residuals <= q3 + 1.5 * iqr]
         whishi = float(whishi.max()) if len(whishi) > 0 else float(q3)
         stats = dict(
             med=float(med),
@@ -239,7 +237,7 @@ def _draw_budget_row(
                 line.set_linewidth(1.0)
         # Mark the mean
         ax.plot(
-            np.mean(clean),
+            np.mean(residuals),
             y,
             marker="D",
             markersize=3.5,
@@ -248,13 +246,13 @@ def _draw_budget_row(
         )
 
     # ── KDE (top slice) — clean points only ──────────────────────────
-    if len(clean) >= MIN_KDE_POINTS:
+    if len(residuals) >= MIN_KDE_POINTS:
         try:
-            kde = gaussian_kde(clean, bw_method="silverman")
+            kde = gaussian_kde(residuals, bw_method="silverman")
         except np.linalg.LinAlgError:
             return
-        pad = (clean.max() - clean.min()) * 0.15
-        x_eval = np.linspace(clean.min() - pad, clean.max() + pad, 200)
+        pad = (residuals.max() - residuals.min()) * 0.15
+        x_eval = np.linspace(residuals.min() - pad, residuals.max() + pad, 200)
         density = kde(x_eval)
         kde_base = y + 0.10 * row_height
         kde_max_h = 0.32 * row_height
@@ -313,7 +311,7 @@ def plot_residual_distributions(
         all_colors = cmap(np.linspace(0.15, 0.85, n_all_budgets))
 
         # Only draw rows for budgets that have at least one clean point
-        clean_edf = edf[edf["reason"] == OutlierReason.NONE]
+        clean_edf = edf[~edf["outlier"]]
         drawn_budgets: list[tuple[float, str]] = []  # (budget, hex color)
         for bi, budget in enumerate(all_budgets):
             if (clean_edf["budget"] == budget).any():
@@ -327,13 +325,14 @@ def plot_residual_distributions(
             residuals = np.asarray(
                 clean_edf.loc[clean_edf["budget"] == budget, "residual"]
             )
+            residuals = residuals[~np.isnan(residuals)]
             _draw_budget_row(ax, residuals, float(yi), bcolor, row_height)
 
         # "Overall" row pooling all clean points
+        overall_resid = np.asarray(clean_edf["residual"])
+        overall_resid = overall_resid[~np.isnan(overall_resid)]
         overall_y = float(n_drawn)
-        _draw_budget_row(
-            ax, np.asarray(clean_edf["residual"]), overall_y, "#555555", row_height
-        )
+        _draw_budget_row(ax, overall_resid, overall_y, "#555555", row_height)
         # Separator line between budgets and overall
         ax.axhline(n_drawn - 0.5, color="grey", linestyle=":", linewidth=0.6, zorder=0)
 
@@ -443,6 +442,12 @@ def plot_isoflop_curves(
 
     cmap = plt.colormaps["viridis"]
 
+    # Experiments where outlier loss values are clipped to max clean loss
+    clip_experiments = {
+        Experiment.EPOCHAI_CHINCHILLA,
+        Experiment.MISFITTING_FINEWEB,
+    }
+
     for idx, experiment in enumerate(experiments):
         row, col = idx // n_cols, idx % n_cols
         ax = axes[row, col]
@@ -453,14 +458,9 @@ def plot_isoflop_curves(
         n_all_budgets = len(all_budgets)
         all_colors = cmap(np.linspace(0.15, 0.85, n_all_budgets))
 
-        # For selected experiments, clip outlier loss values to max clean loss
-        _CLIP_EXPERIMENTS = {
-            Experiment.EPOCHAI_CHINCHILLA,
-            Experiment.MISFITTING_FINEWEB,
-        }
         clip_loss_max: float | None = None
-        if experiment in _CLIP_EXPERIMENTS:
-            all_clean = edf[edf["reason"] == OutlierReason.NONE]["loss"]
+        if experiment in clip_experiments:
+            all_clean = edf[~edf["outlier"]]["loss"]
             if len(all_clean) > 0:
                 clip_loss_max = float(all_clean.max()) * 1.05
 
@@ -471,9 +471,8 @@ def plot_isoflop_curves(
 
             N = bdf["params"].to_numpy()
             L = bdf["loss"].to_numpy()
-            reasons = bdf["reason"].to_numpy()
 
-            clean_mask = reasons == OutlierReason.NONE
+            clean_mask = ~bdf["outlier"].to_numpy()
             N_clean = N[clean_mask]
             L_clean = L[clean_mask]
 
@@ -490,6 +489,7 @@ def plot_isoflop_curves(
                     edgecolors=color,
                 )
 
+            reasons = bdf["reason"].to_numpy()
             for reason, (marker, style) in REASON_MARKER_MAP.items():
                 rmask = reasons == reason
                 if rmask.any():
@@ -720,7 +720,6 @@ def plot_residual_std_by_budget(
     setup_style()
 
     experiments = ordered_experiments(results.keys())
-    n_exp = len(experiments)
 
     # Assign a distinct color and marker per experiment
     cmap = plt.colormaps["tab10"]
