@@ -13,6 +13,7 @@ from scipy.stats import t as t_dist  # pyrefly: ignore
 
 from scaling_law_analysis.data.schema import (
     UNIQUE_KEY,
+    Experiment,
     IsoFlopRecord,
     OutlierReason,
     QCStage,
@@ -46,26 +47,17 @@ def experiment_name(
 
 # ── Canonical experiment ordering & display names ────────────────────────────
 
-EXPERIMENT_ORDER: list[str] = [
-    "epochai_chinchilla__massivetext__chinchilla",
-    "ml_scalefit__massivetext__chinchilla",
-    "llama_3__exp_loss",
-    "llama_3__raw_loss",
-    "marin_202603__comma__llama_2",
-    "marin_202603__dclm__llama_2",
-    "marin_202603__nemotron__llama_2",
-    "misfitting__fineweb_c4__transformer",
-]
+EXPERIMENT_ORDER: list[str] = [e.value for e in Experiment]
 
 EXPERIMENT_DISPLAY_NAMES: dict[str, str] = {
-    "epochai_chinchilla__massivetext__chinchilla": "Epoch AI / Chinchilla",
-    "ml_scalefit__massivetext__chinchilla": "ML-Scalefit / Chinchilla",
-    "llama_3__exp_loss": "Llama 3 (exp loss)",
-    "llama_3__raw_loss": "Llama 3 (raw loss)",
-    "marin_202603__comma__llama_2": "Marin / CoMMA",
-    "marin_202603__dclm__llama_2": "Marin / DCLM",
-    "marin_202603__nemotron__llama_2": "Marin / Nemotron",
-    "misfitting__fineweb_c4__transformer": "Misfitting / FineWeb-C4",
+    Experiment.EPOCHAI_CHINCHILLA: "Epoch AI / Chinchilla",
+    Experiment.ML_SCALEFIT_CHINCHILLA: "ML-Scalefit / Chinchilla",
+    Experiment.LLAMA3_EXP_LOSS: "Llama 3 (exp loss)",
+    Experiment.LLAMA3_RAW_LOSS: "Llama 3 (raw loss)",
+    Experiment.MARIN_COMMA: "Marin / CoMMA",
+    Experiment.MARIN_DCLM: "Marin / DCLM",
+    Experiment.MARIN_NEMOTRON: "Marin / Nemotron",
+    Experiment.MISFITTING_FINEWEB: "Misfitting / FineWeb-C4",
 }
 
 
@@ -239,7 +231,7 @@ assert _covered == _all_reasons, (
 # Per-experiment overrides for outlier detection thresholds.
 EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
-    "misfitting__fineweb_c4__transformer": QCConfig(loo_zscore_threshold=100.0),
+    Experiment.MISFITTING_FINEWEB: QCConfig(loo_zscore_threshold=100.0),
 }
 
 

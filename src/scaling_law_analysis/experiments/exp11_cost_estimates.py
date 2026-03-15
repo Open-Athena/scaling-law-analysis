@@ -18,7 +18,7 @@ import numpy as np
 import pandas as pd
 
 from scaling_law_analysis import config
-from scaling_law_analysis.data.schema import OutlierReason, QCStage
+from scaling_law_analysis.data.schema import Experiment, OutlierReason, QCStage
 from scaling_law_analysis.data.transform import DEFAULT_STAGES, STAGE_REASONS
 from scaling_law_analysis.chinchilla import (
     ExponentGrid,
@@ -82,7 +82,7 @@ class IsoFlopModelConfig:
 
 LLAMA3_MODEL = IsoFlopModelConfig(
     name="Llama 3",
-    experiment="llama_3__raw_loss",
+    experiment=Experiment.LLAMA3_RAW_LOSS,
     eval_budget=3.8e25,
     file_prefix="llama3",
 )
@@ -90,7 +90,7 @@ LLAMA3_MODEL = IsoFlopModelConfig(
 # Eval budget from Figure 2, arxiv:2203.15556
 CHINCHILLA_MODEL = IsoFlopModelConfig(
     name="Chinchilla",
-    experiment="epochai_chinchilla__massivetext__chinchilla",
+    experiment=Experiment.EPOCHAI_CHINCHILLA,
     eval_budget=5.76e23,
     file_prefix="chinchilla",
 )
@@ -343,7 +343,7 @@ def plot_progressive_filter(
         markeredgecolor="white",
         markeredgewidth=0.8,
         zorder=3,
-        label="Approach 2",
+        label="Approach 2\n(filtered)",
     )
 
     # Approach 3 reference line at DCL=0%
@@ -357,7 +357,7 @@ def plot_progressive_filter(
         markeredgecolor="white",
         markeredgewidth=0.8,
         zorder=2,
-        label="Approach 3",
+        label="Approach 3\n(unfiltered)",
     )
 
     # $ annotations to the right of Approach 2 dots
@@ -405,7 +405,9 @@ def plot_progressive_filter(
     ax_bar.grid(True, axis="x", alpha=0.3)
     ax_bar.invert_yaxis()
 
-    ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
+    leg = ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
+    for text in leg.get_texts():
+        text.set_multialignment("center")
 
     # Convergence annotation on last row
     if show_convergence_annotation:

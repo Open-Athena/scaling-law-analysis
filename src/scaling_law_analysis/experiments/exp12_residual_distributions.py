@@ -16,6 +16,7 @@ from pathlib import Path
 import matplotlib.colors as mcolors
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib.ticker import FuncFormatter
 import numpy as np
 import pandas as pd
 from scipy.stats import gaussian_kde  # pyrefly: ignore
@@ -28,7 +29,7 @@ from scaling_law_analysis.chinchilla import (
 )
 from scaling_law_analysis import config
 from scaling_law_analysis.data.common import ISOFLOPS_CSV
-from scaling_law_analysis.data.schema import OutlierReason
+from scaling_law_analysis.data.schema import Experiment, OutlierReason
 from scaling_law_analysis.data.transform import (
     DEFAULT_STAGES,
     STAGE_REASONS,
@@ -55,6 +56,16 @@ RESIDUAL_FIT_GRID = ParameterGrid(
 
 # Minimum points required to draw a KDE.
 MIN_KDE_POINTS = 5
+
+# Experiments to include in the analysis.
+EXPERIMENTS = [
+    Experiment.EPOCHAI_CHINCHILLA,
+    Experiment.LLAMA3_RAW_LOSS,
+    Experiment.MARIN_COMMA,
+    Experiment.MARIN_DCLM,
+    Experiment.MARIN_NEMOTRON,
+    Experiment.MISFITTING_FINEWEB,
+]
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -277,21 +288,21 @@ def plot_residual_distributions(
 
     experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
-    n_cols = 4
+    n_cols = 3
     n_rows = (n_exp + n_cols - 1) // n_cols
 
     fig, axes = plt.subplots(
         n_rows,
         n_cols,
-        figsize=(24, 5.5 * n_rows),
-        layout="constrained",
+        figsize=(12, 3.5 * n_rows),
     )
     axes = np.atleast_2d(axes)
 
     cmap = plt.colormaps["viridis"]
 
     for idx, experiment in enumerate(experiments):
-        ax = axes[idx // n_cols, idx % n_cols]
+        row, col = idx // n_cols, idx % n_cols
+        ax = axes[row, col]
         edf: pd.DataFrame = results[experiment]["df"]
         fit: SurfaceFitResult | None = results[experiment].get("fit")
 
@@ -332,12 +343,16 @@ def plot_residual_distributions(
         labels = [_fmt_budget(b) for b, _ in drawn_budgets] + ["Overall"]
         ax.set_yticks(range(n_rows_plot))
         ax.set_yticklabels(
-            labels,
+            labels if col == 0 else [],
             fontsize=max(6, 9 - n_drawn // 8),
         )
         ax.set_ylim(-0.6, n_rows_plot - 0.4)
-        ax.set_xlabel("Residual: observed \u2212 predicted (nats)", fontsize=9)
-        ax.set_ylabel("Compute budget (FLOPs)", fontsize=9)
+        ax.tick_params(axis="x", labelsize=7)
+        ax.xaxis.set_major_formatter(FuncFormatter(lambda v, _: f"{v:g}"))
+        if row == n_rows - 1:
+            ax.set_xlabel("Residual: observed \u2212 predicted (nats)", fontsize=9)
+        if col == 0:
+            ax.set_ylabel("Compute budget (FLOPs)", fontsize=9)
         ax.grid(True, axis="x", alpha=0.2)
 
         # Title
@@ -377,20 +392,21 @@ def plot_residual_distributions(
             label="Mean",
         ),
     ]
-    fig.legend(
-        handles=legend_handles,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.01),
-        ncol=len(legend_handles),
-        fontsize=9,
-        frameon=True,
-        borderpad=0.4,
-    )
-
     if title is None:
         logloss_label = "log-loss" if use_logloss else "raw-loss"
         title = f"Approach 3 Residual Distributions by Compute Budget ({logloss_label})"
     fig.suptitle(title, fontsize=13)
+    fig.tight_layout(rect=(0, 0.03, 1, 0.99))
+
+    fig.legend(
+        handles=legend_handles,
+        loc="upper center",
+        bbox_to_anchor=(0.5, 0.04),
+        ncol=len(legend_handles),
+        fontsize=8,
+        frameon=True,
+        borderpad=0.4,
+    )
 
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
@@ -414,27 +430,38 @@ def plot_isoflop_curves(
 
     experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
-    n_cols = 4
+    n_cols = 3
     n_rows_grid = (n_exp + n_cols - 1) // n_cols
 
     fig, axes = plt.subplots(
         n_rows_grid,
         n_cols,
-        figsize=(24, 5.5 * n_rows_grid),
-        layout="constrained",
+        figsize=(12, 4.5 * n_rows_grid),
     )
     axes = np.atleast_2d(axes)
 
     cmap = plt.colormaps["viridis"]
 
     for idx, experiment in enumerate(experiments):
-        ax = axes[idx // n_cols, idx % n_cols]
+        row, col = idx // n_cols, idx % n_cols
+        ax = axes[row, col]
         edf: pd.DataFrame = results[experiment]["df"]
         fit: SurfaceFitResult | None = results[experiment].get("fit")
 
         all_budgets = sorted(edf["budget"].unique(), reverse=True)
         n_all_budgets = len(all_budgets)
         all_colors = cmap(np.linspace(0.15, 0.85, n_all_budgets))
+
+        # For selected experiments, clip outlier loss values to max clean loss
+        _CLIP_EXPERIMENTS = {
+            Experiment.EPOCHAI_CHINCHILLA,
+            Experiment.MISFITTING_FINEWEB,
+        }
+        clip_loss_max: float | None = None
+        if experiment in _CLIP_EXPERIMENTS:
+            all_clean = edf[edf["reason"] == OutlierReason.NONE]["loss"]
+            if len(all_clean) > 0:
+                clip_loss_max = float(all_clean.max()) * 1.05
 
         for bi, budget in enumerate(all_budgets):
             color = all_colors[bi]
@@ -465,9 +492,12 @@ def plot_isoflop_curves(
             for reason, (marker, style) in REASON_MARKER_MAP.items():
                 rmask = reasons == reason
                 if rmask.any():
+                    L_plot = L[rmask].copy()
+                    if clip_loss_max is not None:
+                        L_plot = np.minimum(L_plot, clip_loss_max)
                     ax.scatter(
                         N[rmask],
-                        L[rmask],
+                        L_plot,
                         s=20,
                         marker=marker,
                         linewidths=0.9,
@@ -497,12 +527,13 @@ def plot_isoflop_curves(
                     _fmt_budget(budget),
                     (np.exp(n_mid), l_mid),
                     textcoords="offset points",
-                    xytext=(0, 6),
+                    xytext=(0, 2),
                     fontsize=7,
                     ha="center",
                     va="bottom",
                     color="black",
                     alpha=0.8,
+                    zorder=10,
                 )
 
             # ── Method prediction curve ──────────────────────────────
@@ -548,8 +579,12 @@ def plot_isoflop_curves(
 
         ax.set_xscale("log")
         ax.set_yscale("log")
-        ax.set_xlabel("Parameters (N)", fontsize=9)
-        ax.set_ylabel("Loss (nats)", fontsize=9)
+        if clip_loss_max is not None:
+            ax.set_ylim(top=clip_loss_max * 1.03)
+        if row == n_rows_grid - 1:
+            ax.set_xlabel("Parameters (N)", fontsize=9)
+        if col == 0:
+            ax.set_ylabel("Loss (nats)", fontsize=9)
         ax.grid(True, alpha=0.2)
 
         short = display_name(experiment)
@@ -604,17 +639,19 @@ def plot_isoflop_curves(
         ),
         Line2D([], [], color="grey", linestyle="-", linewidth=1.2, label="Prediction"),
     ]
+    fig.suptitle(title, fontsize=13)
+    fig.tight_layout(rect=(0, 0.05, 1, 0.99))
+
     fig.legend(
         handles=legend_handles,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.01),
+        bbox_to_anchor=(0.5, 0.06),
         ncol=len(legend_handles) // 2,
-        fontsize=9,
+        fontsize=8,
         frameon=True,
         borderpad=0.4,
     )
 
-    fig.suptitle(title, fontsize=13)
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {output_path}")
@@ -629,19 +666,19 @@ def plot_flop_factors(
 
     experiments = ordered_experiments(results.keys())
     n_exp = len(experiments)
-    n_cols = 4
+    n_cols = 3
     n_rows = (n_exp + n_cols - 1) // n_cols
 
     fig, axes = plt.subplots(
         n_rows,
         n_cols,
-        figsize=(24, 5 * n_rows),
-        layout="constrained",
+        figsize=(12, 3.5 * n_rows),
     )
     axes = np.atleast_2d(axes)
 
     for idx, experiment in enumerate(experiments):
-        ax = axes[idx // n_cols, idx % n_cols]
+        row, col = idx // n_cols, idx % n_cols
+        ax = axes[row, col]
         k_values: dict[float, float] = results[experiment].get("k_values", {})
 
         budgets = np.array(sorted(k_values.keys()))
@@ -651,8 +688,10 @@ def plot_flop_factors(
         ax.axhline(6.0, color="grey", linestyle="--", linewidth=0.8, label="k = 6")
 
         ax.set_xscale("log")
-        ax.set_xlabel("Compute budget C (FLOPs)", fontsize=9)
-        ax.set_ylabel("k  (C = k·N·D)", fontsize=9)
+        if row == n_rows - 1:
+            ax.set_xlabel("Compute budget C (FLOPs)", fontsize=9)
+        if col == 0:
+            ax.set_ylabel("k  (C = k·N·D)", fontsize=9)
         ax.grid(True, alpha=0.2)
 
         short = display_name(experiment)
@@ -665,6 +704,8 @@ def plot_flop_factors(
         axes[idx // n_cols, idx % n_cols].set_visible(False)
 
     fig.suptitle("Per-Budget FLOP Factor k (C = k·N·D)", fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.99))
+
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {output_path}")
@@ -677,8 +718,9 @@ def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp12")
     df = pd.read_csv(ISOFLOPS_CSV)
     df["reason"] = df["reason"].fillna(OutlierReason.NONE)
-    all_experiments = set(df["experiment"].unique())
-    experiments = ordered_experiments(all_experiments)
+    experiments = ordered_experiments(
+        [e for e in df["experiment"].unique() if e in EXPERIMENTS]
+    )
 
     # Outlier columns are pre-computed by the data pipeline
     print("Using pre-computed outlier annotations from data pipeline")
@@ -696,9 +738,8 @@ def main() -> None:
         experiment_edfs[experiment] = edf
 
     # ── Approach 3 fits (raw-loss and log-loss) ──────────────────────────
-    global_fits: dict[str, SurfaceFitResult] = {}  # from logloss=False
+    global_fits: dict[str, SurfaceFitResult] = {}  # from logloss=True
     for use_logloss in [False, True]:
-        logloss_tag = "true" if use_logloss else "false"
         print(f"\n{'=' * 60}")
         print(f"Approach 3 with use_logloss={use_logloss}")
         print(f"{'=' * 60}")
@@ -736,22 +777,24 @@ def main() -> None:
             )
 
             results[experiment] = {"fit": fit, "df": edf}
-            if not use_logloss:
+            if use_logloss:
                 global_fits[experiment] = fit
+
+        loss_stem = "log" if use_logloss else "lin"
+        logloss_label = "log-loss" if use_logloss else "linear-loss"
 
         plot_residual_distributions(
             results,
-            output_dir / f"residuals_logloss_{logloss_tag}.png",
+            output_dir / f"residuals_ap3_{loss_stem}_loss.png",
             use_logloss=use_logloss,
         )
-
-        logloss_label = "log-loss" if use_logloss else "raw-loss"
-        plot_isoflop_curves(
-            results,
-            output_dir / f"isoflops_approach3_logloss_{logloss_tag}.png",
-            title=f"IsoFLOP Curves — Approach 3 ({logloss_label})",
-            method="approach3",
-        )
+        if use_logloss:
+            plot_isoflop_curves(
+                results,
+                output_dir / f"isoflops_ap3_{loss_stem}_loss.png",
+                title=f"IsoFLOP Curves — Approach 3 ({logloss_label})",
+                method="approach3",
+            )
 
     # ── Per-budget FLOP factor (k) estimation ──────────────────────
     print(f"\n{'=' * 60}")
@@ -789,14 +832,14 @@ def main() -> None:
 
     plot_residual_distributions(
         results_kfactor,
-        output_dir / "residuals_flop_factor.png",
-        use_logloss=False,
+        output_dir / "residuals_ap3_log_loss_adj.png",
+        use_logloss=True,
         title="Per-Budget FLOP Factor Residuals (k in C = k·N·D)",
     )
 
     plot_isoflop_curves(
         results_kfactor,
-        output_dir / "isoflops_flop_factor.png",
+        output_dir / "isoflops_ap3_log_loss_adj.png",
         title="Per-Budget FLOP Factor Curves (k in C = k·N·D)",
         method="flop_factor",
     )

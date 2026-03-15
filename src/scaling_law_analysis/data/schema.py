@@ -78,6 +78,19 @@ class QCStage(StrEnum):
     POST_QC = "post_qc"
 
 
+class Experiment(StrEnum):
+    """Canonical experiment identifiers."""
+
+    EPOCHAI_CHINCHILLA = "epochai_chinchilla__massivetext__chinchilla"
+    ML_SCALEFIT_CHINCHILLA = "ml_scalefit__massivetext__chinchilla"
+    LLAMA3_EXP_LOSS = "llama_3__exp_loss"
+    LLAMA3_RAW_LOSS = "llama_3__raw_loss"
+    MARIN_COMMA = "marin_202603__comma__llama_2"
+    MARIN_DCLM = "marin_202603__dclm__llama_2"
+    MARIN_NEMOTRON = "marin_202603__nemotron__llama_2"
+    MISFITTING_FINEWEB = "misfitting__fineweb_c4__transformer"
+
+
 class IsoFlopAnnotatedRecord(IsoFlopRecord):
     """Schema with outlier annotations appended."""
 
