@@ -59,7 +59,7 @@ from scaling_law_analysis.data.common import ISOFLOPS_CSV
 
 LLAMA3_LOSS_LOG_SCALE = True  # if True, interpret validation_loss as ln(loss)
 
-LLAMA3_FIT_GRID = ParameterGrid(
+FIT_GRID = ParameterGrid(
     E=np.linspace(0.1, 5.0, 8),
     A=np.logspace(1, 6, 8),
     B=np.logspace(1, 6, 8),
@@ -67,9 +67,35 @@ LLAMA3_FIT_GRID = ParameterGrid(
     beta=np.linspace(0.05, 0.95, 8),
 )
 
-LLAMA3_VPNLS_GRID = ExponentGrid(
+VPNLS_GRID = ExponentGrid(
     alpha=np.linspace(0.05, 0.95, 256),
     beta=np.linspace(0.05, 0.95, 256),
+)
+
+
+@dataclass(frozen=True)
+class IsoFlopModelConfig:
+    """Configuration for a model's isoFLOP progressive filter analysis."""
+
+    name: str  # "Llama 3", "Chinchilla"
+    experiment: str  # experiment name in isoflops CSV
+    eval_budget: float  # FLOPs for extrapolation
+    file_prefix: str  # "llama3", "chinchilla"
+
+
+LLAMA3_MODEL = IsoFlopModelConfig(
+    name="Llama 3",
+    experiment="llama_3__raw_loss",
+    eval_budget=3.8e25,
+    file_prefix="llama3",
+)
+
+# Eval budget from Figure 2, arxiv:2203.15556
+CHINCHILLA_MODEL = IsoFlopModelConfig(
+    name="Chinchilla",
+    experiment="epochai_chinchilla__massivetext__chinchilla",
+    eval_budget=5.76e23,
+    file_prefix="chinchilla",
 )
 
 
@@ -81,16 +107,17 @@ _LLAMA3_EXPERIMENT = {
 }
 
 
-def _load_llama3_data(
-    log_scale: bool,
+def _load_isoflop_data(
+    experiment: str,
+    filter_outliers: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Load Llama 3 isoFLOP data from the data pipeline CSV.
+    """Load isoFLOP data from the data pipeline CSV.
 
     Returns (N, D, L, C) arrays.
     """
     df = pd.read_csv(ISOFLOPS_CSV)
-    edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[log_scale]]
-    if FILTER_OUTLIERS:
+    edf = df[df["experiment"] == experiment]
+    if filter_outliers:
         edf = edf[~edf["outlier"]]
     N = edf["params"].to_numpy()
     D = edf["tokens"].to_numpy()
@@ -99,17 +126,16 @@ def _load_llama3_data(
     return N, D, L, C
 
 
-def _fit_llama3_vpnls(
+def _fit_vpnls(
+    name: str,
     N: np.ndarray,
     D: np.ndarray,
     L: np.ndarray,
 ) -> LossSurface:
-    """Fit Llama 3 isoFLOP data via VPNLS with L-BFGS-B."""
-    result = fit_vpnls(
-        N, D, L, grid=LLAMA3_VPNLS_GRID, method="l-bfgs-b", use_grad=True
-    )
+    """Fit isoFLOP data via VPNLS with L-BFGS-B."""
+    result = fit_vpnls(N, D, L, grid=VPNLS_GRID, method="l-bfgs-b", use_grad=True)
     print(
-        f"Llama 3 VPNLS: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
+        f"{name} VPNLS: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
         f"α={result.alpha:.4f}, β={result.beta:.4f} "
         f"(RSS={result.residual_sum_squares:.6f})"
     )
@@ -118,17 +144,18 @@ def _fit_llama3_vpnls(
     )
 
 
-def _fit_llama3_a3(
+def _fit_a3(
+    name: str,
     N: np.ndarray,
     D: np.ndarray,
     L: np.ndarray,
 ) -> LossSurface:
-    """Fit a loss surface to Llama 3 isoFLOP data via Approach 3."""
+    """Fit a loss surface to isoFLOP data via Approach 3."""
     result = fit_approach3(
-        N, D, L, grid=LLAMA3_FIT_GRID, use_lse=True, use_logloss=True, use_grad=True
+        N, D, L, grid=FIT_GRID, use_lse=True, use_logloss=True, use_grad=True
     )
     print(
-        f"Llama 3 Approach 3: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
+        f"{name} Approach 3: E={result.E:.4f}, A={result.A:.1f}, B={result.B:.1f}, "
         f"α={result.alpha:.4f}, β={result.beta:.4f} "
         f"(RSS={result.residual_sum_squares:.6f})"
     )
@@ -137,16 +164,17 @@ def _fit_llama3_a3(
     )
 
 
-def _fit_llama3_a2(
+def _fit_a2(
+    name: str,
     N: np.ndarray,
     D: np.ndarray,
     L: np.ndarray,
     C: np.ndarray,
 ) -> ParabolaFitResult:
-    """Fit Llama 3 isoFLOP data via Approach 2."""
+    """Fit isoFLOP data via Approach 2."""
     result = fit_approach2(N, D, L, C)
     print(
-        f"Llama 3 Approach 2: a={result.a:.4f}, b={result.b:.4f} "
+        f"{name} Approach 2: a={result.a:.4f}, b={result.b:.4f} "
         f"(N* ∝ C^a, D* ∝ C^b)"
     )
     return result
@@ -208,6 +236,7 @@ class _FilterLevel:
 def _progressive_filter_dcl(
     surface: LossSurface,
     eval_budget: float,
+    experiment: str,
 ) -> list[_FilterLevel]:
     """Compute DCL and data statistics at each cumulative filter level.
 
@@ -215,7 +244,7 @@ def _progressive_filter_dcl(
     Returns list of _FilterLevel starting with "Raw" (no filter).
     """
     df = pd.read_csv(ISOFLOPS_CSV)
-    edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[False]].copy()
+    edf = df[df["experiment"] == experiment].copy()
 
     results: list[_FilterLevel] = []
     total_pts = len(edf)
@@ -1080,6 +1109,32 @@ def save_report(
     print(f"Saved: {output_path}")
 
 
+def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None:
+    """Fit A3/VPNLS on raw data and run progressive filter analysis for *model*."""
+    N, D, L, _ = _load_isoflop_data(model.experiment)
+    raw_a3 = _fit_a3(model.name, N, D, L)
+    raw_vpnls = _fit_vpnls(model.name, N, D, L)
+
+    for method_label, surface, suffix in [
+        ("A3", raw_a3, "a3"),
+        ("VPNLS", raw_vpnls, "vpnls"),
+    ]:
+        print(f"\n── Progressive filter ({model.name}): DCL vs {method_label} ──")
+        results = _progressive_filter_dcl(surface, model.eval_budget, model.experiment)
+        for r in results:
+            print(
+                f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
+                f"({r.dcl_flops / model.eval_budget * 100:.1f}%)"
+            )
+        plot_progressive_filter(
+            results,
+            output_dir / f"progressive_filter_{model.file_prefix}_{suffix}.png",
+            f"Deadweight Compute Loss: Approach 2 vs {method_label} "
+            f"Progressive Filtering ({model.name})",
+            model.eval_budget,
+        )
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────
 
 
@@ -1092,10 +1147,11 @@ def main() -> None:
     for log_scale in [True, False]:
         label = "log-scale" if log_scale else "raw nats"
         print(f"\n── Llama 3 fits ({label}) ──")
-        N, D, L, C = _load_llama3_data(log_scale=log_scale)
-        vpnls = _fit_llama3_vpnls(N, D, L)
-        a3 = _fit_llama3_a3(N, D, L)
-        a2 = _fit_llama3_a2(N, D, L, C)
+        experiment = _LLAMA3_EXPERIMENT[log_scale]
+        N, D, L, C = _load_isoflop_data(experiment, filter_outliers=FILTER_OUTLIERS)
+        vpnls = _fit_vpnls("Llama 3", N, D, L)
+        a3 = _fit_a3("Llama 3", N, D, L)
+        a2 = _fit_a2("Llama 3", N, D, L, C)
         llama3_comparisons.append((log_scale, vpnls, a3, a2))
         if log_scale == LLAMA3_LOSS_LOG_SCALE:
             primary_vpnls = vpnls
@@ -1142,40 +1198,9 @@ def main() -> None:
         eval_budget=LLAMA3_405B_FLOPS,
     )
 
-    # ── Progressive filter impact on DCL (raw-nats Llama 3 only) ──
-    # Use the raw-nats surfaces (log_scale=False) fit on unfiltered data.
-    raw_nats_entry = next(
-        (ls, vpnls, a3, a2) for ls, vpnls, a3, a2 in llama3_comparisons if not ls
-    )
-    _, raw_vpnls, raw_a3, _ = raw_nats_entry
-
-    print("\n── Progressive filter: DCL vs A3 ──")
-    a3_results = _progressive_filter_dcl(raw_a3, LLAMA3_405B_FLOPS)
-    for r in a3_results:
-        print(
-            f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
-            f"({r.dcl_flops / LLAMA3_405B_FLOPS * 100:.1f}%)"
-        )
-    plot_progressive_filter(
-        a3_results,
-        output_dir / "progressive_filter_a3.png",
-        "Deadweight Compute Loss: Approach 2 vs Approach 3 Progressive Filtering (Llama 3)",
-        LLAMA3_405B_FLOPS,
-    )
-
-    print("\n── Progressive filter: DCL vs VPNLS ──")
-    vpnls_results = _progressive_filter_dcl(raw_vpnls, LLAMA3_405B_FLOPS)
-    for r in vpnls_results:
-        print(
-            f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
-            f"({r.dcl_flops / LLAMA3_405B_FLOPS * 100:.1f}%)"
-        )
-    plot_progressive_filter(
-        vpnls_results,
-        output_dir / "progressive_filter_vpnls.png",
-        "Deadweight Compute Loss: Approach 2 vs VPNLS Progressive Filtering (Llama 3)",
-        LLAMA3_405B_FLOPS,
-    )
+    # ── Progressive filter impact on DCL ──
+    for model in [LLAMA3_MODEL, CHINCHILLA_MODEL]:
+        _run_progressive_filter(model, output_dir)
 
 
 if __name__ == "__main__":
