@@ -20,6 +20,7 @@ import pandas as pd
 
 from scaling_law_analysis import config
 from scaling_law_analysis.data.schema import OutlierReason
+from scaling_law_analysis.data.transform import DEFAULT_STAGES, STAGE_REASONS
 from scaling_law_analysis.chinchilla import (
     ExponentGrid,
     LossSurface,
@@ -153,16 +154,23 @@ def _fit_llama3_a2(
 
 # ── Progressive filter analysis ──────────────────────────────────────────────
 
-# Stage execution order in detect_outliers (must match transform.py).
+# Short bar-chart labels for each OutlierReason.
+_REASON_SHORT_LABELS: dict[OutlierReason, str] = {
+    OutlierReason.EXACT_DUP: "Exact dup",
+    OutlierReason.DUP_PARAMS: "Near dup",
+    OutlierReason.TOO_FEW: "Too few",
+    OutlierReason.SPLINE: "Spline",
+    OutlierReason.NEG_CURVATURE: "Neg curv",
+    OutlierReason.WEAK_CURVATURE: "Weak curv",
+    OutlierReason.OFF_CENTER: "Off center",
+    OutlierReason.TOO_FEW_POST_QC: "Post-QC",
+}
+
+# Derive stage ordering from the canonical DEFAULT_STAGES / STAGE_REASONS.
 _FILTER_STAGES: list[tuple[str, OutlierReason]] = [
-    ("Exact dup", OutlierReason.EXACT_DUP),
-    ("Near dup", OutlierReason.DUP_PARAMS),
-    ("Too few", OutlierReason.TOO_FEW),
-    ("Spline", OutlierReason.SPLINE),
-    ("Neg curv", OutlierReason.NEG_CURVATURE),
-    ("Weak curv", OutlierReason.WEAK_CURVATURE),
-    ("Off center", OutlierReason.OFF_CENTER),
-    ("Post-QC", OutlierReason.TOO_FEW_POST_QC),
+    (_REASON_SHORT_LABELS[reason], reason)
+    for stage in DEFAULT_STAGES
+    for reason in STAGE_REASONS[stage]
 ]
 
 

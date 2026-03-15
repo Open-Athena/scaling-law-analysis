@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -14,6 +15,7 @@ from scaling_law_analysis.data.schema import (
     UNIQUE_KEY,
     IsoFlopRecord,
     OutlierReason,
+    QCStage,
 )
 
 
@@ -183,7 +185,7 @@ def fit_parabolas(
 
 # ── Pre-fit outlier detection ────────────────────────────────────────────────
 
-# Detection threshold constants
+# Detection threshold constants (defaults for QCConfig)
 MIN_BUDGET_POINTS = 6
 LOO_ZSCORE_THRESHOLD = 6.0
 NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binning
@@ -194,44 +196,61 @@ CURVATURE_CI = 0.95
 # means a point can be up to 25% beyond the min half-distance and still be kept.
 OFF_CENTER_MARGIN = 0.50
 
+
+@dataclass(frozen=True)
+class QCConfig:
+    """Threshold configuration for outlier detection."""
+
+    min_budget_points: int = MIN_BUDGET_POINTS
+    loo_zscore_threshold: float = LOO_ZSCORE_THRESHOLD
+    near_dup_log_tol: float = NEAR_DUP_LOG_TOL
+    curvature_ci: float = CURVATURE_CI
+    off_center_margin: float = OFF_CENTER_MARGIN
+
+
+# Mapping from each QCStage to the OutlierReason(s) it produces.
+STAGE_REASONS: dict[QCStage, list[OutlierReason]] = {
+    QCStage.DEDUP: [OutlierReason.EXACT_DUP, OutlierReason.DUP_PARAMS],
+    QCStage.TOO_FEW: [OutlierReason.TOO_FEW],
+    QCStage.SPLINE: [OutlierReason.SPLINE],
+    QCStage.CURVATURE: [OutlierReason.NEG_CURVATURE, OutlierReason.WEAK_CURVATURE],
+    QCStage.OFF_CENTER: [OutlierReason.OFF_CENTER],
+    QCStage.POST_QC: [OutlierReason.TOO_FEW_POST_QC],
+}
+
+# Canonical ordering of QC stages.
+DEFAULT_STAGES: list[QCStage] = [
+    QCStage.DEDUP,
+    QCStage.TOO_FEW,
+    QCStage.SPLINE,
+    QCStage.CURVATURE,
+    QCStage.OFF_CENTER,
+    QCStage.POST_QC,
+]
+
+# Sync check: every non-NONE OutlierReason must be covered by exactly one stage.
+_covered = {r for reasons in STAGE_REASONS.values() for r in reasons}
+_all_reasons = {r for r in OutlierReason if r != OutlierReason.NONE}
+assert _covered == _all_reasons, (
+    f"STAGE_REASONS coverage mismatch: "
+    f"missing={_all_reasons - _covered}, extra={_covered - _all_reasons}"
+)
+
 # Per-experiment overrides for outlier detection thresholds.
-# Keys: experiment name → dict with optional "min_budget_points" and/or "loo_zscore_threshold".
-EXPERIMENT_OVERRIDES: dict[str, dict] = {
+EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
-    "misfitting__fineweb_c4__transformer": {"loo_zscore_threshold": 100.0},
+    "misfitting__fineweb_c4__transformer": QCConfig(loo_zscore_threshold=100.0),
 }
 
 
-def detect_outliers(
-    edf: pd.DataFrame,
-    *,
-    min_budget_points: int = MIN_BUDGET_POINTS,
-    loo_zscore_threshold: float = LOO_ZSCORE_THRESHOLD,
-    curvature_ci: float = CURVATURE_CI,
-    off_center_margin: float = OFF_CENTER_MARGIN,
-) -> pd.DataFrame:
-    """Pre-fit outlier detection. Adds ``outlier`` and ``reason`` columns.
+# ── Stage functions ──────────────────────────────────────────────────────────
+# Uniform signature: (edf, budgets, cfg) -> None  (mutates edf in place)
 
-    Stage 0a — exact duplicate params: keep point closest to nominal budget.
-    Stage 0b — near-duplicate params: same, within log(N) tolerance.
-    Stage 1  — too few points: budgets with < *min_budget_points* are flagged.
-    Stage 2  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
-    Stage 3a — negative curvature: quadratic fit log(L) ~ log(N)^2 with a <= 0.
-    Stage 3b — weak curvature: CI for quadratic coefficient includes zero at
-               *curvature_ci* confidence level (0.0 to disable).
-    Stage 4  — off-center: trim to symmetric window around parabola minimum,
-               with *off_center_margin* fractional slack (0.50 = 50% beyond).
-    Stage 5  — post-QC too-few-points recheck (must be last).
-    """
+
+def _stage_dedup(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
     R = OutlierReason
 
-    edf = edf.copy()
-    edf["outlier"] = pd.Series(False, index=edf.index, dtype=bool)
-    edf["reason"] = R.NONE
-
-    budgets = edf["budget"].unique()
-
-    # Stage 0a: exact duplicate params within a budget — keep the point whose
+    # Sub-stage 0a: exact duplicate params within a budget — keep the point whose
     # implied compute (6·N·D) is closest to the nominal budget, ties by loss.
     for budget in budgets:
         mask = edf["budget"] == budget
@@ -248,10 +267,10 @@ def detect_outliers(
                 edf.loc[flag_idx, "outlier"] = True
                 edf.loc[flag_idx, "reason"] = R.EXACT_DUP
 
-    # Stage 0b: near-duplicate params within a budget — keep the point whose
+    # Sub-stage 0b: near-duplicate params within a budget — keep the point whose
     # implied compute (6·N·D) is closest to the nominal budget.  Ties broken
     # by lowest loss.  Two points are "near-duplicates" if their log(N) values
-    # differ by less than NEAR_DUP_LOG_TOL.  Only considers unflagged rows.
+    # differ by less than near_dup_log_tol.  Only considers unflagged rows.
     for budget in budgets:
         mask = (edf["budget"] == budget) & ~edf["outlier"]
         bdf = edf.loc[mask].sort_values("params")
@@ -261,7 +280,7 @@ def detect_outliers(
         bins: list[list[int]] = []
         current_bin: list[int] = [0]
         for i in range(1, len(log_n)):
-            if log_n[i] - log_n[current_bin[0]] <= NEAR_DUP_LOG_TOL:
+            if log_n[i] - log_n[current_bin[0]] <= cfg.near_dup_log_tol:
                 current_bin.append(i)
             else:
                 bins.append(current_bin)
@@ -280,17 +299,19 @@ def detect_outliers(
             edf.loc[flag_idx, "outlier"] = True
             edf.loc[flag_idx, "reason"] = R.DUP_PARAMS
 
-    # Stage 1: too few clean points
+
+def _stage_too_few(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
     for budget in budgets:
         mask = (edf["budget"] == budget) & ~edf["outlier"]
-        if mask.sum() < min_budget_points:
+        if mask.sum() < cfg.min_budget_points:
             budget_mask = edf["budget"] == budget
             # Only flag rows not already flagged by an earlier stage
             unflagged = budget_mask & ~edf["outlier"]
             edf.loc[unflagged, "outlier"] = True
-            edf.loc[unflagged, "reason"] = R.TOO_FEW
+            edf.loc[unflagged, "reason"] = OutlierReason.TOO_FEW
 
-    # Stage 2: Akima LOO (only clean rows in surviving budgets)
+
+def _stage_spline(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
     surviving_budgets = [
         b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
     ]
@@ -323,11 +344,15 @@ def detect_outliers(
         if mad > 0:
             for ix, r in loo_residuals.items():
                 z = 0.6745 * abs(r - med) / mad
-                if z > loo_zscore_threshold:
+                if z > cfg.loo_zscore_threshold:
                     edf.loc[ix, "outlier"] = True
-                    edf.loc[ix, "reason"] = R.SPLINE
+                    edf.loc[ix, "reason"] = OutlierReason.SPLINE
 
-    # Stage 3a: negative curvature (only clean rows in surviving budgets)
+
+def _stage_curvature(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
+    R = OutlierReason
+
+    # Sub-stage 3a: negative curvature (only clean rows in surviving budgets)
     surviving_budgets = [
         b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
     ]
@@ -342,12 +367,10 @@ def detect_outliers(
                 edf.loc[unflagged, "outlier"] = True
                 edf.loc[unflagged, "reason"] = R.NEG_CURVATURE
 
-    # Stage 3b: weak curvature — CI for the quadratic coefficient `a` includes
-    # zero at the requested confidence level.  The point estimate â may be
-    # positive (passed stage 3a) but statistically indistinguishable from zero,
-    # meaning the isoflop curve is too flat to reliably locate an optimum.
-    # Skipped when curvature_ci <= 0.
-    if curvature_ci > 0:
+    # Sub-stage 3b: weak curvature — CI for the quadratic coefficient `a`
+    # includes zero at the requested confidence level.  Skipped when
+    # curvature_ci <= 0.
+    if cfg.curvature_ci > 0:
         surviving_budgets = [
             b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
         ]
@@ -362,23 +385,20 @@ def detect_outliers(
             coeffs, cov = np.polyfit(log_n, log_l, 2, cov=True)
             a_hat = coeffs[0]
             if a_hat <= 0:
-                # Already caught by stage 3a
+                # Already caught by sub-stage 3a
                 continue
             se_a = float(np.sqrt(cov[0, 0]))
             df = n_pts - 3
-            t_crit = float(t_dist.ppf((1 + curvature_ci) / 2, df))
+            t_crit = float(t_dist.ppf((1 + cfg.curvature_ci) / 2, df))
             ci_lower = a_hat - t_crit * se_a
             if ci_lower <= 0:
                 unflagged = (edf["budget"] == budget) & ~edf["outlier"]
                 edf.loc[unflagged, "outlier"] = True
                 edf.loc[unflagged, "reason"] = R.WEAK_CURVATURE
 
-    # Stage 4: off-center — trim to a symmetric window around the parabola
-    # minimum N*.  For each budget, fit a parabola to clean points in log-log
-    # space, find N*, then compute the log-distance from N* to the nearest
-    # clean point on each side.  The shorter side defines the symmetric radius;
-    # any clean points beyond that radius are flagged.  If all clean points
-    # fall on one side of N* (minimum is extrapolated), flag the entire budget.
+
+def _stage_off_center(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
+    R = OutlierReason
     surviving_budgets = [
         b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
     ]
@@ -404,22 +424,63 @@ def detect_outliers(
         # Symmetric radius = min distance from N* to the nearest edge,
         # plus a fractional margin to allow slight overshoot.
         radius = min(log_n_star - left.min(), right.max() - log_n_star)
-        radius *= 1.0 + off_center_margin
+        radius *= 1.0 + cfg.off_center_margin
         outside = (log_n < log_n_star - radius) | (log_n > log_n_star + radius)
         if outside.any():
             flag_idx = clean.index[outside]
             edf.loc[flag_idx, "outlier"] = True
             edf.loc[flag_idx, "reason"] = R.OFF_CENTER
 
-    # Stage 5: post-QC too-few-points recheck.  Earlier stages may have reduced
-    # surviving budgets below the minimum.  This MUST be the last stage so that
-    # it catches any budget left under-supported after all other filters.
+
+def _stage_post_qc(edf: pd.DataFrame, budgets: np.ndarray, cfg: QCConfig) -> None:
     for budget in budgets:
         mask = (edf["budget"] == budget) & ~edf["outlier"]
-        if 0 < mask.sum() < min_budget_points:
+        if 0 < mask.sum() < cfg.min_budget_points:
             unflagged = (edf["budget"] == budget) & ~edf["outlier"]
             edf.loc[unflagged, "outlier"] = True
-            edf.loc[unflagged, "reason"] = R.TOO_FEW_POST_QC
+            edf.loc[unflagged, "reason"] = OutlierReason.TOO_FEW_POST_QC
+
+
+_STAGE_DISPATCH: dict[QCStage, Callable[[pd.DataFrame, np.ndarray, QCConfig], None]] = {
+    QCStage.DEDUP: _stage_dedup,
+    QCStage.TOO_FEW: _stage_too_few,
+    QCStage.SPLINE: _stage_spline,
+    QCStage.CURVATURE: _stage_curvature,
+    QCStage.OFF_CENTER: _stage_off_center,
+    QCStage.POST_QC: _stage_post_qc,
+}
+
+
+def detect_outliers(
+    edf: pd.DataFrame,
+    *,
+    stages: list[QCStage] | None = None,
+    cfg: QCConfig | None = None,
+) -> pd.DataFrame:
+    """Pre-fit outlier detection. Adds ``outlier`` and ``reason`` columns.
+
+    Parameters
+    ----------
+    stages : list of QCStage, optional
+        Ordered list of QC stages to run.  Defaults to ``DEFAULT_STAGES``.
+    cfg : QCConfig, optional
+        Threshold configuration.  Defaults to ``QCConfig()`` (module defaults).
+    """
+    if stages is None:
+        stages = DEFAULT_STAGES
+    if cfg is None:
+        cfg = QCConfig()
+
+    R = OutlierReason
+
+    edf = edf.copy()
+    edf["outlier"] = pd.Series(False, index=edf.index, dtype=bool)
+    edf["reason"] = R.NONE
+
+    budgets = edf["budget"].unique()
+
+    for stage in stages:
+        _STAGE_DISPATCH[stage](edf, budgets, cfg)
 
     # Invariant checks
     assert (

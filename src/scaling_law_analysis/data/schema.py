@@ -67,6 +67,17 @@ class OutlierReason(StrEnum):
     TOO_FEW_POST_QC = "too_few_post_qc"
 
 
+class QCStage(StrEnum):
+    """Quality-control stage in the outlier detection pipeline."""
+
+    DEDUP = "dedup"
+    TOO_FEW = "too_few"
+    SPLINE = "spline"
+    CURVATURE = "curvature"
+    OFF_CENTER = "off_center"
+    POST_QC = "post_qc"
+
+
 class IsoFlopAnnotatedRecord(IsoFlopRecord):
     """Schema with outlier annotations appended."""
 

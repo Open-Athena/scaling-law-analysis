@@ -29,7 +29,12 @@ from scaling_law_analysis.chinchilla import (
 from scaling_law_analysis import config
 from scaling_law_analysis.data.common import ISOFLOPS_CSV
 from scaling_law_analysis.data.schema import OutlierReason
-from scaling_law_analysis.data.transform import display_name, ordered_experiments
+from scaling_law_analysis.data.transform import (
+    DEFAULT_STAGES,
+    STAGE_REASONS,
+    display_name,
+    ordered_experiments,
+)
 from scaling_law_analysis.data.visualize import (
     OUTLIER_COLOR,
     REASON_LABELS,
@@ -683,16 +688,7 @@ def main() -> None:
         edf = df[df["experiment"] == experiment].copy()
         clean = edf[~edf["outlier"]]
         print(f"\n  {experiment} ({len(edf)} points)")
-        for reason in [
-            OutlierReason.EXACT_DUP,
-            OutlierReason.DUP_PARAMS,
-            OutlierReason.TOO_FEW,
-            OutlierReason.NEG_CURVATURE,
-            OutlierReason.WEAK_CURVATURE,
-            OutlierReason.SPLINE,
-            OutlierReason.OFF_CENTER,
-            OutlierReason.TOO_FEW_POST_QC,
-        ]:
+        for reason in [r for stage in DEFAULT_STAGES for r in STAGE_REASONS[stage]]:
             cnt = (edf["reason"] == reason).sum()
             if cnt > 0:
                 print(f"    {reason}: {cnt}")

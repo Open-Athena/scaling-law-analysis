@@ -15,6 +15,7 @@ from scaling_law_analysis.data.extract import FETCH_FUNCTIONS
 from scaling_law_analysis.data.schema import ANNOTATED_SCHEMA_COLS, SCHEMA_COLS
 from scaling_law_analysis.data.transform import (
     EXPERIMENT_OVERRIDES,
+    QCConfig,
     assert_unique,
     detect_outliers,
     fit_parabolas,
@@ -64,8 +65,8 @@ def main() -> None:
     annotated_dfs: list[pd.DataFrame] = []
     for experiment in experiments:
         edf = combined[combined["experiment"] == experiment].copy()
-        overrides = EXPERIMENT_OVERRIDES.get(experiment, {})
-        edf = detect_outliers(edf, **overrides)
+        cfg = EXPERIMENT_OVERRIDES.get(experiment)
+        edf = detect_outliers(edf, cfg=cfg)
         clean = edf[~edf["outlier"]]
         print(f"  {experiment}: {len(clean)}/{len(edf)} clean")
         annotated_dfs.append(edf)
