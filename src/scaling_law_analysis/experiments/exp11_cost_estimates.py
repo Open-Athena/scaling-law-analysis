@@ -370,15 +370,23 @@ def plot_progressive_filter(
 
     # $ annotations to the right of Approach 2 dots
     for idx, (pct, dollars) in enumerate(zip(dcl_pcts, dcl_dollars)):
+        if pct < 1.0:
+            # Near-zero DCL: place to the left of the Approach 3 line
+            x_off, y_off, ha = -6, 4, "right"
+        elif results[idx].label == "+Off Center":
+            # Shift down to avoid overlap with neighboring annotations
+            x_off, y_off, ha = 6, -8, "left"
+        else:
+            x_off, y_off, ha = 6, 4, "left"
         ax_bar.annotate(
             fmt_dollars(dollars),
             xy=(pct, y_pos[idx]),
-            xytext=(6, 4),
+            xytext=(x_off, y_off),
             textcoords="offset points",
             fontsize=8,
             color="#333333",
             va="top",
-            ha="left",
+            ha=ha,
             zorder=4,
         )
 
