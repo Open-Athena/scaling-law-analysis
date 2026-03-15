@@ -430,7 +430,14 @@ def plot_progressive_filter(
         )
 
     # ── Right panel: detail table ──
-    headers = ["\u0394 points", "points", "\u0394 budgets", "budgets", "DCL %", "DCL $"]
+    headers = [
+        r"$\Delta n_{\mathrm{points}}$",
+        r"$n_{\mathrm{points}}$",
+        r"$\Delta n_{\mathrm{budgets}}$",
+        r"$n_{\mathrm{budgets}}$",
+        "DCL %",
+        r"DCL \$",
+    ]
     grad_cols = {4, 5}
     n_cols = len(headers)
 

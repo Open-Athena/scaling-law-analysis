@@ -736,6 +736,7 @@ def plot_residual_std_by_budget(
         budgets: np.ndarray
         stds: np.ndarray
         n_clean: int
+        n_budgets: int
         mean_std: float
         kw_p: float  # Kruskal-Wallis p-value
         lev_p: float  # Levene's p-value
@@ -779,6 +780,7 @@ def plot_residual_std_by_budget(
             budgets=b_arr,
             stds=s_arr,
             n_clean=len(clean),
+            n_budgets=len(budgets_sorted),
             mean_std=float(s_arr.mean()),
             kw_p=float(kw_p),
             lev_p=float(lev_p),
@@ -811,14 +813,21 @@ def plot_residual_std_by_budget(
 
     ax_plot.set_xscale("log")
     ax_plot.set_xlabel("Compute budget (FLOPs)", fontsize=9)
-    ax_plot.set_ylabel("Residual std dev (nats)", fontsize=9)
+    ax_plot.set_ylabel("Residual σ (nats)", fontsize=9)
     ax_plot.grid(True, alpha=0.2)
 
     # ── Right panel: summary table ──
-    headers = ["Experiment", "n", "Mean σ", "KW p", "Levene p"]
+    headers = [
+        "Experiment",
+        r"$n_{\mathrm{points}}$",
+        r"$n_{\mathrm{budgets}}$",
+        "Mean σ",
+        "KW p",
+        "Levene p",
+    ]
     # Custom column x-positions: wider Experiment column, narrower data columns
-    col_left = [0.0, 2.2, 2.8, 3.6, 4.4]  # left edge of each column
-    col_right = [2.2, 2.8, 3.6, 4.4, 5.2]  # right edge
+    col_left = [0.0, 2.2, 2.8, 3.4, 4.1, 4.8]  # left edge of each column
+    col_right = [2.2, 2.8, 3.4, 4.1, 4.8, 5.5]  # right edge
     col_center = [(l + r) / 2 for l, r in zip(col_left, col_right)]
     tbl_width = col_right[-1]
     n_rows = len(stats)
@@ -835,7 +844,6 @@ def plot_residual_std_by_budget(
             ha="center",
             va="bottom",
             fontsize=8,
-            fontweight="bold",
         )
 
     # Alternating row backgrounds
@@ -870,6 +878,7 @@ def plot_residual_std_by_budget(
         row_vals = [
             short,
             str(st.n_clean),
+            str(st.n_budgets),
             f"{st.mean_std:.4f}",
             _fmt_pval(st.kw_p),
             _fmt_pval(st.lev_p),

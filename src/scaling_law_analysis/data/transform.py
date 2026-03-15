@@ -232,7 +232,7 @@ assert _covered == _all_reasons, (
 EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
     Experiment.MISFITTING_FINEWEB: QCConfig(loo_zscore_threshold=100.0),
-    # Lower LOO threshold for Marin DCLM to catch high-variance outliers.
+    Experiment.EPOCHAI_CHINCHILLA: QCConfig(loo_zscore_threshold=3.0),
     Experiment.MARIN_DCLM: QCConfig(loo_zscore_threshold=4.5),
 }
 
