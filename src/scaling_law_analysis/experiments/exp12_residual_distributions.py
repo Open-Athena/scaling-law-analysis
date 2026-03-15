@@ -978,7 +978,7 @@ def main() -> None:
         clean = edf[~edf["outlier"]]
         print(f"\n  {experiment} ({len(edf)} points)")
         for reason in [r for stage in DEFAULT_STAGES for r in STAGE_REASONS[stage]]:
-            cnt = (edf["reason"] == reason).sum()
+            cnt = (edf["reason"] == reason).sum()  # pyrefly: ignore
             if cnt > 0:
                 print(f"    {reason}: {cnt}")
         print(f"    clean: {len(clean)}/{len(edf)} points")
