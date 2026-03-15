@@ -194,7 +194,7 @@ NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binni
 CURVATURE_CI = 0.95
 # Fractional margin added to the off-center symmetric radius.  A value of 0.25
 # means a point can be up to 25% beyond the min half-distance and still be kept.
-OFF_CENTER_MARGIN = 0.50
+OFF_CENTER_MARGIN = 2.00
 
 
 @dataclass(frozen=True)
@@ -222,9 +222,9 @@ STAGE_REASONS: dict[QCStage, list[OutlierReason]] = {
 DEFAULT_STAGES: list[QCStage] = [
     QCStage.DEDUP,
     QCStage.TOO_FEW,
+    QCStage.OFF_CENTER,
     QCStage.SPLINE,
     QCStage.CURVATURE,
-    QCStage.OFF_CENTER,
     QCStage.POST_QC,
 ]
 

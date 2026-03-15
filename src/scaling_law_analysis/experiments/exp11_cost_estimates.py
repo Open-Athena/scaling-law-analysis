@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 from scaling_law_analysis import config
-from scaling_law_analysis.data.schema import OutlierReason
+from scaling_law_analysis.data.schema import OutlierReason, QCStage
 from scaling_law_analysis.data.transform import DEFAULT_STAGES, STAGE_REASONS
 from scaling_law_analysis.chinchilla import (
     ExponentGrid,
@@ -154,39 +154,72 @@ def _fit_llama3_a2(
 
 # ── Progressive filter analysis ──────────────────────────────────────────────
 
-# Short bar-chart labels for each OutlierReason.
-_REASON_SHORT_LABELS: dict[OutlierReason, str] = {
-    OutlierReason.EXACT_DUP: "Exact dup",
-    OutlierReason.DUP_PARAMS: "Near dup",
-    OutlierReason.TOO_FEW: "Too few",
-    OutlierReason.SPLINE: "Spline",
-    OutlierReason.NEG_CURVATURE: "Neg curv",
-    OutlierReason.WEAK_CURVATURE: "Weak curv",
-    OutlierReason.OFF_CENTER: "Off center",
-    OutlierReason.TOO_FEW_POST_QC: "Post-QC",
-}
-
-# Derive stage ordering from the canonical DEFAULT_STAGES / STAGE_REASONS.
-_FILTER_STAGES: list[tuple[str, OutlierReason]] = [
-    (_REASON_SHORT_LABELS[reason], reason)
-    for stage in DEFAULT_STAGES
-    for reason in STAGE_REASONS[stage]
+# Grouped filter stages: (group_label, list of OutlierReasons collapsed into one level).
+# Order follows DEFAULT_STAGES.
+_FILTER_GROUPS: list[tuple[str, list[OutlierReason]]] = [
+    (
+        "Pre-QC",
+        [r for stage in (QCStage.DEDUP, QCStage.TOO_FEW) for r in STAGE_REASONS[stage]],
+    ),
+    (
+        "Off Center",
+        [
+            r
+            for stage in (QCStage.OFF_CENTER, QCStage.SPLINE)
+            for r in STAGE_REASONS[stage]
+        ],
+    ),
+    (
+        "Weak Curvature",
+        [r for r in STAGE_REASONS[QCStage.CURVATURE]],
+    ),
+    (
+        "Post-QC",
+        [r for r in STAGE_REASONS[QCStage.POST_QC]],
+    ),
 ]
+
+# Verify all QCStages are covered by _FILTER_GROUPS.
+_covered_stages = {
+    stage
+    for _, reasons in _FILTER_GROUPS
+    for stage in QCStage
+    if any(r in reasons for r in STAGE_REASONS[stage])
+}
+_missing_stages = set(QCStage) - _covered_stages
+if _missing_stages:
+    raise RuntimeError(
+        f"_FILTER_GROUPS is missing QCStage(s): {sorted(_missing_stages)}"
+    )
+
+
+@dataclass
+class _FilterLevel:
+    """One level in the progressive filter analysis."""
+
+    label: str
+    dcl_flops: float
+    pts_removed: int
+    pts_remaining: int
+    budgets_removed: int
+    budgets_remaining: int
 
 
 def _progressive_filter_dcl(
     surface: LossSurface,
     eval_budget: float,
-) -> list[tuple[str, float]]:
-    """Compute DCL at each cumulative filter level for Llama 3 raw-loss data.
+) -> list[_FilterLevel]:
+    """Compute DCL and data statistics at each cumulative filter level.
 
     *surface* is the ground-truth surface (A3 or VPNLS, fit on raw data).
-    Returns list of (label, dcl_flops) pairs starting with "Raw" (no filter).
+    Returns list of _FilterLevel starting with "Raw" (no filter).
     """
     df = pd.read_csv(ISOFLOPS_CSV)
     edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[False]].copy()
 
-    results: list[tuple[str, float]] = []
+    results: list[_FilterLevel] = []
+    total_pts = len(edf)
+    total_budgets = edf["budget"].nunique()
 
     # Level 0: no filtering
     a2 = fit_approach2(
@@ -196,14 +229,28 @@ def _progressive_filter_dcl(
         edf["budget"].to_numpy(),
     )
     d = compare_allocations(surface, a2, eval_budget)
-    results.append(("Raw", d["wasted_flops"]))
+    results.append(
+        _FilterLevel(
+            label="Raw",
+            dcl_flops=d["wasted_flops"],
+            pts_removed=0,
+            pts_remaining=total_pts,
+            budgets_removed=0,
+            budgets_remaining=total_budgets,
+        )
+    )
 
-    # Cumulative filter levels
+    # Cumulative filter levels (grouped)
     excluded: set[str] = set()
-    for label, reason in _FILTER_STAGES:
-        excluded.add(reason.value)
+    prev_pts = total_pts
+    prev_budgets = total_budgets
+    for label, reasons in _FILTER_GROUPS:
+        for reason in reasons:
+            excluded.add(reason.value)
         filtered = edf[~edf["reason"].isin(excluded)]
-        if len(filtered) == 0:
+        cur_pts = len(filtered)
+        cur_budgets = filtered["budget"].nunique() if cur_pts > 0 else 0
+        if cur_pts == 0:
             break
         a2 = fit_approach2(
             filtered["params"].to_numpy(),
@@ -212,45 +259,268 @@ def _progressive_filter_dcl(
             filtered["budget"].to_numpy(),
         )
         d = compare_allocations(surface, a2, eval_budget)
-        results.append((f"+{label}", d["wasted_flops"]))
+        results.append(
+            _FilterLevel(
+                label=f"+{label}",
+                dcl_flops=d["wasted_flops"],
+                pts_removed=prev_pts - cur_pts,
+                pts_remaining=cur_pts,
+                budgets_removed=prev_budgets - cur_budgets,
+                budgets_remaining=cur_budgets,
+            )
+        )
+        prev_pts = cur_pts
+        prev_budgets = cur_budgets
 
     return results
 
 
 def plot_progressive_filter(
-    results: list[tuple[str, float]],
+    results: list[_FilterLevel],
     output_path: str | Path,
     title: str,
     eval_budget: float,
 ) -> None:
-    """Bar chart of DCL at each cumulative filter level."""
+    """Progressive filter: horizontal bar + dot-line chart with detail table."""
     setup_style()
+    plt.rcParams["text.usetex"] = False
 
-    labels = [r[0] for r in results]
-    dcl_vals = [r[1] for r in results]
-    dcl_pcts = [v / eval_budget * 100 for v in dcl_vals]
+    n_rows = len(results)
+    y_pos = np.arange(n_rows)
 
-    fig, ax = plt.subplots(figsize=(10, 5), layout="constrained")
-    x = np.arange(len(labels))
-    bars = ax.bar(x, dcl_pcts, color="#4c72b0", edgecolor="white", width=0.6)
+    dcl_dollars = [_flops_to_dollars(r.dcl_flops) for r in results]
+    dcl_pcts = [r.dcl_flops / eval_budget * 100 for r in results]
 
-    # Value labels on bars
-    for bar, pct, flops in zip(bars, dcl_pcts, dcl_vals):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            bar.get_height() + 0.1,
-            f"{pct:.1f}%\n({fmt_dollars(_flops_to_dollars(flops))})",
+    fig_height = max(0.5 * n_rows + 1.5, 4.5)
+    fig, (ax_bar, ax_tbl) = plt.subplots(
+        1,
+        2,
+        figsize=(12, fig_height),
+        gridspec_kw={"width_ratios": [6, 4], "wspace": 0.02},
+        sharey=True,
+        layout="constrained",
+    )
+
+    # ── Left panel: thin bars (background) + dot-line (foreground) ──
+    ax_bar.barh(
+        y_pos,
+        dcl_pcts,
+        color="#d0d0d0",
+        edgecolor="white",
+        linewidth=0.8,
+        height=0.15,
+        zorder=1,
+    )
+    ax_bar.plot(
+        dcl_pcts,
+        y_pos,
+        "o-",
+        color="#333333",
+        markersize=7,
+        linewidth=1.8,
+        markeredgecolor="white",
+        markeredgewidth=0.8,
+        zorder=3,
+        label="Approach 2",
+    )
+
+    # Approach 3 reference line at DCL=0%
+    ax_bar.plot(
+        [0] * n_rows,
+        y_pos,
+        "s-",
+        color="#333333",
+        markersize=5,
+        linewidth=1.8,
+        markeredgecolor="white",
+        markeredgewidth=0.8,
+        zorder=2,
+        label="Approach 3",
+    )
+
+    # $ annotations to the right of Approach 2 dots
+    for idx, (pct, dollars) in enumerate(zip(dcl_pcts, dcl_dollars)):
+        ax_bar.annotate(
+            fmt_dollars(dollars),
+            xy=(pct, y_pos[idx]),
+            xytext=(6, 4),
+            textcoords="offset points",
+            fontsize=8,
+            color="#333333",
+            va="top",
+            ha="left",
+            zorder=4,
+        )
+
+    max_val = max(dcl_pcts)
+    ax_bar.set_xlim(-max_val * 0.15, max_val * 1.6)
+
+    # Tick labels with brief descriptions
+    _GROUP_DESCRIPTIONS: dict[str, str] = {
+        "Raw": "unfiltered",
+        "+Pre-QC": "dedup & min points",
+        "+Off Center": "geometric outliers",
+        "+Weak Curvature": "flat/inverted curves",
+        "+Post-QC": "sparse curve cleanup",
+    }
+    tick_labels = []
+    for r in results:
+        desc = _GROUP_DESCRIPTIONS.get(r.label, "")
+        tick_labels.append(f"{r.label}\n{desc}" if desc else r.label)
+
+    ax_bar.set_yticks(y_pos)
+    ax_bar.set_yticklabels(tick_labels, fontsize=9)
+    ax_bar.set_xlabel("Deadweight Compute Loss (%)", fontsize=10)
+    ax_bar.set_ylabel("Approach 2 QC Pipeline", fontsize=10)
+    ax_bar.grid(True, axis="x", alpha=0.3)
+    ax_bar.invert_yaxis()
+
+    ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
+
+    # Convergence annotation on last row
+    last_y = y_pos[-1]
+    eval_exp = int(np.floor(np.log10(eval_budget)))
+    eval_mantissa = eval_budget / 10**eval_exp
+    ax_bar.annotate(
+        "QC bias corrections yield nearly convergent\n"
+        "compute-optimal estimates at "
+        rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$ FLOPs",
+        xy=(max_val * 0.12, last_y),
+        xytext=(max_val * 0.35, last_y),
+        fontsize=8.5,
+        color="#555555",
+        fontstyle="italic",
+        ha="left",
+        va="center",
+        arrowprops=dict(arrowstyle="->", color="#999999", lw=1.0),
+        zorder=4,
+    )
+
+    # ── Right panel: detail table ──
+    headers = ["\u0394 points", "points", "\u0394 budgets", "budgets", "DCL %", "DCL $"]
+    grad_cols = {4, 5}
+    n_cols = len(headers)
+
+    cell_values: list[list[str]] = []
+    for i, r in enumerate(results):
+        if r.label == "Raw":
+            delta_pts = "\u2014"
+            delta_bdg = "\u2014"
+        else:
+            delta_pts = f"\u2212{r.pts_removed}" if r.pts_removed > 0 else "0"
+            delta_bdg = f"\u2212{r.budgets_removed}" if r.budgets_removed > 0 else "0"
+        cell_values.append(
+            [
+                delta_pts,
+                str(r.pts_remaining),
+                delta_bdg,
+                str(r.budgets_remaining),
+                f"{dcl_pcts[i]:.2f}%",
+                _fmt_dollars_2dp(dcl_dollars[i]),
+            ]
+        )
+
+    vmin, vmax = min(dcl_pcts), max(dcl_pcts)
+
+    ax_tbl.set_xlim(-0.15, n_cols + 0.3)
+    ax_tbl.set_ylim(n_rows - 0.5, -0.5)
+    ax_tbl.set_axis_off()
+
+    ax_tbl.text(
+        0.5,
+        -0.02,
+        "Filter Details",
+        transform=ax_tbl.transAxes,
+        ha="center",
+        va="top",
+        fontsize=10,
+    )
+
+    for j, header in enumerate(headers):
+        ax_tbl.text(
+            j + 0.5,
+            -0.7,
+            header,
             ha="center",
             va="bottom",
             fontsize=8,
         )
 
-    ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=9)
-    ax.set_ylabel("DCL (% of eval budget)")
-    ax.set_title(title, fontsize=11)
-    ax.grid(True, axis="y", alpha=0.3)
+    # Alternating row backgrounds
+    for idx in range(n_rows):
+        if idx % 2 == 0:
+            ax_tbl.add_patch(
+                plt.Rectangle(
+                    (0, idx - 0.5),
+                    n_cols,
+                    1,
+                    facecolor="#f0f0f0",
+                    edgecolor="none",
+                    zorder=0,
+                )
+            )
 
+    # Gradient cell backgrounds for DCL columns
+    for j in grad_cols:
+        for idx in range(n_rows):
+            bg = _gradient_color(dcl_pcts[idx], vmin, vmax)
+            ax_tbl.add_patch(
+                plt.Rectangle(
+                    (j, idx - 0.5),
+                    1,
+                    1,
+                    facecolor=bg,
+                    edgecolor="none",
+                    zorder=1,
+                )
+            )
+
+    # Cell values
+    for idx in range(n_rows):
+        for j in range(n_cols):
+            if j in grad_cols:
+                bg = _gradient_color(dcl_pcts[idx], vmin, vmax)
+                color = _text_color_for_bg(bg)
+                fontweight = "bold"
+            else:
+                color = "#000000"
+                fontweight = "normal"
+            ax_tbl.text(
+                j + 0.5,
+                idx,
+                cell_values[idx][j],
+                ha="center",
+                va="center",
+                fontsize=8,
+                fontweight=fontweight,
+                color=color,
+                zorder=2,
+            )
+
+    # Table border
+    ax_tbl.add_patch(
+        plt.Rectangle(
+            (0, -0.5),
+            n_cols,
+            n_rows,
+            facecolor="none",
+            edgecolor="black",
+            linewidth=1.0,
+            zorder=3,
+        )
+    )
+
+    # Vertical divider between count columns and DCL columns
+    first_grad = min(grad_cols)
+    ax_tbl.plot(
+        [first_grad, first_grad],
+        [-0.5, n_rows - 0.5],
+        color="black",
+        linewidth=1.0,
+        zorder=3,
+    )
+
+    fig.suptitle(title, fontsize=12)
     fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
     plt.close(fig)
     print(f"Saved: {output_path}")
@@ -262,6 +532,18 @@ def _flops_to_dollars(flops: float) -> float:
     seconds = flops / flops_per_second
     hours = seconds / 3600
     return hours * GPU_COST_PER_HOUR
+
+
+def _fmt_dollars_2dp(dollars: float) -> str:
+    """Format a dollar amount with 0 decimal places for table display."""
+    v = abs(dollars)
+    if v >= 1e6:
+        return f"${v / 1e6:.0f}M"
+    if v >= 1e3:
+        return f"${v / 1e3:.0f}K"
+    if v >= 1:
+        return f"${v:.0f}"
+    return f"${v:.0f}"
 
 
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -426,7 +708,7 @@ def plot_dcl_summary(
     fig, (ax_bar, ax_tbl) = plt.subplots(
         1,
         2,
-        figsize=(13, fig_height),
+        figsize=(12, fig_height),
         gridspec_kw={"width_ratios": [4, 5], "wspace": 0.02},
         sharey=True,
         layout="constrained",
@@ -869,19 +1151,25 @@ def main() -> None:
 
     print("\n── Progressive filter: DCL vs A3 ──")
     a3_results = _progressive_filter_dcl(raw_a3, LLAMA3_405B_FLOPS)
-    for label, dcl in a3_results:
-        print(f"  {label:>12s}: DCL={dcl:.2e} ({dcl / LLAMA3_405B_FLOPS * 100:.1f}%)")
+    for r in a3_results:
+        print(
+            f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
+            f"({r.dcl_flops / LLAMA3_405B_FLOPS * 100:.1f}%)"
+        )
     plot_progressive_filter(
         a3_results,
         output_dir / "progressive_filter_a3.png",
-        "DCL: Approach 2 vs Approach 3 — Progressive Filtering (Llama 3, raw nats)",
+        "DCL: Approach 2 vs Approach 3 \u2014 Progressive Filtering (Llama 3, raw nats)",
         LLAMA3_405B_FLOPS,
     )
 
     print("\n── Progressive filter: DCL vs VPNLS ──")
     vpnls_results = _progressive_filter_dcl(raw_vpnls, LLAMA3_405B_FLOPS)
-    for label, dcl in vpnls_results:
-        print(f"  {label:>12s}: DCL={dcl:.2e} ({dcl / LLAMA3_405B_FLOPS * 100:.1f}%)")
+    for r in vpnls_results:
+        print(
+            f"  {r.label:>12s}: DCL={r.dcl_flops:.2e} "
+            f"({r.dcl_flops / LLAMA3_405B_FLOPS * 100:.1f}%)"
+        )
     plot_progressive_filter(
         vpnls_results,
         output_dir / "progressive_filter_vpnls.png",
