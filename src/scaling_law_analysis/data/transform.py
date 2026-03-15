@@ -241,7 +241,8 @@ EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
     "misfitting__fineweb_c4__transformer": QCConfig(loo_zscore_threshold=100.0),
     # Lower off-center margin for Chinchilla (fewer points per curve).
-    "epochai_chinchilla__massivetext__chinchilla": QCConfig(off_center_margin=1.00),
+    "epochai_chinchilla__massivetext__chinchilla": QCConfig(off_center_margin=1.50),
+    "ml_scalefit__massivetext__chinchilla": QCConfig(off_center_margin=1.50),
 }
 
 

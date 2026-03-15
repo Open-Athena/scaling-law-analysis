@@ -309,6 +309,7 @@ def plot_progressive_filter(
     output_path: str | Path,
     title: str,
     eval_budget: float,
+    show_convergence_annotation: bool = True,
 ) -> None:
     """Progressive filter: horizontal bar + dot-line chart with detail table."""
     setup_style()
@@ -407,23 +408,24 @@ def plot_progressive_filter(
     ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
 
     # Convergence annotation on last row
-    last_y = y_pos[-1]
-    eval_exp = int(np.floor(np.log10(eval_budget)))
-    eval_mantissa = eval_budget / 10**eval_exp
-    ax_bar.annotate(
-        "QC bias corrections yield nearly convergent\n"
-        "compute-optimal estimates at "
-        rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$ FLOPs",
-        xy=(max_val * 0.12, last_y),
-        xytext=(max_val * 0.35, last_y),
-        fontsize=8.5,
-        color="#555555",
-        fontstyle="italic",
-        ha="left",
-        va="center",
-        arrowprops=dict(arrowstyle="->", color="#999999", lw=1.0),
-        zorder=4,
-    )
+    if show_convergence_annotation:
+        last_y = y_pos[-1]
+        eval_exp = int(np.floor(np.log10(eval_budget)))
+        eval_mantissa = eval_budget / 10**eval_exp
+        ax_bar.annotate(
+            "QC bias corrections yield nearly convergent\n"
+            "compute-optimal estimates at "
+            rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$ FLOPs",
+            xy=(max_val * 0.12, last_y),
+            xytext=(max_val * 0.35, last_y),
+            fontsize=8.5,
+            color="#555555",
+            fontstyle="italic",
+            ha="left",
+            va="center",
+            arrowprops=dict(arrowstyle="->", color="#999999", lw=1.0),
+            zorder=4,
+        )
 
     # ── Right panel: detail table ──
     headers = ["\u0394 points", "points", "\u0394 budgets", "budgets", "DCL %", "DCL $"]
@@ -1132,6 +1134,7 @@ def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None
             f"Deadweight Compute Loss: Approach 2 vs {method_label} "
             f"Progressive Filtering ({model.name})",
             model.eval_budget,
+            show_convergence_annotation=(model is LLAMA3_MODEL),
         )
 
 
