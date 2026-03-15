@@ -53,7 +53,7 @@ EXPERIMENT_DISPLAY_NAMES: dict[str, str] = {
     Experiment.EPOCHAI_CHINCHILLA: "Epoch AI / Chinchilla",
     Experiment.ML_SCALEFIT_CHINCHILLA: "ML-Scalefit / Chinchilla",
     Experiment.LLAMA3_EXP_LOSS: "Llama 3 (exp loss)",
-    Experiment.LLAMA3_RAW_LOSS: "Llama 3 (raw loss)",
+    Experiment.LLAMA3_RAW_LOSS: "Llama 3",
     Experiment.MARIN_COMMA: "Marin / CoMMA",
     Experiment.MARIN_DCLM: "Marin / DCLM",
     Experiment.MARIN_NEMOTRON: "Marin / Nemotron",
@@ -232,6 +232,8 @@ assert _covered == _all_reasons, (
 EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
     Experiment.MISFITTING_FINEWEB: QCConfig(loo_zscore_threshold=100.0),
+    # Lower LOO threshold for Marin DCLM to catch high-variance outliers.
+    Experiment.MARIN_DCLM: QCConfig(loo_zscore_threshold=4.5),
 }
 
 

@@ -11,6 +11,7 @@ Usage:
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 import matplotlib.colors as mcolors
@@ -19,7 +20,7 @@ from matplotlib.lines import Line2D
 from matplotlib.ticker import FuncFormatter
 import numpy as np
 import pandas as pd
-from scipy.stats import gaussian_kde  # pyrefly: ignore
+from scipy.stats import gaussian_kde, kruskal, levene  # pyrefly: ignore
 
 from scaling_law_analysis.chinchilla import (
     LossSurface,
@@ -711,6 +712,244 @@ def plot_flop_factors(
     print(f"Saved: {output_path}")
 
 
+def plot_residual_std_by_budget(
+    results: dict[str, dict],
+    output_path: Path,
+) -> None:
+    """Plot per-budget residual std dev for each experiment with summary table."""
+    setup_style()
+
+    experiments = ordered_experiments(results.keys())
+    n_exp = len(experiments)
+
+    # Assign a distinct color and marker per experiment
+    cmap = plt.colormaps["tab10"]
+    exp_colors = {exp: cmap(i) for i, exp in enumerate(experiments)}
+    _markers = ["o", "s", "D", "^", "v", "P", "X", "*"]
+    exp_markers = {
+        exp: _markers[i % len(_markers)] for i, exp in enumerate(experiments)
+    }
+
+    # ── Gather per-budget std devs and run tests ──
+    @dataclass
+    class _ExpStats:
+        budgets: np.ndarray
+        stds: np.ndarray
+        n_clean: int
+        mean_std: float
+        kw_p: float  # Kruskal-Wallis p-value
+        lev_p: float  # Levene's p-value
+
+    stats: dict[str, _ExpStats] = {}
+    for experiment in experiments:
+        edf: pd.DataFrame = results[experiment]["df"]
+        clean = edf[~edf["outlier"]]
+        if "residual" not in clean.columns or len(clean) == 0:
+            continue
+
+        budgets_sorted = sorted(clean["budget"].unique())
+        budget_stds = []
+        budget_groups: list[np.ndarray] = []
+        for budget in budgets_sorted:
+            resid = clean.loc[clean["budget"] == budget, "residual"].to_numpy()
+            if len(resid) >= 2:
+                budget_stds.append(resid.std())
+                budget_groups.append(resid)
+            else:
+                budget_stds.append(0.0)
+                budget_groups.append(resid)
+
+        b_arr = np.array(budgets_sorted)
+        s_arr = np.array(budget_stds)
+
+        # Kruskal-Wallis: do residual locations differ across budgets?
+        valid_groups = [g for g in budget_groups if len(g) >= 2]
+        if len(valid_groups) >= 2:
+            _, kw_p = kruskal(*valid_groups)
+        else:
+            kw_p = float("nan")
+
+        # Levene's test: do residual variances differ across budgets?
+        if len(valid_groups) >= 2:
+            _, lev_p = levene(*valid_groups)
+        else:
+            lev_p = float("nan")
+
+        stats[experiment] = _ExpStats(
+            budgets=b_arr,
+            stds=s_arr,
+            n_clean=len(clean),
+            mean_std=float(s_arr.mean()),
+            kw_p=float(kw_p),
+            lev_p=float(lev_p),
+        )
+
+    # ── Figure layout: plot (left) + table (right) ──
+    fig, (ax_plot, ax_tbl) = plt.subplots(
+        1,
+        2,
+        figsize=(12, 3),
+        gridspec_kw={"width_ratios": [3, 4], "wspace": 0.02},
+    )
+
+    # ── Left panel: std dev vs budget ──
+    for experiment in experiments:
+        if experiment not in stats:
+            continue
+        st = stats[experiment]
+        color = exp_colors[experiment]
+        marker = exp_markers[experiment]
+        ax_plot.plot(
+            st.budgets,
+            st.stds,
+            linestyle="-",
+            marker=marker,
+            color=color,
+            markersize=5,
+            linewidth=1.2,
+        )
+
+    ax_plot.set_xscale("log")
+    ax_plot.set_xlabel("Compute budget (FLOPs)", fontsize=9)
+    ax_plot.set_ylabel("Residual std dev (nats)", fontsize=9)
+    ax_plot.grid(True, alpha=0.2)
+
+    # ── Right panel: summary table ──
+    headers = ["Experiment", "n", "Mean σ", "KW p", "Levene p"]
+    # Custom column x-positions: wider Experiment column, narrower data columns
+    col_left = [0.0, 2.2, 2.8, 3.6, 4.4]  # left edge of each column
+    col_right = [2.2, 2.8, 3.6, 4.4, 5.2]  # right edge
+    col_center = [(l + r) / 2 for l, r in zip(col_left, col_right)]
+    tbl_width = col_right[-1]
+    n_rows = len(stats)
+
+    ax_tbl.set_xlim(-0.05, tbl_width + 0.05)
+    ax_tbl.set_ylim(n_rows - 0.5, -1.2)
+    ax_tbl.set_axis_off()
+
+    for j, header in enumerate(headers):
+        ax_tbl.text(
+            col_center[j],
+            -0.7,
+            header,
+            ha="center",
+            va="bottom",
+            fontsize=8,
+            fontweight="bold",
+        )
+
+    # Alternating row backgrounds
+    for idx in range(n_rows):
+        if idx % 2 == 0:
+            ax_tbl.add_patch(
+                plt.Rectangle(
+                    (0, idx - 0.5),
+                    tbl_width,
+                    1,
+                    facecolor="#f0f0f0",
+                    edgecolor="none",
+                    zorder=0,
+                )
+            )
+
+    def _fmt_pval(p: float) -> str:
+        if np.isnan(p):
+            return "—"
+        if p < 0.001:
+            return f"{p:.1e}"
+        return f"{p:.3f}"
+
+    row_idx = 0
+    for experiment in experiments:
+        if experiment not in stats:
+            continue
+        st = stats[experiment]
+        short = display_name(experiment)
+        color = exp_colors[experiment]
+        marker = exp_markers[experiment]
+        row_vals = [
+            short,
+            str(st.n_clean),
+            f"{st.mean_std:.4f}",
+            _fmt_pval(st.kw_p),
+            _fmt_pval(st.lev_p),
+        ]
+        for j, val in enumerate(row_vals):
+            if j == 0:
+                # Draw marker + name for legend-style experiment column
+                ax_tbl.plot(
+                    col_left[0] + 0.15,
+                    row_idx,
+                    marker=marker,
+                    color=color,
+                    markersize=5,
+                    linestyle="none",
+                    zorder=2,
+                    clip_on=False,
+                )
+                ax_tbl.text(
+                    col_left[0] + 0.35,
+                    row_idx,
+                    val,
+                    ha="left",
+                    va="center",
+                    fontsize=8,
+                    fontweight="bold",
+                    color=color,
+                    zorder=2,
+                )
+            else:
+                ax_tbl.text(
+                    col_center[j],
+                    row_idx,
+                    val,
+                    ha="center",
+                    va="center",
+                    fontsize=8,
+                    color="#000000",
+                    zorder=2,
+                )
+        row_idx += 1
+
+    # Table border
+    ax_tbl.add_patch(
+        plt.Rectangle(
+            (0, -0.5),
+            tbl_width,
+            n_rows,
+            facecolor="none",
+            edgecolor="black",
+            linewidth=1.0,
+            zorder=3,
+        )
+    )
+
+    fig.suptitle(
+        "Loss Variance: IsoFLOP Residuals by Budget",
+        fontsize=13,
+        y=1.06,
+    )
+    ax_plot.set_title("Approach 3 Fit Residuals", fontsize=10, pad=8)
+
+    fig.tight_layout()
+
+    # Align table so first data row top (y=-0.5) matches the plot area top.
+    # Headers at y=-0.7 will extend slightly above.
+    plot_pos = ax_plot.get_position()
+    tbl_pos = ax_tbl.get_position()
+    # ylim is (n_rows - 0.5, -1.2): total range = n_rows + 0.7
+    # Data rows span y=-0.5 to n_rows-0.5: range = n_rows
+    # Header offset above data: 0.7 / (n_rows + 0.7) of axis height
+    data_frac = n_rows / (n_rows + 0.7)
+    total_height = plot_pos.height / data_frac
+    tbl_y0 = plot_pos.y0
+    ax_tbl.set_position([tbl_pos.x0, tbl_y0, tbl_pos.width, total_height])
+
+    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"Saved: {output_path}")
+
+
 # ── Entry point ──────────────────────────────────────────────────────────────
 
 
@@ -847,6 +1086,11 @@ def main() -> None:
     plot_flop_factors(
         results_kfactor,
         output_dir / "flop_factors.png",
+    )
+
+    plot_residual_std_by_budget(
+        results_kfactor,
+        output_dir / "residuals_summary.png",
     )
 
 
