@@ -194,7 +194,7 @@ NEAR_DUP_LOG_TOL = 0.01  # relative tolerance on log(N) for near-duplicate binni
 CURVATURE_CI = 0.95
 # Fractional margin added to the off-center symmetric radius.  A value of 0.25
 # means a point can be up to 25% beyond the min half-distance and still be kept.
-OFF_CENTER_MARGIN = 2.00
+OFF_CENTER_MARGIN = 1.50
 
 
 @dataclass(frozen=True)
@@ -240,9 +240,6 @@ assert _covered == _all_reasons, (
 EXPERIMENT_OVERRIDES: dict[str, QCConfig] = {
     # Effectively disables LOO spline outlier detection for misfitting.
     "misfitting__fineweb_c4__transformer": QCConfig(loo_zscore_threshold=100.0),
-    # Lower off-center margin for Chinchilla (fewer points per curve).
-    "epochai_chinchilla__massivetext__chinchilla": QCConfig(off_center_margin=1.50),
-    "ml_scalefit__massivetext__chinchilla": QCConfig(off_center_margin=1.50),
 }
 
 
