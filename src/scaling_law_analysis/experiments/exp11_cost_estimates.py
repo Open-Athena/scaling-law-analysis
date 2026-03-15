@@ -624,6 +624,76 @@ class DCLRow:
     surface: LossSurface
     eval_budget: float
     ba_ratio: float  # b/a from Approach 3 fit (α/(α+β)) / (β/(α+β)) = α/β
+    dcl_ci_lo: float | None = None
+    dcl_ci_hi: float | None = None
+
+
+def _resample_within_budgets(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    C: np.ndarray,
+    rng: np.random.Generator,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Resample points within each budget (with replacement, preserving count)."""
+    new_indices: list[int] = []
+    for budget in np.unique(C):
+        indices = np.where(C == budget)[0]
+        resampled = rng.choice(indices, size=len(indices), replace=True)
+        new_indices.extend(resampled.tolist())
+    idx = np.array(new_indices)
+    return N[idx], D[idx], L[idx], C[idx]
+
+
+def _bootstrap_dcl(
+    N: np.ndarray,
+    D: np.ndarray,
+    L: np.ndarray,
+    C: np.ndarray,
+    vpnls_surface: LossSurface,
+    a3_surface: LossSurface,
+    eval_budget: float,
+    n_boot: int = 100,
+    seed: int = 42,
+) -> dict[str, tuple[float, float]]:
+    """Bootstrap 90% CIs for DCL via within-budget resampling.
+
+    Ground-truth surfaces (A3/VPNLS) are fixed; only A2 is refit on each
+    resample.  Returns dict with keys "vpnls" and "a3", each mapping to
+    (ci_lo, ci_hi).
+    """
+    rng = np.random.default_rng(seed)
+    dcl_vpnls: list[float] = []
+    dcl_a3: list[float] = []
+    n_failed = 0
+
+    for i in range(n_boot):
+        N_b, D_b, L_b, C_b = _resample_within_budgets(N, D, L, C, rng)
+        try:
+            a2_r = fit_approach2(N_b, D_b, L_b, C_b)
+            dcl_vpnls.append(
+                compare_allocations(vpnls_surface, a2_r, eval_budget)["wasted_flops"]
+            )
+            dcl_a3.append(
+                compare_allocations(a3_surface, a2_r, eval_budget)["wasted_flops"]
+            )
+        except Exception:
+            n_failed += 1
+            continue
+        if (i + 1) % 10 == 0:
+            print(f"  Bootstrap: {i + 1}/{n_boot} " f"({n_failed} failed)")
+
+    print(f"  Bootstrap complete: {len(dcl_vpnls)}/{n_boot} successful")
+    return {
+        "vpnls": (
+            float(np.percentile(dcl_vpnls, 5)),
+            float(np.percentile(dcl_vpnls, 95)),
+        ),
+        "a3": (
+            float(np.percentile(dcl_a3, 5)),
+            float(np.percentile(dcl_a3, 95)),
+        ),
+    }
 
 
 def _collect_dcl_rows(
@@ -631,6 +701,7 @@ def _collect_dcl_rows(
     training_budgets: np.ndarray,
     surfaces: SurfaceList,
     llama3_comparisons: list[Llama3FitSet],
+    bootstrap_cis: dict[str, tuple[float, float]] | None = None,
 ) -> list[DCLRow]:
     """Collect all DCL rows for the summary figure."""
     _, log_range = next(g for g in GRID_WIDTHS if g[0] == REPORT_GRID)
@@ -645,15 +716,19 @@ def _collect_dcl_rows(
             ("VPNLS", vpnls_surface),
             ("Approach 3", a3_surface),
         ]:
+            label = f"Llama 3: {method_label} ({scale_tag})"
             d = compare_allocations(surface, llama3_a2, eval_budget)
+            ci = (bootstrap_cis or {}).get(label)
             rows.append(
                 DCLRow(
-                    label=f"Llama 3: {method_label} ({scale_tag})",
+                    label=label,
                     group="real",
                     d=d,
                     surface=surface,
                     eval_budget=eval_budget,
                     ba_ratio=a3_ba,
+                    dcl_ci_lo=ci[0] if ci else None,
+                    dcl_ci_hi=ci[1] if ci else None,
                 )
             )
 
@@ -779,7 +854,7 @@ def plot_dcl_summary(
     max_val = max(dcl_vals)
     min_val = min(dcl_vals)
     ax_bar.set_xscale("log")
-    ax_bar.set_xlim(min_val * 0.3, max_val * 3)
+    ax_bar.set_xlim(min_val * 0.3, max_val * 8)
 
     # Value labels — inside bar for large bars, just outside for small
     threshold = max_val * 0.05  # bars < 5% of max get outside labels
@@ -805,6 +880,25 @@ def plot_dcl_summary(
                 fontsize=8,
                 color="#333333",
                 fontweight="bold",
+            )
+
+    # Bootstrap CI $ annotations (bracket notation, anchored to bar end)
+    for idx, row in enumerate(ordered):
+        if row.dcl_ci_lo is not None and row.dcl_ci_hi is not None:
+            lo_dollars = fmt_dollars(_flops_to_dollars(row.dcl_ci_lo))
+            hi_dollars = fmt_dollars(_flops_to_dollars(row.dcl_ci_hi))
+            # Escape $ so matplotlib mathtext doesn't interpret them
+            lo_esc = lo_dollars.replace("$", r"\$")
+            hi_esc = hi_dollars.replace("$", r"\$")
+            ax_bar.text(
+                dcl_vals[idx] * 1.15,
+                y_pos[idx],
+                f"({lo_esc}\u2013{hi_esc})",
+                va="center",
+                ha="left",
+                fontsize=8,
+                color="#555555",
+                fontstyle="italic",
             )
 
     ax_bar.set_yticks(y_pos)
@@ -1163,12 +1257,14 @@ def main() -> None:
 
     # Fit Llama 3 isoFLOP data under both log-scale assumptions.
     llama3_comparisons: list[Llama3FitSet] = []
+    llama3_data: dict[bool, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
     primary_vpnls: LossSurface | None = None
     for log_scale in [True, False]:
         label = "log-scale" if log_scale else "raw nats"
         print(f"\n── Llama 3 fits ({label}) ──")
         experiment = _LLAMA3_EXPERIMENT[log_scale]
         N, D, L, C = _load_isoflop_data(experiment, filter_outliers=FILTER_OUTLIERS)
+        llama3_data[log_scale] = (N, D, L, C)
         vpnls = _fit_vpnls("Llama 3", N, D, L)
         a3 = _fit_a3("Llama 3", N, D, L)
         a2 = _fit_a2("Llama 3", N, D, L, C)
@@ -1205,12 +1301,25 @@ def main() -> None:
         llama3_comparisons=llama3_comparisons,
     )
 
+    # Bootstrap CIs for empirical Llama 3 DCL estimates
+    bootstrap_cis: dict[str, tuple[float, float]] = {}
+    for log_scale, vpnls_surf, a3_surf, _ in llama3_comparisons:
+        scale_tag = "log" if log_scale else "raw"
+        N, D, L, C = llama3_data[log_scale]
+        print(f"\n── Bootstrap DCL (Llama 3, {scale_tag}) ──")
+        cis = _bootstrap_dcl(
+            N, D, L, C, vpnls_surf, a3_surf, eval_budget=LLAMA3_405B_FLOPS
+        )
+        bootstrap_cis[f"Llama 3: VPNLS ({scale_tag})"] = cis["vpnls"]
+        bootstrap_cis[f"Llama 3: Approach 3 ({scale_tag})"] = cis["a3"]
+
     # DCL summary figure
     dcl_rows = _collect_dcl_rows(
         eval_budget=LLAMA3_405B_FLOPS,
         training_budgets=TRAINING_BUDGETS,
         surfaces=surfaces,
         llama3_comparisons=llama3_comparisons,
+        bootstrap_cis=bootstrap_cis,
     )
     plot_dcl_summary(
         dcl_rows,
