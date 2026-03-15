@@ -19,6 +19,7 @@ import numpy as np
 import pandas as pd
 
 from scaling_law_analysis import config
+from scaling_law_analysis.data.schema import OutlierReason
 from scaling_law_analysis.chinchilla import (
     ExponentGrid,
     LossSurface,
@@ -148,6 +149,111 @@ def _fit_llama3_a2(
         f"(N* ∝ C^a, D* ∝ C^b)"
     )
     return result
+
+
+# ── Progressive filter analysis ──────────────────────────────────────────────
+
+# Stage execution order in detect_outliers (must match transform.py).
+_FILTER_STAGES: list[tuple[str, OutlierReason]] = [
+    ("Exact dup", OutlierReason.EXACT_DUP),
+    ("Near dup", OutlierReason.DUP_PARAMS),
+    ("Too few", OutlierReason.TOO_FEW),
+    ("Spline", OutlierReason.SPLINE),
+    ("Neg curv", OutlierReason.NEG_CURVATURE),
+    ("Weak curv", OutlierReason.WEAK_CURVATURE),
+    ("Off center", OutlierReason.OFF_CENTER),
+    ("Post-QC", OutlierReason.TOO_FEW_POST_QC),
+]
+
+
+def _progressive_filter_dcl(
+    surface: LossSurface,
+    eval_budget: float,
+) -> list[tuple[str, float]]:
+    """Compute DCL at each cumulative filter level for Llama 3 raw-loss data.
+
+    *surface* is the ground-truth surface (A3 or VPNLS, fit on raw data).
+    Returns list of (label, dcl_flops) pairs starting with "Raw" (no filter).
+    """
+    df = pd.read_csv(ISOFLOPS_CSV)
+    edf = df[df["experiment"] == _LLAMA3_EXPERIMENT[False]].copy()
+
+    results: list[tuple[str, float]] = []
+
+    # Level 0: no filtering
+    a2 = fit_approach2(
+        edf["params"].to_numpy(),
+        edf["tokens"].to_numpy(),
+        edf["loss"].to_numpy(),
+        edf["budget"].to_numpy(),
+    )
+    d = compare_allocations(surface, a2, eval_budget)
+    results.append(("Raw", d["wasted_flops"]))
+
+    # Cumulative filter levels
+    excluded: set[str] = set()
+    for label, reason in _FILTER_STAGES:
+        excluded.add(reason.value)
+        filtered = edf[~edf["reason"].isin(excluded)]
+        if len(filtered) == 0:
+            break
+        a2 = fit_approach2(
+            filtered["params"].to_numpy(),
+            filtered["tokens"].to_numpy(),
+            filtered["loss"].to_numpy(),
+            filtered["budget"].to_numpy(),
+        )
+        d = compare_allocations(surface, a2, eval_budget)
+        results.append((f"+{label}", d["wasted_flops"]))
+
+    return results
+
+
+def plot_progressive_filter(
+    results: list[tuple[str, float]],
+    output_path: str | Path,
+    title: str,
+    eval_budget: float,
+) -> None:
+    """Bar chart of DCL at each cumulative filter level."""
+    setup_style()
+
+    labels = [r[0] for r in results]
+    dcl_vals = [r[1] for r in results]
+    dcl_pcts = [v / eval_budget * 100 for v in dcl_vals]
+
+    fig, ax = plt.subplots(figsize=(10, 5), layout="constrained")
+    x = np.arange(len(labels))
+    bars = ax.bar(x, dcl_pcts, color="#4c72b0", edgecolor="white", width=0.6)
+
+    # Value labels on bars
+    for bar, pct, flops in zip(bars, dcl_pcts, dcl_vals):
+        ax.text(
+            bar.get_x() + bar.get_width() / 2,
+            bar.get_height() + 0.1,
+            f"{pct:.1f}%\n({fmt_dollars(_flops_to_dollars(flops))})",
+            ha="center",
+            va="bottom",
+            fontsize=8,
+        )
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=30, ha="right", fontsize=9)
+    ax.set_ylabel("DCL (% of eval budget)")
+    ax.set_title(title, fontsize=11)
+    ax.grid(True, axis="y", alpha=0.3)
+
+    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+    print(f"Saved: {output_path}")
+
+
+def _flops_to_dollars(flops: float) -> float:
+    """Convert FLOPs to dollar cost using H100 assumptions."""
+    flops_per_second = H100_BF16_TFLOPS * 1e12 * MFU
+    seconds = flops / flops_per_second
+    hours = seconds / 3600
+    return hours * GPU_COST_PER_HOUR
 
 
 # ── Configuration ────────────────────────────────────────────────────────────
@@ -744,6 +850,35 @@ def main() -> None:
         dcl_rows,
         output_dir / "compute_allocation_errors.png",
         eval_budget=LLAMA3_405B_FLOPS,
+    )
+
+    # ── Progressive filter impact on DCL (raw-nats Llama 3 only) ──
+    # Use the raw-nats surfaces (log_scale=False) fit on unfiltered data.
+    raw_nats_entry = next(
+        (ls, vpnls, a3, a2) for ls, vpnls, a3, a2 in llama3_comparisons if not ls
+    )
+    _, raw_vpnls, raw_a3, _ = raw_nats_entry
+
+    print("\n── Progressive filter: DCL vs A3 ──")
+    a3_results = _progressive_filter_dcl(raw_a3, LLAMA3_405B_FLOPS)
+    for label, dcl in a3_results:
+        print(f"  {label:>12s}: DCL={dcl:.2e} ({dcl / LLAMA3_405B_FLOPS * 100:.1f}%)")
+    plot_progressive_filter(
+        a3_results,
+        output_dir / "progressive_filter_a3.png",
+        "DCL: Approach 2 vs Approach 3 — Progressive Filtering (Llama 3, raw nats)",
+        LLAMA3_405B_FLOPS,
+    )
+
+    print("\n── Progressive filter: DCL vs VPNLS ──")
+    vpnls_results = _progressive_filter_dcl(raw_vpnls, LLAMA3_405B_FLOPS)
+    for label, dcl in vpnls_results:
+        print(f"  {label:>12s}: DCL={dcl:.2e} ({dcl / LLAMA3_405B_FLOPS * 100:.1f}%)")
+    plot_progressive_filter(
+        vpnls_results,
+        output_dir / "progressive_filter_vpnls.png",
+        "DCL: Approach 2 vs VPNLS — Progressive Filtering (Llama 3, raw nats)",
+        LLAMA3_405B_FLOPS,
     )
 
 

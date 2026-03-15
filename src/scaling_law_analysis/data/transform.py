@@ -215,12 +215,12 @@ def detect_outliers(
     Stage 0a — exact duplicate params: keep point closest to nominal budget.
     Stage 0b — near-duplicate params: same, within log(N) tolerance.
     Stage 1  — too few points: budgets with < *min_budget_points* are flagged.
-    Stage 2a — negative curvature: quadratic fit log(L) ~ log(N)^2 with a <= 0.
-    Stage 2b — weak curvature: CI for quadratic coefficient includes zero at
+    Stage 2  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
+    Stage 3a — negative curvature: quadratic fit log(L) ~ log(N)^2 with a <= 0.
+    Stage 3b — weak curvature: CI for quadratic coefficient includes zero at
                *curvature_ci* confidence level (0.0 to disable).
-    Stage 3  — Akima LOO: leave-one-out spline residuals, experiment-wide MAD.
     Stage 4  — off-center: trim to symmetric window around parabola minimum,
-               with *off_center_margin* fractional slack (0.25 = 25% beyond).
+               with *off_center_margin* fractional slack (0.50 = 50% beyond).
     Stage 5  — post-QC too-few-points recheck (must be last).
     """
     R = OutlierReason
@@ -290,53 +290,7 @@ def detect_outliers(
             edf.loc[unflagged, "outlier"] = True
             edf.loc[unflagged, "reason"] = R.TOO_FEW
 
-    # Stage 2a: negative curvature (only clean rows in surviving budgets)
-    surviving_budgets = [
-        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
-    ]
-    for budget in surviving_budgets:
-        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
-        log_n = np.log(clean["params"].to_numpy())
-        log_l = np.log(clean["loss"].to_numpy())
-        if len(log_n) >= 3:
-            coeffs = np.polyfit(log_n, log_l, 2)
-            if coeffs[0] <= 0:
-                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
-                edf.loc[unflagged, "outlier"] = True
-                edf.loc[unflagged, "reason"] = R.NEG_CURVATURE
-
-    # Stage 2b: weak curvature — CI for the quadratic coefficient `a` includes
-    # zero at the requested confidence level.  The point estimate â may be
-    # positive (passed stage 2a) but statistically indistinguishable from zero,
-    # meaning the isoflop curve is too flat to reliably locate an optimum.
-    # Skipped when curvature_ci <= 0.
-    if curvature_ci > 0:
-        surviving_budgets = [
-            b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
-        ]
-        for budget in surviving_budgets:
-            clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
-            log_n = np.log(clean["params"].to_numpy())
-            log_l = np.log(clean["loss"].to_numpy())
-            n_pts = len(log_n)
-            if n_pts < 4:
-                # Need at least 4 points for df = n-3 >= 1
-                continue
-            coeffs, cov = np.polyfit(log_n, log_l, 2, cov=True)
-            a_hat = coeffs[0]
-            if a_hat <= 0:
-                # Already caught by stage 2a
-                continue
-            se_a = float(np.sqrt(cov[0, 0]))
-            df = n_pts - 3
-            t_crit = float(t_dist.ppf((1 + curvature_ci) / 2, df))
-            ci_lower = a_hat - t_crit * se_a
-            if ci_lower <= 0:
-                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
-                edf.loc[unflagged, "outlier"] = True
-                edf.loc[unflagged, "reason"] = R.WEAK_CURVATURE
-
-    # Stage 3: Akima LOO (only clean rows in surviving budgets)
+    # Stage 2: Akima LOO (only clean rows in surviving budgets)
     surviving_budgets = [
         b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
     ]
@@ -372,6 +326,52 @@ def detect_outliers(
                 if z > loo_zscore_threshold:
                     edf.loc[ix, "outlier"] = True
                     edf.loc[ix, "reason"] = R.SPLINE
+
+    # Stage 3a: negative curvature (only clean rows in surviving budgets)
+    surviving_budgets = [
+        b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+    ]
+    for budget in surviving_budgets:
+        clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
+        log_n = np.log(clean["params"].to_numpy())
+        log_l = np.log(clean["loss"].to_numpy())
+        if len(log_n) >= 3:
+            coeffs = np.polyfit(log_n, log_l, 2)
+            if coeffs[0] <= 0:
+                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+                edf.loc[unflagged, "outlier"] = True
+                edf.loc[unflagged, "reason"] = R.NEG_CURVATURE
+
+    # Stage 3b: weak curvature — CI for the quadratic coefficient `a` includes
+    # zero at the requested confidence level.  The point estimate â may be
+    # positive (passed stage 3a) but statistically indistinguishable from zero,
+    # meaning the isoflop curve is too flat to reliably locate an optimum.
+    # Skipped when curvature_ci <= 0.
+    if curvature_ci > 0:
+        surviving_budgets = [
+            b for b in budgets if not edf.loc[edf["budget"] == b, "outlier"].all()
+        ]
+        for budget in surviving_budgets:
+            clean = edf.loc[(edf["budget"] == budget) & ~edf["outlier"]]
+            log_n = np.log(clean["params"].to_numpy())
+            log_l = np.log(clean["loss"].to_numpy())
+            n_pts = len(log_n)
+            if n_pts < 4:
+                # Need at least 4 points for df = n-3 >= 1
+                continue
+            coeffs, cov = np.polyfit(log_n, log_l, 2, cov=True)
+            a_hat = coeffs[0]
+            if a_hat <= 0:
+                # Already caught by stage 3a
+                continue
+            se_a = float(np.sqrt(cov[0, 0]))
+            df = n_pts - 3
+            t_crit = float(t_dist.ppf((1 + curvature_ci) / 2, df))
+            ci_lower = a_hat - t_crit * se_a
+            if ci_lower <= 0:
+                unflagged = (edf["budget"] == budget) & ~edf["outlier"]
+                edf.loc[unflagged, "outlier"] = True
+                edf.loc[unflagged, "reason"] = R.WEAK_CURVATURE
 
     # Stage 4: off-center — trim to a symmetric window around the parabola
     # minimum N*.  For each budget, fit a parabola to clean points in log-log
