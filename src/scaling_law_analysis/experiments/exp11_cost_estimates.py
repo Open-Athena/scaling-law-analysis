@@ -2,8 +2,7 @@
 
 Estimates wasted compute and dollar costs from Approach 2 extrapolation errors
 on published loss surfaces (Chinchilla, SODA, Sparse-NMM) and Llama 3 isoFLOP
-data. Compares VPNLS and Approach 3 as ground truth against Approach 2 under
-both log-scale and raw-nats interpretations of Llama 3 losses.
+data. Compares VPNLS and Approach 3 as ground truth against Approach 2.
 
 Usage:
     uv run python -m scaling_law_analysis.experiments.exp11_cost_estimates
@@ -57,8 +56,6 @@ from scaling_law_analysis.experiments.exp10_compounding_errors import (
 
 from scaling_law_analysis.data.common import ISOFLOPS_CSV
 
-LLAMA3_LOSS_LOG_SCALE = True  # if True, interpret validation_loss as ln(loss)
-
 FIT_GRID = ParameterGrid(
     E=np.linspace(0.1, 5.0, 8),
     A=np.logspace(1, 6, 8),
@@ -100,11 +97,6 @@ CHINCHILLA_MODEL = IsoFlopModelConfig(
 
 
 FILTER_OUTLIERS = False
-
-_LLAMA3_EXPERIMENT = {
-    True: "llama_3__exp_loss",
-    False: "llama_3__raw_loss",
-}
 
 
 def _load_isoflop_data(
@@ -608,7 +600,7 @@ LLAMA3_405B_FLOPS = 3.8e25
 REPORT_DRIFT_RATE = np.log10(3)  # drift to 3×
 REPORT_GRID = "XS (±2×)"
 
-Llama3FitSet = tuple[bool, LossSurface, LossSurface, ParabolaFitResult]
+Llama3FitSet = tuple[LossSurface, LossSurface, ParabolaFitResult]
 
 
 # ── DCL summary figure ───────────────────────────────────────────────────────
@@ -707,16 +699,14 @@ def _collect_dcl_rows(
     _, log_range = next(g for g in GRID_WIDTHS if g[0] == REPORT_GRID)
     rows: list[DCLRow] = []
 
-    # Real Llama 3 fits (VPNLS/A3 × log-scale/raw-nats)
-    # Use b/a from Approach 3 for all real rows in each scale group.
-    for log_scale, vpnls_surface, a3_surface, llama3_a2 in llama3_comparisons:
-        scale_tag = "log" if log_scale else "raw"
+    # Real Llama 3 fits (VPNLS/A3)
+    for vpnls_surface, a3_surface, llama3_a2 in llama3_comparisons:
         a3_ba = a3_surface.b / a3_surface.a
         for method_label, surface in [
             ("VPNLS", vpnls_surface),
             ("Approach 3", a3_surface),
         ]:
-            label = f"Llama 3: {method_label} ({scale_tag})"
+            label = f"Llama 3: {method_label}"
             d = compare_allocations(surface, llama3_a2, eval_budget)
             ci = (bootstrap_cis or {}).get(label)
             rows.append(
@@ -1173,49 +1163,40 @@ def save_report(
     w("Llama 3: Approach 2 vs Parametric Fits on Real IsoFLOP Data")
     w("=" * 60)
     w("")
-    # Use first entry to get n_curves (same data for all).
-    n_curves = len(llama3_comparisons[0][3].parabola_fits_N)
+    vpnls_surface, a3_surface, llama3_a2 = llama3_comparisons[0]
+    n_curves = len(llama3_a2.parabola_fits_N)
     w("Each parametric fit is treated as ground truth in turn;")
     w("Approach 2 fit provides the inferred D* allocation,")
     w("extrapolated to the same budget.")
     w(f"Training data: {n_curves} isoFLOP curves from 6×10^18 to 10^22 FLOPs.")
-    w("IsoFLOP points digitized from Llama 3 paper (Fig. 2), which plots")
-    w("negative log-likelihood on a log-scale y-axis.")
-
-    for log_scale, vpnls_surface, a3_surface, llama3_a2 in llama3_comparisons:
-        if log_scale:
-            scale_label = "log-scale (exp transform)"
-        else:
-            scale_label = "raw nats (no transform)"
+    w("IsoFLOP points digitized from Llama 3 paper (Fig. 2).")
+    w("")
+    w(
+        f"VPNLS surface (E={vpnls_surface.E:.4f}, "
+        f"A={vpnls_surface.A:.1f}, B={vpnls_surface.B:.1f}, "
+        f"α={vpnls_surface.alpha:.4f}, β={vpnls_surface.beta:.4f}, "
+        f"a={vpnls_surface.a:.4f}, b={vpnls_surface.b:.4f})"
+    )
+    w(
+        f"Approach 3 surface (E={a3_surface.E:.4f}, "
+        f"A={a3_surface.A:.1f}, B={a3_surface.B:.1f}, "
+        f"α={a3_surface.alpha:.4f}, β={a3_surface.beta:.4f}, "
+        f"a={a3_surface.a:.4f}, b={a3_surface.b:.4f})"
+    )
+    w(
+        f"Approach 2 power laws: a={llama3_a2.a:.4f}, b={llama3_a2.b:.4f} "
+        f"(N* ∝ C^a, D* ∝ C^b)"
+    )
+    w("")
+    for label, surface in [
+        ("VPNLS", vpnls_surface),
+        ("Approach 3", a3_surface),
+    ]:
+        d = compare_allocations(surface, llama3_a2, eval_budget)
+        w(f"Approach 2 vs {label}:")
+        w("-" * 60)
+        w(fmt_surface_result(d, eval_budget))
         w("")
-        w(f"── {scale_label} ──")
-        w("")
-        w(
-            f"VPNLS surface (E={vpnls_surface.E:.4f}, "
-            f"A={vpnls_surface.A:.1f}, B={vpnls_surface.B:.1f}, "
-            f"α={vpnls_surface.alpha:.4f}, β={vpnls_surface.beta:.4f}, "
-            f"a={vpnls_surface.a:.4f}, b={vpnls_surface.b:.4f})"
-        )
-        w(
-            f"Approach 3 surface (E={a3_surface.E:.4f}, "
-            f"A={a3_surface.A:.1f}, B={a3_surface.B:.1f}, "
-            f"α={a3_surface.alpha:.4f}, β={a3_surface.beta:.4f}, "
-            f"a={a3_surface.a:.4f}, b={a3_surface.b:.4f})"
-        )
-        w(
-            f"Approach 2 power laws: a={llama3_a2.a:.4f}, b={llama3_a2.b:.4f} "
-            f"(N* ∝ C^a, D* ∝ C^b)"
-        )
-        w("")
-        for label, surface in [
-            ("VPNLS", vpnls_surface),
-            ("Approach 3", a3_surface),
-        ]:
-            d = compare_allocations(surface, llama3_a2, eval_budget)
-            w(f"Approach 2 vs {label}:")
-            w("-" * 60)
-            w(fmt_surface_result(d, eval_budget))
-            w("")
 
     with open(output_path, "w") as f:
         f.write("\n".join(lines) + "\n")
@@ -1255,24 +1236,15 @@ def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None
 def main() -> None:
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp11")
 
-    # Fit Llama 3 isoFLOP data under both log-scale assumptions.
-    llama3_comparisons: list[Llama3FitSet] = []
-    llama3_data: dict[bool, tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]] = {}
-    primary_vpnls: LossSurface | None = None
-    for log_scale in [True, False]:
-        label = "log-scale" if log_scale else "raw nats"
-        print(f"\n── Llama 3 fits ({label}) ──")
-        experiment = _LLAMA3_EXPERIMENT[log_scale]
-        N, D, L, C = _load_isoflop_data(experiment, filter_outliers=FILTER_OUTLIERS)
-        llama3_data[log_scale] = (N, D, L, C)
-        vpnls = _fit_vpnls("Llama 3", N, D, L)
-        a3 = _fit_a3("Llama 3", N, D, L)
-        a2 = _fit_a2("Llama 3", N, D, L, C)
-        llama3_comparisons.append((log_scale, vpnls, a3, a2))
-        if log_scale == LLAMA3_LOSS_LOG_SCALE:
-            primary_vpnls = vpnls
-    assert primary_vpnls is not None
-    surfaces: SurfaceList = [("Llama 3", primary_vpnls)] + COST_REPORT_SURFACES
+    # Fit Llama 3 isoFLOP data.
+    print("\n── Llama 3 fits ──")
+    experiment = LLAMA3_MODEL.experiment
+    N, D, L, C = _load_isoflop_data(experiment, filter_outliers=FILTER_OUTLIERS)
+    vpnls = _fit_vpnls("Llama 3", N, D, L)
+    a3 = _fit_a3("Llama 3", N, D, L)
+    a2 = _fit_a2("Llama 3", N, D, L, C)
+    llama3_comparisons: list[Llama3FitSet] = [(vpnls, a3, a2)]
+    surfaces: SurfaceList = [("Llama 3", vpnls)] + COST_REPORT_SURFACES
 
     results = run(
         eval_budget=LLAMA3_405B_FLOPS,
@@ -1302,16 +1274,12 @@ def main() -> None:
     )
 
     # Bootstrap CIs for empirical Llama 3 DCL estimates
-    bootstrap_cis: dict[str, tuple[float, float]] = {}
-    for log_scale, vpnls_surf, a3_surf, _ in llama3_comparisons:
-        scale_tag = "log" if log_scale else "raw"
-        N, D, L, C = llama3_data[log_scale]
-        print(f"\n── Bootstrap DCL (Llama 3, {scale_tag}) ──")
-        cis = _bootstrap_dcl(
-            N, D, L, C, vpnls_surf, a3_surf, eval_budget=LLAMA3_405B_FLOPS
-        )
-        bootstrap_cis[f"Llama 3: VPNLS ({scale_tag})"] = cis["vpnls"]
-        bootstrap_cis[f"Llama 3: Approach 3 ({scale_tag})"] = cis["a3"]
+    print("\n── Bootstrap DCL (Llama 3) ──")
+    cis = _bootstrap_dcl(N, D, L, C, vpnls, a3, eval_budget=LLAMA3_405B_FLOPS)
+    bootstrap_cis: dict[str, tuple[float, float]] = {
+        "Llama 3: VPNLS": cis["vpnls"],
+        "Llama 3: Approach 3": cis["a3"],
+    }
 
     # DCL summary figure
     dcl_rows = _collect_dcl_rows(

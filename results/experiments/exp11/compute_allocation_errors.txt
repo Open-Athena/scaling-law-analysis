@@ -17,13 +17,13 @@ The resulting loss L(N,D) is suboptimal. Deadweight Compute Loss
 (DCL) inverts L_opt(C) to find the smaller budget that would reach
 the same loss with optimal allocation; DCL = budget − equivalent_C.
 
-Llama 3 (E=1.8405, A=261.7, B=870.2, α=0.3481, β=0.3591, a=0.5078, b=0.4922)
+Llama 3 (E=0.6047, A=59.1, B=155.1, α=0.3100, β=0.3136, a=0.5029, b=0.4971)
 ------------------------------------------------------------
-  D* (tokens):        9.2T true →       9.9T inferred  (over, 7.5%)
-  N* (params):      686.9B true →     638.9B inferred  (under, 7.0%)
-  D*/N* ratio:        13.4 true →       15.5 inferred
-  Loss (nats):  1.879635 true → 1.879648 inferred  (+0.000013 penalty)
-  DCL: 7.03e22 FLOPs (0.2% of budget, $39K)
+  D* (tokens):       10.2T true →      10.8T inferred  (over, 6.4%)
+  N* (params):      621.6B true →     584.5B inferred  (under, 6.0%)
+  D*/N* ratio:        16.4 true →       18.5 inferred
+  Loss (nats):  0.630631 true → 0.630635 inferred  (+0.000005 penalty)
+  DCL: 4.50e22 FLOPs (0.1% of budget, $25K)
 
 Chinchilla (E=1.6900, A=406.4, B=410.7, α=0.3400, β=0.2800, a=0.4516, b=0.5484)
 ------------------------------------------------------------
@@ -57,33 +57,7 @@ Each parametric fit is treated as ground truth in turn;
 Approach 2 fit provides the inferred D* allocation,
 extrapolated to the same budget.
 Training data: 10 isoFLOP curves from 6×10^18 to 10^22 FLOPs.
-IsoFLOP points digitized from Llama 3 paper (Fig. 2), which plots
-negative log-likelihood on a log-scale y-axis.
-
-── log-scale (exp transform) ──
-
-VPNLS surface (E=1.8405, A=261.7, B=870.2, α=0.3481, β=0.3591, a=0.5078, b=0.4922)
-Approach 3 surface (E=1.8383, A=262.2, B=821.3, α=0.3481, β=0.3562, a=0.5057, b=0.4943)
-Approach 2 power laws: a=0.4631, b=0.5369 (N* ∝ C^a, D* ∝ C^b)
-
-Approach 2 vs VPNLS:
-------------------------------------------------------------
-  D* (tokens):        9.2T true →      16.1T inferred  (over, 74.7%)
-  N* (params):      686.9B true →     393.1B inferred  (under, 42.8%)
-  D*/N* ratio:        13.4 true →       41.0 inferred
-  Loss (nats):  1.879635 true → 1.880397 inferred  (+0.000762 penalty)
-  DCL: 3.93e24 FLOPs (10.3% of budget, $2.2M)
-
-Approach 2 vs Approach 3:
-------------------------------------------------------------
-  D* (tokens):        9.5T true →      16.1T inferred  (over, 70.0%)
-  N* (params):      668.4B true →     393.1B inferred  (under, 41.2%)
-  D*/N* ratio:        14.2 true →       41.0 inferred
-  Loss (nats):  1.878015 true → 1.878709 inferred  (+0.000694 penalty)
-  DCL: 3.57e24 FLOPs (9.4% of budget, $2.0M)
-
-
-── raw nats (no transform) ──
+IsoFLOP points digitized from Llama 3 paper (Fig. 2).
 
 VPNLS surface (E=0.6047, A=59.1, B=155.1, α=0.3100, β=0.3136, a=0.5029, b=0.4971)
 Approach 3 surface (E=0.6021, A=56.2, B=147.3, α=0.3068, β=0.3110, a=0.5034, b=0.4966)
