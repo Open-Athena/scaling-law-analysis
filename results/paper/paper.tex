@@ -483,8 +483,7 @@ used in this analysis.
     \label{fig:extrapolation_error}
 \end{figure}
 
-The key observations from Figure~\ref{fig:extrapolation_error} (raw data in
-Appendix~\ref{sec:appendix_extrapolation_data}) are:
+The key observations from Figure~\ref{fig:extrapolation_error} are:
 \begin{itemize}
     \item \textbf{Symmetric surfaces are unaffected:} When $\alpha = \beta$,
         all grid widths produce zero error.
@@ -682,8 +681,7 @@ all four grid widths.
     the symmetric surface, the constant offset results correspond to
     Figure~\ref{fig:constant_bias} and the drift results correspond to
     Figure~\ref{fig:drifting_bias}; the asymmetric surfaces reveal how these
-    sampling biases interact with the inherent asymmetry bias. Raw data in
-    Appendix~\ref{sec:appendix_compounding_data}.}
+    sampling biases interact with the inherent asymmetry bias.}
     \label{fig:compounding}
 \end{figure}
 
@@ -937,8 +935,6 @@ errors on the order of $10^{-3}$\%.
 Figure~\ref{fig:appendix_method_detail} in the appendix breaks this down by
 surface and sampling range.
 
-The full method comparison data is provided in
-Appendix~\ref{sec:appendix_method_data}.
 
 \paragraph{Summary.}
 Variable projection reduces the nonlinear search to the exponential terms
@@ -1297,140 +1293,13 @@ Several limitations scope the conclusions of this study.
 
 \appendix
 
-\section{Extrapolation Error Raw Data}
-\label{sec:appendix_extrapolation_data}
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{llcccc}
-        \toprule
-        Surface & Grid & True $D^*$ & Inferred $D^*$ & Abs Error & Rel Error \\
-        \midrule
-        \multicolumn{6}{l}{\textit{Symmetric ($\alpha = \beta = 0.31$)}} \\
-        & XS ($\pm 2\times$) & 408.2B & 408.2B & $\approx 0$ & $\approx 0$\% \\
-        & S ($\pm 4\times$) & 408.2B & 408.2B & $\approx 0$ & $\approx 0$\% \\
-        & L ($\pm 8\times$) & 408.2B & 408.2B & $\approx 0$ & $\approx 0$\% \\
-        & XL ($\pm 16\times$) & 408.2B & 408.2B & $\approx 0$ & $\approx 0$\% \\
-        \midrule
-        \multicolumn{6}{l}{\textit{Chinchilla ($\alpha = 0.34$, $\beta = 0.28$)}} \\
-        & XS ($\pm 2\times$) & 4.04T & 4.02T & $-13.2$B & $-0.33$\% \\
-        & S ($\pm 4\times$) & 4.04T & 3.98T & $-52.5$B & $-1.30$\% \\
-        & L ($\pm 8\times$) & 4.04T & 3.92T & $-117.2$B & $-2.90$\% \\
-        & XL ($\pm 16\times$) & 4.04T & 3.83T & $-205.8$B & $-5.10$\% \\
-        \midrule
-        \multicolumn{6}{l}{\textit{Asymmetric ($\alpha = 0.465$, $\beta = 0.155$)}} \\
-        & XS ($\pm 2\times$) & 45.1Q & 44.3Q & $-755$T & $-1.67$\% \\
-        & S ($\pm 4\times$) & 45.1Q & 42.2Q & $-2.9$Q & $-6.50$\% \\
-        & L ($\pm 8\times$) & 45.1Q & 38.8Q & $-6.3$Q & $-13.91$\% \\
-        & XL ($\pm 16\times$) & 45.1Q & 34.7Q & $-10.4$Q & $-23.12$\% \\
-        \bottomrule
-    \end{tabular}
-    \caption{Extrapolation error raw data underlying
-    Figure~\ref{fig:extrapolation_error}. Training range:
-    $10^{17}$--$10^{21}$ FLOPs; evaluation budget: $10^{24}$ FLOPs.
-    B~=~billion, T~=~trillion, Q~=~quadrillion.}
-    \label{tab:extrapolation_raw}
-\end{table}
-
-\section{Compounding Errors Raw Data}
-\label{sec:appendix_compounding_data}
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{llcccc}
-        \toprule
-        Config & Surface & Grid & True $D^*$ & Inferred $D^*$ & Rel Error \\
-        \midrule
-        \multicolumn{6}{l}{\textit{Offset $3\times$ (sampling center at $3\times$ true optimum at every budget)}} \\
-        & Symmetric & XS & 408.2B & 424.5B & $+3.97$\% \\
-        & Symmetric & S & 408.2B & 422.4B & $+3.47$\% \\
-        & Symmetric & L & 408.2B & 419.0B & $+2.65$\% \\
-        & Symmetric & XL & 408.2B & 414.4B & $+1.51$\% \\
-        & Chinchilla & XS & 4.04T & 4.32T & $+7.11$\% \\
-        & Chinchilla & S & 4.04T & 4.27T & $+5.69$\% \\
-        & Chinchilla & L & 4.04T & 4.17T & $+3.38$\% \\
-        & Chinchilla & XL & 4.04T & 4.05T & $+0.24$\% \\
-        & Asymmetric & XS & 45.1Q & 53.8Q & $+19.22$\% \\
-        & Asymmetric & S & 45.1Q & 51.6Q & $+14.41$\% \\
-        & Asymmetric & L & 45.1Q & 48.2Q & $+6.96$\% \\
-        & Asymmetric & XL & 45.1Q & 44.0Q & $-2.42$\% \\
-        \midrule
-        \multicolumn{6}{l}{\textit{Drift to $3\times$ (center drifts from true optimum to $3\times$ at highest budget)}} \\
-        & Symmetric & XS & 408.2B & 433.0B & $+6.07$\% \\
-        & Symmetric & S & 408.2B & 429.4B & $+5.17$\% \\
-        & Symmetric & L & 408.2B & 423.3B & $+3.70$\% \\
-        & Symmetric & XL & 408.2B & 415.1B & $+1.69$\% \\
-        & Chinchilla & XS & 4.04T & 4.50T & $+11.61$\% \\
-        & Chinchilla & S & 4.04T & 4.43T & $+9.83$\% \\
-        & Chinchilla & L & 4.04T & 4.32T & $+6.94$\% \\
-        & Chinchilla & XL & 4.04T & 4.16T & $+3.05$\% \\
-        & Asymmetric & XS & 45.1Q & 60.7Q & $+34.57$\% \\
-        & Asymmetric & S & 45.1Q & 58.7Q & $+30.04$\% \\
-        & Asymmetric & L & 45.1Q & 55.5Q & $+22.97$\% \\
-        & Asymmetric & XL & 45.1Q & 51.4Q & $+14.00$\% \\
-        \bottomrule
-    \end{tabular}
-    \caption{Compounding errors raw data underlying
-    Figure~\ref{fig:compounding}. Training range: $10^{17}$--$10^{21}$ FLOPs;
-    evaluation budget: $10^{24}$ FLOPs. B~=~billion, T~=~trillion,
-    Q~=~quadrillion.}
-    \label{tab:compounding_raw}
-\end{table}
-
-\section{Method Comparison Data}
-\label{sec:appendix_method_data}
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{lcrrrrrr}
-        \toprule
-        Method & Failures & Max $E$ & Max $A$ & Max $B$ & Max $\alpha$ & Max $\beta$ \\
-        \midrule
-        2D L-BFGS-B (analytical) & 0/60 & $1.4 \!\times\! 10^{-7}$ & $9.2 \!\times\! 10^{-7}$ & $8.7 \!\times\! 10^{-7}$ & $1.7 \!\times\! 10^{-7}$ & $1.7 \!\times\! 10^{-7}$ \\
-        2D L-BFGS-B (numerical) & 0/60 & $8.3 \!\times\! 10^{-8}$ & $6.4 \!\times\! 10^{-8}$ & $7.7 \!\times\! 10^{-8}$ & $1.3 \!\times\! 10^{-8}$ & $2.0 \!\times\! 10^{-8}$ \\
-        2D Nelder-Mead (VPNLS) & 0/60 & $5.2 \!\times\! 10^{-8}$ & $6.3 \!\times\! 10^{-8}$ & $7.9 \!\times\! 10^{-8}$ & $1.2 \!\times\! 10^{-8}$ & $2.0 \!\times\! 10^{-8}$ \\
-        2D Grid ($256^2$) & 0/60 & 2.58 & 2.03 & 2.03 & 0.44 & 0.57 \\
-        5D L-BFGS-B (analytical) & 0/60 & $4.1 \!\times\! 10^{-6}$ & $1.7 \!\times\! 10^{-5}$ & $6.6 \!\times\! 10^{-6}$ & $4.0 \!\times\! 10^{-6}$ & $1.3 \!\times\! 10^{-6}$ \\
-        5D L-BFGS-B (numerical) & 0/60 & $1.6 \!\times\! 10^{-3}$ & $1.2 \!\times\! 10^{-3}$ & $2.6 \!\times\! 10^{-3}$ & $2.7 \!\times\! 10^{-4}$ & $7.3 \!\times\! 10^{-4}$ \\
-        \bottomrule
-    \end{tabular}
-    \caption{Aggregate data from Figure~\ref{fig:parameter_recovery}: maximum
-    $|\text{relative error}|$ (\%) per parameter across 60 fits (3 surfaces
-    $\times$ 20 sampling ranges). All methods converged on all fits. Methods
-    sorted by precision (best to worst).}
-    \label{tab:parameter_recovery}
-\end{table}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{lccc}
-        \toprule
-        Method & GMean err\% & Max $a$ err\% & Max $b$ err\% \\
-        \midrule
-        VPNLS [$+\nabla$] & 1.09 & 34.2 & 11.4 \\
-        MLE Approach~3 [grid, $-$LSE, $-$LL] & 1.11 & 73.6 & 24.5 \\
-        Approach~3 [grid, $+$LSE, $+$LL] & 1.26 & 44.2 & 14.7 \\
-        Approach~2 & 4.84 & 715.5 & 238.5 \\
-        Naive Approach~3 [rand, $-$LSE, $-$LL] & 16.2 & 296.0 & 98.7 \\
-        \bottomrule
-    \end{tabular}
-    \caption{Data from Figure~\ref{fig:exponent_inference}: geometric mean and
-    maximum $|\text{relative error}|$ (\%) on scaling exponents $a$ and $b$,
-    pooled across 3 noise levels $\times$ 3 budget counts $\times$ 4
-    points-per-curve settings $\times$ 256 seeds = 9{,}216 fits per method.}
-    \label{tab:exponent_inference}
-\end{table}
-
 \section{Detailed Method Comparison}
 \label{sec:appendix_method_comparison}
 
 Full per-parameter, per-surface, per-sampling-range error breakdown for all
 six method configurations.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.png}
     \caption{Detailed method comparison: absolute relative error vs sampling
@@ -1447,7 +1316,7 @@ Detailed view of $D^*$ extrapolation error as a function of compute budget,
 showing how errors evolve from $10^{22}$ to $10^{25}$ FLOPs across sampling
 ranges, loss surfaces, and bias configurations.
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.png}
     \caption{Combined extrapolation error by compute budget. Rows correspond to
@@ -1460,7 +1329,7 @@ ranges, loss surfaces, and bias configurations.
 \section{IsoFLOP Samples with Noise}
 \label{sec:appendix_noisy_isoflop}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.png}
     \caption{Noisy IsoFLOP samples used in the exponent inference comparison
@@ -1478,7 +1347,7 @@ ranges, loss surfaces, and bias configurations.
 \section{Exponent Inference Error Breakdown}
 \label{sec:appendix_exponent_errors}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.png}
     \caption{Per-condition breakdown of exponent inference errors from
@@ -1496,7 +1365,7 @@ ranges, loss surfaces, and bias configurations.
 \section{Data Efficiency Error Breakdown}
 \label{sec:appendix_data_efficiency}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.png}
     \caption{Per-noise-level breakdown of signed exponent errors from
@@ -1531,7 +1400,7 @@ error model as implied by the original Chinchilla Approach~3 log-loss
 formulation. The Huber variant down-weights outliers and produces modestly
 different estimates.
 
-\begin{table}[ht]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{lccccccc}
@@ -1561,7 +1430,7 @@ exponents $a$ and $b$ (where $N^* \propto C^a$ and $D^* \propto C^b$) from
 scaling law studies across a range of domains, architectures, and fitting
 methods.
 
-\begin{table}[ht]
+\begin{table}[H]
     \centering
     \small
     \begin{tabular}{llllccc}
@@ -1661,7 +1530,7 @@ methods.
 \section{IsoFLOP Quality Control Visualization}
 \label{sec:appendix_isoflop_qc}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/isoflops_ap3_log_loss_adj.png}
     \caption{IsoFLOP curves for six experiments spanning different datasets
@@ -1676,7 +1545,7 @@ methods.
 \section{Progressive Filtering for Chinchilla}
 \label{sec:appendix_progressive_chinchilla}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/progressive_filter_chinchilla_a3.png}
     \caption{Progressive quality control filtering on Chinchilla data,
@@ -1690,7 +1559,7 @@ methods.
 \section{Residual Distributions by Budget}
 \label{sec:appendix_residual_distributions}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/residuals_ap3_log_loss_adj.png}
     \caption{Per-budget residual distributions after Approach~3 fitting with
@@ -1704,7 +1573,7 @@ methods.
 \section{Residual Variance Summary}
 \label{sec:appendix_residual_variance}
 
-\begin{figure}[ht]
+\begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/residuals_summary.png}
     \caption{Per-budget residual standard deviation (left) and summary

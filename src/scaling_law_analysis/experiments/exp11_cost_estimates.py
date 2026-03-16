@@ -313,8 +313,8 @@ def plot_progressive_filter(
     fig, (ax_bar, ax_tbl) = plt.subplots(
         1,
         2,
-        figsize=(12, fig_height),
-        gridspec_kw={"width_ratios": [6, 4], "wspace": 0.02},
+        figsize=(10, fig_height),
+        gridspec_kw={"width_ratios": [5, 5], "wspace": 0.02},
         sharey=True,
         layout="constrained",
     )
@@ -379,7 +379,7 @@ def plot_progressive_filter(
         )
 
     max_val = max(dcl_pcts)
-    ax_bar.set_xlim(-max_val * 0.15, max_val * 1.6)
+    ax_bar.set_xlim(-max_val * 0.15, max_val * 1.3)
 
     # Tick labels with brief descriptions
     _GROUP_DESCRIPTIONS: dict[str, str] = {
@@ -401,7 +401,16 @@ def plot_progressive_filter(
     ax_bar.grid(True, axis="x", alpha=0.3)
     ax_bar.invert_yaxis()
 
-    leg = ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
+    if show_convergence_annotation:
+        # Halfway between center right and lower right to avoid annotation overlap
+        leg = ax_bar.legend(
+            bbox_to_anchor=(1.0, 0.38),
+            loc="center right",
+            fontsize=8,
+            framealpha=0.9,
+        )
+    else:
+        leg = ax_bar.legend(loc="lower right", fontsize=8, framealpha=0.9)
     for text in leg.get_texts():
         text.set_multialignment("center")
 
@@ -411,8 +420,8 @@ def plot_progressive_filter(
         eval_exp = int(np.floor(np.log10(eval_budget)))
         eval_mantissa = eval_budget / 10**eval_exp
         ax_bar.annotate(
-            "QC bias corrections yield nearly convergent\n"
-            "compute-optimal estimates at "
+            "QC bias corrections yield nearly\n"
+            "convergent estimates at "
             rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$ FLOPs",
             xy=(max_val * 0.12, last_y),
             xytext=(max_val * 0.35, last_y),
@@ -826,8 +835,8 @@ def plot_dcl_summary(
     fig, (ax_bar, ax_tbl) = plt.subplots(
         1,
         2,
-        figsize=(12, fig_height),
-        gridspec_kw={"width_ratios": [4, 5], "wspace": 0.02},
+        figsize=(10, fig_height),
+        gridspec_kw={"width_ratios": [3, 5], "wspace": 0.02},
         sharey=True,
         layout="constrained",
     )
@@ -905,14 +914,14 @@ def plot_dcl_summary(
     # Dashed separator between real and simulated
     if n_real > 0 and len(sim) > 0:
         sep_y = n_real - 0.5
-        ax_bar.axhline(sep_y, color="gray", linestyle="--", linewidth=1)
+        ax_bar.axhline(sep_y, color="black", linestyle="-", linewidth=0.6)
         xhi = ax_bar.get_xlim()[1]
         ax_bar.text(
             xhi,
             sep_y - 0.08,
             "empirical \u2191 ",
             fontsize=7,
-            color="gray",
+            color="#aaaaaa",
             ha="right",
             va="bottom",
         )
@@ -921,7 +930,7 @@ def plot_dcl_summary(
             sep_y + 0.08,
             "simulated \u2193 ",
             fontsize=7,
-            color="gray",
+            color="#aaaaaa",
             ha="right",
             va="top",
         )
@@ -1073,9 +1082,9 @@ def plot_dcl_summary(
         ax_tbl.plot(
             [0, n_cols],
             [n_real - 0.5, n_real - 0.5],
-            color="gray",
-            linestyle="--",
-            linewidth=1,
+            color="black",
+            linestyle="-",
+            linewidth=0.6,
             zorder=3,
         )
 
