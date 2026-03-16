@@ -29,6 +29,7 @@ When one implementation artifact changes, other artifacts that depend on it may 
   - `results/article/figures/exponent_inference/exponent_inference.csv` → "Method Comparison (Exponent Inference)" (prose error claims, collapsible data table)
   - `results/experiments/exp8/conditioning_analysis.txt` → "Problems with Direct Surface Fitting" (experimental setup: surface parameters, compute budgets, points per curve; Hessian eigenvalue ranges, condition numbers κ ≈ 3.5×10¹¹ and κ ≈ 11, underdetermined parameter directions)
   - `results/experiments/exp0/reproductions.txt` → "VPNLS Implementation Validation" appendix (fitted parameter values for VPNLS, Approach 3 variants, and ml-scalefit configurations)
+  - `results/experiments/exp11/compute_allocation_errors.txt` → "Error Costs" section (Approach 2 exponents, DCL percentages and dollar costs, bootstrap CI bounds)
 - **Experiment outputs copied to article**: the figure generator's `copy_experiment_outputs` in `src/scaling_law_analysis/article/figures.py` copies experiment results directly into the article directory tree. See that function for the authoritative list of copied files. Re-run step 2 after re-running experiments.
 
 ## Spec → Spec
