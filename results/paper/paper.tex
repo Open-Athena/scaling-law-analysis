@@ -34,8 +34,8 @@
 Systematic Biases in IsoFLOP Parabola Fits}
 
 \author{
-    Eric Czech\thanks{Affiliations TBD} \and
-    Zhiwei Xu\thanks{Affiliations TBD} \and
+    Eric Czech\thanks{Open Athena AI Foundation} \and
+    Zhiwei Xu\thanks{Department of Statistics, University of Michigan, Ann Arbor} \and
     Yael Elmatad\footnotemark[1] \and
     Yixin Wang\footnotemark[2] \and
     William Held\footnotemark[1]
@@ -1353,6 +1353,35 @@ different estimates.
 
 \section{IsoFLOP Quality Control Pipeline}
 \label{sec:appendix_isoflop_qc}
+
+The IsoFLOP quality control pipeline applies these steps in this order:
+
+\begin{itemize}
+    \item \textbf{Pre-QC} removes duplicate and near-duplicate parameter values
+    within each budget. Exact duplicates are disambiguated by keeping the point
+    whose implied compute ($6ND$) is closest to the nominal budget (ties broken
+    by minimum loss). Near-duplicates are identified by greedy binning in
+    log-parameter space (tolerance 0.01) and disambiguated the same way. Budgets
+    with fewer than 6 remaining points are then removed entirely.
+
+    \item \textbf{Off Center} removes points that fall outside a symmetric
+    window around each IsoFLOP curve's parabola minimum ($2.5\times$ the
+    distance from the minimum to the nearer edge), targeting the off-center
+    sampling bias identified in the main text. An Akima spline step also removes
+    individual statistical outliers at this stage. Across all six experiments,
+    81\% of spline-flagged points fall at the extreme endpoints of their
+    budget's parameter range which better aligns this filter to the more direct
+    but conservative off-center filter.
+
+    \item \textbf{Weak Curvature} first flags entire budgets with negative
+    parabola curvature (quadratic coefficient $\leq 0$). For remaining budgets,
+    it checks whether the curvature is significantly positive by testing whether
+    the 95\% confidence interval on the quadratic coefficient includes zero.
+    Budgets that fail either check are removed.
+
+    \item \textbf{Post-QC} removes budgets that fell below the 6-point minimum
+    after earlier filtering.
+\end{itemize}
 
 \begin{figure}[H]
     \centering
