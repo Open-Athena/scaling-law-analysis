@@ -1080,7 +1080,7 @@ def main() -> None:
         results_kfactor,
         output_dir / "residuals_ap3_log_loss_adj.png",
         use_logloss=True,
-        title="Per-Budget FLOP Factor Residuals (k in C = k·N·D)",
+        title="Approach 3 Residual Distributions\nPer-budget k adjustment: D = C/(k·N), k fit by OLS",
     )
 
     plot_isoflop_curves(

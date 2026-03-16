@@ -207,7 +207,15 @@ the Huber function provides robustness to outliers from noisy training runs.
 
 Because we evaluate methods on simulated data with known noise models and
 want maximum likelihood estimates in some configurations, we use MSE rather
-than the Huber objective throughout this study. More details on these
+than the Huber objective throughout this study. This is the maximum likelihood
+estimator under the constant, additive Gaussian noise assumed in our
+simulations. When fitting real data, we remove outliers before fitting in
+most cases. Appendix
+Figures~\ref{fig:appendix_residual_distributions}
+and~\ref{fig:appendix_residual_variance} examine residual variance
+across compute budgets in six real IsoFLOP experiments and find no strong
+evidence that noise varies by budget, supporting this assumption. More details
+on these
 differences and how they relate to common implementations are discussed in
 Appendix~\ref{sec:appendix_vpnls_validation}. The LSE reparameterization and
 log-space objective, however, are evaluated directly in the exponent inference
@@ -289,7 +297,8 @@ We test two configurations to see how the effect scales:
     \item \textbf{Asymmetric:} $\alpha = 0.46$, $\beta = 0.15$ (ratio $= 3.0$)
 \end{itemize}
 
-This Asymmetric surface definition is not unrealistic. An exponent ratio of 3.0
+This ratio for the Asymmetric surface is on the high end of previously reported
+statistics without being unrealistic. An exponent ratio of 3.0
 is comparable to what has been observed in practice.
 Kaplan et al.~\citep{kaplan_scaling} reported compute-optimal allocation
 exponents of $a = 0.73$, $b = 0.27$ (as cited in
@@ -948,7 +957,12 @@ The parameter recovery results above are noise-free, which is obviously not
 representative of practice. We now extend the compounding errors scenario
 (Section~\ref{sec:compounding}; Asymmetric surface with a $3\times$ drift at
 the $\pm 8\times$ grid) to a statistical setting. Gaussian noise is added to
-loss values at three levels ($\sigma = 0.05, 0.1, 0.2$), the number of compute
+loss values at three levels ($\sigma = 0.05, 0.1, 0.2$), applied uniformly
+across all compute budgets. Appendix
+Figures~\ref{fig:appendix_residual_distributions}
+and~\ref{fig:appendix_residual_variance} provide empirical support for this
+uniform treatment, finding no strong evidence that residual variance differs
+by budget in most real IsoFLOP experiments. The number of compute
 budgets varies from 2 to 4, and the number of points per IsoFLOP curve ranges
 from 4 to 32. Each configuration is repeated with 256 independent noise
 realizations, yielding 9{,}216 fits per method and 46{,}080 fits in total.
@@ -1033,12 +1047,16 @@ well-configured direct fitting methods substantially outperform Approach~2.
 
 The exponent inference comparison above used an asymmetric surface with
 off-center sampling, conditions designed to test structural biases. Here we do
-the opposite, returning to the ideal conditions of the symmetric surfaces
+the opposite and build on the ideal conditions of the symmetric surfaces
 section ($\alpha = \beta = 0.31$, perfectly centered sampling) where Approach~2
 has no structural bias. All methods are unbiased in this setting, so the
 relevant comparison is variance. For unbiased estimators, statistical efficiency
 is proportional to the inverse of variance, so lower variance means more
-precise estimates for a given sample size. Even under these ideal conditions,
+precise estimates for a given sample size. Noise levels
+($\sigma \in \{0.01, 0.02, 0.05\}$) are calibrated to the empirical residual
+standard deviations observed across real IsoFLOP experiments (Appendix
+Figures~\ref{fig:appendix_residual_distributions}
+and~\ref{fig:appendix_residual_variance}). Even under these ideal conditions,
 Figure~\ref{fig:data_efficiency} shows that Approach~2 recovers scaling
 exponents with roughly $8\times$ higher variance than Approach~3 or VPNLS.
 
@@ -1149,6 +1167,10 @@ converge on nearly identical estimates with negligible deadweight loss.
 Appendix Figure~\ref{fig:appendix_isoflop_qc} visualizes the QC pipeline
 across six experiments spanning different datasets and model families,
 including Chinchilla, Llama~3, CoMMA, DCLM, Nemotron, and FineWeb.
+Appendix Figure~\ref{fig:appendix_progressive_chinchilla} shows the same
+analysis for Chinchilla data, extrapolated to its own evaluation budget of
+$5.8\times10^{23}$~FLOPs. DCL drops from 37.9\% to 12.5\% after the same
+targeted filtering steps.
 
 While the simulated Llama~3 surface produces minimal waste due to its
 nearly symmetric exponents, surfaces with greater asymmetry show substantially
@@ -1649,6 +1671,49 @@ methods.
     shown: Epoch~AI/Chinchilla, Llama~3, Marin/CoMMA, Marin/DCLM,
     Marin/Nemotron, and Misfitting/FineWeb-C4.}
     \label{fig:appendix_isoflop_qc}
+\end{figure}
+
+\section{Progressive Filtering for Chinchilla}
+\label{sec:appendix_progressive_chinchilla}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/progressive_filter_chinchilla_a3.png}
+    \caption{Progressive quality control filtering on Chinchilla data,
+    analogous to Figure~\ref{fig:progressive-filter} for Llama~3. DCL is
+    measured against an Approach~3 surface fit to unfiltered data and
+    extrapolated to $5.8\times10^{23}$~FLOPs. Starting from 37.9\% DCL on
+    raw data, the off-center and weak-curvature filters reduce DCL to 12.5\%.}
+    \label{fig:appendix_progressive_chinchilla}
+\end{figure}
+
+\section{Residual Distributions by Budget}
+\label{sec:appendix_residual_distributions}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/residuals_ap3_log_loss_adj.png}
+    \caption{Per-budget residual distributions after Approach~3 fitting with
+    per-budget FLOP factor adjustment, across six experiments. Each row shows
+    the residuals for one compute budget as a layered rug plot, boxplot, and
+    KDE, with an overall row pooling all clean points. The zero-residual
+    reference line (dashed) indicates perfect prediction.}
+    \label{fig:appendix_residual_distributions}
+\end{figure}
+
+\section{Residual Variance Summary}
+\label{sec:appendix_residual_variance}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/residuals_summary.png}
+    \caption{Per-budget residual standard deviation (left) and summary
+    statistics (right) for six experiments. Kruskal-Wallis tests whether
+    residual locations differ across budgets. Levene tests whether residual
+    variances differ across budgets. High p-values in most experiments
+    indicate that a budget-independent noise model is a reasonable
+    approximation for simulation purposes.}
+    \label{fig:appendix_residual_variance}
 \end{figure}
 
 \end{document}

@@ -1518,6 +1518,18 @@ def copy_experiment_outputs(output_dir: Path) -> None:
             exp_dir / "exp12" / "isoflops_ap3_log_loss_adj.png",
             appendix_dir / "isoflops_ap3_log_loss_adj.png",
         ),
+        (
+            exp_dir / "exp11" / "progressive_filter_chinchilla_a3.png",
+            appendix_dir / "progressive_filter_chinchilla_a3.png",
+        ),
+        (
+            exp_dir / "exp12" / "residuals_ap3_log_loss_adj.png",
+            appendix_dir / "residuals_ap3_log_loss_adj.png",
+        ),
+        (
+            exp_dir / "exp12" / "residuals_summary.png",
+            appendix_dir / "residuals_summary.png",
+        ),
     ]
 
     compounding_dir = prepare_output_dir(output_dir / "figures" / "compounding_errors")
