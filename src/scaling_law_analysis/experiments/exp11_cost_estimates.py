@@ -1092,7 +1092,7 @@ def plot_dcl_summary(
     eval_mantissa = eval_budget / 10**eval_exp
     eval_latex = rf"${eval_mantissa:.1f} \times 10^{{{eval_exp}}}$"
     fig.suptitle(
-        "Deadweight Compute Loss: Approach 2 Misallocation at Frontier Scale\n"
+        "Deadweight Compute Loss: Approach 2 Misallocation at Scale\n"
         f"(Extrapolated to {eval_latex} FLOPs)",
         fontsize=12,
     )

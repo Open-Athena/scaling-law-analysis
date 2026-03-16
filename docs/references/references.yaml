@@ -43,7 +43,7 @@
 
 - key: optibert
   title: Training compute-optimal transformer encoder models
-  venue: Other
+  venue: EMNLP
   url: https://aclanthology.org/2025.emnlp-main.1804.pdf
 
 - key: dit_scaling
@@ -203,7 +203,7 @@
 
 - key: olmo_hybrid
   title: "OLMo Hybrid: From Theory to Practice"
-  venue: Other
+  venue: Allen Institute for AI
   url: https://allenai.org/papers/olmo-hybrid
 
 - key: epochai_open_model_compute
