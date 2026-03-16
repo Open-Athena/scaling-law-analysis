@@ -1086,7 +1086,7 @@ def main() -> None:
     plot_isoflop_curves(
         results_kfactor,
         output_dir / "isoflops_ap3_log_loss_adj.png",
-        title="Per-Budget FLOP Factor Curves (k in C = k·N·D)",
+        title="IsoFLOP QC Pipeline Annotations",
         method="flop_factor",
     )
 

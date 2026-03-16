@@ -619,6 +619,7 @@
                         <li><a href="#appendix-data-efficiency">Data Efficiency Error Breakdown</a></li>
                         <li><a href="#appendix-vpnls-validation">VPNLS Implementation Validation</a></li>
                         <li><a href="#appendix-published-exponents">Published Scaling Exponents</a></li>
+                        <li><a href="#appendix-isoflop-qc">IsoFLOP Quality Control Visualization</a></li>
                     </ol>
                 </li>
             </ol>
@@ -2356,13 +2357,20 @@
                 surface, yielding DCL of 6.5% of budget ($1.4M).
                 The simulated Llama&nbsp;3 condition, which isolates the systematic biases
                 from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
-                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This indicates that most of the empirical
-                error is likely attributable to the particular shape of the real IsoFLOP data rather
-                than to the biases modeled here.
-                Chinchilla (<i>b/a</i>&nbsp;&asymp;&nbsp;1.21) allocation errors remain similarly
-                small at 0.4% ($95K).
-                The multimodal surfaces show substantially higher costs as exponent asymmetry
-                increases: SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
+                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the real Llama&nbsp;3 data
+                contains larger biases than those modeled here, or biases from other sources.
+                <a href="#fig-14">Figure&nbsp;14</a> shows that when known Approach&nbsp;2 biases
+                are addressed through targeted quality control, Approach&nbsp;2 and Approach&nbsp;3
+                converge on nearly identical estimates with negligible deadweight loss.
+                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A6</a> visualizes the QC
+                pipeline across six experiments spanning different datasets and model families,
+                including Chinchilla, Llama&nbsp;3, CoMMA, DCLM, Nemotron, and FineWeb.
+            </p>
+
+            <p>
+                While the simulated Llama&nbsp;3 surface produces minimal waste due to its
+                nearly symmetric exponents, surfaces with greater asymmetry show substantially
+                higher costs. SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
                 and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
                 For domains with highly asymmetric scaling exponents, which are
                 more common in multimodal settings, Approach&nbsp;2
@@ -2982,6 +2990,20 @@
                 </figcaption>
             </figure>
         </section>
+
+            <h3 id="appendix-isoflop-qc">H. IsoFLOP Quality Control Visualization</h3>
+            <figure>
+                <img src="appendix/isoflops_ap3_log_loss_adj.png"
+                    alt="IsoFLOP curves after quality control with per-budget FLOP factor adjustment">
+                <figcaption>
+                    <strong>Figure A6:</strong> IsoFLOP curves for six experiments spanning
+                    different datasets and model families. Clean points (circles) and outlier
+                    points (markers by reason) are shown alongside parabolic fits (dashed)
+                    and Approach&nbsp;3 predictions with per-budget FLOP factor adjustment (solid).
+                    Experiments shown: Epoch&nbsp;AI/Chinchilla, Llama&nbsp;3, Marin/CoMMA,
+                    Marin/DCLM, Marin/Nemotron, and Misfitting/FineWeb-C4.
+                </figcaption>
+            </figure>
 
         <!-- References -->
         <section id="references">

@@ -1514,6 +1514,10 @@ def copy_experiment_outputs(output_dir: Path) -> None:
             exp_dir / "exp9" / "data_efficiency_detailed.png",
             appendix_dir / "data_efficiency_detailed.png",
         ),
+        (
+            exp_dir / "exp12" / "isoflops_ap3_log_loss_adj.png",
+            appendix_dir / "isoflops_ap3_log_loss_adj.png",
+        ),
     ]
 
     compounding_dir = prepare_output_dir(output_dir / "figures" / "compounding_errors")
