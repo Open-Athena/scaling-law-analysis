@@ -427,10 +427,10 @@ def plot_progressive_filter(
 
     # ── Right panel: detail table ──
     headers = [
-        r"$\Delta n_{\mathrm{points}}$",
-        r"$n_{\mathrm{points}}$",
-        r"$\Delta n_{\mathrm{budgets}}$",
-        r"$n_{\mathrm{budgets}}$",
+        "Δ points",
+        "points",
+        "Δ budgets",
+        "budgets",
         "DCL %",
         r"DCL \$",
     ]

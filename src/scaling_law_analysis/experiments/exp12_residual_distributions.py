@@ -817,10 +817,10 @@ def plot_residual_std_by_budget(
 
     # ── Right panel: summary table ──
     headers = [
-        "Experiment",
-        r"$n_{\mathrm{points}}$",
-        r"$n_{\mathrm{budgets}}$",
-        "Mean σ",
+        "experiment",
+        "points",
+        "budgets",
+        "mean σ",
         "KW p",
         "Levene p",
     ]
@@ -985,7 +985,7 @@ def main() -> None:
         experiment_edfs[experiment] = edf
 
     # ── Approach 3 fits (raw-loss and log-loss) ──────────────────────────
-    global_fits: dict[str, SurfaceFitResult] = {}  # from logloss=True
+    all_fits: dict[bool, dict[str, SurfaceFitResult]] = {False: {}, True: {}}
     for use_logloss in [False, True]:
         print(f"\n{'=' * 60}")
         print(f"Approach 3 with use_logloss={use_logloss}")
@@ -1005,6 +1005,7 @@ def main() -> None:
             L_clean = np.asarray(clean["loss"])
 
             fit = _fit_experiment(N_clean, D_clean, L_clean, use_logloss=use_logloss)
+            all_fits[use_logloss][experiment] = fit
 
             # Compute residuals for ALL points (including outliers)
             N_all = np.asarray(edf["params"])
@@ -1024,8 +1025,6 @@ def main() -> None:
             )
 
             results[experiment] = {"fit": fit, "df": edf}
-            if use_logloss:
-                global_fits[experiment] = fit
 
         loss_stem = "log" if use_logloss else "lin"
         logloss_label = "log-loss" if use_logloss else "linear-loss"
@@ -1053,11 +1052,11 @@ def main() -> None:
         edf = experiment_edfs[experiment].copy()
         clean = edf[~edf["outlier"]]
 
-        if len(clean) == 0 or experiment not in global_fits:
+        if len(clean) == 0 or experiment not in all_fits[True]:
             print(f"\n  {experiment}: no clean points or no global fit, skipping")
             continue
 
-        surface = global_fits[experiment].to_loss_surface()
+        surface = all_fits[True][experiment].to_loss_surface()
         predictions, k_values = _flop_factor_predictions(edf, surface)
         edf["residual"] = edf["loss"].to_numpy() - predictions
 

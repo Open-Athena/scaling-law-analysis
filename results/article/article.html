@@ -653,9 +653,11 @@
                 only the two scaling exponents, relying on second-order Taylor approximations
                 that reduce each IsoFLOP curve to a simple parabola. This sacrifices recovery
                 of the full loss surface but makes estimation simple, and enables extraction
-                of what are typically viewed as the most actionable scaling properties of a model and dataset. It does this
-                through a sequence of straightforward quadratic and linear fits, which frequently requires far more than 5 parameters
-                to be estimated (at least 3 per compute budget and 2 for the final power law), but elides the need for a nonlinear optimizer.
+                of what are typically viewed as the most actionable scaling properties of a model
+                and dataset. It does this through a sequence of straightforward quadratic and 
+                linear fits, which frequently requires far more than 5 parameters to be estimated 
+                (at least 3 per compute budget and 2 for the final power law), but elides the need 
+                for a nonlinear optimizer.
             </p>
 
             <p>
@@ -663,20 +665,21 @@
                 approximations and its behavior on loss surfaces that are less symmetric than
                 the original Chinchilla form (where parameter and token scaling exponents are
                 roughly equal) have not, to our knowledge, been studied in detail. Here we
-                revisit the basics of how to apply a simple model like Chinchilla with high
-                precision and stability. We investigate this through noise-free synthetic simulations
-                that isolate systematic biases inherent to Approach 2 by eliminating
-                all sources of statistical noise.
+                revisit the basics of how to fit the Chinchilla loss model with high
+                precision and stability. We investigate this through 1) noise-free synthetic 
+                simulations of IsoFLOP experiments, 2) closed-form expression of one particular
+                Approach 2 error mode, 3) simulations with a noise model (additive gaussian) 
+                justified by examining residuals from 6 real IsoFLOP experiments, each filtered 
+                through an extensive 8 step quality control pipeline, and 4) comparing allocation
+                forecasts from Approach 2 to other methods after fitting them on Llama 3 training runs.
             </p>
 
             <p>
-                We show how these biases affect allocation planning
-                for final training runs at large compute budgets. We show how
-                extrapolation errors trace back to suboptimal IsoFLOP experiment design, and
-                that pathologies in these designs can be observed in real, high-profile
+                We also show how extrapolation errors trace back to suboptimal IsoFLOP experiment design, 
+                and that pathologies in these designs can be observed in real, high-profile
                 scaling law studies even if they are difficult to quantify precisely. Finally,
                 we propose an alternative fitting method that is simple, stable, and free of
-                these biases while building on the same intuitive computational shortcut:
+                these biases while building on the same computational shortcut as Approach 2:
                 optimizing exponential terms separately from linear terms. We call this
                 approach Variable Projection with Non-negative Least Squares (VPNLS).
             </p>
@@ -783,7 +786,7 @@
             <h3 id="approach-3">Approach 3: Direct Surface Fitting</h3>
 
             <p>
-                The alternative is to fit all five parameters \((E, A, B, \alpha, \beta)\)
+                An alternative is to fit all five parameters \((E, A, B, \alpha, \beta)\)
                 simultaneously by minimizing the residual sum of squares (RSS) directly:
             </p>
 
@@ -824,13 +827,16 @@
             </p>
 
             <p>
-                Because we evaluate methods on simulated data with known noise models and
-                want maximum likelihood estimates in some configurations, we use MSE rather
-                than the Huber objective throughout this study. More details on these
-                differences and how they relate to common implementations are discussed in
-                <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a>. The LSE
-                reparameterization and log-space objective, however, are evaluated directly
-                in the <a href="#method-comparison-inference">exponent inference comparison</a>.
+                We use MSE rather than the Huber objective throughout this study because it is the 
+                maximum likelihood estimator under the additive Gaussian noise assumed in
+                our simulations. We also assume this same noise model for real IsoFLOP data
+                after curating it extensively (including removing outliers) and providing 
+                evidence that neither heteroscedastic residuals across compute budgets nor 
+                non-Gaussian distributions are supported well by the data.
+                Some more details on these differences in optimization objectives, reparameterizations,
+                outcome scaling, and how they relate to common implementations are discussed in
+                <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a> and the 
+                <a href="#method-comparison-inference">exponent inference comparison</a> section.
             </p>
         </section>
 
