@@ -95,20 +95,24 @@ Despite this broad adoption, the sensitivity of the method's core
 approximations and its behavior on loss surfaces that are less symmetric than
 the original Chinchilla form (where parameter and token scaling exponents are
 roughly equal) have not, to our knowledge, been studied in detail. Here we
-revisit the basics of how to apply a simple model like Chinchilla with high
-precision and stability. We investigate this through noise-free synthetic
-simulations that isolate systematic biases inherent to Approach~2 by
-eliminating all sources of statistical noise.
+revisit the basics of how to fit the Chinchilla loss model with high
+precision and stability. We investigate this through
+1)~noise-free synthetic simulations of IsoFLOP experiments,
+2)~closed-form expression of one particular Approach~2 error mode,
+3)~simulations with a noise model justified by examining
+residuals from 6 real IsoFLOP experiments, each filtered through an extensive
+8-step quality control pipeline, and
+4)~comparing allocation forecasts from Approach~2 to other methods after
+fitting them on Llama~3 training runs.
 
-We show how these biases affect allocation planning
-for final training runs at large compute budgets. We show how extrapolation
-errors trace back to suboptimal IsoFLOP experiment design, and that pathologies
-in these designs can be observed in real, high-profile scaling law studies even
-if they are difficult to quantify precisely. Finally, we propose an alternative
-fitting method that is simple, stable, and free of these biases while building
-on the same intuitive computational shortcut: optimizing exponential terms
-separately from linear terms. We call this approach Variable Projection with
-Non-negative Least Squares (VPNLS).
+We also show how extrapolation errors trace back to suboptimal IsoFLOP
+experiment design, and that pathologies in these designs can be observed in
+real, high-profile scaling law studies even if they are difficult to quantify
+precisely. Finally, we propose an alternative fitting method that is simple,
+stable, and free of these biases while building on the same computational
+shortcut as Approach~2: optimizing exponential terms separately from linear
+terms. We call this approach Variable Projection with Non-negative Least
+Squares (VPNLS).
 
 This investigation is also motivated by a broader landscape of
 \emph{analytical} extensions to the Chinchilla loss surface. A growing body of
