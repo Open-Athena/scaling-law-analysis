@@ -1219,7 +1219,7 @@ def _run_progressive_filter(model: IsoFlopModelConfig, output_dir: Path) -> None
     raw_vpnls = _fit_vpnls(model.name, N, D, L)
 
     for method_label, surface, suffix in [
-        ("A3", raw_a3, "a3"),
+        ("3", raw_a3, "a3"),
         ("VPNLS", raw_vpnls, "vpnls"),
     ]:
         print(f"\n── Progressive filter ({model.name}): DCL vs {method_label} ──")

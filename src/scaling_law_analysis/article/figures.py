@@ -1547,6 +1547,10 @@ def copy_experiment_outputs(output_dir: Path) -> None:
             exp_dir / "exp11" / "compute_allocation_errors.png",
             error_costs_dir / "compute_allocation_errors.png",
         ),
+        (
+            exp_dir / "exp11" / "progressive_filter_llama3_a3.png",
+            error_costs_dir / "progressive_filter_llama3_a3.png",
+        ),
     ]
 
     for src, dst in appendix_copies + main_copies:

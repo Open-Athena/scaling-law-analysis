@@ -53,8 +53,7 @@ approximation accuracy), uncentered IsoFLOP sampling, and loss surface
 asymmetry ($\alpha \neq \beta$). Effects of these errors are demonstrated as
 misallocations at open frontier compute scales. Applied to published Llama~3
 IsoFLOP data, these biases imply a parameter underallocation corresponding to
-6--10\% of the $3.8\times10^{25}$ FLOP training budget (valued at
-\$1.3--2.2M). Simulated multimodal model misallocations show even greater opportunity
+6.5\% of the $3.8\times10^{25}$ FLOP training budget and \$1.4M (90\% CI: \$412K--\$2.9M) in unnecessary compute (H100 hrs @ 50\% MFU). Simulated multimodal model misallocations show even greater opportunity
 costs due to higher loss surface asymmetry. Chinchilla Approach~3 largely eliminates these
 biases but is often regarded as less data-efficient, numerically unstable,
 prone to local minima, and harder to implement. Each concern is shown to be
@@ -1136,8 +1135,8 @@ H100-hour~\citep{olmo3}.
 \end{figure}
 
 Figure~\ref{fig:dcl} shows the results. On the empirical Llama~3 data,
-Approach~2 overestimates the compute-optimal token count by 58--75\% depending
-on the reference surface, yielding DCL of 6--10\% of budget (\$1.3--2.2M).
+Approach~2 overestimates the compute-optimal token count by ${\sim}60$\% relative to the Approach~3
+surface, yielding DCL of 6.5\% of budget (\$1.4M).
 The simulated Llama~3 condition, which isolates the systematic biases from the
 IsoFLOP experiment design, produces only 0.2\% DCL (\$39K) at
 $\beta/\alpha \approx 0.97$. This indicates that most of the empirical error
@@ -1151,10 +1150,24 @@ exponent asymmetry increases: SODA ($\beta/\alpha \approx 1.56$) reaches
 are more common in multimodal settings, Approach~2
 misallocations can waste a non-trivial fraction of a large training budget.
 
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/progressive_filter_llama3_a3.png}
+    \caption{Effect of progressive quality control filtering on Approach~2
+    Deadweight Compute Loss, measured against an Approach~3 surface fit to
+    unfiltered Llama~3 data. Each row cumulatively applies one QC stage.
+    Nearly all DCL reduction comes from the off-center and weak-curvature
+    filters, which target the specific Approach~2 biases identified in
+    this study. The right table reports points and budgets
+    removed at each stage, along with DCL as a percentage of the
+    $3.8\times10^{25}$~FLOP evaluation budget and dollar cost.}
+    \label{fig:progressive-filter}
+\end{figure}
+
 \paragraph{Summary.}
 Based on Llama~3 IsoFLOP data, Approach~2 overestimates the compute-optimal
-token count by 58--75\% at $3.8\times10^{25}$~FLOPs, wasting 6--10\% of the
-training budget (\$1.3--2.2M in H100 time). Multimodal loss surfaces, where
+token count by ${\sim}60$\% at $3.8\times10^{25}$~FLOPs, wasting 6.5\% of the
+training budget (\$1.4M in H100 time). Multimodal loss surfaces, where
 exponent asymmetry is typically larger, exhibit similarly significant
 misallocation errors (8--10\% of budget costing \$1.7--2.1M) under the same
 simulation conditions for which Llama~3 errors reach only 0.2\% waste. This
@@ -1177,7 +1190,7 @@ curves from prominent scaling law studies
 (Section~\ref{sec:real_isoflop}) show clear signs of both asymmetry and
 off-center sampling. At frontier compute scales
 (Section~\ref{sec:error_costs}), we estimate that these biases translate to a
-potential 6--10\% decrease in training FLOPs (\$1.3--2.2M) on Llama~3 data
+potential 6.5\% decrease in training FLOPs (\$1.4M) on Llama~3 data
 and potentially more on multimodal surfaces with greater asymmetry.
 
 Approach~3 eliminates these biases. With grid initialization and LSE
