@@ -612,14 +612,14 @@
                 <li>
                     <a href="#appendix">Appendix</a>
                     <ol>
+                        <li><a href="#appendix-vpnls-validation">VPNLS Implementation Validation</a></li>
+                        <li><a href="#appendix-isoflop-qc">IsoFLOP Quality Control Pipeline</a></li>
+                        <li><a href="#appendix-noisy-isoflop">IsoFLOP Samples with Noise</a></li>
                         <li><a href="#appendix-method-comparison">Detailed Method Comparison</a></li>
                         <li><a href="#appendix-combined-extrapolation">Combined Extrapolation Error by Compute Budget</a></li>
-                        <li><a href="#appendix-noisy-isoflop">IsoFLOP Samples with Noise</a></li>
                         <li><a href="#appendix-exponent-errors">Exponent Inference Error Breakdown</a></li>
                         <li><a href="#appendix-data-efficiency">Data Efficiency Error Breakdown</a></li>
-                        <li><a href="#appendix-vpnls-validation">VPNLS Implementation Validation</a></li>
                         <li><a href="#appendix-published-exponents">Published Scaling Exponents</a></li>
-                        <li><a href="#appendix-isoflop-qc">IsoFLOP Quality Control Visualization</a></li>
                         <li><a href="#appendix-progressive-chinchilla">Progressive Filtering for Chinchilla</a></li>
                         <li><a href="#appendix-residual-distributions">Residual Distributions by Budget</a></li>
                         <li><a href="#appendix-residual-variance">Residual Variance Summary</a></li>
@@ -644,7 +644,7 @@
                 Amazon<sup><a href="#ref-il_scaling">[6]</a></sup>,
                 Waymo<sup><a href="#ref-waymo_scaling">[8]</a></sup>, and
                 Arc Institute<sup><a href="#ref-evo">[5]</a></sup>, among others
-                (see <a href="#table-published-exponents">Table&nbsp;A1</a>). It is also
+                (see <a href="#table-published-exponents">Table&nbsp;A2</a>). It is also
                 a workhorse method for academic scaling law
                 studies<sup><a href="#ref-dit_scaling">[10]</a>,<a href="#ref-dlm_scaling">[11]</a>,<a href="#ref-biosignal_scaling">[12]</a></sup>
                 and <a href="https://github.com/karpathy/nanochat/discussions/420">tutorials</a> like those from Andrej Karpathy.
@@ -840,7 +840,7 @@
                 evidence that noise varies by budget, supporting this assumption.
                 Some more details on these differences in optimization objectives, reparameterizations,
                 outcome scaling, and how they relate to common implementations are discussed in
-                <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a> and the 
+                <a href="#appendix-vpnls-validation">Appendix&nbsp;A</a> and the 
                 <a href="#method-comparison-inference">exponent inference comparison</a> section.
             </p>
         </section>
@@ -968,7 +968,7 @@
                 \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
                 Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
                 of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
-                that drives the biases studied here. See <a href="#table-published-exponents">Table&nbsp;A1</a> for other examples of reported imbalances, 
+                that drives the biases studied here. See <a href="#table-published-exponents">Table&nbsp;A2</a> for other examples of reported imbalances, 
                 several of which indicate ratios in the 2-3 range (or even higher in one case<sup><a href="#ref-protein_plm_scaling">[38]</a></sup>). 
             </p>
 
@@ -1575,7 +1575,7 @@
 
             <p>
                 Published scaling law studies frequently report asymmetric loss
-                surfaces, as shown in <a href="#table-published-exponents">Table&nbsp;A1</a>. Some degree of
+                surfaces, as shown in <a href="#table-published-exponents">Table&nbsp;A2</a>. Some degree of
                 asymmetry is nearly universal across modalities, and several reported
                 exponent estimates reach the same levels of imbalance as the most
                 extreme configuration in our simulations. The related biases documented
@@ -1709,7 +1709,7 @@
             </p>
 
             <p>
-                <a href="#appendix-combined-extrapolation">Figure A2</a> provides a more
+                <a href="#appendix-combined-extrapolation">Figure A4</a> provides a more
                 detailed view of these results. It shows how \(D^*\) extrapolation errors change across
                 compute budgets, which sources of bias grow with extrapolation distance
                 (drift), which remain constant (surface asymmetry and
@@ -1901,7 +1901,7 @@
             <p>
                 The implementation of this algorithm used in the remainder of this work was
                 validated against <code>ml-scalefit</code> <sup><a href="#ref-optimal_data_mixtures">[22]</a></sup>.
-                See <a href="#appendix-vpnls-validation">Appendix&nbsp;F</a> for details.
+                See <a href="#appendix-vpnls-validation">Appendix&nbsp;A</a> for details.
             </p>
 
             <h3 id="method-comparison-recovery">Method Comparison (Parameter Recovery)</h3>
@@ -2038,7 +2038,7 @@
                 high precision in this noiseless setting (errors on the order of
                 10<sup>&minus;5</sup>%), though with larger errors than any 2D method, particularly on the Asymmetric surface. The 5D numerical gradient variant
                 performs worse, with errors on the order of 10<sup>&minus;3</sup>%.
-                <a href="#appendix-method-comparison">Figure A1</a> breaks this down by
+                <a href="#appendix-method-comparison">Figure A3</a> breaks this down by
                 surface and sampling range.
             </p>
 
@@ -2073,7 +2073,7 @@
                 budgets varies from 2 to 4, and the number of points per IsoFLOP curve
                 ranges from 4 to 32. Each configuration is repeated with 256 independent
                 noise realizations, yielding 9,216 fits per method and 46,080 fits in total.
-                <a href="#appendix-noisy-isoflop">Figure&nbsp;A3</a> shows what the noisy
+                <a href="#appendix-noisy-isoflop">Figure&nbsp;A2</a> shows what the noisy
                 IsoFLOP samples look like at each noise level.
             </p>
 
@@ -2211,7 +2211,7 @@
                 VPNLS produced the smallest maximum errors in this experiment (34% on
                 \(a\), 11% on \(b\)) with typical accuracy roughly equivalent to
                 Approach&nbsp;3. The detailed breakdown in
-                <a href="#appendix-exponent-errors">Figure&nbsp;A4</a> shows how errors
+                <a href="#appendix-exponent-errors">Figure&nbsp;A5</a> shows how errors
                 distribute across noise levels, budget counts, and dataset sizes.
             </p>
 
@@ -2274,7 +2274,7 @@
             </figure>
 
             <p>
-                <a href="#appendix-data-efficiency">Figure&nbsp;A5</a> breaks these results
+                <a href="#appendix-data-efficiency">Figure&nbsp;A6</a> breaks these results
                 down by noise level, showing the full distribution of signed errors for each
                 method.
             </p>
@@ -2381,7 +2381,7 @@
                 <a href="#fig-14">Figure&nbsp;14</a> shows that when known Approach&nbsp;2 biases
                 are addressed through targeted quality control, Approach&nbsp;2 and Approach&nbsp;3
                 converge on nearly identical estimates with negligible deadweight loss.
-                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A6</a> visualizes the QC
+                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A1</a> visualizes the QC
                 pipeline across six experiments spanning different datasets and model families,
                 including Chinchilla, Llama&nbsp;3, CoMMA, DCLM, Nemotron, and FineWeb.
                 <a href="#appendix-progressive-chinchilla">Appendix Figure&nbsp;A7</a> shows the
@@ -2548,109 +2548,14 @@
         <section id="appendix">
             <h2>Appendix</h2>
 
-            <h3 id="appendix-method-comparison">A. Detailed Method Comparison</h3>
-
-            <figure>
-                <img src="appendix/parameter_recovery_detailed.png"
-                    alt="Detailed method comparison showing per-parameter error across surfaces and sampling ranges">
-                <figcaption>
-                    <strong>Figure A1:</strong> Per-parameter recovery error for six fitting
-                    methods across three loss surfaces and 20 sampling ranges (baseline, no
-                    bias). Each panel shows absolute relative error (%) on a log scale versus
-                    sampling range, with one curve per method. Rows correspond to loss surfaces
-                    (symmetric, Chinchilla, high imbalance); columns correspond to parameters
-                    (E, A, B, &alpha;, &beta;).
-                </figcaption>
-            </figure>
-
-            <h3 id="appendix-combined-extrapolation">B. Combined Extrapolation Error by Compute Budget</h3>
-
-            <figure>
-                <img src="appendix/combined_extrapolation_error.png"
-                    alt="Extrapolation error in D* across compute budgets for all surfaces, sampling ranges, and bias configurations">
-                <figcaption>
-                    <strong>Figure A2:</strong> Relative error in compute-optimal token count
-                    \(D^*\) when extrapolating from the fitting range (10<sup>17</sup>&ndash;10<sup>21</sup>
-                    FLOPs) to higher compute budgets (10<sup>22</sup>&ndash;10<sup>25</sup> FLOPs),
-                    with asymmetry and sampling biases acting simultaneously. Columns correspond
-                    to loss surfaces (symmetric, Chinchilla, Asymmetric); rows correspond to
-                    sampling ranges (narrow ±2×, medium ±16×, wide ±100×). The wide row uses
-                    an extreme grid width not employed in the main text, included here to
-                    further illustrate how far results can deviate with a misconfigured
-                    experiment. Each curve represents a different sampling bias configuration:
-                    baseline (no bias), two linear drift rates (drift_0.2 and drift_0.4,
-                    where the value is the log<sub>10</sub> offset at the highest compute
-                    budget), and two constant center offsets (scale_1.5 and scale_2.0, where
-                    the value is the multiplicative factor applied at every budget). On
-                    symmetric surfaces, errors are driven entirely by off-center sampling;
-                    on asymmetric surfaces, the inherent surface bias adds a constant offset
-                    visible as the non-zero baseline curve. Drift-based biases produce errors
-                    that grow with extrapolation distance (steeper curves), while constant
-                    offsets and surface asymmetry produce flat errors.
-                </figcaption>
-            </figure>
-
-            <h3 id="appendix-noisy-isoflop">C. IsoFLOP Samples with Noise</h3>
-
-            <figure>
-                <img src="appendix/isoflop_curves_noisy.png"
-                    alt="IsoFLOP samples at three noise levels showing noisy data points, true surface, and drifting sampling centers">
-                <figcaption>
-                    <strong>Figure A3:</strong> Noisy IsoFLOP samples used in the exponent
-                    inference comparison (<a href="#method-comparison-inference">Figure&nbsp;9</a>).
-                    Columns correspond to noise levels
-                    (&sigma;&nbsp;=&nbsp;0.05,&nbsp;0.1,&nbsp;0.2); rows show loss versus
-                    log<sub>10</sub>(N) (top) and log<sub>10</sub>(D) (bottom). Scatter points
-                    are noisy observations; solid curves show the noiseless reference surface.
-                    Red &times; marks the true compute-optimal point at each budget; black
-                    diamonds mark the sampling centers, which drift away from the true optima
-                    at higher compute budgets.
-                    Surface: Asymmetric (&alpha;=0.465, &beta;=0.155), 4 budgets
-                    (10<sup>17</sup>&ndash;10<sup>21</sup>&nbsp;FLOPs), 32 points per curve,
-                    &plusmn;8&times; grid.
-                </figcaption>
-            </figure>
-
-            <h3 id="appendix-exponent-errors">D. Exponent Inference Error Breakdown</h3>
-
-            <figure>
-                <img src="appendix/exponent_inference_errors.png"
-                    alt="Boxplots of exponent inference errors broken down by noise level, budget count, and points per IsoFLOP curve">
-                <figcaption>
-                    <strong>Figure A4:</strong> Per-condition breakdown of exponent inference
-                    errors from <a href="#method-comparison-inference">Figure&nbsp;9</a>,
-                    showing 4 of 5 methods (excludes Naive Approach&nbsp;3, which serves only
-                    as a negative control in the main figure).
-                    Rows correspond to number of compute budgets (2, 3, 4); left columns show
-                    the lowest noise level (&sigma;=0.05) and right columns show the highest
-                    (&sigma;=0.2), each split by exponent (\(a\) and \(b\)). Within each
-                    panel, boxplots show absolute relative error (%) on a log scale for each
-                    method at each points-per-curve setting (4, 8, 16, 32), over 256 noise
-                    realizations.
-                </figcaption>
-            </figure>
-
-            <h3 id="appendix-data-efficiency">E. Data Efficiency Error Breakdown</h3>
-
-            <figure>
-                <img src="appendix/data_efficiency_detailed.png"
-                    alt="Boxplots of data efficiency errors broken down by noise level for Approach 2, Approach 3, and VPNLS">
-                <figcaption>
-                    <strong>Figure A5:</strong> Per-noise-level breakdown of signed exponent
-                    errors from <a href="#method-comparison-efficiency">Figure&nbsp;12</a>.
-                    Boxplots show the distribution of \(\hat{b} - b_{\mathrm{true}}\) on a
-                    symlog scale for each method at each noise level. Pooled summary
-                    statistics (sample size, variance, IQR) are shown below each method group.
-                </figcaption>
-            </figure>
-            <h3 id="appendix-vpnls-validation">F. VPNLS Implementation Validation</h3>
+            <h3 id="appendix-vpnls-validation">A. VPNLS Implementation Validation</h3>
 
             <p>
                 We validated our VPNLS implementation against
-                <code>ml-scalefit</code> <sup><a href="#ref-optimal_data_mixtures">[22]</a></sup>. 
-                Both were run on the Chinchilla dataset (217 training points with \(C < 10^{21}\), 
+                <code>ml-scalefit</code> <sup><a href="#ref-optimal_data_mixtures">[22]</a></sup>.
+                Both were run on the Chinchilla dataset (217 training points with \(C < 10^{21}\),
                 inputs normalized by \(N/10^6\) and \(D/10^9\)).
-                <a href="#table-vpnls-validation">Table&nbsp;A2</a> shows the fitted parameters.
+                <a href="#table-vpnls-validation">Table&nbsp;A1</a> shows the fitted parameters.
             </p>
 
             <p>
@@ -2740,17 +2645,127 @@
                     </tbody>
                 </table>
                 <figcaption>
-                    <strong>Table A2:</strong> VPNLS validation against <code>ml-scalefit</code>
+                    <strong>Table A1:</strong> VPNLS validation against <code>ml-scalefit</code>
                     on the Chinchilla dataset. VPNLS and <code>ml-scalefit</code> (MSE) agree
                     to three decimal places (\(1 \times 10^{-3}\)). Approach 3 with linear loss is identical to VPNLS;
                     only the log-scaled loss variant diverges.
                 </figcaption>
             </figure>
 
-            <h3 id="appendix-published-exponents">G. Published Scaling Exponents</h3>
+            <h3 id="appendix-isoflop-qc">B. IsoFLOP Quality Control Pipeline</h3>
+            <figure>
+                <img src="appendix/isoflops_ap3_log_loss_adj.png"
+                    alt="IsoFLOP curves after quality control with per-budget FLOP factor adjustment">
+                <figcaption>
+                    <strong>Figure A1:</strong> IsoFLOP curves for six experiments spanning
+                    different datasets and model families. Clean points (circles) and outlier
+                    points (markers by reason) are shown alongside parabolic fits (dashed)
+                    and Approach&nbsp;3 predictions with per-budget FLOP factor adjustment (solid).
+                    Experiments shown: Epoch&nbsp;AI/Chinchilla, Llama&nbsp;3, Marin/CoMMA,
+                    Marin/DCLM, Marin/Nemotron, and Misfitting/FineWeb-C4.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-noisy-isoflop">C. IsoFLOP Samples with Noise</h3>
+
+            <figure>
+                <img src="appendix/isoflop_curves_noisy.png"
+                    alt="IsoFLOP samples at three noise levels showing noisy data points, true surface, and drifting sampling centers">
+                <figcaption>
+                    <strong>Figure A2:</strong> Noisy IsoFLOP samples used in the exponent
+                    inference comparison (<a href="#method-comparison-inference">Figure&nbsp;9</a>).
+                    Columns correspond to noise levels
+                    (&sigma;&nbsp;=&nbsp;0.05,&nbsp;0.1,&nbsp;0.2); rows show loss versus
+                    log<sub>10</sub>(N) (top) and log<sub>10</sub>(D) (bottom). Scatter points
+                    are noisy observations; solid curves show the noiseless reference surface.
+                    Red &times; marks the true compute-optimal point at each budget; black
+                    diamonds mark the sampling centers, which drift away from the true optima
+                    at higher compute budgets.
+                    Surface: Asymmetric (&alpha;=0.465, &beta;=0.155), 4 budgets
+                    (10<sup>17</sup>&ndash;10<sup>21</sup>&nbsp;FLOPs), 32 points per curve,
+                    &plusmn;8&times; grid.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-method-comparison">D. Detailed Method Comparison</h3>
+
+            <figure>
+                <img src="appendix/parameter_recovery_detailed.png"
+                    alt="Detailed method comparison showing per-parameter error across surfaces and sampling ranges">
+                <figcaption>
+                    <strong>Figure A3:</strong> Per-parameter recovery error for six fitting
+                    methods across three loss surfaces and 20 sampling ranges (baseline, no
+                    bias). Each panel shows absolute relative error (%) on a log scale versus
+                    sampling range, with one curve per method. Rows correspond to loss surfaces
+                    (symmetric, Chinchilla, high imbalance); columns correspond to parameters
+                    (E, A, B, &alpha;, &beta;).
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-combined-extrapolation">E. Combined Extrapolation Error by Compute Budget</h3>
+
+            <figure>
+                <img src="appendix/combined_extrapolation_error.png"
+                    alt="Extrapolation error in D* across compute budgets for all surfaces, sampling ranges, and bias configurations">
+                <figcaption>
+                    <strong>Figure A4:</strong> Relative error in compute-optimal token count
+                    \(D^*\) when extrapolating from the fitting range (10<sup>17</sup>&ndash;10<sup>21</sup>
+                    FLOPs) to higher compute budgets (10<sup>22</sup>&ndash;10<sup>25</sup> FLOPs),
+                    with asymmetry and sampling biases acting simultaneously. Columns correspond
+                    to loss surfaces (symmetric, Chinchilla, Asymmetric); rows correspond to
+                    sampling ranges (narrow ±2×, medium ±16×, wide ±100×). The wide row uses
+                    an extreme grid width not employed in the main text, included here to
+                    further illustrate how far results can deviate with a misconfigured
+                    experiment. Each curve represents a different sampling bias configuration:
+                    baseline (no bias), two linear drift rates (drift_0.2 and drift_0.4,
+                    where the value is the log<sub>10</sub> offset at the highest compute
+                    budget), and two constant center offsets (scale_1.5 and scale_2.0, where
+                    the value is the multiplicative factor applied at every budget). On
+                    symmetric surfaces, errors are driven entirely by off-center sampling;
+                    on asymmetric surfaces, the inherent surface bias adds a constant offset
+                    visible as the non-zero baseline curve. Drift-based biases produce errors
+                    that grow with extrapolation distance (steeper curves), while constant
+                    offsets and surface asymmetry produce flat errors.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-exponent-errors">F. Exponent Inference Error Breakdown</h3>
+
+            <figure>
+                <img src="appendix/exponent_inference_errors.png"
+                    alt="Boxplots of exponent inference errors broken down by noise level, budget count, and points per IsoFLOP curve">
+                <figcaption>
+                    <strong>Figure A5:</strong> Per-condition breakdown of exponent inference
+                    errors from <a href="#method-comparison-inference">Figure&nbsp;9</a>,
+                    showing 4 of 5 methods (excludes Naive Approach&nbsp;3, which serves only
+                    as a negative control in the main figure).
+                    Rows correspond to number of compute budgets (2, 3, 4); left columns show
+                    the lowest noise level (&sigma;=0.05) and right columns show the highest
+                    (&sigma;=0.2), each split by exponent (\(a\) and \(b\)). Within each
+                    panel, boxplots show absolute relative error (%) on a log scale for each
+                    method at each points-per-curve setting (4, 8, 16, 32), over 256 noise
+                    realizations.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-data-efficiency">G. Data Efficiency Error Breakdown</h3>
+
+            <figure>
+                <img src="appendix/data_efficiency_detailed.png"
+                    alt="Boxplots of data efficiency errors broken down by noise level for Approach 2, Approach 3, and VPNLS">
+                <figcaption>
+                    <strong>Figure A6:</strong> Per-noise-level breakdown of signed exponent
+                    errors from <a href="#method-comparison-efficiency">Figure&nbsp;12</a>.
+                    Boxplots show the distribution of \(\hat{b} - b_{\mathrm{true}}\) on a
+                    symlog scale for each method at each noise level. Pooled summary
+                    statistics (sample size, variance, IQR) are shown below each method group.
+                </figcaption>
+            </figure>
+
+            <h3 id="appendix-published-exponents">H. Published Scaling Exponents</h3>
 
             <p>
-                <a href="#table-published-exponents">Table&nbsp;A1</a> collects published
+                <a href="#table-published-exponents">Table&nbsp;A2</a> collects published
                 compute-allocation exponents \(a\) and \(b\) (where \(N^* \propto C^a\) and
                 \(D^* \propto C^b\)) from scaling law studies across a range of domains,
                 architectures, and fitting methods.
@@ -3002,7 +3017,7 @@
                     <p><sup>&ddagger;</sup> Exponents originally from Kaplan et al.<sup><a href="#ref-kaplan_scaling">[14]</a></sup> (OpenWebText2) and Hoffmann et al.<sup><a href="#ref-chinchilla">[1]</a></sup> (MassiveText), as reported in DeepSeek.</p>
                 </div>
                 <figcaption>
-                    <strong>Table A1:</strong> Published compute-allocation exponents from
+                    <strong>Table A2:</strong> Published compute-allocation exponents from
                     scaling law studies across domains. Columns \(a\) and \(b\) are the
                     allocation exponents governing optimal model size (\(N^* \propto C^a\))
                     and dataset size (\(D^* \propto C^b\)). The \(\beta/\alpha\) column
@@ -3013,20 +3028,6 @@
                 </figcaption>
             </figure>
         </section>
-
-            <h3 id="appendix-isoflop-qc">H. IsoFLOP Quality Control Visualization</h3>
-            <figure>
-                <img src="appendix/isoflops_ap3_log_loss_adj.png"
-                    alt="IsoFLOP curves after quality control with per-budget FLOP factor adjustment">
-                <figcaption>
-                    <strong>Figure A6:</strong> IsoFLOP curves for six experiments spanning
-                    different datasets and model families. Clean points (circles) and outlier
-                    points (markers by reason) are shown alongside parabolic fits (dashed)
-                    and Approach&nbsp;3 predictions with per-budget FLOP factor adjustment (solid).
-                    Experiments shown: Epoch&nbsp;AI/Chinchilla, Llama&nbsp;3, Marin/CoMMA,
-                    Marin/DCLM, Marin/Nemotron, and Misfitting/FineWeb-C4.
-                </figcaption>
-            </figure>
 
             <h3 id="appendix-progressive-chinchilla">I. Progressive Filtering for Chinchilla</h3>
             <figure>

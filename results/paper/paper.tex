@@ -1293,89 +1293,6 @@ Several limitations scope the conclusions of this study.
 
 \appendix
 
-\section{Detailed Method Comparison}
-\label{sec:appendix_method_comparison}
-
-Full per-parameter, per-surface, per-sampling-range error breakdown for all
-six method configurations.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.png}
-    \caption{Detailed method comparison: absolute relative error vs sampling
-    range for all six configurations. Rows correspond to loss surfaces
-    (symmetric, Chinchilla, Asymmetric); columns correspond to parameters
-    ($E$, $A$, $B$, $\alpha$, $\beta$).}
-    \label{fig:appendix_method_detail}
-\end{figure}
-
-\section{Combined Extrapolation Error by Compute Budget}
-\label{sec:appendix_combined_extrapolation}
-
-Detailed view of $D^*$ extrapolation error as a function of compute budget,
-showing how errors evolve from $10^{22}$ to $10^{25}$ FLOPs across sampling
-ranges, loss surfaces, and bias configurations.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.png}
-    \caption{Combined extrapolation error by compute budget. Rows correspond to
-    sampling ranges (narrow, medium, wide); columns correspond to loss surfaces
-    (symmetric, Chinchilla, Asymmetric). Each panel shows relative $D^*$ error
-    vs extrapolation compute budget with one curve per bias configuration.}
-    \label{fig:appendix_combined_extrapolation}
-\end{figure}
-
-\section{IsoFLOP Samples with Noise}
-\label{sec:appendix_noisy_isoflop}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.png}
-    \caption{Noisy IsoFLOP samples used in the exponent inference comparison
-    (Figure~\ref{fig:exponent_inference}). Columns correspond to noise levels
-    ($\sigma = 0.05, 0.1, 0.2$); rows show loss versus $\log_{10}(N)$ (top)
-    and $\log_{10}(D)$ (bottom). Scatter points are noisy observations; solid
-    curves show the noiseless reference surface. Red $\times$ marks the true
-    compute-optimal point at each budget; black diamonds mark the sampling
-    centers, which drift away from the true optima at higher compute budgets.
-    Surface: Asymmetric ($\alpha = 0.465$, $\beta = 0.155$), 4 budgets
-    ($10^{17}$--$10^{21}$~FLOPs), 32 points per curve, $\pm 8\times$ grid.}
-    \label{fig:appendix_noisy_isoflop}
-\end{figure}
-
-\section{Exponent Inference Error Breakdown}
-\label{sec:appendix_exponent_errors}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.png}
-    \caption{Per-condition breakdown of exponent inference errors from
-    Figure~\ref{fig:exponent_inference}, showing 4 of 5 methods (excludes
-    Naive Approach~3, which serves only as a negative control in the main
-    figure). Rows correspond to number of compute budgets (2, 3, 4); left
-    columns show the lowest noise level ($\sigma = 0.05$) and right columns
-    show the highest ($\sigma = 0.2$), each split by exponent ($a$ and $b$).
-    Within each panel, boxplots show absolute relative error (\%) on a log
-    scale for each method at each points-per-curve setting (4, 8, 16, 32),
-    over 256 noise realizations.}
-    \label{fig:appendix_exponent_errors}
-\end{figure}
-
-\section{Data Efficiency Error Breakdown}
-\label{sec:appendix_data_efficiency}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.png}
-    \caption{Per-noise-level breakdown of signed exponent errors from
-    Figure~\ref{fig:data_efficiency}. Boxplots show the distribution of
-    $\hat{b} - b_{\mathrm{true}}$ on a symlog scale for each method at each
-    noise level. Pooled summary statistics (sample size, variance, IQR) are
-    shown below each method group.}
-    \label{fig:appendix_data_efficiency}
-\end{figure}
-
 \section{VPNLS Implementation Validation}
 \label{sec:appendix_vpnls_validation}
 
@@ -1421,6 +1338,104 @@ different estimates.
     variant diverges.}
     \label{tab:vpnls_validation}
 \end{table}
+
+\section{IsoFLOP Quality Control Pipeline}
+\label{sec:appendix_isoflop_qc}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/isoflops_ap3_log_loss_adj.png}
+    \caption{IsoFLOP curves for six experiments spanning different datasets
+    and model families. Clean points (circles) and outlier points (markers
+    by reason) are shown alongside parabolic fits (dashed) and Approach~3
+    predictions with per-budget FLOP factor adjustment (solid). Experiments
+    shown: Epoch~AI/Chinchilla, Llama~3, Marin/CoMMA, Marin/DCLM,
+    Marin/Nemotron, and Misfitting/FineWeb-C4.}
+    \label{fig:appendix_isoflop_qc}
+\end{figure}
+
+\section{IsoFLOP Samples with Noise}
+\label{sec:appendix_noisy_isoflop}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.png}
+    \caption{Noisy IsoFLOP samples used in the exponent inference comparison
+    (Figure~\ref{fig:exponent_inference}). Columns correspond to noise levels
+    ($\sigma = 0.05, 0.1, 0.2$); rows show loss versus $\log_{10}(N)$ (top)
+    and $\log_{10}(D)$ (bottom). Scatter points are noisy observations; solid
+    curves show the noiseless reference surface. Red $\times$ marks the true
+    compute-optimal point at each budget; black diamonds mark the sampling
+    centers, which drift away from the true optima at higher compute budgets.
+    Surface: Asymmetric ($\alpha = 0.465$, $\beta = 0.155$), 4 budgets
+    ($10^{17}$--$10^{21}$~FLOPs), 32 points per curve, $\pm 8\times$ grid.}
+    \label{fig:appendix_noisy_isoflop}
+\end{figure}
+
+\section{Detailed Method Comparison}
+\label{sec:appendix_method_comparison}
+
+Full per-parameter, per-surface, per-sampling-range error breakdown for all
+six method configurations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.png}
+    \caption{Detailed method comparison: absolute relative error vs sampling
+    range for all six configurations. Rows correspond to loss surfaces
+    (symmetric, Chinchilla, Asymmetric); columns correspond to parameters
+    ($E$, $A$, $B$, $\alpha$, $\beta$).}
+    \label{fig:appendix_method_detail}
+\end{figure}
+
+\section{Combined Extrapolation Error by Compute Budget}
+\label{sec:appendix_combined_extrapolation}
+
+Detailed view of $D^*$ extrapolation error as a function of compute budget,
+showing how errors evolve from $10^{22}$ to $10^{25}$ FLOPs across sampling
+ranges, loss surfaces, and bias configurations.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.png}
+    \caption{Combined extrapolation error by compute budget. Rows correspond to
+    sampling ranges (narrow, medium, wide); columns correspond to loss surfaces
+    (symmetric, Chinchilla, Asymmetric). Each panel shows relative $D^*$ error
+    vs extrapolation compute budget with one curve per bias configuration.}
+    \label{fig:appendix_combined_extrapolation}
+\end{figure}
+
+\section{Exponent Inference Error Breakdown}
+\label{sec:appendix_exponent_errors}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.png}
+    \caption{Per-condition breakdown of exponent inference errors from
+    Figure~\ref{fig:exponent_inference}, showing 4 of 5 methods (excludes
+    Naive Approach~3, which serves only as a negative control in the main
+    figure). Rows correspond to number of compute budgets (2, 3, 4); left
+    columns show the lowest noise level ($\sigma = 0.05$) and right columns
+    show the highest ($\sigma = 0.2$), each split by exponent ($a$ and $b$).
+    Within each panel, boxplots show absolute relative error (\%) on a log
+    scale for each method at each points-per-curve setting (4, 8, 16, 32),
+    over 256 noise realizations.}
+    \label{fig:appendix_exponent_errors}
+\end{figure}
+
+\section{Data Efficiency Error Breakdown}
+\label{sec:appendix_data_efficiency}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.png}
+    \caption{Per-noise-level breakdown of signed exponent errors from
+    Figure~\ref{fig:data_efficiency}. Boxplots show the distribution of
+    $\hat{b} - b_{\mathrm{true}}$ on a symlog scale for each method at each
+    noise level. Pooled summary statistics (sample size, variance, IQR) are
+    shown below each method group.}
+    \label{fig:appendix_data_efficiency}
+\end{figure}
 
 \section{Published Scaling Exponents}
 \label{sec:appendix_published_exponents}
@@ -1526,21 +1541,6 @@ methods.
     or reported directly for Kaplan estimates.}
     \label{tab:published_exponents}
 \end{table}
-
-\section{IsoFLOP Quality Control Visualization}
-\label{sec:appendix_isoflop_qc}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{../article/appendix/isoflops_ap3_log_loss_adj.png}
-    \caption{IsoFLOP curves for six experiments spanning different datasets
-    and model families. Clean points (circles) and outlier points (markers
-    by reason) are shown alongside parabolic fits (dashed) and Approach~3
-    predictions with per-budget FLOP factor adjustment (solid). Experiments
-    shown: Epoch~AI/Chinchilla, Llama~3, Marin/CoMMA, Marin/DCLM,
-    Marin/Nemotron, and Misfitting/FineWeb-C4.}
-    \label{fig:appendix_isoflop_qc}
-\end{figure}
 
 \section{Progressive Filtering for Chinchilla}
 \label{sec:appendix_progressive_chinchilla}
