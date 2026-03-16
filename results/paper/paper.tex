@@ -218,11 +218,10 @@ most cases. Appendix
 Figures~\ref{fig:appendix_residual_distributions}
 and~\ref{fig:appendix_residual_variance} examine residual variance
 across compute budgets in six real IsoFLOP experiments and find no strong
-evidence that noise varies by budget, supporting this assumption. More details
-on these
-differences and how they relate to common implementations are discussed in
-Appendix~\ref{sec:appendix_vpnls_validation}. The LSE reparameterization and
-log-space objective, however, are evaluated directly in the exponent inference
+evidence that noise varies by budget, supporting this assumption. Some more details on these differences in optimization objectives,
+reparameterizations, outcome scaling, and how they relate to common
+implementations are discussed in
+Appendix~\ref{sec:appendix_vpnls_validation} and the exponent inference
 comparison (Section~\ref{sec:method_comparison_exponent_inference}).
 
 \section{Symmetric Surfaces: Unbiased Estimation in Ideal Conditions}
@@ -466,12 +465,16 @@ used in this analysis.
         Extra Large (XL) & $\pm 16\times$ & $\frac{1}{16}\times$ to $16\times$ & $256\times$ & 2.41 \\
         \bottomrule
     \end{tabular}
-    \caption{Sampling grid widths used in simulations. Real experiments
-    typically span 1--2 decades, placing the Small and Large grids within the
-    realistic range. The Extra Large grid ($\pm 16\times$, $\sim$2.4 decades) is
-    the default used in all single-grid analyses in the preceding sections.}
+    \caption{Sampling grid widths used in simulations.}
     \label{tab:grid_widths}
 \end{table}
+
+In practice, scaling law experiments typically sample across 1 to 2 decades in
+token count, placing the Small and Large grids squarely within the realistic
+range. The Extra Small and Extra Large grids bracket this range on either side,
+illustrating how the biases shrink or grow as the sampling window narrows or
+widens. The Extra Large grid ($\pm 16\times$, $\sim$2.4 decades) is the default
+used in all single-grid analyses in the preceding sections.
 
 \begin{figure}[ht]
     \centering
@@ -482,8 +485,10 @@ used in this analysis.
     scaling law predicts fewer tokens than optimal. Bars are grouped by sampling
     grid width. Annotations for the Chinchilla surface show $D^*$ (true
     compute-optimal token count) versus $\hat{D}^*$ (the Approach~2 estimate);
-    the Small and Large grid annotations are emphasized as they fall within the
-    realistic 1--2 decade range typical of scaling law experiments.}
+    the Small and Large grid annotations are emphasized (thicker borders) as they
+    fall within the realistic 1--2 decade range typical of scaling law
+    experiments, while Extra Small and Extra Large bracket either side as more
+    extreme configurations.}
     \label{fig:extrapolation_error}
 \end{figure}
 
@@ -641,8 +646,8 @@ Published scaling law studies frequently report asymmetric loss surfaces, as
 shown in Table~\ref{tab:published_exponents}. Some degree of asymmetry is
 nearly universal across modalities, and several reported exponent estimates
 reach the same levels of imbalance as the most extreme configuration in our
-simulations. The related biases documented in this paper therefore apply
-broadly.
+simulations. The related biases documented in this paper are therefore likely to apply
+more broadly.
 
 Beyond surface asymmetry, the IsoFLOP curves in Figure~\ref{fig:wild} also
 show visible signs of off-center sampling and drift:
@@ -1385,10 +1390,12 @@ six method configurations.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.png}
-    \caption{Detailed method comparison: absolute relative error vs sampling
-    range for all six configurations. Rows correspond to loss surfaces
-    (symmetric, Chinchilla, Asymmetric); columns correspond to parameters
-    ($E$, $A$, $B$, $\alpha$, $\beta$).}
+    \caption{Per-parameter recovery error for six fitting methods across three
+    loss surfaces and 20 sampling ranges (baseline, no bias). Each panel shows
+    absolute relative error (\%) on a log scale versus sampling range, with one
+    curve per method. Rows correspond to loss surfaces (symmetric, Chinchilla,
+    high imbalance); columns correspond to parameters ($E$, $A$, $B$, $\alpha$,
+    $\beta$).}
     \label{fig:appendix_method_detail}
 \end{figure}
 
@@ -1402,10 +1409,24 @@ ranges, loss surfaces, and bias configurations.
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.png}
-    \caption{Combined extrapolation error by compute budget. Rows correspond to
-    sampling ranges (narrow, medium, wide); columns correspond to loss surfaces
-    (symmetric, Chinchilla, Asymmetric). Each panel shows relative $D^*$ error
-    vs extrapolation compute budget with one curve per bias configuration.}
+    \caption{Relative error in compute-optimal token count $D^*$ when
+    extrapolating from the fitting range ($10^{17}$--$10^{21}$ FLOPs) to higher
+    compute budgets ($10^{22}$--$10^{25}$ FLOPs), with asymmetry and sampling
+    biases acting simultaneously. Columns correspond to loss surfaces (symmetric,
+    Chinchilla, Asymmetric); rows correspond to sampling ranges (narrow $\pm
+    2\times$, medium $\pm 16\times$, wide $\pm 100\times$). The wide row uses an
+    extreme grid width not employed in the main text, included here to further
+    illustrate how far results can deviate with a misconfigured experiment. Each
+    curve represents a different sampling bias configuration: baseline (no bias),
+    two linear drift rates (drift\_0.2 and drift\_0.4, where the value is the
+    $\log_{10}$ offset at the highest compute budget), and two constant center
+    offsets (scale\_1.5 and scale\_2.0, where the value is the multiplicative
+    factor applied at every budget). On symmetric surfaces, errors are driven
+    entirely by off-center sampling; on asymmetric surfaces, the inherent surface
+    bias adds a constant offset visible as the non-zero baseline curve.
+    Drift-based biases produce errors that grow with extrapolation distance
+    (steeper curves), while constant offsets and surface asymmetry produce flat
+    errors.}
     \label{fig:appendix_combined_extrapolation}
 \end{figure}
 
