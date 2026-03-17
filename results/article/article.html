@@ -1112,16 +1112,15 @@
             </ul>
 
             <p>
-                This ratio for the Asymmetric surface is on the high end of previously reported statistics without
-                being unrealistic. An exponent ratio of 3.0 is comparable to what has been observed in practice.
-                Kaplan et al.<sup><a href="#ref-kaplan_scaling">[14]</a></sup> reported compute-optimal
-                allocation exponents of \(a = 0.73\), \(b = 0.27\) (as cited in
-                DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>). This implies a loss surface exponent ratio of
-                \(\beta / \alpha \approx 2.7\). The asymmetry runs in the opposite direction from our
-                Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)), but the degree
-                of imbalance is similar, and it is the magnitude of the imbalance, not its direction,
-                that drives the biases studied here. See <a href="#table-published-exponents">Table&nbsp;A2</a> for other examples of reported imbalances, 
-                several of which indicate ratios in the 2-3 range (or even higher in one case<sup><a href="#ref-protein_plm_scaling">[38]</a></sup>). 
+                This ratio (\(\alpha/\beta = 3\)) for the Asymmetric surface is on the upper end of
+                previously reported statistics without being unrealistic.
+                <a href="#table-published-exponents">Table&nbsp;A2</a> reports scaling statistics for many
+                datasets and architectures, several of which indicate ratios in the 2–3 range
+                (or even higher in one case<sup><a href="#ref-protein_plm_scaling">[38]</a></sup>).
+                In text datasets, the asymmetry typically runs in the opposite direction from our
+                hypothetical Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)),
+                but the opposite is frequently true in multimodal datasets and it is the magnitude
+                of the imbalance, not its direction, that drives most of the biases studied here.
             </p>
 
             <figure id="fig-2">
