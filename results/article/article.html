@@ -832,7 +832,7 @@
 
             <p>
                 We use MSE rather than the Huber objective throughout this study because it is the
-                maximum likelihood estimator under the constant, additive Gaussian noise assumed in
+                maximum likelihood estimator (MLE) under the constant, additive Gaussian noise assumed in
                 our simulations. When fitting real data, we remove outliers before fitting in
                 most cases. <a href="#appendix-residual-distributions">Appendix Figures&nbsp;A8</a>
                 and <a href="#appendix-residual-variance">A9</a> examine residual variance
@@ -938,11 +938,18 @@
                 surface, yielding DCL of 6.5% of budget ($1.4M).
                 Notably, our Approach&nbsp;2 fit yields <i>b</i>&nbsp;=&nbsp;0.5368,
                 which rounds exactly to 0.537 as reported in the Llama&nbsp;3 paper.
+                These results also include extrapolations from the Variable Projection
+                (VPNLS) method discussed in the <a href="#vpnls">VPNLS section</a>.
+                This provides a contrast between projections made from a canonical
+                Approach&nbsp;3 implementation fit on logarithmic loss values and one without
+                this rescaling, a necessary assumption for unbiased estimation in our later
+                simulations (see <a href="#appendix-vpnls-validation">Appendix&nbsp;A</a>).
                 The simulated Llama&nbsp;3 condition, which isolates the systematic biases
                 from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
                 <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the magnitude of the off-center sampling bias assumed,
                 which matches the most extreme form of that bias used in later sections, has
-                little impact relative to the biases present in the actual Llama&nbsp;3 IsoFLOP data.
+                little impact relative to the biases present in the actual Llama&nbsp;3 IsoFLOP data
+                (see <a href="#fig-6">Figure&nbsp;6</a>).
             </p>
 
             <p>
@@ -983,6 +990,14 @@
                     3.8&times;10<sup>25</sup>&nbsp;FLOP evaluation budget and dollar cost.
                 </figcaption>
             </figure>
+
+            <p>
+                The source of these Approach&nbsp;2 misallocations is characterized in many of the
+                following sections. This begins with simulations of IsoFLOP experiments under
+                perfect, unrealistic conditions and progresses to noisier, more realistic scenarios.
+                Each of these demonstrates one or more estimation biases that can compound
+                significantly in extrapolations, as we attempted to show more directly in this section.
+            </p>
 
         </section>
 
@@ -1060,8 +1075,7 @@
 
             <p>
                 This establishes our baseline. Approach 2 is precisely correct under ideal conditions that
-                are unrealistic in practice. The problems arise when we deviate from these ideal conditions, as shown
-                in the following sections where these conditions are perturbed in controlled ways.
+                are unrealistic in practice.
             </p>
         </section>
 
@@ -1073,12 +1087,11 @@
                 We repeat the exact same procedure as before: perfect sampling centers, no noise,
                 identical methodology. The only change is that the loss surface is now <strong>asymmetric</strong>
                 (\(\alpha \neq \beta\)).
-            </p>
-
-            <p>
-                Simulation results show that when the loss surface is asymmetric, Approach 2 produces
-                systematically wrong intercepts while exponents remain accurate. This isn't statistical
-                noise; it's a deterministic bias from fitting parabolas to a non-parabolic surface.
+                Simulation results for this scenario show that Approach 2 produces
+                systematically wrong intercepts while exponents remain accurate. This means
+                that fitting Chinchilla Approach&nbsp;2 to noise-free data drawn from the published
+                Chinchilla loss surface produces an incorrect scaling law, a result we found
+                to be counterintuitive.
             </p>
 
             <p>
@@ -1153,12 +1166,9 @@
             </table>
 
             <p>
-                Figure 2 shows the results from this simulation, with relative errors in the tables above.
-                A few percent error in the intercept might seem minor, but this simulation
-                provided every advantage other than loss surface asymmetry. 
-                The data contains no measurement noise and the sampling is perfect, with IsoFLOP grids centered precisely at the true optimum
-                (something difficult or impossible to know in practice). And the loss surface parameters are
-                standard in the Chinchilla case, taken directly from the Chinchilla paper.
+                <a href="#fig-2">Figure&nbsp;2</a> shows the results from this simulation, with
+                relative errors in the table above. Both show how errors increase with greater asymmetry and the
+                following section outlines how they arise.
             </p>
 
             <h3 id="underlying-causes">Underlying Causes</h3>
@@ -1516,7 +1526,7 @@
             <h2>Off-Center Sampling: Exponent and Extrapolation Errors</h2>
 
             <p>
-                The previous sections assumed perfectly centered sampling. At every compute budget,
+                The previous simulation sections assumed perfectly centered sampling. At every compute budget,
                 the IsoFLOP grid was placed exactly at the true optimum. In practice, you don't know
                 \(N^*\) before running the experiment. Sampling centers are guesses, informed by prior
                 estimates or heuristics, and they will likely be wrong by some amount.
@@ -1533,8 +1543,9 @@
             <h3 id="constant-bias">Constant Multiplicative Bias</h3>
 
             <p>
-                The simplest form of off-center sampling is a constant multiplicative offset: every
-                compute budget's sampling center is shifted by the same factor from the true optimum.
+                The simplest form of off-center sampling is a constant multiplicative offset
+                where every compute budget's sampling center is shifted by the same factor from
+                the true optimum.
                 A "3× offset" means each IsoFLOP grid is centered at \(3 \times D^*\) instead of
                 \(D^*\), so the grid midpoint consistently sits at three times the true optimal token count.
             </p>
@@ -1544,8 +1555,7 @@
                 effect where each parabola vertex shifts by a constant amount in log-space. This is the
                 same mechanism as asymmetry bias. The slope of \(\log D^*\) vs \(\log C\) is
                 unaffected (a constant additive shift in log-space doesn't change the slope), so the
-                scaling exponent is preserved perfectly. The intercept, however, absorbs the entire
-                error.
+                scaling exponent is preserved while the intercept is not.
             </p>
 
             <figure id="fig-4">
@@ -1565,7 +1575,7 @@
             </figure>
 
             <p>
-                The extrapolation bar chart (top right) shows what this means for token prediction.
+                The extrapolation in <a href="#fig-4">Figure&nbsp;4</a> (top right) shows what this means for token prediction.
                 All four grid widths overestimate \(D^*\), with the narrowest grid (XS) producing the
                 largest error. This is the reverse of the asymmetry bias pattern, where wider grids
                 amplified error. Here, narrower grids are more sensitive to off-center placement because
@@ -1573,7 +1583,7 @@
             </p>
 
             <p>
-                The intercept error panel (bottom right) confirms the pattern across the full
+                The intercept error panel (bottom right) shows the same pattern across the full
                 continuum of grid widths. The error is always positive (the inferred \(D^*\)
                 overshoots) and decreases monotonically as the grid widens, reflecting how a wider
                 sampling range brings more of the true loss curve's shape into the fit, partially
@@ -1592,7 +1602,10 @@
             <p>
                 Because the offset now differs across compute budgets, it no longer cancels
                 in the slope of \(\log D^*\) vs \(\log C\). Both the exponent and the
-                intercept are affected.
+                intercept are affected, as seen in <a href="#fig-5">Figure&nbsp;5</a>. The bottom-left panels of
+                <a href="#fig-4">Figure&nbsp;4</a> and <a href="#fig-5">Figure&nbsp;5</a> highlight
+                the most important difference between compute-independent (constant bias) and
+                compute-dependent offsets (drift bias).
             </p>
 
             <figure id="fig-5">
@@ -1607,12 +1620,6 @@
                 </figcaption>
             </figure>
 
-            <p>
-                The bottom-left panels of <a href="#fig-4">Figure&nbsp;4</a> and <a href="#fig-5">Figure&nbsp;5</a>
-                show the most important difference between the two. Those plots demonstrate how constant 
-                offsets in sampling centers do not bias exponent inference while multiplicative offsets do.
-            </p>
-
         </section>
 
         <!-- Section 6: Real IsoFLOP Curves -->
@@ -1621,10 +1628,10 @@
 
             <p>
                 The previous sections used synthetic, noise-free simulations to isolate Approach 2's
-                biases under controlled conditions. A natural question is whether the conditions that
+                biases under controlled conditions. A good question is whether the conditions that
                 trigger these biases, asymmetric loss surfaces and imperfectly centered sampling,
                 actually arise in practice. To get a sense of this, we can look at IsoFLOP curves
-                published in three of the most prominent scaling law
+                published in three prominent scaling law
                 studies<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-llama3">[2]</a>,<a href="#ref-deepseek">[3]</a></sup>
                 in <a href="#fig-6">Figure&nbsp;6</a>
                 (<a href="https://docs.google.com/document/d/1Ab3cYJJYu7t_99Idj9gpHv2icZmRTPBJ_brJxsgnVA4">additional examples</a>).
@@ -1642,12 +1649,12 @@
             </figure>
 
             <p>
-                Published scaling law studies frequently report asymmetric loss
-                surfaces, as shown in <a href="#table-published-exponents">Table&nbsp;A2</a>. Some degree of
+                We first consider biases that might arise from asymmetry. Published scaling
+                law studies frequently report unequal scaling exponents, as shown in
+                <a href="#table-published-exponents">Table&nbsp;A2</a>. Some degree of
                 asymmetry is nearly universal across modalities, and several reported
                 exponent estimates reach the same levels of imbalance as the most
-                extreme configuration in our simulations. The related biases documented
-                in this article are therefore likely to apply more broadly.
+                extreme configuration in our simulations.
             </p>
 
             <p>
