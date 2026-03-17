@@ -434,35 +434,25 @@ direction, that drives most of the biases studied here.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{lccc}
+    \begin{tabular}{llccc}
         \toprule
-        Parameter & True Value & Inferred Value & Relative Error \\
+        Surface & Parameter & True Value & Inferred Value & Relative Error \\
         \midrule
-        $b$ ($D^*$ exponent) & 0.548387 & 0.548387 & $\approx 0$\% \\
-        $b_0$ ($D^*$ intercept) & $-0.555357$ & $-0.578092$ & $-4.1$\% \\
+        \multirow{2}{*}{Chinchilla}
+        & $b$ ($D^*$ exponent) & 0.548387 & 0.548387 & $\approx 0$\% \\
+        & $b_0$ ($D^*$ intercept) & $-0.555357$ & $-0.578092$ & $-4.1$\% \\
+        \midrule
+        \multirow{2}{*}{Asymmetric}
+        & $b$ ($D^*$ exponent) & 0.750000 & 0.750000 & $\approx 0$\% \\
+        & $b_0$ ($D^*$ intercept) & $-1.345791$ & $-1.459957$ & $-8.5$\% \\
         \bottomrule
     \end{tabular}
-    \caption{Approach~2 parameter recovery on the Chinchilla surface.}
+    \caption{Approach~2 parameter recovery on asymmetric surfaces.}
     \label{tab:chinchilla_surface}
 \end{table}
 
-\begin{table}[H]
-    \centering
-    \begin{tabular}{lccc}
-        \toprule
-        Parameter & True Value & Inferred Value & Relative Error \\
-        \midrule
-        $b$ ($D^*$ exponent) & 0.750000 & 0.750000 & $\approx 0$\% \\
-        $b_0$ ($D^*$ intercept) & $-1.345791$ & $-1.459957$ & $-8.5$\% \\
-        \bottomrule
-    \end{tabular}
-    \caption{Approach~2 parameter recovery on the Asymmetric surface.}
-    \label{tab:asymmetric_surface}
-\end{table}
-
 Figure~\ref{fig:asymmetric} shows the results from this simulation, with
-relative errors in Tables~\ref{tab:chinchilla_surface}
-and~\ref{tab:asymmetric_surface}.
+relative errors in Table~\ref{tab:chinchilla_surface}.
 A few percent error in the intercept might seem minor, but this
 simulation provided every advantage other than loss surface asymmetry.
 The data contains no measurement noise and the sampling is perfect, with
