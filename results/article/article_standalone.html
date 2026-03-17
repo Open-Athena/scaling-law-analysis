@@ -980,21 +980,6 @@
                 </figcaption>
             </figure>
 
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Based on Llama&nbsp;3 IsoFLOP data, Approach&nbsp;2 overestimates
-                    the compute-optimal token count by ~60% at
-                    3.8&times;10<sup>25</sup>&nbsp;FLOPs, wasting 6.5% of the
-                    training budget ($1.4M in H100 time). Multimodal loss surfaces,
-                    where exponent asymmetry is typically larger, exhibit similarly significant misallocation 
-                    errors (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
-                    for which Llama 3 errors reach only 0.2% waste. This suggests that designing IsoFLOP 
-                    experiments to avoid Approach 2 biases is particularly important in those settings, or
-                    that Approach 2 should not be used to fit data from them.
-                </p>
-            </div>
-
         </section>
 
         <!-- Section 3: Symmetric Surfaces -->
@@ -1068,16 +1053,6 @@
                     </tr>
                 </tbody>
             </table>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    On a symmetric loss surface with perfectly crafted IsoFLOP grid sampling,
-                    Approach 2 recovers both exponents and intercepts with machine-precision
-                    accuracy. When \(\alpha = \beta\), the parabola vertex shift is zero,
-                    so the inferred optima coincide with the true optima.
-                </p>
-            </div>
 
             <p>
                 This establishes our baseline. Approach 2 is precisely correct under ideal conditions that
@@ -1195,15 +1170,6 @@
                 (something difficult or impossible to know in practice). And the loss surface parameters are
                 standard in the Chinchilla case, taken directly from the Chinchilla paper.
             </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Even under unrealistically ideal conditions, Approach 2 produces biased intercepts for
-                    asymmetric surfaces. The error is systematic, a property of the parabolic
-                    approximation, not statistical noise.
-                </p>
-            </div>
 
             <h3 id="underlying-causes">Underlying Causes</h3>
 
@@ -1553,21 +1519,6 @@
                     (\(\alpha/\beta = 3\)) shows roughly 4–5x larger errors than Chinchilla at each grid width</li>
             </ul>
 
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Consider the Chinchilla surface with the Large grid (±8x), a practical sampling
-                    range for real experiments. When extrapolating to 10²⁴ FLOPs, the true optimal
-                    token count is 4.04 trillion, but Approach 2 predicts only 3.92 trillion: a 2.9%
-                    underestimate, or roughly 117 billion fewer tokens than optimal. While 2.9% may
-                    seem modest, keep in mind that we are still assuming unrealistically ideal conditions:
-                    perfectly centered sampling grids at every compute budget and zero measurement
-                    noise. Real experiments, where the true optimum is unknown, data is noisy,
-                    and the scaling exponent imbalance may be larger than Chinchilla's modest
-                    \(\alpha/\beta \approx 1.2\), can only do worse.
-                </p>
-            </div>
-
         </section>
 
         <!-- Section 5: Off-Center Sampling -->
@@ -1639,21 +1590,6 @@
                 compensating for the misplaced center.
             </p>
 
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Consider the symmetric surface with the Large grid (±8×) and a 3× offset,
-                    where every IsoFLOP grid is centered at three times the true optimal token count.
-                    When extrapolating to 10²⁴ FLOPs, the true optimal token count is 408.2 billion,
-                    but Approach 2 predicts 419.0 billion: a 2.6% overestimate, roughly 10.8 billion
-                    more tokens than optimal. Compare this with the Chinchilla asymmetry result at the
-                    same grid width: a 2.9% underestimate. The magnitudes are comparable,
-                    but the sources are entirely different. Asymmetry bias comes from the
-                    shape of the loss surface; off-center bias comes from where you place the grid.
-                    In a real experiment, both act simultaneously.
-                </p>
-            </div>
-
             <h3 id="drifting-bias">Drifting Bias</h3>
 
             <p>
@@ -1686,15 +1622,6 @@
                 show the most important difference between the two. Those plots demonstrate how constant 
                 offsets in sampling centers do not bias exponent inference while multiplicative offsets do.
             </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Constant bias preserves exponents and any compute-dependent bias pattern distorts
-                    them. The distinction matters because exponent errors compound during extrapolation,
-                    while intercept errors remain fixed.
-                </p>
-            </div>
 
         </section>
 
@@ -1867,20 +1794,6 @@
                 constant offsets), and how these patterns vary across two drift rates
                 and center offset magnitudes.
             </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Multiple bias sources act simultaneously in any real experiment. Surface
-                    asymmetry and off-center sampling each produce meaningful errors on their
-                    own. When they happen to act in the same direction, the combined error
-                    exceeds either one alone. On our hypothetical Asymmetric surface with drift to 3×,
-                    errors reach 35% even when using the narrowest grid, where the parabolic
-                    approximation is most accurate. When they oppose, partial cancellation
-                    can occur, but this depends on the specific combination of surface
-                    geometry, offset magnitude, and grid width.
-                </p>
-            </div>
 
         </section>
 
@@ -2193,20 +2106,6 @@
                 surface and sampling range.
             </p>
 
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Variable projection reduces the nonlinear search to the exponential terms
-                    only, producing a well-conditioned 2D landscape where all tested optimizers
-                    converge reliably. The same initialization budget that spreads thinly across
-                    5D (4<sup>5</sup>&nbsp;=&nbsp;1,024 points) provides dense coverage in 2D
-                    (32<sup>2</sup>&nbsp;=&nbsp;1,024 points). The exponents
-                    \((\alpha, \beta)\) are also confined to tight ranges (typically 0 to 1),
-                    unlike the linear coefficients which span orders of magnitude, making grid
-                    search over the reduced space especially effective.
-                </p>
-            </div>
-
             <h3 id="method-comparison-inference">Method Comparison (Exponent Inference)</h3>
 
             <p>
@@ -2365,20 +2264,6 @@
                 <a href="#appendix-exponent-errors">Figure&nbsp;A5</a> shows how errors
                 distribute across noise levels, budget counts, and dataset sizes.
             </p>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    On asymmetric loss surfaces with realistic noise, Approach&nbsp;2's
-                    structural bias persists regardless of data quality. Naive Approach&nbsp;3
-                    without careful initialization and parameterization performs even worse.
-                    With grid initialization and LSE reparameterization (as specified in the
-                    Chinchilla paper), Approach&nbsp;3 achieves typical accuracy comparable
-                    to VPNLS. VPNLS produced the smallest maximum errors in this experiment,
-                    though all well-configured direct fitting methods substantially outperform
-                    Approach&nbsp;2.
-                </p>
-            </div>
 
             <h3 id="method-comparison-efficiency">Method Comparison (Data Efficiency)</h3>
 
