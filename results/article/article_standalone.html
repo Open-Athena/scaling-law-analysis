@@ -1774,22 +1774,22 @@
             </p>
 
             <p>
-                We believe these 3× perturbations and the large errors they can cause are representative of realistic conditions.
-                The IsoFLOP curves they produce (top-left panels of
-                Figures <a href="#fig-4">4</a> and <a href="#fig-5">5</a>)
-                are qualitatively similar to those from the published studies in
-                <a href="#fig-6">Figure 6</a>, where sampling grids are not perfectly
-                centered and the degree of off-centering varies across compute budgets.
-                This is substantiated in more detail in <a href="#error-costs">Error Costs</a>.
-            </p>
-
-            <p>
                 <a href="#appendix-combined-extrapolation">Figure A4</a> provides a more
                 detailed view of these results. It shows how \(D^*\) extrapolation errors change across
                 compute budgets, which sources of bias grow with extrapolation distance
                 (drift), which remain constant (surface asymmetry and
                 constant offsets), and how these patterns vary across two drift rates
                 and center offset magnitudes.
+            </p>
+
+            <p>
+                In summary, multiple sources of bias act simultaneously in any real experiment.
+                Surface asymmetry and off-center sampling can each produce meaningful errors on
+                their own. When they happen to act in the same direction, the combined error can
+                compound. On our hypothetical Asymmetric surface with drift to 3&times;, errors
+                reach 35% even when using the narrowest grid where the parabolic approximation is
+                most accurate. When they oppose, partial cancellation can occur, but this depends
+                on the specific combination of surface geometry, offset magnitude, and grid width.
             </p>
 
         </section>
@@ -1804,7 +1804,7 @@
                 off-center sampling), and that the conditions driving these biases are visible
                 in published scaling law studies. The natural alternative is Approach 3, which fits all five
                 surface parameters \((E, A, B, \alpha, \beta)\) simultaneously via nonlinear
-                least squares. This avoids the parabolic approximation but introduces
+                optimization. This avoids the parabolic approximation but introduces
                 other problems.
             </p>
 
@@ -1813,16 +1813,16 @@
             <p>
                 A recent survey of over 50 scaling law
                 papers<sup><a href="#ref-misfitting">[13]</a></sup> documents the landscape of
-                fitting practices and their failure modes. The problems described below apply to
-                scaling law fitting in general, not just Chinchilla forms, but they are directly
-                relevant because Approach 3 involves the same kind of nonlinear optimization.
+                fitting practices and their failure modes. The problems described within it apply to scaling laws in general,
+                not just Chinchilla forms like Approach&nbsp;3.
                 Over half of the papers surveyed do not fully specify their fitting procedure
-                (optimizer, loss function, or initialization), which compounds challenges in
-                standardization and reproducibility.
+                (optimizer, loss function, or initialization), which compounds reproducibility
+                challenges, but the papers that do provide these details suggest several common
+                challenges.
             </p>
 
             <p>
-                The most common optimizers for scaling law fits are BFGS and L-BFGS. Some
+                First, the most frequently used optimizers for scaling law fits are BFGS and L-BFGS. Some
                 studies use SGD-family optimizers like Adam and Adagrad, though these are noted
                 as sometimes poorly suited for curve fitting due to limited data efficiency.
                 This is because methods like BFGS incorporate second-order derivates (Hessian matrices)
@@ -1832,17 +1832,18 @@
             </p>
 
             <p>
-                A limitation common to all optimizers is sensitivity to intialization, which is primarily a
+                Second, a limitation common to all optimizers is sensitivity to initialization, which is primarily a
                 consequence of the "the difficulty of optimizing over this space, and the presence of 
-                many local minima.". Common mitigations for this include grid search over hundreds or thousands
+                many local minima.". Mitigations for this include grid search over hundreds or thousands
                 of starting points (running the optimizer from each and keeping the best fit), random sampling 
                 of starting points, evaluating a coarse grid without optimization and seeding the optimizer from
                 the single best candidate, or initializing from previously published parameter values.
             </p>
 
             <p>
-                Another significant issue is numerical stability, and this issue can be framed more concretely 
-                within the context of some of the simulations discussed in prior sections. For example, consider 
+                Third, numerical stability is a significant issue that can be framed more
+                concretely within the context of some of the simulations discussed in prior
+                sections. For example, consider 
                 the Hessian of the residual sum of squares (RSS) objective for a five-parameter
                 fit on noise-free data from the hypothetical Asymmetric surface
                 (\(\alpha = 0.465\), \(\beta = 0.155\)), using five IsoFLOP contours from
