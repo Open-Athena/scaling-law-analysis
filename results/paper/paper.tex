@@ -218,7 +218,7 @@ want maximum likelihood estimates in some configurations, we use MSE rather
 than the Huber objective throughout this study. This is the maximum likelihood
 estimator (MLE) under the constant, additive Gaussian noise assumed in our
 simulations. When fitting real data, we remove outliers before fitting in
-most cases. Appendix
+most cases.
 Figures~\ref{fig:appendix_residual_distributions}~and~\ref{fig:appendix_residual_variance} examine residual variance
 across compute budgets in six real IsoFLOP experiments and find no strong
 evidence that noise varies by budget, supporting this assumption. Some more details on these differences in optimization objectives,
@@ -320,10 +320,10 @@ little impact relative to the biases present in the actual Llama~3 IsoFLOP data
 Figure~\ref{fig:progressive-filter} shows that when known Approach~2 biases
 are addressed through targeted quality control (QC), Approach~2 and Approach~3
 converge on nearly identical estimates with negligible deadweight loss.
-Appendix Figure~\ref{fig:appendix_isoflop_qc} visualizes that QC pipeline
+Figure~\ref{fig:appendix_isoflop_qc} visualizes that QC pipeline
 across six experiments spanning different datasets and model families,
 including Chinchilla, Llama~3, CoMMA, DCLM, Nemotron, and FineWeb.
-Appendix Figure~\ref{fig:appendix_progressive_chinchilla} shows the same
+Figure~\ref{fig:appendix_progressive_chinchilla} shows the same
 analysis for Chinchilla data, extrapolated to its own evaluation budget of
 $5.8\times10^{23}$~FLOPs. DCL drops from 37.9\% to 12.5\%, demonstrating a similar convergence
 in allocation estimates.
@@ -774,7 +774,7 @@ asymmetry bias pushes errors negative (underestimating). When the two sources
 reinforce rather than cancel, errors grow substantially---reaching nearly $+35$\% at a
 maximum on the Asymmetric surface.
 
-Appendix Figure~\ref{fig:appendix_combined_extrapolation} provides a
+Figure~\ref{fig:appendix_combined_extrapolation} provides a
 more detailed view of these results. It shows how $D^*$ extrapolation errors
 change across compute budgets, which sources of bias grow with extrapolation
 distance (drift), which remain constant (surface asymmetry and constant
@@ -1001,7 +1001,7 @@ precision among the 2D methods.
 high precision in this noiseless setting (errors on the order of
 $10^{-5}$\%), though with larger errors than any 2D method, particularly on the Asymmetric surface. The 5D numerical gradient variant performs worse, with
 errors on the order of $10^{-3}$\%.
-Appendix Figure~\ref{fig:appendix_method_detail} breaks this down by
+Figure~\ref{fig:appendix_method_detail} breaks this down by
 surface and sampling range.
 
 
@@ -1013,7 +1013,7 @@ representative of practice. We now extend the compounding errors scenario
 (Section~\ref{sec:compounding}; Asymmetric surface with a $3\times$ drift at
 the $\pm 8\times$ grid) to a statistical setting. Gaussian noise is added to
 loss values at three levels ($\sigma = 0.05, 0.1, 0.2$), applied uniformly
-across all compute budgets. Appendix
+across all compute budgets.
 Figures~\ref{fig:appendix_residual_distributions}
 and~\ref{fig:appendix_residual_variance} provide empirical support for this
 uniform treatment, finding no strong evidence that residual variance differs
@@ -1021,7 +1021,7 @@ by budget in most real IsoFLOP experiments. The number of compute
 budgets varies from 2 to 4, and the number of points per IsoFLOP curve ranges
 from 4 to 32. Each configuration is repeated with 256 independent noise
 realizations, yielding 9{,}216 fits per method and 46{,}080 fits in total.
-Appendix Figure~\ref{fig:appendix_noisy_isoflop} shows what the noisy
+Figure~\ref{fig:appendix_noisy_isoflop} shows what the noisy
 IsoFLOP samples look like at each noise level.
 
 Because a scaling law study is typically run once rather than repeated hundreds
@@ -1085,7 +1085,7 @@ reparameterization.
 
 VPNLS produced the smallest maximum errors in this experiment (34\% on $a$,
 11\% on $b$) with typical accuracy roughly equivalent to Approach~3. The
-detailed breakdown in Appendix Figure~\ref{fig:appendix_exponent_errors} shows how
+detailed breakdown in Figure~\ref{fig:appendix_exponent_errors} shows how
 errors distribute across noise levels, budget counts, and dataset sizes.
 
 \subsection{Method Comparison (Data Efficiency)}
@@ -1100,8 +1100,8 @@ relevant comparison is variance. For unbiased estimators, statistical efficiency
 is proportional to the inverse of variance, so lower variance means more
 precise estimates for a given sample size. Noise levels
 ($\sigma \in \{0.01, 0.02, 0.05\}$) are calibrated to the empirical residual
-standard deviations observed across real IsoFLOP experiments (Appendix
-Figures~\ref{fig:appendix_residual_distributions}
+standard deviations observed across real IsoFLOP experiments
+(Figures~\ref{fig:appendix_residual_distributions}
 and~\ref{fig:appendix_residual_variance}). Even under these ideal conditions,
 Figure~\ref{fig:data_efficiency} shows that Approach~2 recovers scaling
 exponents with roughly $8\times$ higher variance than Approach~3 or VPNLS.
@@ -1122,7 +1122,7 @@ exponents with roughly $8\times$ higher variance than Approach~3 or VPNLS.
     \label{fig:data_efficiency}
 \end{figure}
 
-Appendix Figure~\ref{fig:appendix_data_efficiency} breaks these results down by noise
+Figure~\ref{fig:appendix_data_efficiency} breaks these results down by noise
 level, showing the full distribution of signed errors for each method.
 
 \section{Conclusion}
@@ -1216,6 +1216,10 @@ Several limitations scope the conclusions of this study.
 \bibliography{references}
 
 \appendix
+\renewcommand{\thefigure}{A\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{A\arabic{table}}
+\setcounter{table}{0}
 
 \section{VPNLS Implementation Validation}
 \label{sec:appendix_vpnls_validation}
