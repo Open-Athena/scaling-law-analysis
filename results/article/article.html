@@ -569,6 +569,9 @@
                         <li><a href="#approach-3">Approach 3: Direct Surface Fitting</a></li>
                     </ol>
                 </li>
+                <li>
+                    <a href="#error-costs">Error Costs: Misallocation at Scale</a>
+                </li>
                 <li><a href="#symmetric-surfaces">Symmetric Surfaces: Unbiased Estimation in Ideal Conditions</a></li>
                 <li>
                     <a href="#asymmetric">Asymmetric Surfaces: Intercept and Extrapolation Errors</a>
@@ -599,9 +602,6 @@
                         <li><a href="#method-comparison-inference">Method Comparison (Exponent Inference)</a></li>
                         <li><a href="#method-comparison-efficiency">Method Comparison (Data Efficiency)</a></li>
                     </ol>
-                </li>
-                <li>
-                    <a href="#error-costs">Error Costs: Misallocation at Scale</a>
                 </li>
                 <li>
                     <a href="#conclusion">Conclusion</a>
@@ -845,7 +845,159 @@
             </p>
         </section>
 
-        <!-- Section 2: Symmetric Surfaces -->
+        <!-- Section 2: Error Costs -->
+        <section id="error-costs">
+            <h2>Error Costs: Misallocation at Scale</h2>
+
+            <p>
+                Scaling laws serve at least two broad purposes in practice. At smaller scales they
+                guide research decisions like comparing architectures, datasets, and training
+                strategies before committing to a full run. For production models of small to
+                medium size, allocation planning typically targets deliberate overtraining
+                (training on more data than compute-optimal) rather than compute-optimality
+                itself, and Approach&nbsp;3 or variations on it are much more common in that
+                setting. The compute-optimal scaling laws studied in this article are
+                most directly relevant to the largest models in frontier families, which are
+                still frequently trained near compute-optimality. For these runs, the biases
+                documented in the preceding sections may translate directly into wasted compute.
+            </p>
+
+            <p>
+                To quantify this, we assess the cost of Approach&nbsp;2 misallocations at the
+                compute scale of Llama&nbsp;3 405B (3.8&times;10<sup>25</sup>
+                FLOPs)<sup><a href="#ref-llama3">[2]</a></sup>, which remains one of the most
+                compute-intensive open models trained as of early
+                2026<sup><a href="#ref-epochai_open_model_compute">[42]</a></sup>. We also
+                examine three additional loss surfaces with published Approach&nbsp;3 fit
+                statistics&mdash;the original Chinchilla
+                surface<sup><a href="#ref-chinchilla">[1]</a></sup>, and two multimodal models
+                for which scaling is substantially more asymmetric,
+                SODA<sup><a href="#ref-audio_scaling">[36]</a></sup> (interleaved audio-text)
+                and Sparse-NMM<sup><a href="#ref-nmm_scaling">[39]</a></sup> (native multimodal
+                with sparse mixture-of-experts). These surfaces span a range of exponent
+                asymmetry ratios (<i>b/a</i>) from near-unity to nearly 2:1, providing a
+                view of how the biases compound as the loss surface departs from the symmetric
+                case.
+            </p>
+
+            <p>
+                We measure misallocation in terms of <strong>Deadweight Compute Loss</strong>
+                (DCL), defined as the excess FLOPs consumed by training at the Approach&nbsp;2&ndash;inferred
+                allocation relative to the budget that would achieve the same loss under optimal
+                allocation. Given a compute budget <i>C</i> and an inferred data allocation
+                <i>D*</i>, the model size is forced by the constraint <i>N = C / (6D*)</i>. The
+                resulting loss <i>L(N, D*)</i> is suboptimal. Inverting the optimal loss
+                function <i>L<sub>opt</sub>(C)</i> yields the smaller budget
+                <i>C<sub>eq</sub></i> that would reach this same loss with optimal allocation;
+                DCL&nbsp;=&nbsp;<i>C</i>&nbsp;&minus;&nbsp;<i>C<sub>eq</sub></i>. This is
+                analogous to deadweight loss in economics, where dataset and model sizes define
+                a supply&ndash;demand tradeoff that maximizes a &ldquo;total surplus&rdquo;&mdash;or
+                equivalently, minimizes validation loss&mdash;only at the compute-optimal allocation.
+                Any departure from optimality wastes compute in the same sense that a price
+                distortion wastes economic surplus.
+            </p>
+
+            <p>
+                For Llama&nbsp;3, we <a href="https://github.com/eric-czech/llama3_isoflop_extraction">digitize individual IsoFLOP data points</a> from Figure&nbsp;2
+                of the original paper<sup><a href="#ref-llama3">[2]</a></sup> following the
+                SVG-coordinate extraction method of Besiroglu et
+                al.<sup><a href="#ref-epochai_chinchilla_replication">[43]</a></sup>, then fit
+                both Approach&nbsp;2 and two Approach&nbsp;3 implementations (VPNLS and direct
+                L-BFGS-B) to obtain competing allocations at the target budget. For Chinchilla,
+                SODA, and Sparse-NMM we take a simulated approach instead, generating synthetic
+                IsoFLOP data from each published loss surface, fitting Approach&nbsp;2 to it
+                under the same bias assumptions used in earlier sections (XS grid width,
+                3&times; sampling drift), and comparing the resulting extrapolations. We include
+                a simulated Llama&nbsp;3 condition as well, which provides an implicit measure
+                of how much of the empirical Llama&nbsp;3 error is attributable to the real
+                IsoFLOP experiment design versus the biases we introduce systematically. Dollar
+                costs are computed assuming 50% model FLOPs
+                utilization<sup><a href="#ref-beyond_chinchilla">[44]</a></sup> and $2 per
+                H100-hour<sup><a href="#ref-olmo3">[45]</a></sup>.
+            </p>
+
+            <figure id="fig-13">
+                <img src="figures/compute_allocation_errors/compute_allocation_errors.png"
+                    alt="Deadweight Compute Loss and allocation details for Approach 2 misallocations at frontier scale">
+                <figcaption>
+                    <strong>Figure 13:</strong> Approach&nbsp;2 misallocation costs extrapolated to
+                    3.8&times;10<sup>25</sup>&nbsp;FLOPs. Left: Deadweight Compute Loss (DCL) as a
+                    percentage of budget. Right: allocation details including true vs.&nbsp;inferred
+                    token counts and model sizes, loss penalty, and dollar cost.
+                    &ldquo;Empirical&rdquo; rows use Approach&nbsp;2 power laws fit to digitized
+                    Llama&nbsp;3 IsoFLOP data, evaluated against VPNLS and Approach&nbsp;3 surfaces.
+                    &ldquo;Simulated&rdquo; rows use synthetic IsoFLOP data generated from each
+                    published surface with XS grid and 3&times;&nbsp;drift bias.
+                </figcaption>
+            </figure>
+
+            <p>
+                <a href="#fig-13">Figure&nbsp;13</a> shows the results.
+                On the empirical Llama&nbsp;3 data, Approach&nbsp;2 overestimates the
+                compute-optimal token count by ~60% relative to the Approach&nbsp;3
+                surface, yielding DCL of 6.5% of budget ($1.4M).
+                Notably, our Approach&nbsp;2 fit yields <i>b</i>&nbsp;=&nbsp;0.5368,
+                which rounds exactly to 0.537 as reported in the Llama&nbsp;3 paper.
+                The simulated Llama&nbsp;3 condition, which isolates the systematic biases
+                from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
+                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the real Llama&nbsp;3 data
+                contains larger biases than those modeled here, or biases from other sources.
+                <a href="#fig-14">Figure&nbsp;14</a> shows that when known Approach&nbsp;2 biases
+                are addressed through targeted quality control, Approach&nbsp;2 and Approach&nbsp;3
+                converge on nearly identical estimates with negligible deadweight loss.
+                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A1</a> visualizes the QC
+                pipeline across six experiments spanning different datasets and model families,
+                including Chinchilla, Llama&nbsp;3, CoMMA, DCLM, Nemotron, and FineWeb.
+                <a href="#appendix-progressive-chinchilla">Appendix Figure&nbsp;A7</a> shows the
+                same analysis for Chinchilla data, extrapolated to its own evaluation budget of
+                5.8&times;10<sup>23</sup>&nbsp;FLOPs. DCL drops from 37.9% to 12.5% after the
+                same targeted filtering steps.
+            </p>
+
+            <p>
+                While the simulated Llama&nbsp;3 surface produces minimal waste due to its
+                nearly symmetric exponents, surfaces with greater asymmetry show substantially
+                higher costs. SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
+                and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
+                For domains with highly asymmetric scaling exponents, which are
+                more common in multimodal settings, Approach&nbsp;2
+                misallocations can waste a non-trivial fraction of a large
+                training budget.
+            </p>
+
+            <figure id="fig-14">
+                <img src="figures/compute_allocation_errors/progressive_filter_llama3_a3.png"
+                    alt="Progressive filtering impact on Approach 2 DCL relative to Approach 3">
+                <figcaption>
+                    <strong>Figure 14:</strong> Effect of progressive quality control filtering on
+                    Approach&nbsp;2 Deadweight Compute Loss, measured against an Approach&nbsp;3 surface
+                    fit to unfiltered Llama&nbsp;3 data. Each row cumulatively applies one QC stage.
+                    Nearly all DCL reduction comes from the off-center and weak-curvature filters,
+                    which target the specific Approach&nbsp;2 biases identified in this study.
+                    The right table reports points and budgets removed at each stage,
+                    along with DCL as a percentage of the
+                    3.8&times;10<sup>25</sup>&nbsp;FLOP evaluation budget and dollar cost.
+                </figcaption>
+            </figure>
+
+            <div class="callout key-point">
+                <div class="callout-title">✓ Summary</div>
+                <p>
+                    Based on Llama&nbsp;3 IsoFLOP data, Approach&nbsp;2 overestimates
+                    the compute-optimal token count by ~60% at
+                    3.8&times;10<sup>25</sup>&nbsp;FLOPs, wasting 6.5% of the
+                    training budget ($1.4M in H100 time). Multimodal loss surfaces,
+                    where exponent asymmetry is typically larger, exhibit similarly significant misallocation 
+                    errors (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
+                    for which Llama 3 errors reach only 0.2% waste. This suggests that designing IsoFLOP 
+                    experiments to avoid Approach 2 biases is particularly important in those settings, or
+                    that Approach 2 should not be used to fit data from them.
+                </p>
+            </div>
+
+        </section>
+
+        <!-- Section 3: Symmetric Surfaces -->
         <section id="symmetric-surfaces">
             <h2>Symmetric Surfaces: Unbiased Estimation in Ideal Conditions</h2>
 
@@ -934,7 +1086,7 @@
             </p>
         </section>
 
-        <!-- Section 3: Asymmetric Surfaces -->
+        <!-- Section 4: Asymmetric Surfaces -->
         <section id="asymmetric">
             <h2>Asymmetric Surfaces: Intercept and Extrapolation Errors</h2>
 
@@ -1419,7 +1571,7 @@
 
         </section>
 
-        <!-- Section 4: Off-Center Sampling -->
+        <!-- Section 5: Off-Center Sampling -->
         <section id="off-center">
             <h2>Off-Center Sampling: Exponent and Extrapolation Errors</h2>
 
@@ -1547,7 +1699,7 @@
 
         </section>
 
-        <!-- Section 5: Real IsoFLOP Curves -->
+        <!-- Section 6: Real IsoFLOP Curves -->
         <section id="real-isoflop-curves">
             <h2>Real IsoFLOP Curves: Evidence from Published Studies</h2>
 
@@ -1733,7 +1885,7 @@
 
         </section>
 
-        <!-- Section 6: Robust Fits -->
+        <!-- Section 7: Robust Fits -->
         <section id="robust-fits">
             <h2>Robust Fits: Unbiased Estimation with Linear Separation</h2>
 
@@ -2278,158 +2430,6 @@
                 down by noise level, showing the full distribution of signed errors for each
                 method.
             </p>
-
-        </section>
-
-        <!-- Section 7: Error Costs -->
-        <section id="error-costs">
-            <h2>Error Costs: Misallocation at Scale</h2>
-
-            <p>
-                Scaling laws serve at least two broad purposes in practice. At smaller scales they
-                guide research decisions like comparing architectures, datasets, and training
-                strategies before committing to a full run. For production models of small to
-                medium size, allocation planning typically targets deliberate overtraining
-                (training on more data than compute-optimal) rather than compute-optimality
-                itself, and Approach&nbsp;3 or variations on it are much more common in that
-                setting. The compute-optimal scaling laws studied in this article are
-                most directly relevant to the largest models in frontier families, which are
-                still frequently trained near compute-optimality. For these runs, the biases
-                documented in the preceding sections may translate directly into wasted compute.
-            </p>
-
-            <p>
-                To quantify this, we assess the cost of Approach&nbsp;2 misallocations at the
-                compute scale of Llama&nbsp;3 405B (3.8&times;10<sup>25</sup>
-                FLOPs)<sup><a href="#ref-llama3">[2]</a></sup>, which remains one of the most
-                compute-intensive open models trained as of early
-                2026<sup><a href="#ref-epochai_open_model_compute">[42]</a></sup>. We also
-                examine three additional loss surfaces with published Approach&nbsp;3 fit
-                statistics&mdash;the original Chinchilla
-                surface<sup><a href="#ref-chinchilla">[1]</a></sup>, and two multimodal models
-                for which scaling is substantially more asymmetric,
-                SODA<sup><a href="#ref-audio_scaling">[36]</a></sup> (interleaved audio-text)
-                and Sparse-NMM<sup><a href="#ref-nmm_scaling">[39]</a></sup> (native multimodal
-                with sparse mixture-of-experts). These surfaces span a range of exponent
-                asymmetry ratios (<i>b/a</i>) from near-unity to nearly 2:1, providing a
-                view of how the biases compound as the loss surface departs from the symmetric
-                case.
-            </p>
-
-            <p>
-                We measure misallocation in terms of <strong>Deadweight Compute Loss</strong>
-                (DCL), defined as the excess FLOPs consumed by training at the Approach&nbsp;2&ndash;inferred
-                allocation relative to the budget that would achieve the same loss under optimal
-                allocation. Given a compute budget <i>C</i> and an inferred data allocation
-                <i>D*</i>, the model size is forced by the constraint <i>N = C / (6D*)</i>. The
-                resulting loss <i>L(N, D*)</i> is suboptimal. Inverting the optimal loss
-                function <i>L<sub>opt</sub>(C)</i> yields the smaller budget
-                <i>C<sub>eq</sub></i> that would reach this same loss with optimal allocation;
-                DCL&nbsp;=&nbsp;<i>C</i>&nbsp;&minus;&nbsp;<i>C<sub>eq</sub></i>. This is
-                analogous to deadweight loss in economics, where dataset and model sizes define
-                a supply&ndash;demand tradeoff that maximizes a &ldquo;total surplus&rdquo;&mdash;or
-                equivalently, minimizes validation loss&mdash;only at the compute-optimal allocation.
-                Any departure from optimality wastes compute in the same sense that a price
-                distortion wastes economic surplus.
-            </p>
-
-            <p>
-                For Llama&nbsp;3, we <a href="https://github.com/eric-czech/llama3_isoflop_extraction">digitize individual IsoFLOP data points</a> from Figure&nbsp;2
-                of the original paper<sup><a href="#ref-llama3">[2]</a></sup> following the
-                SVG-coordinate extraction method of Besiroglu et
-                al.<sup><a href="#ref-epochai_chinchilla_replication">[43]</a></sup>, then fit
-                both Approach&nbsp;2 and two Approach&nbsp;3 implementations (VPNLS and direct
-                L-BFGS-B) to obtain competing allocations at the target budget. For Chinchilla,
-                SODA, and Sparse-NMM we take a simulated approach instead, generating synthetic
-                IsoFLOP data from each published loss surface, fitting Approach&nbsp;2 to it
-                under the same bias assumptions used in earlier sections (XS grid width,
-                3&times; sampling drift), and comparing the resulting extrapolations. We include
-                a simulated Llama&nbsp;3 condition as well, which provides an implicit measure
-                of how much of the empirical Llama&nbsp;3 error is attributable to the real
-                IsoFLOP experiment design versus the biases we introduce systematically. Dollar
-                costs are computed assuming 50% model FLOPs
-                utilization<sup><a href="#ref-beyond_chinchilla">[44]</a></sup> and $2 per
-                H100-hour<sup><a href="#ref-olmo3">[45]</a></sup>.
-            </p>
-
-            <figure id="fig-13">
-                <img src="figures/compute_allocation_errors/compute_allocation_errors.png"
-                    alt="Deadweight Compute Loss and allocation details for Approach 2 misallocations at frontier scale">
-                <figcaption>
-                    <strong>Figure 13:</strong> Approach&nbsp;2 misallocation costs extrapolated to
-                    3.8&times;10<sup>25</sup>&nbsp;FLOPs. Left: Deadweight Compute Loss (DCL) as a
-                    percentage of budget. Right: allocation details including true vs.&nbsp;inferred
-                    token counts and model sizes, loss penalty, and dollar cost.
-                    &ldquo;Empirical&rdquo; rows use Approach&nbsp;2 power laws fit to digitized
-                    Llama&nbsp;3 IsoFLOP data, evaluated against VPNLS and Approach&nbsp;3 surfaces.
-                    &ldquo;Simulated&rdquo; rows use synthetic IsoFLOP data generated from each
-                    published surface with XS grid and 3&times;&nbsp;drift bias.
-                </figcaption>
-            </figure>
-
-            <p>
-                <a href="#fig-13">Figure&nbsp;13</a> shows the results.
-                On the empirical Llama&nbsp;3 data, Approach&nbsp;2 overestimates the
-                compute-optimal token count by ~60% relative to the Approach&nbsp;3
-                surface, yielding DCL of 6.5% of budget ($1.4M).
-                Notably, our Approach&nbsp;2 fit yields <i>b</i>&nbsp;=&nbsp;0.5368,
-                which rounds exactly to 0.537 as reported in the Llama&nbsp;3 paper.
-                The simulated Llama&nbsp;3 condition, which isolates the systematic biases
-                from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
-                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the real Llama&nbsp;3 data
-                contains larger biases than those modeled here, or biases from other sources.
-                <a href="#fig-14">Figure&nbsp;14</a> shows that when known Approach&nbsp;2 biases
-                are addressed through targeted quality control, Approach&nbsp;2 and Approach&nbsp;3
-                converge on nearly identical estimates with negligible deadweight loss.
-                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A1</a> visualizes the QC
-                pipeline across six experiments spanning different datasets and model families,
-                including Chinchilla, Llama&nbsp;3, CoMMA, DCLM, Nemotron, and FineWeb.
-                <a href="#appendix-progressive-chinchilla">Appendix Figure&nbsp;A7</a> shows the
-                same analysis for Chinchilla data, extrapolated to its own evaluation budget of
-                5.8&times;10<sup>23</sup>&nbsp;FLOPs. DCL drops from 37.9% to 12.5% after the
-                same targeted filtering steps.
-            </p>
-
-            <p>
-                While the simulated Llama&nbsp;3 surface produces minimal waste due to its
-                nearly symmetric exponents, surfaces with greater asymmetry show substantially
-                higher costs. SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
-                and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
-                For domains with highly asymmetric scaling exponents, which are
-                more common in multimodal settings, Approach&nbsp;2
-                misallocations can waste a non-trivial fraction of a large
-                training budget.
-            </p>
-
-            <figure id="fig-14">
-                <img src="figures/compute_allocation_errors/progressive_filter_llama3_a3.png"
-                    alt="Progressive filtering impact on Approach 2 DCL relative to Approach 3">
-                <figcaption>
-                    <strong>Figure 14:</strong> Effect of progressive quality control filtering on
-                    Approach&nbsp;2 Deadweight Compute Loss, measured against an Approach&nbsp;3 surface
-                    fit to unfiltered Llama&nbsp;3 data. Each row cumulatively applies one QC stage.
-                    Nearly all DCL reduction comes from the off-center and weak-curvature filters,
-                    which target the specific Approach&nbsp;2 biases identified in this study.
-                    The right table reports points and budgets removed at each stage,
-                    along with DCL as a percentage of the
-                    3.8&times;10<sup>25</sup>&nbsp;FLOP evaluation budget and dollar cost.
-                </figcaption>
-            </figure>
-
-            <div class="callout key-point">
-                <div class="callout-title">✓ Summary</div>
-                <p>
-                    Based on Llama&nbsp;3 IsoFLOP data, Approach&nbsp;2 overestimates
-                    the compute-optimal token count by ~60% at
-                    3.8&times;10<sup>25</sup>&nbsp;FLOPs, wasting 6.5% of the
-                    training budget ($1.4M in H100 time). Multimodal loss surfaces,
-                    where exponent asymmetry is typically larger, exhibit similarly significant misallocation 
-                    errors (8&ndash;10% of budget costing $1.7&ndash;2.1M) under the same simulation conditions
-                    for which Llama 3 errors reach only 0.2% waste. This suggests that designing IsoFLOP 
-                    experiments to avoid Approach 2 biases is particularly important in those settings, or
-                    that Approach 2 should not be used to fit data from them.
-                </p>
-            </div>
 
         </section>
 
