@@ -856,10 +856,10 @@
                 medium size, allocation planning typically targets deliberate overtraining
                 (training on more data than compute-optimal) rather than compute-optimality
                 itself, and Approach&nbsp;3 or variations on it are much more common in that
-                setting. The compute-optimal scaling laws studied in this article are
+                setting. The compute-optimal scaling laws analyzed in this work are
                 most directly relevant to the largest models in frontier families, which are
-                still frequently trained near compute-optimality. For these runs, the biases
-                documented in the preceding sections may translate directly into wasted compute.
+                still frequently trained near compute-optimality. This means that the Approach&nbsp;2 biases detailed in later sections are
+                applicable, and may translate directly into wasted compute.
             </p>
 
             <p>
@@ -875,9 +875,8 @@
                 SODA<sup><a href="#ref-audio_scaling">[36]</a></sup> (interleaved audio-text)
                 and Sparse-NMM<sup><a href="#ref-nmm_scaling">[39]</a></sup> (native multimodal
                 with sparse mixture-of-experts). These surfaces span a range of exponent
-                asymmetry ratios (<i>b/a</i>) from near-unity to nearly 2:1, providing a
-                view of how the biases compound as the loss surface departs from the symmetric
-                case.
+                asymmetry ratios (<i>b/a</i>) from near-unity to nearly 2:1, providing a view of how misallocation grows as the loss surface departs from
+                nearly equal scaling exponents.
             </p>
 
             <p>
@@ -906,8 +905,8 @@
                 L-BFGS-B) to obtain competing allocations at the target budget. For Chinchilla,
                 SODA, and Sparse-NMM we take a simulated approach instead, generating synthetic
                 IsoFLOP data from each published loss surface, fitting Approach&nbsp;2 to it
-                under the same bias assumptions used in earlier sections (XS grid width,
-                3&times; sampling drift), and comparing the resulting extrapolations. We include
+                under controlled bias conditions (narrow sampling grid, drifting sampling
+                centers) detailed in later sections, and comparing the resulting extrapolations. We include
                 a simulated Llama&nbsp;3 condition as well, which provides an implicit measure
                 of how much of the empirical Llama&nbsp;3 error is attributable to the real
                 IsoFLOP experiment design versus the biases we introduce systematically. Dollar
@@ -927,7 +926,8 @@
                     &ldquo;Empirical&rdquo; rows use Approach&nbsp;2 power laws fit to digitized
                     Llama&nbsp;3 IsoFLOP data, evaluated against VPNLS and Approach&nbsp;3 surfaces.
                     &ldquo;Simulated&rdquo; rows use synthetic IsoFLOP data generated from each
-                    published surface with XS grid and 3&times;&nbsp;drift bias.
+                    published surface with the XS grid and 3&times;&nbsp;drift bias used in the
+                    <a href="#drifting-bias">Drifting Bias</a> simulation section.
                 </figcaption>
             </figure>
 
@@ -940,18 +940,22 @@
                 which rounds exactly to 0.537 as reported in the Llama&nbsp;3 paper.
                 The simulated Llama&nbsp;3 condition, which isolates the systematic biases
                 from the IsoFLOP experiment design, produces only 0.2% DCL ($39K) at
-                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the real Llama&nbsp;3 data
-                contains larger biases than those modeled here, or biases from other sources.
+                <i>b/a</i>&nbsp;&asymp;&nbsp;0.97. This suggests that the magnitude of the off-center sampling bias assumed,
+                which matches the most extreme form of that bias used in later sections, has
+                little impact relative to the biases present in the actual Llama&nbsp;3 IsoFLOP data.
+            </p>
+
+            <p>
                 <a href="#fig-14">Figure&nbsp;14</a> shows that when known Approach&nbsp;2 biases
-                are addressed through targeted quality control, Approach&nbsp;2 and Approach&nbsp;3
+                are addressed through targeted quality control (QC), Approach&nbsp;2 and Approach&nbsp;3
                 converge on nearly identical estimates with negligible deadweight loss.
-                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A1</a> visualizes the QC
+                <a href="#appendix-isoflop-qc">Appendix Figure&nbsp;A1</a> visualizes that QC
                 pipeline across six experiments spanning different datasets and model families,
                 including Chinchilla, Llama&nbsp;3, CoMMA, DCLM, Nemotron, and FineWeb.
                 <a href="#appendix-progressive-chinchilla">Appendix Figure&nbsp;A7</a> shows the
                 same analysis for Chinchilla data, extrapolated to its own evaluation budget of
-                5.8&times;10<sup>23</sup>&nbsp;FLOPs. DCL drops from 37.9% to 12.5% after the
-                same targeted filtering steps.
+                5.8&times;10<sup>23</sup>&nbsp;FLOPs. DCL drops from 37.9% to 12.5%, demonstrating a similar convergence
+                in allocation estimates.
             </p>
 
             <p>
@@ -973,7 +977,7 @@
                     Approach&nbsp;2 Deadweight Compute Loss, measured against an Approach&nbsp;3 surface
                     fit to unfiltered Llama&nbsp;3 data. Each row cumulatively applies one QC stage.
                     Nearly all DCL reduction comes from the off-center and weak-curvature filters,
-                    which target the specific Approach&nbsp;2 biases identified in this study.
+                    which target specific Approach&nbsp;2 biases.
                     The right table reports points and budgets removed at each stage,
                     along with DCL as a percentage of the
                     3.8&times;10<sup>25</sup>&nbsp;FLOP evaluation budget and dollar cost.
