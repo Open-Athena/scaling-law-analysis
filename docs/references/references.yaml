@@ -216,6 +216,11 @@
   venue: ArXiv
   url: https://arxiv.org/abs/2404.10102
 
+- key: beyond_language_modeling
+  title: "Beyond Language Modeling: An Exploration of Multimodal Pretraining"
+  venue: ArXiv
+  url: https://arxiv.org/abs/2603.03276
+
 - key: beyond_chinchilla
   title: Beyond Chinchilla-Optimal -- Accounting for Inference in Language Model Scaling Laws
   venue: ArXiv
