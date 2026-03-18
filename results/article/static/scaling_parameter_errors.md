@@ -8,11 +8,11 @@ The loss along an IsoFLOP contour is:
 
 $$L(N; C) = E + A N^{-\alpha} + B \cdot 6^\beta C^{-\beta} N^\beta$$
 
-Let $w = \log_{10}(N/N^{*})$, where $N^{*}$ is the true optimum. Then:
+Let $w = \log_{10}(N/N^\ast)$, where $N^\ast$ is the true optimum. Then:
 
 > $$L(w) = E + P \cdot 10^{-\alpha w} + R \cdot 10^{\beta w}$$
 >
-> where $P = A \cdot (N^{*})^{-\alpha}$ and $R = B \cdot 6^\beta C^{-\beta} (N^{*})^\beta$.
+> where $P = A \cdot (N^\ast)^{-\alpha}$ and $R = B \cdot 6^\beta C^{-\beta} (N^\ast)^\beta$.
 
 At the true optimum, the first-order condition gives:
 
@@ -76,9 +76,9 @@ Therefore $a_1 = 0$ and $\delta w = 0$.
 
 The inferred optimum is:
 
-$$\hat{N}^{*} = N^{*} \cdot 10^{\delta w}$$
+$$\hat{N}^{*} = N^\ast \cdot 10^{\delta w}$$
 
-Since the true scaling is $N^{*} = a_0 \cdot C^a$, the inferred scaling is:
+Since the true scaling is $N^\ast = a_0 \cdot C^a$, the inferred scaling is:
 
 $$\hat{N}^{*} = a_0 \cdot 10^{\delta w} \cdot C^a = \hat{a}_0 \cdot C^a$$
 
