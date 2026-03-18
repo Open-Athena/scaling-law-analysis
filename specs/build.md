@@ -10,8 +10,7 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
 4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))
 5. **Edit article**: `results/article/article.html`
-6. **Build supplementary PDF** — skip if `scaling_parameter_errors.html` hasn't changed (see [Scaling Parameter Errors PDF](#scaling-parameter-errors-pdf))
-7. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
+6. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
 8. **Push to `main`**
 9. **Deploy** (when ready to publish) — trigger "Deploy Article" workflow from the Actions tab or via `gh workflow run deploy.yml`
    - **Agent note — TLS errors**: The `gh` CLI may fail with `x509: OSStatus -26276` if the shell session cannot access the macOS system keychain for certificate verification (common in sandboxed environments). If your environment supports sandbox permissions, run `gh` commands without sandboxing (e.g. `required_permissions: ["all"]`). If a combined command (e.g. `git push && gh workflow run`) is used, ensure the entire command runs without sandbox restrictions.
@@ -29,35 +28,6 @@ uv run python -m scaling_law_analysis.article.standalone
 ```
 
 Reads `results/article/article.html` → writes `results/article/article_standalone.html`.
-
-### Scaling Parameter Errors PDF
-
-Requires Playwright (`uv pip install playwright && uv run playwright install chromium`):
-
-```bash
-uv run python -c "
-import asyncio
-from playwright.async_api import async_playwright
-from pathlib import Path
-
-async def main():
-    html = Path('results/article/static/scaling_parameter_errors.html').resolve()
-    pdf = html.with_suffix('.pdf')
-    async with async_playwright() as p:
-        browser = await p.chromium.launch()
-        page = await browser.new_page()
-        await page.goto(f'file://{html}', wait_until='networkidle')
-        await page.evaluate('() => MathJax.startup.promise')
-        await page.wait_for_timeout(2000)
-        await page.pdf(path=str(pdf), format='Letter', print_background=True,
-                       scale=0.95, margin=dict(top='12mm', bottom='12mm', left='12mm', right='12mm'))
-        await browser.close()
-
-asyncio.run(main())
-"
-```
-
-The article links to this PDF via a `blob/main` URL on GitHub, so no special commit ordering is needed — the link always resolves to the latest version on `main`.
 
 ### Deploy to GitHub Pages
 
