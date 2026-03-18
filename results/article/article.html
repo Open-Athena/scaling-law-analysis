@@ -1236,7 +1236,7 @@
             </p>
 
             <p>
-                The <a href="https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/article/static/scaling_parameter_errors.pdf">full derivation</a> provides the
+                The <a href="https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/article/static/scaling_parameter_errors.md">full derivation</a> provides the
                 closed-form expression for vertex shift \(\delta w\) as a function of \(\alpha\),
                 \(\beta\), \(W\), and \(n\). It also shows how this shift translates directly
                 into intercept error, independent of compute budget.
@@ -2383,7 +2383,7 @@
             <h3 id="limitations">Limitations</h3>
 
             <p>
-                Several limitations scope the conclusions of this study. We highlight
+                Several known limitations qualify the conclusions of this study: We highlight
                 the most important ones here.
             </p>
 
@@ -2540,7 +2540,7 @@
 
             <ul>
                 <li><strong>Pre-QC</strong> removes duplicate and near-duplicate parameter values within each budget. Exact duplicates are disambiguated by keeping the point whose implied compute (6ND) is closest to the nominal budget (ties broken by minimum loss). Near-duplicates are identified by greedy binning in log-parameter space (tolerance 0.01) and disambiguated the same way. Budgets with fewer than 6 remaining points are then removed entirely.</li>
-                <li><strong>Off Center</strong> removes points that fall outside a symmetric window around each IsoFLOP curve's parabola minimum (2.5&times; the distance from the minimum to the nearer edge), targeting the off-center sampling bias identified in the main text. An Akima spline step also removes individual statistical outliers at this stage. Across all six experiments, 81% of spline-flagged points fall at the extreme endpoints of their budget's parameter range which better aligns this filter to the more direct but conservative off-center filter.</li>
+                <li><strong>Off Center</strong> removes points that fall outside a symmetric window around each IsoFLOP curve's parabola minimum (2.5&times; the distance from the minimum to the nearer edge), targeting the off-center sampling bias identified in the main text. An Akima spline step also removes individual statistical outliers at this stage. Across all six experiments, 81% of spline-flagged points fall at the extreme endpoints of their budget's parameter range, so in practice the spline step reinforces the more direct off-center filter.</li>
                 <li><strong>Weak Curvature</strong> first flags entire budgets with negative parabola curvature (quadratic coefficient &le; 0). For remaining budgets, it checks whether the curvature is significantly positive by testing whether the 95% confidence interval on the quadratic coefficient includes zero. Budgets that fail either check are removed.</li>
                 <li><strong>Post-QC</strong> removes budgets that fell below the 6-point minimum after earlier filtering.</li>
             </ul>

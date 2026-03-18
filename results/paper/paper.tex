@@ -516,7 +516,7 @@ $\beta = 0.28$): a $\pm 2\times$ grid ($W = 0.60$) yields 0.3\% intercept
 error, while a $\pm 16\times$ grid ($W = 2.41$) yields 4.1\% error.
 
 The full
-derivation\footnote{\url{https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/article/static/scaling_parameter_errors.pdf}}
+derivation\footnote{\url{https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/article/static/scaling_parameter_errors.md}}
 provides the closed-form expression for vertex shift $\delta w$ as a function
 of $\alpha$, $\beta$, $W$, and $n$. It also shows how this shift translates
 directly into intercept error, independent of compute budget.
@@ -1180,7 +1180,7 @@ formulations, or as a simpler alternative to Approach~2.
 \subsection{Limitations}
 \label{sec:limitations}
 
-Several limitations scope the conclusions of this study.
+Several known limitations qualify the conclusions of this study:
 
 \begin{itemize}
     \item \textbf{Irreducible loss dominance at large scale.} At sufficiently
@@ -1286,8 +1286,8 @@ The IsoFLOP quality control pipeline applies these steps in this order:
     sampling bias identified in the main text. An Akima spline step also removes
     individual statistical outliers at this stage. Across all six experiments,
     81\% of spline-flagged points fall at the extreme endpoints of their
-    budget's parameter range which better aligns this filter to the more direct
-    but conservative off-center filter.
+    budget's parameter range, so in practice the spline step reinforces the
+    more direct off-center filter.
 
     \item \textbf{Weak Curvature} first flags entire budgets with negative
     parabola curvature (quadratic coefficient $\leq 0$). For remaining budgets,
