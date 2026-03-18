@@ -1283,11 +1283,13 @@ The IsoFLOP quality control pipeline applies these steps in this order:
     \item \textbf{Off Center} removes points that fall outside a symmetric
     window around each IsoFLOP curve's parabola minimum ($2.5\times$ the
     distance from the minimum to the nearer edge), targeting the off-center
-    sampling bias identified in the main text. An Akima spline step also removes
-    individual statistical outliers at this stage. Across all six experiments,
-    81\% of spline-flagged points fall at the extreme endpoints of their
-    budget's parameter range, so in practice the spline step reinforces the
-    more direct off-center filter.
+    sampling bias identified in the main text. An Akima spline step also removes individual statistical outliers at
+    this stage by fitting a leave-one-out spline to non-outlying points at
+    each budget and flagging those with extreme MAD-based residuals. Across
+    all experiments, every spline-identified point (28 of 28) is terminal,
+    having no non-outlying point on at least one side in sorted parameter
+    order. In practice, the spline step acts as a more aggressive complement
+    to the conservative off-center filter.
 
     \item \textbf{Weak Curvature} first flags entire budgets with negative
     parabola curvature (quadratic coefficient $\leq 0$). For remaining budgets,
