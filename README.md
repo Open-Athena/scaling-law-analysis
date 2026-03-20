@@ -13,9 +13,9 @@ See [`specs/project.md`](specs/project.md#project-structure) for the full direct
 
 Results from this analysis can be found in a few places:
 
-- **[Article (HTML)](https://openathena.ai/scaling-law-analysis/)**
-- **[Paper (PDF)](https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf)**
-- **[Interactive demo](https://claude.ai/public/artifacts/ff4b6e45-cc20-4a96-b95c-57caac05bfff)** ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
+- [Article (HTML)](https://openathena.ai/scaling-law-analysis/)
+- [Paper (PDF)](https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf)
+- [Interactive demo](https://claude.ai/public/artifacts/ff4b6e45-cc20-4a96-b95c-57caac05bfff) ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
 
 See [`specs/build.md`](specs/build.md) for build and reproduction details.
 
