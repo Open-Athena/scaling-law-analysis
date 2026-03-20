@@ -1,6 +1,11 @@
 ## Overview
 
-This project investigates how the parabolic approximation in Chinchilla Approach 2 introduces systematic biases in compute-optimal allocation estimates. Using noise-free synthetic loss surfaces with known ground truth, it isolates three sources of error: IsoFLOP sampling grid width, uncentered sampling, and loss surface asymmetry. These biases are validated under realistic noise models, quantified against published Llama 3 IsoFLOP data, and shown to produce even larger misallocations on simulated multimodal scaling surfaces. The project then demonstrates how exploiting the partially linear structure of the scaling law objective (via Variable Projection) eliminates these biases through a low-dimensional, well-conditioned optimization.
+This project studies how neural scaling laws are fit, comparing methods across objectives, optimizers, reparameterizations, and experimental designs.
+
+- **Bias analysis**: Systematic errors in Chinchilla Approach 2's parabolic approximation are isolated using noise-free synthetic loss surfaces, tracing them to IsoFLOP sampling grid width, uncentered sampling, and loss surface asymmetry.
+- **Method comparison**: Multiple fitting methods are evaluated — including Approach 2, several Approach 3 variants (direct 5D optimization with different objectives, gradient strategies, and initializations), and Variable Projection (VPNLS) — under both noiseless and noisy conditions.
+- **Empirical validation**: Fitting implementations are validated against Apple's [ml-scalefit](https://github.com/apple/ml-scalefit) reproductions. Biases are quantified against published Llama 3 IsoFLOP data and shown to produce even larger misallocations on simulated multimodal scaling surfaces.
+- **Novel reparameterization**: VPNLS exploits the partially linear structure of the loss surface to reduce fitting to a well-conditioned 2D search, eliminating the biases of Approach 2 while avoiding the numerical difficulties of full 5D optimization.
 
 See [`specs/project.md`](specs/project.md#project-structure) for the full directory layout and implementation map.
 
@@ -8,9 +13,9 @@ See [`specs/project.md`](specs/project.md#project-structure) for the full direct
 
 Results from this analysis can be found in a few places:
 
-> **[Article (HTML)](https://openathena.ai/scaling-law-analysis/)**
-> **[Paper (PDF)](https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf)**
-> **[Interactive demo](https://claude.ai/public/artifacts/ff4b6e45-cc20-4a96-b95c-57caac05bfff)** ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
+- **[Article (HTML)](https://openathena.ai/scaling-law-analysis/)**
+- **[Paper (PDF)](https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf)**
+- **[Interactive demo](https://claude.ai/public/artifacts/ff4b6e45-cc20-4a96-b95c-57caac05bfff)** ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
 
 See [`specs/build.md`](specs/build.md) for build and reproduction details.
 
