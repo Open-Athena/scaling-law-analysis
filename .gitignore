@@ -7,6 +7,4 @@ __pycache__/
 build/
 dist/
 *.egg-info/
-demo/node_modules/
-demo/package-lock.json
-demo/package.json
+results/paper/submissions/*/staging/
