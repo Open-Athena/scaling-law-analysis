@@ -20,7 +20,6 @@ from scipy.special import logsumexp
 
 from scaling_law_analysis.common import check_design_matrix
 
-
 # =============================================================================
 # Fit status and exceptions
 # =============================================================================

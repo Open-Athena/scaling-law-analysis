@@ -36,7 +36,6 @@ from scaling_law_analysis.experiments.exp5_parameter_recovery import (
     run_method_comparison,
 )
 
-
 # =============================================================================
 # Surface Configuration
 # =============================================================================

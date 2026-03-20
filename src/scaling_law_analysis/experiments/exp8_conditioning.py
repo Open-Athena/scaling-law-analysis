@@ -32,7 +32,6 @@ from scaling_law_analysis.experiments.common import (
     sample_isoflop_data,
 )
 
-
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 

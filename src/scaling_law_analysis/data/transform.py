@@ -19,7 +19,6 @@ from scaling_law_analysis.data.schema import (
     QCStage,
 )
 
-
 # ── Helpers ──────────────────────────────────────────────────────────────────
 
 
