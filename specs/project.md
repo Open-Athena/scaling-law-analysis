@@ -51,5 +51,4 @@ This project follows Spec Development (SDD). The `specs/` directory is an opinio
 | `  experiments/` | Per-experiment figures (`exp{N}/`) |
 | `  article/` | Article HTML (`article.html`, `article_standalone.html`); figure PNGs and CSVs under `figures/`; `appendix/`, `static/`, `references/` |
 | `  paper/` | LaTeX source (paper.tex, references.bib) and compiled PDF |
-| `  post/` | Word document export for external publication |
 | `tests/` | Test suite |

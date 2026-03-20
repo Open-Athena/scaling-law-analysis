@@ -20,295 +20,254 @@
 
 ## Motivation
 
-- Chinchilla Approach 2 is arguably the most widely adopted method for fitting scaling laws in practice today
-- Used by top AI labs including DeepMind [chinchilla] [sovit] (its creators), Meta [llama3] [optibert], DeepSeek [deepseek], Microsoft [ehr_scaling], Amazon [il_scaling], Waymo [waymo_scaling], and Arc Institute [evo], among others
-- Also a workhorse method for academic studies [dit_scaling] [dlm_scaling] [biosignal_scaling] and high-profile practitioner tutorials (e.g. Andrej Karpathy)
-- Its appeal lies in stability and data efficiency relative to nonlinear optimization over all loss surface parameters; this owes to its reliance on 2nd-order Taylor approximations fit as parabolas and the fact that it estimates only the more actionable scaling exponents rather than the full set of surface parameters
-- Many **analytical** extensions have since been formulated that add or modify terms in the original Chinchilla functional form: epochs [data_constrained] [data_filtering_scaling], overfitting [mupt], precision [precision_scaling], MoE sparsity [moe_scaling], data quality [quality_scaling], data mixtures [optimal_data_mixtures] [redundancy_scaling] [data_filtering_scaling], non-embedding parameters [reconciling_scaling], downstream task performance [ai2_task_scaling]; these prescribe explicit functional forms rather than inferring scaling law structure automatically, and build directly on Chinchilla as a foundation
-  - We revisit basics here on how to best apply a simple model like Chinchilla with high precision and stability, to validation loss alone, before considering more advanced extensions
+- Approach 2 is arguably the most widely adopted method for fitting scaling laws today
+- Used by top AI labs including DeepMind [chinchilla] [sovit], Meta [llama3] [optibert] [beyond_language_modeling], DeepSeek [deepseek], Microsoft [ehr_scaling], Amazon [il_scaling], Waymo [waymo_scaling], and Arc Institute [evo], among others
+- Also a workhorse for academic studies [dit_scaling] [dlm_scaling] [biosignal_scaling] and practitioner tutorials (e.g. Andrej Karpathy)
+- Its appeal lies in stability and data efficiency relative to nonlinear optimization, owing to parabolic (2nd-order Taylor) approximations that estimate only the scaling exponents rather than the full surface
+- Many analytical extensions build on the Chinchilla functional form: data repetition [data_constrained], overfitting [mupt], precision [precision_scaling], optimizers [optimizer_scaling], MoE sparsity [moe_memory_scaling], pruning [pruning_scaling], data quality [quality_scaling], data mixtures [optimal_data_mixtures] [atlas_multilingual], model shape/context length [icr_scaling], non-embedding parameters [reconciling_scaling], downstream task performance [ai2_task_scaling]
+  - Similar studies extend individual terms in isolation [redundancy_scaling] [data_filtering_scaling] [moe_scaling] [subgroup_scaling] or propose modified Kaplan scaling laws [kaplan_scaling]
   - A fitting method that recovers the base surface with higher precision may offer a stronger starting point for these richer settings
-- To our knowledge, the sensitivity of these approximations and the method's behavior on loss surfaces that are less symmetric than the original Chinchilla form (where token and parameter scaling exponents are roughly equal) have not been studied in detail
-- We investigate this through noise-free synthetic simulations that isolate systematic biases inherent to the method itself
-- We show how these biases impact downstream decisions like dataset size selection for final training runs at large compute budgets
-- We show how extrapolation errors trace back to suboptimal isoflop experiment design, and that pathologies in these designs can be observed in real, high-profile scaling law studies even if they are difficult to quantify precisely
-- We propose VPNLS (Variable Projection with Non-negative Least Squares), an alternative fitting method that is simple, stable, and free of these biases while building on the same intuitive computational shortcut: optimizing exponential terms separately from linear terms
+- The sensitivity of the parabolic approximation on asymmetric loss surfaces (where α ≠ β) has not been studied in detail
+- Four modes of investigation: (1) noise-free synthetic simulations, (2) closed-form error expressions, (3) noisy simulations with a validated noise model, (4) empirical fits to Llama 3 IsoFLOP data
+- We propose VPNLS (Variable Projection with Non-negative Least Squares) as an alternative that builds on the same computational shortcut (optimizing exponential terms separately from linear terms) without the parabolic approximation
 
 ---
 
 ## Preliminaries: Loss Surface, Notation, and Fitting Methods
 
-- Introduce the Chinchilla loss surface: L(N, D) = E + A/N^α + B/D^β; define each term (N = parameters, D = tokens, E = irreducible loss, A/B/α/β = scaling coefficients)
-- State the compute-optimal allocation: N* ∝ C^a where a = β/(α+β), D* ∝ C^b where b = α/(α+β); recovering a and b from empirical runs is the goal
+- Chinchilla loss surface: L(N, D) = E + A/N^α + B/D^β
+- Compute-optimal allocation: N* ∝ C^a where a = β/(α+β), D* ∝ C^b where b = α/(α+β)
+- Compute constraint: C = 6ND
 - **Approach 2: IsoFLOP Parabolic Fitting**
-  - Key insight: along a fixed-compute contour, loss as a function of log N is approximately parabolic near the optimum
-  - Three-step pipeline: (1) sample IsoFLOP contours at various (N, D) pairs for each compute budget, (2) fit parabolas and extract vertex N* for each budget, (3) regress log N* against log C to recover scaling exponent
-  - Appeal is simplicity: only polynomial fits, no nonlinear optimization; parabolic approximation comes from Taylor expansion around the optimum
+  - Along a fixed-compute contour, loss as a function of log N is approximately parabolic near the optimum
+  - Three-step pipeline: (1) sample IsoFLOP contours, (2) fit parabolas and extract vertex N* per budget, (3) regress log N* on log C to recover scaling exponent
+  - Only polynomial fits, no nonlinear optimization
 - **Approach 3: Direct Surface Fitting**
-  - Direct formulation: minimize Σ(L_i − L̂(N_i, D_i))² over all five parameters; show the RSS objective
-  - Practical issues with direct optimization: (1) E, A, B must remain positive for physical meaning, requiring box constraints; (2) the loss scale spans orders of magnitude, so errors at small loss values are underweighted
-  - Chinchilla's adapted formulation [chinchilla]: LSE reparameterization optimizes (e, a, b, α, β) where E=exp(e), A=exp(a), B=exp(b), enforcing positivity without explicit bounds; the predicted log-loss is computed via logsumexp(e, a−α·log N, b−β·log D) for numerical stability; the objective is Huber loss on log-predictions rather than MSE on predictions, which reweights errors more uniformly across the loss scale and is robust to outliers
-  - Show both objectives side by side (direct RSS, then LSE + Huber log-loss)
-  - We use MSE rather than Huber throughout because we evaluate methods on simulated data with known noise models and want MLE estimates in some configurations
-  - Avoids the parabolic approximation entirely but is notoriously unstable: sensitive to initialization, prone to spurious local minima
+  - Minimize Σ(L_i − L̂(N_i, D_i))² over all five parameters (RSS objective)
+  - Practical issues: E, A, B must remain positive; loss scale spans orders of magnitude
+  - Chinchilla's adapted formulation [chinchilla]: LSE reparameterization enforces positivity via E=exp(e), A=exp(a), B=exp(b); predicted log-loss via logsumexp for numerical stability; Huber loss on log-predictions
+  - Both objectives shown side by side; we use MSE rather than Huber throughout for MLE properties
+  - Avoids the parabolic approximation but is notoriously unstable
 
 ---
 
-## The Happy Path: Symmetric Surfaces
+## Error Costs: Misallocation at Scale
 
-- Frame as establishing a baseline before examining failure modes
-- Use a concrete asymmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31
-- Note that equal exponents (α = β) mean compute splits evenly; true scaling exponents are a = b = 0.5
-- Describe the experiment: five IsoFLOP contours from 10^17 to 10^21 FLOPs with 15 model sizes per curve, fit parabolas, extract optimal D*; note that this same configuration (five budgets, 15 points per curve) is used in all simulations throughout the article
-- Figure (1 row × 2 columns): IsoFLOP curves with fitted parabolas (left) and power-law fit (right); true (×) and inferred (+) optima indistinguishable
-- Table: show perfect recovery of b (D* exponent) and b₀ (D* intercept) with machine-precision relative errors (~10⁻¹⁰ %)
-- Key result: on a symmetric surface with perfectly crafted IsoFLOP grid sampling, Approach 2 recovers both exponents and intercepts with machine-precision accuracy; the parabola vertex shift is zero when α = β, so the inferred optima coincide with the true optima
-- Close by noting this baseline is precisely correct under ideal conditions that are unrealistic in practice; the following sections perturb these conditions in controlled ways
+- Overview
+  - Compute-optimal scaling laws are most directly relevant to the largest frontier models, which are still frequently trained near compute-optimality
+  - Assess the cost of Approach 2 misallocations at the compute scale of Llama 3 405B (3.8×10²⁵ FLOPs) [llama3], one of the most compute-intensive open models as of early 2026 [epochai_open_model_compute]
+  - Also examine Chinchilla and two multimodal models with greater asymmetry: SODA [audio_scaling] and Sparse-NMM [nmm_scaling]
+  - Measure misallocation as Deadweight Compute Loss (DCL), the FLOPs needed to reach an optimal allocation from one provided by Approach 2
+- Methods
+  - For Llama 3: extract raw IsoFLOP data from Figure 2 of [llama3] via SVG coordinate extraction [epochai_chinchilla_replication]; fit Approach 2 and several Approach 3 variants; extrapolate to target compute; convert FLOPs to dollars assuming 50% MFU [beyond_chinchilla] and $2/H100 hour [olmo3]
+  - For Chinchilla, SODA, Sparse-NMM: simulate IsoFLOP data from published Approach 3 fit statistics; fit with Approach 2; compare extrapolations
+  - Llama 3 included in both approaches to measure how IsoFLOP experiment design degrades Approach 2 accuracy beyond the systematic biases
+- Figure (1×2): horizontal bar chart of DCL (left); heatmap of token/param counts, loss differences, dollar costs (right); simulated vs real results separated by dashed line
+- Results
+  - Empirical Llama 3: DCL of 6–10% of budget ($1.3–2.2M) depending on Approach 3 configuration
+  - Simulated Llama 3 (near-symmetric, b/a ≈ 0.97): only 0.2% DCL ($39K), implying ~$1–2M of empirical cost is attributable to Approach 2's poor fit to real IsoFLOP data rather than surface asymmetry alone
+  - Asymmetric surfaces amplify errors: SODA (b/a = 1.56) reaches 8% DCL ($1.7M); Sparse-NMM (b/a = 1.91) reaches 10% DCL ($2.1M) under the same 3× drift bias
+  - Multimodal models with more asymmetric surfaces face potentially much larger misallocations than text-only LLMs
+
+---
+
+## Symmetric Surfaces: Unbiased Estimation in Ideal Conditions
+
+- Establishes a baseline before examining failure modes
+- Symmetric surface: L(N, D) = 1.69 + 400/N^0.31 + 400/D^0.31; equal exponents mean a = b = 0.5
+- Experiment: five IsoFLOP contours from 10¹⁷ to 10²¹ FLOPs, 15 points per curve (this configuration is used in all simulations throughout the article)
+- Figure (1×2): IsoFLOP curves with fitted parabolas (left); power-law fit (right); true and inferred optima indistinguishable
+- Table: machine-precision recovery of b (exponent) and b₀ (intercept), relative errors ~10⁻¹⁰ %
+- Key result: the parabola vertex shift is zero when α = β; Approach 2 is exactly correct under these ideal conditions
+- These conditions are unrealistic in practice; the following sections perturb them in controlled ways
 
 ---
 
 ## Asymmetric Surfaces: Intercept and Extrapolation Errors
 
-- Frame as repeating the exact same procedure as the Happy Path; only change is α ≠ β
+- Same procedure as the symmetric baseline; only change is α ≠ β
+- Two test surfaces: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and Asymmetric (α=0.465, β=0.155, ratio = 3.0, comparable to DeepSeek's reported allocation exponents [deepseek])
+- Figure (2×2): Approach 2 on both surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, Asymmetric; visible gap between true and inferred power-law lines
+- Tables: b exponent has negligible error; b₀ intercept has meaningful error, larger for the Asymmetric surface
+- Even under ideal conditions (no noise, centered sampling, standard parameters), Approach 2 produces biased intercepts
 
-- **What Happens**
-  - Asymmetric surfaces produce systematically wrong intercepts while exponents remain accurate
-  - Two test configurations: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and Asymmetric (α=0.465, β=0.155, ratio = 3.0); note that the Asymmetric surface's ratio of 3.0 is comparable to real-world findings (DeepSeek [deepseek] reports allocation exponents a=0.73, b=0.27 on OpenWebText2, implying a loss surface ratio of ~2.7)
-  - Figure (2 rows × 2 columns): Approach 2 on both asymmetric surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, Asymmetric; visible gap between true (dashed) and inferred (solid) power-law lines, especially for the Asymmetric surface
-  - Tables for each surface showing b exponent with negligible error but b₀ intercept with meaningful error; error larger for the Asymmetric surface than Chinchilla
+### Underlying Causes
 
-- **Why This Is Surprising**
-  - Acknowledge that a few percent may seem minor, then enumerate the ideal advantages given to Approach 2: perfect data (no noise, every point exactly on the true surface), perfect sampling (centered at true optimum), and standard parameters (from the Chinchilla paper, not contrived)
-  - Key result: even under these ideal conditions, Approach 2 produces biased intercepts; the error is inherent to the parabolic approximation
+- IsoFLOP curve is not a true parabola; higher-order Taylor terms shift the vertex when α ≠ β
+- Vertex shift is constant across compute budgets, so it biases every N* by the same multiplicative factor
+  - Slope (exponent) is unchanged; intercept absorbs the entire error
+- Closed-form expression: intercept error = 10^(δw) − 1, where δw depends only on (α, β) and sampling grid; δw = 0 when α = β, grows with |α − β| and grid width
+- Taylor expansion intuition: odd-order terms cancel for symmetric surfaces but not for asymmetric ones
 
-- **Why It Happens**
-  - IsoFLOP loss curve is not a true parabola; it contains exponential terms
-  - Parabola vertex shift depends only on surface shape (α, β) and sampling grid, not on compute budget; wider grids amplify the mismatch
-  - Because the vertex shift is constant across compute budgets, it biases every N* by the same multiplicative factor:
-    - Slope (exponent) is unchanged (constant additive shift in log-space doesn't affect slope)
-    - Intercept absorbs the entire error
-  - Exact derivation: intercept error = 10^(δw) − 1, where δw = f(α, β, W, n) depends only on surface exponents and sampling grid (width W in log-space, n points per IsoFLOP curve); properties: δw = 0 when α = β, grows with |α − β|, grows with W
-  - Concrete example: show how Chinchilla parameters yield small intercept error at narrow grid vs. larger error at wide grid
-  - Link to full closed-form derivation document
-  - Taylor expansion intuition: parabola = 2nd-order Taylor expansion; higher-order terms grow with sampling range; odd-order terms cancel for symmetric surfaces (preserving vertex) but not for asymmetric ones (shifting vertex)
+### Error Implications
 
-- **Why It Matters**
-  - Transition: extrapolation requires both exponents and intercepts to be correct; now quantify the practical impact via compute-optimal token prediction
-  - Introduce varying grid widths; define the ±kx notation (range from 1/k to k times optimum, total ratio k², decade span = log₁₀(k²))
-  - Table of four grid widths:
-
-    | Grid Name          | ±k×  | Sampling Range     | Total Ratio | Decade Span (factors of 10) |
-    |--------------------|------|--------------------|-------------|-----------------------------|
-    | Extra Small (XS)   | ±2×  | 1/2× to 2×        | 4×          | 0.60                        |
-    | Small (S)          | ±4×  | 1/4× to 4×        | 16×         | 1.20                        |
-    | Large (L)          | ±8×  | 1/8× to 8×        | 64×         | 1.81                        |
-    | Extra Large (XL)   | ±16× | 1/16× to 16×      | 256×        | 2.41                        |
-
-  - Note that real experiments typically span 1–2 decades, making S and L the realistic range; XS and XL bracket either side; XL is the default used in preceding single-grid analyses
-  - Figure (1 row × 1 column): bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces; negative bars = underestimation
-  - Collapsible raw data table with full-precision values for all surface/grid combinations
-  - Key observations from the figure:
-    - Symmetric surfaces are unaffected (zero error at all grid widths)
-    - Asymmetric surfaces always underestimate (predicting fewer tokens than optimal → undertraining)
-    - Wider grids amplify error
-    - More asymmetry magnifies everything (the Asymmetric surface shows roughly 4–5x larger errors than Chinchilla at each grid width)
-  - Key result: highlight a concrete case using the Chinchilla surface with a practical grid width; show the absolute token shortfall at 10²⁴ FLOPs; emphasize these are ideal conditions, real experiments can only do worse
+- Quantify extrapolation error via compute-optimal token prediction across four grid widths (XS ±2× through XL ±16×); real experiments typically span S to L range
+- Figure (1×1): bar chart of relative D* error at 10²⁴ FLOPs, grouped by grid width across all three surfaces
+- Collapsible raw data table
+- Key observations: symmetric surfaces unaffected; asymmetric surfaces always underestimate; wider grids and more asymmetry amplify error
 
 ---
 
 ## Off-Center Sampling: Exponent and Extrapolation Errors
 
-- In practice you don't know N* before running the experiment; sampling centers are guesses based on prior estimates or heuristics
-- Distinct from asymmetry errors: this is about where you place the grid, not the shape of the surface
-- Study on symmetric surfaces only (α = β) to isolate the effect from asymmetry bias
-- **Constant multiplicative bias**: same factor at every compute budget; corrupts intercepts only (same mechanism as asymmetry errors)
-  - Define "3× offset": each IsoFLOP grid is centered at 3×D* instead of D*, so the grid midpoint sits at three times the true optimum
-  - Figure (2 rows × 2 columns):
-    - (0,0): IsoFLOP contours at L (±8×) grid with offset=3× on symmetric surface; black diamonds at (off-center) sampling centers, red × at true D*, blue + at inferred D*
-    - (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width (XS through XL)
-    - (1,0): D* exponent error vs grid width (16 points from XS to XL); flat at zero (exponent perfectly preserved)
-    - (1,1): D* intercept error vs grid width (16 points from XS to XL); systematic bias that varies with grid width
-    - Bottom row y-axes matched to show exponent is zero while intercept has systematic bias
-- **Drifting bias**: offset grows with compute budget; corrupts both exponents and intercepts
-  - Define "linear drift to 3×": sampling center starts at the true optimum (lowest budget) and drifts to 3× (highest budget), interpolating linearly in log-compute space
-  - Figure (2 rows × 2 columns, same layout as constant bias):
-    - (0,0): IsoFLOP contours at L (±8×) grid with linear drift on symmetric surface; sampling centers (black diamonds) visibly shift away from true D* (red ×) at higher compute budgets, unlike the constant bias case where the gap is uniform
-    - (0,1): Extrapolation error bar chart (D* at 10²⁴ FLOPs) by grid width (XS through XL)
-    - (1,0): D* exponent error vs grid width (16 points from XS to XL); now non-zero, unlike the flat-at-zero line in the constant bias figure — this is the key visual contrast
-    - (1,1): D* intercept error vs grid width (16 points from XS to XL)
-    - Bottom row y-axes matched to show relative magnitude of exponent vs intercept errors
-- Key message: constant bias preserves exponents; any compute-dependent bias pattern distorts them; the distinction matters because exponent errors compound during extrapolation while intercept errors remain fixed
+- In practice, sampling centers are guesses; this is about where you place the grid, distinct from asymmetry errors
+- Studied on symmetric surfaces only (α = β) to isolate the effect
+
+### Constant Multiplicative Bias
+
+- Same offset factor at every compute budget (e.g. 3× offset: grid centered at 3×D* instead of D*)
+- Corrupts intercepts only; exponents are perfectly preserved (same mechanism as asymmetry errors)
+- Figure (2×2): IsoFLOP contours with off-center sampling (top-left); extrapolation error bar chart (top-right); exponent error vs grid width, flat at zero (bottom-left); intercept error vs grid width (bottom-right)
+
+### Drifting Bias
+
+- Offset grows with compute budget (e.g. linear drift from 1× to 3× across budgets)
+- Corrupts both exponents and intercepts; the compute-dependent perturbation distorts the power-law slope
+- Figure (2×2, same layout): key visual contrast is that exponent error is now non-zero
+- Key message: constant bias preserves exponents; compute-dependent bias distorts them; exponent errors compound during extrapolation while intercept errors remain fixed
 
 ---
 
 ## Real IsoFLOP Curves: Evidence from Published Studies
 
-- Figure (1 row × 3 columns): IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]; image at `results/article/static/isoflop_curve_examples.png`
-- These curves exhibit visibly asymmetric shapes (steeper on one side of the minimum than the other), suggesting α ≠ β
-- Sampling centers do not always coincide with the curve minima, and the degree of off-centering appears to vary across compute budgets
-- This is not a criticism of these studies; these are some of the most careful and influential scaling law analyses published. The point is that the conditions under which Approach 2's biases activate are the norm, not the exception
+- IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]
+- Visibly asymmetric shapes and off-center sampling are common in these high-profile studies
+- The conditions under which Approach 2's biases activate are the norm, not the exception
+- Six published experiments processed through the IsoFLOP quality control pipeline
 
-- **Compounding Errors**: simulate combined asymmetry and sampling biases in a single extrapolation analysis using the same 3× drift and 3× center offset from the main-text off-center figures
-- Figure (1×2 bar chart grid): one subplot per sampling configuration (offset by 3×, drift to 3×); loss surface on x-axis, bars grouped/colored by grid width (XS through XL); on the symmetric surface, constant offset results correspond to the constant bias figure and drift results correspond to the drifting bias figure
-- Collapsible raw data table with full-precision values for all config/surface/grid combinations
-- Describe interaction: off-center sampling pushes errors positive, asymmetry pushes negative; net error depends on which dominates; partial cancellation with wider grids is only coincidental
-- Argue that 3× perturbations are representative of realistic conditions: IsoFLOP curves they produce are qualitatively similar to published studies; 3× offset is likely within the range of uncertainty practitioners face
-- Cross-reference to appendix for detailed view of how errors trend with compute budget across a wider set of drift rates and center offset magnitudes
-- Key result: multiple bias sources act simultaneously in any real experiment; when they align, combined error can exceed either one alone, even with the narrowest grid where the parabolic approximation is most accurate
+### Compounding Errors
+
+- Simulate combined asymmetry and off-center sampling biases (3× drift, 3× offset) in a single extrapolation analysis
+- Figure (1×2): one subplot per bias configuration; bars grouped by grid width across surfaces
+- Collapsible raw data table
+- Off-center sampling pushes errors positive, asymmetry pushes negative; partial cancellation is coincidental
+- 3× perturbations are representative of realistic conditions based on comparison with published IsoFLOP curves
+- Key result: multiple bias sources act simultaneously; combined error can exceed either source alone
 
 ---
 
 ## Robust Fits: Unbiased Estimation with Linear Separation
 
-- Opening segue: the previous sections established the biases and showed they arise in practice; now address what to do about them
-- **Problems with Direct Surface Fitting**
-- Naive Approach 3 (nonlinear least squares over all five parameters) is unstable
-  - The following summary of fitting practices and failure modes draws from [misfitting], a survey of over 50 scaling law papers; the problems documented apply to scaling law fitting in general (not just Chinchilla forms), but they are directly relevant because Approach 3 involves the same kind of nonlinear optimization
-  - Over half of surveyed papers do not fully specify their fitting procedure (optimizer, loss, initialization), compounding reproducibility issues
-  - The most common optimizers for scaling law fits are BFGS or L-BFGS; some studies use SGD-family optimizers (Adam, Adagrad), though these are noted as sometimes ill-suited for curve fitting due to poor data efficiency; at least one study [data_filtering_scaling] forgoes optimization entirely in favor of pure grid search due to instability of fitted solutions
-  - "Unstable" in practice means: sensitivity to initialization, sensitivity to optimizer hyperparameters (e.g. convergence tolerance, gradient estimation method), and convergence to local minima rather than the global optimum
-  - Initialization is a major source of variability; common mitigations include (a) grid search over initializations, running the optimizer from each of thousands of starting points and keeping the best fit, (b) random sampling of starting points, (c) evaluating a coarse grid without optimization and seeding the optimizer from the best candidate only, or (d) initializing from previously published parameter values
-    - These mitigations do not reliably solve the problem; the survey's own experiments show that full-grid optimization over 4500 starting points sometimes yields the worst fit among all strategies tested, evidence of "the difficulty of optimizing over this space, and the presence of many local minima"
-  - A simpler alternative is log-linearization: take the log of both sides of the power law and fit with linear regression; however, this changes the error distribution and exaggerates errors at small loss values, biasing parameter estimates in a way that is easily observed in simulations like ours
-      - The canonical Chinchilla Approach 3 (LSE reparameterization with log-loss objective) is a more principled version of this idea: it minimizes MSE in log-space while using LogSumExp to handle the sum structure correctly; we evaluate this variant directly in the exponent inference comparison
-      - The survey also finds that loss function choice (Log-Huber, Huber, MSE, MAE) affects fitted parameters unpredictably across datasets, and non-MSE objectives can introduce systematic bias in parameter estimates; our goal is to identify a method that is simple, stable, and efficient rather than to address outliers or other statistical concerns, so we use MSE for all fits
-  - The survey's experimental analysis varies optimizer, loss function, and initialization strategy across three datasets; the overarching finding is that none of these choices reliably eliminates instability, and results shift unpredictably between datasets
-  - Segue: a key contributor to these problems is the high dimensionality of the joint optimization; variable projection reduces the nonlinear search to only the exponential terms (α, β), solving the linear coefficients (E, A, B) analytically at each candidate; this makes dense grid search practical because the grid grows only with the number of exponential terms, not all parameters
-  - Concrete example from Experiment 8: Hessian of 5D RSS on the Asymmetric surface (α=0.465, β=0.155, five IsoFLOP contours 10¹⁷–10²¹, 15 points/curve) has eigenvalues spanning ~8×10⁻⁶ to ~3×10⁶ (κ ≈ 3.5×10¹¹); flattest directions are A and B (underdetermined near optimum), steepest are α and β; 2D landscape after variable projection has κ ≈ 11 [hessian_optimization]
-- **Variable Projection (VPNLS)**
-- Variable projection exploits the partially linear structure: for fixed (α, β), the loss is linear in (E, A, B)
-- This is the same computational shortcut motivating Approach 2: optimizing exponential terms separately from linear terms; but here it is applied without the parabolic approximation
-- **Algorithm**: search over (α, β) and solve for (E, A, B) analytically at each candidate; a coarse grid search seeds a local optimizer that refines (α, β) while maintaining the linear separation throughout, never optimizing the full five-parameter space; we call this method VPNLS (Variable Projection with Non-negative Least Squares)
-- **Grid search scalability**: because the nonlinear search is over exponential terms only, grid density scales with the number of exponential terms rather than the total number of parameters; a 32² grid over (α, β) provides 1,024 candidates with fine resolution, whereas the same budget in 5D gives only 4⁵ = 1,024 points spread thinly; extensions that add linear terms (e.g. epochs, data quality, MoE sparsity) increase the inner linear solve but do not enlarge the outer grid search
-- **Analytical gradients via the envelope theorem**: switching the inner solve from NNLS to OLS makes the objective differentiable; by the envelope theorem, the gradient of RSS with respect to (α, β) has a closed form that depends only on the current residuals and design matrix, not on implicit derivatives of the optimal (E, A, B)
-- **Optimizer choice**: both L-BFGS-B (with analytical gradients, OLS inner solve) and Nelder-Mead (gradient-free, NNLS inner solve) work well in the 2D (α, β) search space and achieve machine-precision parameter recovery; L-BFGS-B occasionally triggers spurious line-search failures near the optimum when the objective is too flat to verify further progress, but the returned parameters are correct in these cases
-- **Method Comparison (Parameter Recovery)**
-  - We compare six method configurations on noise-free synthetic data across three loss surfaces (symmetric, Chinchilla, Asymmetric) and 20 sampling ranges:
-    - 5D direct (Approach 3): L-BFGS-B with analytical gradients and with numerical gradients (3-point central differences); no variable projection, optimizes all five parameters jointly; grid-seeded from 4⁵ = 1,024 starting points
-    - 2D variable projection: L-BFGS-B with analytical gradients (VPNLS), L-BFGS-B with numerical gradients (3-point central differences), Nelder-Mead (gradient-free, NNLS inner solve), and a fine 256² grid search; grid-seeded from 32² = 1,024 starting points (same total grid budget as Approach 3, so accuracy differences reflect the optimizer and loss landscape, not initialization)
-  - Figure (1 × 2, shared y-axis; methods sorted by gmean error, worst at top): dot-range plot (left) with "(Chinchilla Approach 3)" and "(VPNLS)" callouts on the respective analytical gradient methods; max-error heatmap (right) with columns {E, A, B, α, β}
-  - Results:
-    - All three 2D variable projection methods with local optimization recover parameters to machine precision (~1e-7% or better) across all surfaces; the well-conditioned 2D landscape makes even finite-difference gradients reliable
-    - 5D direct optimization (Approach 3) with analytical gradients is more accurate than grid search but exhibits larger errors than any 2D method in this noiseless setting, particularly on the Chinchilla surface; numerical gradients perform very poorly in the 5D landscape
-    - VPNLS with analytical gradients achieves the highest precision overall; the dominant pattern is the gap between 2D variable projection (all variants) and 5D direct optimization, not between 2D optimizer choices
-- Key message: variable projection reduces the nonlinear search to the exponential terms only, producing a well-conditioned 2D landscape where all tested optimizers converge reliably; the same grid budget that spreads thinly across 5D provides dense coverage in 2D
-- **Method Comparison (Exponent Inference)**
-  - Parameter recovery on noiseless data demonstrates numerical instabilities inherent to the loss surface (see "Problems with Direct Surface Fitting" above) but is not representative of practical use
-  - A more useful comparison incorporates training noise and varies the quantity of data available to each method; the focus shifts from all five surface parameters to the scaling exponents (a, b) that drive compute-optimal allocation, enabling direct comparison with Approach 2
-  - Emphasize worst-case errors: a practitioner typically runs one scaling law study, not hundreds, so sporadic optimizer failures that produce large errors in a minority of fits are arguably the most consequential practical risk
-  - **Setup**: extend the "Compounding Errors" scenario (Asymmetric surface, 3× drift, L grid) to a statistical setting
-    - Five methods: Approach 2; Naive Approach 3 (random init, MLE objective); MLE Approach 3 (grid init, MLE objective); canonical Approach 3 (grid init, LSE reparameterization + log-loss, matching the Chinchilla paper's formulation); VPNLS (L-BFGS-B with analytical gradients)
-    - Sweep over noise levels, budget counts, points-per-curve, and independent noise realizations; report the total number of fits per method and overall
-    - Gaussian noise on loss values; appendix IsoFLOP figure shows what the noisy samples look like at each noise level alongside the true surface and drifting sampling centers
-  - **Figure** (1 × 2, same layout as the parameter recovery comparison): dot-range plot (left) showing geometric mean error with min-max bars, rug ticks, and KDE for each method, pooled across all conditions; max-error heatmap (right) with columns for exponents a and b; methods sorted by worst-case error descending
-  - **Results**:
-    - Approach 2 has consistently poor average accuracy reflecting the structural bias documented in earlier sections
-    - Naive Approach 3 (single random init, no LSE) is worse still, confirming that without careful initialization and parameterization, 5D optimization is unreliable
-    - Canonical Approach 3 (LSE + log-loss, as specified in the Chinchilla paper) with grid initialization is a large improvement; LSE enforces positivity and log-loss stabilizes optimization, but introduces a slight bias under additive Gaussian noise since the objective is misspecified for the noise model
-    - MLE Approach 3 (grid init, original-space MSE) is unbiased for additive noise but in this experiment exhibited larger max errors than canonical Approach 3 or VPNLS
-    - VPNLS is roughly equivalent in typical accuracy to well-configured Approach 3 and produced the smallest max errors in this experiment
-    - Key practical takeaway: grid search initialization and LSE reparameterization are the critical ingredients for stable Approach 3 fits, yet [misfitting] documents that many published studies omit one or both
-    - Appendix boxplot figure breaks results down by noise level, budget count, and points per curve for a granular view
-- **Method Comparison (Data Efficiency)**
-  - Returns to symmetric surface with centered sampling (no structural bias); compares estimator variance
-  - Approach 2's variance is ~8× higher than Approach 3 / VPNLS even under ideal conditions
-  - Figure: bar chart of pooled variance + heatmap by noise level (Experiment 9)
-  - Appendix boxplot figure shows per-noise-level signed error distributions
+### Problems with Direct Surface Fitting
 
----
+- Summary of fitting challenges from [misfitting], a survey of 50+ scaling law papers
+  - Over half do not fully specify their fitting procedure
+  - Most common optimizers are BFGS/L-BFGS; SGD-family noted as sometimes ill-suited for curve fitting
+  - "Unstable" means: sensitivity to initialization, sensitivity to optimizer hyperparameters, convergence to local minima
+  - Common mitigations (grid search over starting points, random init, seeding from published values) do not reliably solve the problem
+  - Loss function choice (Log-Huber, Huber, MSE, MAE) affects parameters unpredictably across datasets
+- Ill-conditioning example: Hessian of 5D RSS on the Asymmetric surface has κ ≈ 3.5×10¹¹; flattest directions are A and B (underdetermined near optimum); 2D landscape after variable projection has κ ≈ 11
 
-## Error Costs: Misallocation at Frontier Scale
+### Variable Projection (VPNLS)
 
-- Overview
-  - Many modern applications of scaling laws are for research purposes like evaluating architectures, datasets, and training strategies at a smaller scale
-  - Resource allocation decisions for small to medium (typically dense) models are typically made with overtraining in mind, rather than being compute-optimal
-    - Approach 3, and variations on it, are far more common in this setting
-  - However, the largest models in many frontier model families are still frequently trained near compute-optimality
-  - In this section, we assess the costs of misallocating token/param ratios at the compute scale of Llama 3 405B (3.8x10^25 FLOPS)
-    - We also do this for Chinchilla and two other multimodal models for which scaling is more asymmetric: SODA [audio_scaling] and Sparse-NMM [nmm_scaling]
-    - We measure this in terms of Deadweight Compute Loss (DCL) defined as the FLOPS needed to reach an optimal allocation from one provided by Approach 2
-      - This is analogous to "deadweight loss" in economics where dataset and model sizes imply a supply-demand tradeoff that only maximize a "Total Surplus", or minimization of validation loss in this context, at compute-optimal allocations
-  - This model is still one of the most compute-intensive open models yet trained as of March 2026 [epochai_open_model_compute]
-      - Add docs/images/epochai_open_model_compute.png to appendix
-- Methods
-  - For Llama 3, our approach to estimating these costs is:
-    - Gather raw IsoFLOP data from Figure 2 of [llama3] following the method of [epochai_chinchilla_replication], in which individual data points are extracted from SVG coordinates
-    - Fit both Approach 2 and several Approach 3 implementations to it
-    - Extrapolate to the target compute scale (3.8x10^25 FLOPS)
-    - Determine how many parameters and tokens *should* have been allocated by comparison to those suggested by Approach 2
-    - Calculate how many FLOPS could have been saved by reaching the same loss with an optimal allocation
-    - Convert this difference in FLOPS assuming 50% MFU [beyond_chinchilla] and $2/H100 hour [olmo3]
-  - For Chinchilla, SODA, and Sparse-NMM, our approach is simpler:
-    - Gather Approach 3 fit statistics published for these models
-    - Simulate IsoFLOP data from these loss surfaces
-    - Fit that data using Approach 2
-    - Compare extrapolations 
-    - We include Llama 3 results for this approach as well
-      - This serves as an indication of the magnitude of Approach 2 biases that we are introducing systematically
-      - Comparing the resulting errors between these Llama 3 results and those from the direct method (fit to real Llama 3 IsoFLOP data), provides an implicit way to measure how problems in the Llama 3 IsoFLOP experiment design degrade the accuracy of Approach 2
-      - These problems in IsoFLOP experiment design for Llama 3 are discussed more in "Real IsoFLOP Curves: Evidence from Published Studies"
-- Figure:
-  - (1x2) subplots:
-    - horizonal bar chart of DCL for each model/dataset/fit (left, 60% width)
-    - heatmap/table of approach 2 / approach 3 token and param counts, loss differences in nats, dollar values for FLOP costs
-    - separate simulated vs real results with a dashed horizontal line in the bar chart
-- Results
-  - Approach 2 errors on Llama 3 extrapolations lead to significant misallocations, ranging from $X to $Y depending on the Approach 3 fit configuration
-  - The difference between the Llama 3 simulated misallocations ($X) and the those computed empirically on real IsoFLOP data ($Y) further substantiate the claim that the biases we are assuming in our simulations are realistic 
-    - The simulations in this case assume the XS (±2×) grid, which is actually impractically small but minimizes Taylor approximation error
-    - The greatest source of error comes from the assumption of a 3x drift in the sampling center, as detailed in previous sections
-  - The simulated results for multimodal models on loss surfaces with far greater asymmetry then demonstrate how this 3x drift compounds to significant misallocations, even though those misallocations are minimal for Llama 3 and Chinchilla
-    - This suggests that real scaling experiments on multimodal data with sampling biases comparable to those in the Llama 3 IsoFLOP sweep may be very significant, possibly far exceeding what our more optimistic simulation here implies
-- Summary
-  - Empirical Llama 3: Approach 2 overestimates D* by 58–75% and underestimates N* by 37–43% at 3.8×10^25 FLOPs, yielding DCL of 6–10% of budget ($1.3–2.2M)
-  - Simulated Llama 3 (b/a ≈ 0.97, near-symmetric): same biases produce only 0.2% DCL ($39K), implying that ~$1–2M of the empirical cost is attributable to Approach 2's poor fit to real isoFLOP data rather than surface asymmetry alone
-  - Asymmetric surfaces amplify errors sharply: SODA (b/a = 1.56) reaches 8% DCL ($1.7M) and Sparse-NMM (b/a = 1.91) reaches 10% DCL ($2.1M) under the same mild 3× drift bias
-  - Multimodal models tend to have more asymmetric loss surfaces (higher b/a), making Approach 2 misallocations potentially much larger than for text-only LLMs; real isoFLOP experiments on such data with sampling biases comparable to Llama 3 may waste considerably more than the $1.7–2.1M our conservative simulations imply
+- For fixed (α, β), the loss is linear in (E, A, B); this is the same shortcut motivating Approach 2 but applied without the parabolic approximation
+- Algorithm: search over (α, β), solve for (E, A, B) via least squares at each candidate; coarse grid seeds a local optimizer; never optimizes the full 5D space
+- Grid search scalability: a 32² grid provides 1,024 candidates with fine 2D resolution vs 4⁵ = 1,024 points spread thinly in 5D; extensions adding linear terms enlarge the inner solve but not the outer grid
+- Analytical gradients via the envelope theorem: switching from NNLS to OLS makes the objective differentiable with closed-form gradients
+- Optimizer choice: L-BFGS-B (analytical gradients, OLS) and Nelder-Mead (gradient-free, NNLS) both achieve machine-precision recovery in the 2D search space
 
+### Method Comparison (Parameter Recovery)
+
+- Six configurations on noise-free data across three surfaces and 20 sampling ranges:
+  - 5D direct (Approach 3): L-BFGS-B with analytical and numerical gradients; grid-seeded from 4⁵ = 1,024 points
+  - 2D variable projection: L-BFGS-B with analytical gradients, L-BFGS-B with numerical gradients, Nelder-Mead, and 256² grid search; grid-seeded from 32² = 1,024 points
+- Figure (1×2): dot-range plot (left) with method callouts; max-error heatmap (right) with columns {E, A, B, α, β}
+- All 2D methods with local optimization recover parameters to machine precision (~1e-7%); 5D methods exhibit larger errors, especially with numerical gradients
+- Dominant pattern is the gap between 2D variable projection (all variants) and 5D direct optimization
+
+### Method Comparison (Exponent Inference)
+
+- Extends to a statistical setting: Gaussian noise, varying noise levels, budget counts, and points per curve; thousands of fits per method
+- Focus shifts to scaling exponents (a, b) for direct comparison with Approach 2; emphasis on worst-case errors
+- Five methods: Approach 2; Naive Approach 3 (random init, MLE); MLE Approach 3 (grid init, MLE); canonical Approach 3 (grid init, LSE + log-loss); VPNLS
+- Figure (1×2): dot-range plot with KDE (left); max-error heatmap (right)
+- Results:
+  - Approach 2 has consistently poor accuracy from structural bias
+  - Naive Approach 3 is worse, confirming that uninitialized 5D optimization is unreliable
+  - Canonical Approach 3 with grid init is a large improvement; LSE and grid init are the critical ingredients
+  - VPNLS is roughly equivalent in typical accuracy to well-configured Approach 3 with the smallest max errors
+
+### Method Comparison (Data Efficiency)
+
+- Symmetric surface with centered sampling (no structural bias); compares estimator variance
+- Approach 2's variance is ~8× higher than Approach 3 / VPNLS even under ideal conditions
+- Figure: bar chart of pooled variance + heatmap by noise level
 
 ---
 
 ## Conclusion
 
-- **Approach 2 biases are structural, not statistical**: the errors documented here exist on noise-free data with perfect experimental conditions; real experiments can only make them worse
-- **Two independent sources compound in practice**: surface asymmetry (α ≠ β) biases intercepts, and off-center sampling biases intercepts or exponents depending on whether the offset is constant or drifting; both act simultaneously in any real experiment
-- **Well-configured Approach 3 works well**: with grid initialization and LSE reparameterization (as specified in the original Chinchilla paper), Approach 3 achieves typical accuracy comparable to VPNLS in our experiments; many published studies omit one or both of these ingredients [misfitting], which likely accounts for much of Approach 3's reputation for instability
-- **VPNLS is non-inferior and structurally simpler**: variable projection separates exponential from linear terms, reducing the nonlinear search to the exponential terms only; this makes dense grid search practical because the grid grows with the number of exponential terms rather than all parameters, enabling finer coverage to avoid local optima than is feasible in a joint 5D search
-- **VPNLS scales naturally to extensions**: analytical extensions to the Chinchilla surface (epochs, data quality, MoE sparsity, etc.) add linear terms that increase only the inner solve, not the outer nonlinear search dimension; this provides a more scalable foundation than joint optimization where each new term adds a dimension to the grid
-- **Takeaway for practitioners**: when using Approach 2, be aware that intercept estimates carry a systematic bias that grows with exponent asymmetry and sampling grid width; when fitting surfaces directly, ensure grid initialization and LSE reparameterization are used; VPNLS offers equivalent accuracy with a simpler optimization structure that scales to richer loss surface specifications
+- **Approach 2 biases are structural, not statistical**: errors exist on noise-free data with perfect experimental conditions and persist under realistic noise levels with varying amounts of data
+- **Three sources of error compound in practice**: IsoFLOP sampling grid width, uncentered IsoFLOP sampling, and loss surface asymmetry all bias inference and extrapolations in different ways; published IsoFLOP curves show clear signs of both asymmetry and off-center sampling
+- **Error costs at frontier scale**: at frontier compute scales, these biases translate to a potential 6.5% decrease in training FLOPs ($1.4M) on Llama 3 data and potentially more on multimodal surfaces with greater asymmetry
+- **Well-configured Approach 3 works well**: grid initialization and LSE reparameterization (as specified in the original Chinchilla paper [chinchilla]) achieve typical accuracy comparable to VPNLS; a recent survey [misfitting] suggests these details may be omitted or not reported in some studies
+- **VPNLS is at least as stable and accurate**: variable projection separates exponential from linear terms, reducing the nonlinear search to the exponential terms only; dense grid search is practical because the exponents occupy tight ranges (typically 0 to 1) unlike linear coefficients which span orders of magnitude
+- **VPNLS scales naturally to extensions**: analytical extensions (epochs, data quality, MoE sparsity, etc.) often add linear terms that could be omitted from direct optimization; a simplified reference implementation is possible in ~70 lines of JavaScript with no dependencies
+- **Takeaway for practitioners**: be aware of systematic bias with Approach 2 that grows with asymmetry, sampling offsets, and grid width; ensure grid init and LSE reparameterization when using Approach 3; VPNLS offers equivalent accuracy with simpler optimization that scales to richer formulations
 
 ### Limitations
 
-- Bullet list with bold labels per item
-- **Irreducible loss dominance at large scale**: at sufficiently large compute budgets the Chinchilla surface reaches E asymptotically, making extrapolations irrelevant and all training configurations equally effective; study assumes practitioners are still in a regime where scaling law extrapolations inform model quality
-- **No quantification of downstream cost**: no connection from token extrapolation error → under/over-training → model performance → cost in FLOPs/$; justified because alternatives to Approach 2 follow from theory and simulation and are easy to implement at no extra computational cost
-- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist, including the Kaplan loss model [kaplan_scaling], refined analytical surfaces like Farseer [farseer] and MuPT [mupt], and agent-discovered functional forms [sld_agent]
-- **Qualitative characterization of published study errors**: likely errors in published studies are not quantified; the qualitative characterization is compelling but difficult to quantify because real pathologies don't follow the convenient theoretical model used in simulations
-- TODO: add limitation for ignoring scaling laws about downstream evals
+- **Irreducible loss dominance at large scale**: at sufficiently large compute budgets, extrapolations become irrelevant as the surface approaches E asymptotically; assumes practitioners are in a regime where scaling law extrapolations still inform model quality
+- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist including Kaplan [kaplan_scaling], Farseer [farseer], MuPT [mupt], and agent-discovered forms [sld_agent]
+- **Qualitative characterization of published study errors**: likely errors are not quantified; real pathologies don't follow the convenient theoretical model used in simulations
 
 ---
 
 ## Appendix
 
-### A. Detailed Method Comparison
+### A. VPNLS Implementation Validation
 
-- Full per-parameter, per-surface, per-sampling-range error breakdown from Experiment 5's method comparison (see `specs/experiments.md`, Experiment 5 > Visualization > item 3)
-- Figure (3 rows × 5 columns): rows = loss surfaces, columns = parameters (E, A, B, α, β); each panel shows absolute relative error vs sampling range for all six method configurations; baseline (no bias) only
+- Validates VPNLS against Apple's ml-scalefit [optimal_data_mixtures] on the Chinchilla dataset (217 points, C < 10²¹)
+- Compares fitted parameters across VPNLS, Approach 3 variants (LSE with and without log-loss), and ml-scalefit configurations (MSE, Huber)
+- MSE configuration matches VPNLS to three decimal places; divergence only under log-scaled loss
 
-### B. Combined Extrapolation Error by Compute Budget
+### B. IsoFLOP Quality Control Pipeline
 
-- Detailed view of D* extrapolation error as a function of compute budget, from Experiment 4
-- Figure (3 rows × 3 columns): rows = sampling ranges (narrow ±2×, medium ±16×, wide ±100×), columns = loss surfaces (symmetric, Chinchilla, Asymmetric); each panel shows relative D* error vs extrapolation compute budget (10²²–10²⁵ FLOPs) with one curve per bias configuration (baseline, two drift rates, two constant offsets)
-- Shows how drift-based biases produce errors that grow with extrapolation distance while surface asymmetry and constant offsets produce flat or slowly varying errors; also reveals how these patterns change across sampling ranges and bias magnitudes
+- 8-step QC pipeline applied to published IsoFLOP data: deduplication, minimum curve size, curvature checks, spline-based outlier detection, progressive filtering
+- Before/after visualizations for six published experiments
 
 ### C. IsoFLOP Samples with Noise
 
-- Visualizes the noisy IsoFLOP data used in the exponent inference comparison
-- Figure (2 rows × n columns): rows = L vs N and L vs D; columns = noise levels; each panel shows scatter points (noisy) with noiseless reference curves, true optima, and drifting sampling centers
-- Gives the reader an intuitive sense of the signal-to-noise ratio at each noise level and how the drifting sampling centers shift relative to the true optima across compute budgets
+- Figure (2 rows × n columns): rows = L vs N and L vs D; columns = noise levels
+- Shows noisy scatter points with noiseless reference curves, true optima, and drifting sampling centers
 
-### D. Exponent Inference Error Breakdown
+### D. Detailed Method Comparison
 
-- Detailed boxplots from the exponent inference comparison, broken down by noise level, number of compute budgets, and points per IsoFLOP curve
-- Shows 4 of 5 methods (excludes Naive Approach 3, which serves only as a negative control in the main figure)
-- Figure (n_budgets rows × 4 columns): columns group by noise level (lowest, highest) and exponent (a, b); each panel shows per-method boxplots at each points-per-curve setting
-- Reveals where the Approach 3 variants' sporadic large errors occur and shows that they do not concentrate in any single experimental condition
+- Full per-parameter, per-surface, per-sampling-range error breakdown from parameter recovery
+- Figure (3 rows × 5 columns): rows = surfaces, columns = parameters; absolute relative error vs sampling range for all six configurations
+
+### E. Combined Extrapolation Error by Compute Budget
+
+- D* extrapolation error as a function of compute budget across sampling ranges, surfaces, and bias configurations
+- Figure (3×3): rows = sampling ranges, columns = surfaces; one curve per bias configuration
+- Shows drift-based biases growing with extrapolation distance vs flat/slowly varying asymmetry errors
+
+### F. Exponent Inference Error Breakdown
+
+- Boxplots broken down by noise level, budget count, and points per curve
+- Shows 4 of 5 methods (excludes Naive Approach 3)
+- Figure (n_budgets rows × 4 columns): columns = noise level × exponent; per-method boxplots at each points-per-curve setting
+
+### G. Data Efficiency Error Breakdown
+
+- Per-noise-level signed error distributions for the data efficiency comparison
+
+### H. Published Scaling Exponents
+
+- Table of scaling exponents from published studies spanning language models, multimodal models, code, scientific domains, and other modalities
+- Provides context for the range of asymmetry ratios observed in practice
+
+### I. Progressive Filtering for Chinchilla
+
+- Effect of progressively applying QC filters to the original Chinchilla IsoFLOP data
+- Shows how each step changes the fitted surface parameters
+
+### J. Residual Distributions by Budget
+
+- Residual distributions from real IsoFLOP experiments grouped by compute budget
+- Assesses whether residual patterns vary systematically across budgets
+
+### K. Residual Variance Summary
+
+- Summary statistics of residual variance across experiments and budgets
+- Supports the uniform noise model used in simulations
