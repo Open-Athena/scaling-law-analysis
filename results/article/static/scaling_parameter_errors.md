@@ -101,7 +101,7 @@ Fitting $\log_{10}(\hat{N}^\ast)$ vs $\log_{10}(C)$ across multiple compute budg
 
 **Main Result:**
 
-- **Exponent error = 0** (exactly, for any α, β, W, n)
+- **Exponent error** = 0 (exactly, for any α, β, W, n)
 - **Intercept error =** $10^{\delta w(\alpha, \beta, W, n)} - 1$
 
 ## 7. Summary
@@ -115,4 +115,4 @@ Key properties:
 - $\delta w = 0$ when $\alpha = \beta$ (symmetric loss)
 - $\delta w$ grows with $|\alpha - \beta|$ (asymmetry)
 - $\delta w$ grows with $W$ (wider sampling range)
-- $\delta w$ is **independent of C** → exponent is exactly preserved
+- $\delta w$ is independent of C → exponent is preserved
