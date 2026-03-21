@@ -1,6 +1,30 @@
 """Shared generic utilities for the scaling_law_analysis package."""
 
+from __future__ import annotations
+
+from pathlib import Path
+from typing import TYPE_CHECKING
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from matplotlib.figure import Figure
+
+
+def save_figure(
+    fig: Figure,
+    path: Path | str,
+    *,
+    dpi: int = 150,
+    bbox_inches: str = "tight",
+    facecolor: str = "white",
+) -> None:
+    """Save a matplotlib figure as both PNG and PDF."""
+    path = Path(path)
+    fig.savefig(path, dpi=dpi, bbox_inches=bbox_inches, facecolor=facecolor)
+    pdf_path = path.with_suffix(".pdf")
+    fig.savefig(pdf_path, bbox_inches=bbox_inches, facecolor=facecolor)
+    print(f"Saved: {path} + {pdf_path.name}")
 
 
 def check_design_matrix(

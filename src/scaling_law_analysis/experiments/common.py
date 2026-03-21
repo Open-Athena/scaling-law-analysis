@@ -15,6 +15,7 @@ from scaling_law_analysis.chinchilla import (
     isoflop_sample,
     compute_center_offset,
 )
+from scaling_law_analysis.common import save_figure
 from scaling_law_analysis.config import prepare_output_dir
 
 # =============================================================================

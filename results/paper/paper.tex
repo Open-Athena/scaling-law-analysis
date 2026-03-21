@@ -286,7 +286,7 @@ H100-hour~\citep{olmo3}.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/compute_allocation_errors.png}
+    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/compute_allocation_errors.pdf}
     \caption{Approach~2 misallocation costs extrapolated to
     $3.8\times10^{25}$~FLOPs. Left: Deadweight Compute Loss (DCL) as a
     percentage of budget; dollar cost ranges for empirical rows are 90\%
@@ -338,7 +338,7 @@ misallocations can waste a non-trivial fraction of a large training budget.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/progressive_filter_llama3_a3.png}
+    \includegraphics[width=\textwidth]{../article/figures/compute_allocation_errors/progressive_filter_llama3_a3.pdf}
     \caption{Effect of progressive quality control filtering on Approach~2
     Deadweight Compute Loss, measured against an Approach~3 surface fit to
     unfiltered Llama~3 data. Each row cumulatively applies one QC stage.
@@ -379,7 +379,7 @@ budgets and 15 points per IsoFLOP curve, unless stated otherwise.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/happy_path/happy_path.png}
+    \includegraphics[width=\textwidth]{../article/figures/happy_path/happy_path.pdf}
     \caption{Approach~2 applied to a symmetric loss surface. Left: IsoFLOP
     curves with fitted parabolas. True ($\times$) and inferred ($+$) optima are
     indistinguishable. Right: Power-law fit recovers the exact scaling
@@ -436,7 +436,7 @@ direction, that drives most of the biases studied here.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/asymmetric/asymmetric.png}
+    \includegraphics[width=\textwidth]{../article/figures/asymmetric/asymmetric.pdf}
     \caption{Approach~2 on asymmetric loss surfaces. Note the visible gap
     between true (dashed) and inferred (solid) power-law lines in the
     Asymmetric case. The exponents match perfectly, but the intercepts differ.}
@@ -581,7 +581,7 @@ used in all single-grid analyses in the preceding sections.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/extrapolation_error/extrapolation_error.png}
+    \includegraphics[width=\textwidth]{../article/figures/extrapolation_error/extrapolation_error.pdf}
     \caption{Relative error in compute-optimal token prediction when
     extrapolating from the training range ($10^{17}$--$10^{21}$ FLOPs) to
     $10^{24}$ FLOPs. Negative values indicate underestimation: the inferred
@@ -641,7 +641,7 @@ does not change the slope), so the scaling exponent is preserved while the inter
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/off_center_constant_bias/off_center_constant_bias.png}
+    \includegraphics[width=\textwidth]{../article/figures/off_center_constant_bias/off_center_constant_bias.pdf}
     \caption{Effect of a constant $3\times$ offset in sampling centers on the
     symmetric surface. Top left: IsoFLOP curves at the Large grid ($\pm
     8\times$), with black diamonds marking the (off-center) sampling center, red
@@ -684,7 +684,7 @@ compute-independent (constant bias) and compute-dependent offsets (drift bias).
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/off_center_drifting_bias/off_center_drifting_bias.png}
+    \includegraphics[width=\textwidth]{../article/figures/off_center_drifting_bias/off_center_drifting_bias.pdf}
     \caption{Effect of a linear drift in sampling centers (centered at true
     optimum for lowest budget, drifting to $3\times$ at highest budget) on the
     symmetric surface. Unlike the constant bias case, the exponent error (bottom
@@ -752,7 +752,7 @@ all four grid widths.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/compounding_errors/compounding_errors.png}
+    \includegraphics[width=\textwidth]{../article/figures/compounding_errors/compounding_errors.pdf}
     \caption{Relative error in $D^*$ at $10^{24}$ FLOPs with off-center
     sampling on all three loss surfaces. Left: constant $3\times$ center offset
     at every budget. Right: linear drift to $3\times$ at the highest compute
@@ -976,7 +976,7 @@ geometry rather than an initialization advantage.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/parameter_recovery/parameter_recovery.png}
+    \includegraphics[width=\textwidth]{../article/figures/parameter_recovery/parameter_recovery.pdf}
     \caption{Comparison of six fitting methods on noise-free synthetic data
     across three loss surfaces and 20 sampling ranges (60 fits total per
     method). Left: geometric mean of $|\text{relative error}|$ (\%) pooled
@@ -1048,7 +1048,7 @@ experimental conditions.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/exponent_inference/exponent_inference.png}
+    \includegraphics[width=\textwidth]{../article/figures/exponent_inference/exponent_inference.pdf}
     \caption{Comparison of five fitting methods on noisy synthetic data, pooled
     across three noise levels, three budget counts, four points-per-curve
     settings, and 256 noise realizations (9{,}216 fits per method). Left:
@@ -1108,7 +1108,7 @@ exponents with roughly $8\times$ higher variance than Approach~3 or VPNLS.
 
 \begin{figure}[ht]
     \centering
-    \includegraphics[width=\textwidth]{../article/figures/data_efficiency/data_efficiency.png}
+    \includegraphics[width=\textwidth]{../article/figures/data_efficiency/data_efficiency.pdf}
     \caption{Estimator variance for the compute-optimal exponent
     $b = \alpha/(\alpha+\beta)$ on a symmetric surface
     ($\alpha = \beta = 0.31$, $A = B = 400$, $E = 1.69$, true $b = 0.5$) with
@@ -1303,7 +1303,7 @@ The IsoFLOP quality control pipeline applies these steps in this order:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/isoflops_ap3_log_loss_adj.png}
+    \includegraphics[width=\textwidth]{../article/appendix/isoflops_ap3_log_loss_adj.pdf}
     \caption{IsoFLOP curves for six experiments spanning different datasets
     and model families. Clean points (circles) and outlier points (markers
     by reason) are shown alongside parabolic fits (dashed) and Approach~3
@@ -1318,7 +1318,7 @@ The IsoFLOP quality control pipeline applies these steps in this order:
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.png}
+    \includegraphics[width=\textwidth]{../article/appendix/isoflop_curves_noisy.pdf}
     \caption{Noisy IsoFLOP samples used in the exponent inference comparison
     (Figure~\ref{fig:exponent_inference}). Columns correspond to noise levels
     ($\sigma = 0.05, 0.1, 0.2$); rows show loss versus $\log_{10}(N)$ (top)
@@ -1339,7 +1339,7 @@ six method configurations.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.png}
+    \includegraphics[width=\textwidth]{../article/appendix/parameter_recovery_detailed.pdf}
     \caption{Per-parameter recovery error for six fitting methods across three
     loss surfaces and 20 sampling ranges (baseline, no bias). Each panel shows
     absolute relative error (\%) on a log scale versus sampling range, with one
@@ -1358,7 +1358,7 @@ ranges, loss surfaces, and bias configurations.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.png}
+    \includegraphics[width=\textwidth]{../article/appendix/combined_extrapolation_error.pdf}
     \caption{Relative error in compute-optimal token count $D^*$ when
     extrapolating from the fitting range ($10^{17}$--$10^{21}$ FLOPs) to higher
     compute budgets ($10^{22}$--$10^{25}$ FLOPs), with asymmetry and sampling
@@ -1385,7 +1385,7 @@ ranges, loss surfaces, and bias configurations.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.png}
+    \includegraphics[width=\textwidth]{../article/appendix/exponent_inference_errors.pdf}
     \caption{Per-condition breakdown of exponent inference errors from
     Figure~\ref{fig:exponent_inference}, showing 4 of 5 methods (excludes
     Naive Approach~3, which serves only as a negative control in the main
@@ -1403,7 +1403,7 @@ ranges, loss surfaces, and bias configurations.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.png}
+    \includegraphics[width=\textwidth]{../article/appendix/data_efficiency_detailed.pdf}
     \caption{Per-noise-level breakdown of signed exponent errors from
     Figure~\ref{fig:data_efficiency}. Boxplots show the distribution of
     $\hat{b} - b_{\mathrm{true}}$ on a symlog scale for each method at each
@@ -1528,7 +1528,7 @@ methods.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/progressive_filter_chinchilla_a3.png}
+    \includegraphics[width=\textwidth]{../article/appendix/progressive_filter_chinchilla_a3.pdf}
     \caption{Progressive quality control filtering on Chinchilla data,
     analogous to Figure~\ref{fig:progressive-filter} for Llama~3. DCL is
     measured against an Approach~3 surface fit to unfiltered data and
@@ -1542,7 +1542,7 @@ methods.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/residuals_ap3_log_loss_adj.png}
+    \includegraphics[width=\textwidth]{../article/appendix/residuals_ap3_log_loss_adj.pdf}
     \caption{Per-budget residual distributions after Approach~3 fitting with
     per-budget FLOP factor adjustment, across six experiments. Each row shows
     the residuals for one compute budget as a layered rug plot, boxplot, and
@@ -1556,7 +1556,7 @@ methods.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=\textwidth]{../article/appendix/residuals_summary.png}
+    \includegraphics[width=\textwidth]{../article/appendix/residuals_summary.pdf}
     \caption{Per-budget residual standard deviation (left) and summary
     statistics (right) for six experiments. Kruskal-Wallis tests whether
     residual locations differ across budgets. Levene tests whether residual

@@ -14,6 +14,7 @@ from scaling_law_analysis.experiments.common import (
     SimulationConfig,
     EXP2_CONFIGS,
     prepare_output_dir,
+    save_figure,
     COMPUTE_BUDGETS,
     LOG_RANGES,
     N_POINTS,
@@ -161,8 +162,7 @@ def main():
 
         # Save individual figure
         fig_path = output_dir / f"{sim_config.name}.png"
-        fig.savefig(fig_path, dpi=150, bbox_inches="tight", facecolor="white")
-        print(f"  Saved: {fig_path}")
+        save_figure(fig, fig_path)
         plt.close(fig)
 
     # Create and save combined error analysis figure
@@ -170,8 +170,7 @@ def main():
     print("Generating combined error analysis figure...")
     combined_fig = create_combined_figure(all_results)
     combined_path = output_dir / "combined_errors.png"
-    combined_fig.savefig(combined_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {combined_path}")
+    save_figure(combined_fig, combined_path)
     plt.close(combined_fig)
 
     # Summary table

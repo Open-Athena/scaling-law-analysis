@@ -34,6 +34,7 @@ from scaling_law_analysis.experiments.common import (
     SODA_SURFACE,
     SPARSE_NMM_SURFACE,
     prepare_output_dir,
+    save_figure,
 )
 from scaling_law_analysis.experiments.exp10_compounding_errors import (
     GRID_WIDTHS,
@@ -575,9 +576,8 @@ def plot_progressive_filter(
             f"{title}\n(Extrapolated to {eval_latex} FLOPs)",
             fontsize=12,
         )
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 def _flops_to_dollars(flops: float) -> float:
@@ -1097,9 +1097,8 @@ def plot_dcl_summary(
         fontsize=12,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 # ── Report ───────────────────────────────────────────────────────────────────

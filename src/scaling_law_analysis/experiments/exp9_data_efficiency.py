@@ -30,7 +30,7 @@ from scaling_law_analysis.chinchilla import (
     fit_vpnls,
     isoflop_sample,
 )
-from scaling_law_analysis.experiments.common import prepare_output_dir
+from scaling_law_analysis.experiments.common import prepare_output_dir, save_figure
 
 # ── Surface ──────────────────────────────────────────────────────────────────
 
@@ -277,9 +277,8 @@ def plot(errors: Errors, output_path: str | Path) -> None:
     ax.grid(True, axis="y", linestyle="--", alpha=0.3)
 
     plt.tight_layout()
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved {output_path}")
 
 
 def plot_summary(errors: Errors, output_path: str | Path) -> None:
@@ -415,9 +414,8 @@ def plot_summary(errors: Errors, output_path: str | Path) -> None:
         fontsize=13,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved {output_path}")
 
 
 # ── Entry point ──────────────────────────────────────────────────────────────

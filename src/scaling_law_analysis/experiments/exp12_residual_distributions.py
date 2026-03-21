@@ -43,7 +43,7 @@ from scaling_law_analysis.data.visualize import (
     REASON_MARKER_MAP,
     setup_style,
 )
-from scaling_law_analysis.experiments.common import prepare_output_dir
+from scaling_law_analysis.experiments.common import prepare_output_dir, save_figure
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -408,9 +408,8 @@ def plot_residual_distributions(
         borderpad=0.4,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 def plot_isoflop_curves(
@@ -653,9 +652,8 @@ def plot_isoflop_curves(
         borderpad=0.4,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 def plot_flop_factors(
@@ -707,9 +705,8 @@ def plot_flop_factors(
     fig.suptitle("Per-Budget FLOP Factor k (C = k·N·D)", fontsize=13)
     fig.tight_layout(rect=(0, 0, 1, 0.99))
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 def plot_residual_std_by_budget(
@@ -953,9 +950,8 @@ def plot_residual_std_by_budget(
     tbl_y0 = plot_pos.y0
     ax_tbl.set_position([tbl_pos.x0, tbl_y0, tbl_pos.width, total_height])
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 # ── Entry point ──────────────────────────────────────────────────────────────

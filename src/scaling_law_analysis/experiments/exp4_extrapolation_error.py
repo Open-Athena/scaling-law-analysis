@@ -19,6 +19,7 @@ from scaling_law_analysis.experiments.common import (
     DISPLAY_LOG_RANGES,
     DISPLAY_LOG_RANGE_NAMES,
     prepare_output_dir,
+    save_figure,
     COMPUTE_BUDGETS,
     EXTRAPOLATION_BUDGETS,
     N_POINTS,
@@ -85,8 +86,7 @@ def main():
         subtitle="Fitting: 10¹⁷-10²¹ FLOPs → Extrapolating to 10²²-10²⁵ FLOPs",
     )
     extrap_path = output_dir / "extrapolation_error.png"
-    extrap_fig.savefig(extrap_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {extrap_path}")
+    save_figure(extrap_fig, extrap_path)
     plt.close(extrap_fig)
 
     # Summary table

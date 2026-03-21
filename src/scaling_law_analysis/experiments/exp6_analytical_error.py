@@ -20,6 +20,7 @@ from scaling_law_analysis.experiments.common import (
     N_POINTS,
     SYMMETRIC_SURFACE,
     prepare_output_dir,
+    save_figure,
     fit_simulated_approach2,
 )
 
@@ -327,8 +328,7 @@ def main():
     fig = create_validation_figure(results)
     output_dir = prepare_output_dir(config.RESULTS_DIR / "experiments" / "exp6")
     output_path = output_dir / "validation_intercept_errors.png"
-    fig.savefig(output_path, dpi=150, bbox_inches="tight")
-    print(f"\nFigure saved to: {output_path}")
+    save_figure(fig, output_path)
 
     print(f"\n{'=' * 60}")
     print(f"OVERALL: {'PASS' if all_passed else 'FAIL'}")

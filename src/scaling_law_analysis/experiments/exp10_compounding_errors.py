@@ -28,6 +28,7 @@ from scaling_law_analysis.experiments.common import (
     SYMMETRIC_SURFACE,
     fit_simulated_approach2,
     prepare_output_dir,
+    save_figure,
 )
 
 # ── Surfaces ─────────────────────────────────────────────────────────────────
@@ -271,9 +272,8 @@ def plot(
     )
     fig.tight_layout()
 
-    fig.savefig(output_path)
+    save_figure(fig, output_path)
     plt.close(fig)
-    print(f"Saved: {output_path}")
 
 
 def save_csv(

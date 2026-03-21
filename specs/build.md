@@ -4,8 +4,8 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 
 ## Full Workflow
 
-1. **Run experiments**: `uv run python -m scaling_law_analysis.experiments.run_all`
-2. **Generate article figures** (outputs to `results/article/`; includes copying appendix figures from experiment results):
+1. **Run experiments**: `uv run python -m scaling_law_analysis.experiments.run_all` — all figures are saved as both PNG and PDF
+2. **Generate article figures** (outputs to `results/article/`; includes copying appendix figures from experiment results; copies both PNG and PDF):
    `uv run python -m scaling_law_analysis.article.figures`
 3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
 4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))
@@ -31,7 +31,7 @@ Reads `results/article/article.html` → writes `results/article/article_standal
 
 ### Paper PDF
 
-Compiles `results/paper/paper.tex` to PDF using [Tectonic](https://tectonic-typst.github.io/tectonic/), a self-contained TeX engine that auto-downloads packages on demand. Figures are referenced from `results/article/figures/` via relative paths, so the article figures step must run first.
+Compiles `results/paper/paper.tex` to PDF using [Tectonic](https://tectonic-typst.github.io/tectonic/), a self-contained TeX engine that auto-downloads packages on demand. The paper references PDF figures from `results/article/figures/` via relative paths (the article HTML uses the PNG versions), so the article figures step must run first.
 
 ```bash
 brew install tectonic  # one-time

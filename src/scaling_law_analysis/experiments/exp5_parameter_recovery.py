@@ -32,6 +32,7 @@ from scaling_law_analysis.experiments.common import (
     DISPLAY_LOG_RANGES,
     DISPLAY_LOG_RANGE_NAMES,
     prepare_output_dir,
+    save_figure,
     COMPUTE_BUDGETS,
     EXTRAPOLATION_BUDGETS,
     LOG_RANGES,
@@ -510,8 +511,7 @@ def main():
     print("Generating parameter errors figure...")
     param_fig = create_param_errors_figure(param_results)
     param_path = output_dir / "surface_param_errors.png"
-    param_fig.savefig(param_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {param_path}")
+    save_figure(param_fig, param_path)
     plt.close(param_fig)
 
     # --- Part 2: Extrapolation Error Analysis (Nelder-Mead) ---
@@ -546,8 +546,7 @@ def main():
         subtitle="Fitting: 10¹⁷-10²¹ FLOPs → Extrapolating to 10²²-10²⁵ FLOPs",
     )
     extrap_path = output_dir / "surface_extrapolation_error.png"
-    extrap_fig.savefig(extrap_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {extrap_path}")
+    save_figure(extrap_fig, extrap_path)
     plt.close(extrap_fig)
 
     # --- Part 3: Method Comparison ---
@@ -561,8 +560,7 @@ def main():
     print("Generating method comparison figure...")
     method_fig = create_method_comparison_figure(method_results)
     method_path = output_dir / "parameter_recovery_detailed.png"
-    method_fig.savefig(method_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {method_path}")
+    save_figure(method_fig, method_path)
     plt.close(method_fig)
 
     csv_path = output_dir / "parameter_recovery_detailed.csv"

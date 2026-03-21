@@ -19,6 +19,7 @@ from scaling_law_analysis.chinchilla import (
     compute_center_offset,
     ParabolaFitResult,
 )
+from scaling_law_analysis.common import save_figure
 from scaling_law_analysis.config import prepare_output_dir
 from scaling_law_analysis.experiments.common import (
     N_POINTS,
@@ -251,9 +252,8 @@ def create_happy_path_figure(output_dir: Path) -> dict:
     # Save
     figure_dir = prepare_output_dir(output_dir / "figures" / "happy_path")
     fig_path = figure_dir / "happy_path.png"
-    fig.savefig(fig_path)
+    save_figure(fig, fig_path)
     plt.close(fig)
-    print(f"Saved: {fig_path}")
 
     # Return comparison data for table (D* only)
     return {
@@ -373,9 +373,8 @@ def create_asymmetric_figure(output_dir: Path) -> dict:
     # Save
     figure_dir = prepare_output_dir(output_dir / "figures" / "asymmetric")
     fig_path = figure_dir / "asymmetric.png"
-    fig.savefig(fig_path)
+    save_figure(fig, fig_path)
     plt.close(fig)
-    print(f"Saved: {fig_path}")
 
     return results
 
@@ -647,9 +646,8 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
     # Save figure
     figure_dir = prepare_output_dir(output_dir / "figures" / "extrapolation_error")
     fig_path = figure_dir / "extrapolation_error.png"
-    fig.savefig(fig_path)
+    save_figure(fig, fig_path)
     plt.close(fig)
-    print(f"Saved: {fig_path}")
 
     # Export raw data to CSV for transparency
     csv_path = figure_dir / "extrapolation_error_data.csv"
@@ -671,8 +669,6 @@ def create_extrapolation_error_figure(output_dir: Path) -> dict:
                     f'"{grid_name}",{log_range},{TRAINING_RANGE},{EVAL_BUDGET:.0e},'
                     f"{true_D:.15e},{inferred_D:.15e},{abs_error:.15e},{rel_error:.15f}\n"
                 )
-    print(f"Saved: {csv_path}")
-
     return results
 
 
@@ -963,9 +959,8 @@ def _create_off_center_bias_figure(
     # Save figure
     figure_dir = prepare_output_dir(output_dir / "figures" / figure_subdir)
     fig_path = figure_dir / fig_filename
-    fig.savefig(fig_path)
+    save_figure(fig, fig_path)
     plt.close(fig)
-    print(f"Saved: {fig_path}")
 
     # Export extrapolation data to CSV
     csv_path = figure_dir / csv_filename
@@ -985,8 +980,6 @@ def _create_off_center_bias_figure(
                 f"{true_D:.15e},{inferred_D:.15e},"
                 f"{abs_error:.15e},{rel_error:.15f}\n"
             )
-    print(f"Saved: {csv_path}")
-
     return {
         "log_ranges": log_ranges,
         "b_errors": b_errors,
@@ -1365,9 +1358,8 @@ def create_method_comparison_figure(output_dir: Path) -> dict:
     # Save figure
     figure_dir = prepare_output_dir(output_dir / "figures" / "parameter_recovery")
     fig_path = figure_dir / "parameter_recovery.png"
-    fig.savefig(fig_path)
+    save_figure(fig, fig_path)
     plt.close(fig)
-    print(f"Saved: {fig_path}")
 
     # --- Export CSV 1: Raw data ---
     raw_csv_path = figure_dir / "parameter_recovery_raw.csv"
@@ -1571,6 +1563,11 @@ def copy_experiment_outputs(output_dir: Path) -> None:
     for src, dst in appendix_copies + main_copies:
         shutil.copy2(src, dst)
         print(f"Copied: {src} → {dst}")
+        if src.suffix == ".png":
+            pdf_src = src.with_suffix(".pdf")
+            if pdf_src.exists():
+                shutil.copy2(pdf_src, dst.with_suffix(".pdf"))
+                print(f"Copied: {pdf_src} → {dst.with_suffix('.pdf')}")
 
 
 if __name__ == "__main__":

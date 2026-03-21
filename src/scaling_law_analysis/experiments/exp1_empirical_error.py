@@ -20,6 +20,7 @@ from scaling_law_analysis.experiments.common import (
     SimulationConfig,
     BALANCED_CONFIG,
     prepare_output_dir,
+    save_figure,
     COMPUTE_BUDGETS,
     LOG_RANGES,
     N_POINTS,
@@ -635,8 +636,7 @@ def main():
 
     # Save figure
     fig_path = output_dir / f"{sim_config.name}.png"
-    fig.savefig(fig_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"\nFigure saved to: {fig_path}")
+    save_figure(fig, fig_path)
 
     plt.close(fig)
 

@@ -21,6 +21,7 @@ from scaling_law_analysis.experiments.common import (
     BIAS_CONFIGS,
     DISPLAY_LOG_RANGES,
     prepare_output_dir,
+    save_figure,
     COMPUTE_BUDGETS,
     LOG_RANGES,
     N_POINTS,
@@ -108,8 +109,7 @@ def run_all_configurations(
                 y=0.995,
             )
             fig_path = output_dir / f"{surface_name}_{bias_name}.png"
-            fig.savefig(fig_path, dpi=150, bbox_inches="tight", facecolor="white")
-            print(f"    Saved: {fig_path}")
+            save_figure(fig, fig_path)
             plt.close(fig)
 
         all_results[surface_name] = surface_results
@@ -320,8 +320,7 @@ def main():
     print("Generating parameter errors figure...")
     param_fig = create_param_errors_figure(all_results)
     param_path = output_dir / "combined_param_errors.png"
-    param_fig.savefig(param_path, dpi=150, bbox_inches="tight", facecolor="white")
-    print(f"Saved: {param_path}")
+    save_figure(param_fig, param_path)
     plt.close(param_fig)
 
     # Create and save optima errors figures (one per loss surface)
@@ -332,8 +331,7 @@ def main():
             surface_name, loss, all_results[surface_name]
         )
         optima_path = output_dir / f"{surface_name}_optima_errors.png"
-        optima_fig.savefig(optima_path, dpi=150, bbox_inches="tight", facecolor="white")
-        print(f"Saved: {optima_path}")
+        save_figure(optima_fig, optima_path)
         plt.close(optima_fig)
 
     # Summary table

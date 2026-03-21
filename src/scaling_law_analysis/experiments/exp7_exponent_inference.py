@@ -47,6 +47,7 @@ from scaling_law_analysis.experiments.common import (
     ASYMMETRIC_CONFIG,
     log_range_to_label,
     prepare_output_dir,
+    save_figure,
 )
 
 
@@ -518,7 +519,7 @@ def create_figure(
         frameon=True,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
 
 
@@ -665,7 +666,7 @@ def create_isoflop_figure(
         fontsize=11,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
 
 
@@ -992,7 +993,7 @@ def create_method_comparison_figure(
         fontsize=13,
     )
 
-    fig.savefig(output_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, output_path)
     plt.close(fig)
 
 
@@ -1176,7 +1177,6 @@ def main():
         center_scale,
         str(isoflop_path),
     )
-    print(f"Saved: {isoflop_path}")
 
     print_summary(
         noise_results,
@@ -1206,7 +1206,6 @@ def main():
         n_repeats,
         str(errors_path),
     )
-    print(f"Saved: {errors_path}")
 
     # Method comparison figure
     comparison_path = output_dir / "exponent_inference.png"
@@ -1216,7 +1215,6 @@ def main():
         n_budgets_range,
         str(comparison_path),
     )
-    print(f"Saved: {comparison_path}")
 
     # Method comparison CSV
     csv_path = output_dir / "exponent_inference.csv"

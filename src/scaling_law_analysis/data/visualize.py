@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 from scipy.interpolate import Akima1DInterpolator
 
+from scaling_law_analysis.common import save_figure
 from scaling_law_analysis.data.schema import OutlierReason
 from scaling_law_analysis.data.transform import display_name, ordered_experiments
 
@@ -175,7 +176,7 @@ def plot_isoflops(
         axes[idx // ncols][idx % ncols].set_visible(False)
 
     fig.tight_layout()
-    fig.savefig(out_path, dpi=150, bbox_inches="tight")
+    save_figure(fig, out_path)
     plt.close(fig)
 
 
@@ -403,6 +404,5 @@ def plot_isoflops_akima(
     )
 
     fig.suptitle("IsoFLOP Curves — Akima", fontsize=13)
-    fig.savefig(out_path, dpi=150, bbox_inches="tight", facecolor="white")
+    save_figure(fig, out_path)
     plt.close(fig)
-    print(f"  wrote {out_path}")
