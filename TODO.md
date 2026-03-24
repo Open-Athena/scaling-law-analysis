@@ -9,6 +9,7 @@
     - Discuss Olmo hybrid assumption of constrained scaling exponents for architecture comparisons
     - Bootstrap for within-budget resampling on Approach 2 only
   - Add https://arxiv.org/abs/2603.03276 as reference on multimodal asymmetry
+  - Add [Gemini Pretraining](https://vladfeinberg.com/assets/2025-04-24-princeton-talk.pdf) notes on MoE data scaling asymmetry as additional need for non-symmetric methods beyond multimodal
   - Make a reference implementation
   - Mention FLOP factor correction and WLS weighting for approach 2 as possible improvements
     - Or at least mention importance of reliance on C=6ND assumption

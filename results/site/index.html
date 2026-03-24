@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Problems with Chinchilla Approach 2: Systematic Biases in IsoFLOP Parabola Fits</title>
+<style>
+  body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 60px 24px;
+    color: #222;
+    line-height: 1.6;
+    background: #fff;
+  }
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 600;
+    text-align: center;
+    margin-bottom: 1.2rem;
+    line-height: 1.3;
+  }
+  .authors {
+    text-align: center;
+    margin-bottom: 0.4rem;
+    font-size: 1.05rem;
+  }
+  .author { white-space: nowrap; }
+  .affiliations {
+    text-align: center;
+    font-size: 0.88rem;
+    color: #555;
+    margin-bottom: 2rem;
+  }
+  .links {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+  }
+  .links a {
+    display: inline-block;
+    margin: 0 12px;
+    padding: 8px 18px;
+    border: 1px solid #333;
+    border-radius: 4px;
+    color: #333;
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .links a:hover {
+    background: #333;
+    color: #fff;
+  }
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+  }
+  .abstract {
+    font-size: 0.95rem;
+    color: #333;
+    text-align: justify;
+  }
+  sup {
+    font-size: 0.75em;
+    margin-left: 1px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Problems with Chinchilla Approach&nbsp;2:<br>Systematic Biases in IsoFLOP Parabola Fits</h1>
+
+<div class="authors">
+  <span class="author">Eric Czech<sup>1</sup></span>,
+  <span class="author">Zhiwei Xu<sup>2</sup></span>,
+  <span class="author">Yael Elmatad<sup>1</sup></span>,
+  <span class="author">Yixin Wang<sup>2</sup></span>,
+  <span class="author">William Held<sup>1</sup></span>
+</div>
+
+<div class="affiliations">
+  <sup>1</sup>Open Athena AI Foundation &nbsp;&nbsp;
+  <sup>2</sup>Department of Statistics, University of Michigan, Ann Arbor
+</div>
+
+<div class="links">
+  <a href="https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf">Paper</a>
+  <a href="article.html">HTML Article</a>
+  <a href="https://github.com/Open-Athena/vpnls">Code</a>
+  <a href="https://docs.google.com/document/d/1EIstsO4CQ1zFuDhwV6D5PuyJxd7JpDkWc2e3UvMPQrQ/edit?usp=sharing">Blog Post</a>
+</div>
+
+<h2>Abstract</h2>
+<p class="abstract">
+Chinchilla Approach&nbsp;2 is among the most widely used methods for fitting neural
+scaling laws. Its parabolic approximation introduces systematic biases in
+compute-optimal allocation estimates, even on noise-free synthetic data. Applied
+to published Llama&nbsp;3 IsoFLOP data at open frontier compute scales, these biases
+imply a parameter underallocation corresponding to 6.5% of the
+3.8&times;10<sup>25</sup> FLOP training budget and $1.4M (90% CI:
+$412K&ndash;$2.9M) in unnecessary compute at 50% H100 MFU. Simulated multimodal
+model misallocations show even greater opportunity costs due to higher loss
+surface asymmetry. Three sources of this error are examined: IsoFLOP sampling
+grid width (Taylor approximation accuracy), uncentered IsoFLOP sampling, and
+loss surface asymmetry (&alpha;&nbsp;&ne;&nbsp;&beta;). Chinchilla Approach&nbsp;3 largely
+eliminates these biases but is often regarded as less data-efficient, numerically
+unstable, prone to local minima, and harder to implement. Each concern is shown
+to be unfounded or addressable, especially when the partially linear structure
+of the objective is exploited via Variable Projection, enabling unbiased
+inference on all five loss surface parameters through a two-dimensional
+optimization that is well-conditioned, analytically differentiable, and amenable
+to dense, or even exhaustive, grid search.
+</p>
+
+</body>
+</html>
