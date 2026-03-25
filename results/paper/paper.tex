@@ -67,7 +67,10 @@ inference on all five loss surface parameters through a two-dimensional
 optimization that is well-conditioned, analytically differentiable, and amenable
 to dense, or even exhaustive, grid search. It may serve as a more convenient
 replacement for Approach~2 or a more scalable alternative for adaptations of
-Approach~3 to richer scaling law formulations.
+Approach~3 to richer scaling law formulations. See
+\url{https://github.com/Open-Athena/vpnls} for details and
+\url{https://openathena.ai/scaling-law-analysis} for other results from this
+study.
 \end{abstract}
 
 \section{Introduction}
@@ -356,7 +359,10 @@ scenarios. Each of these demonstrates one or more estimation biases that can
 compound significantly in extrapolations, as we attempted to show more directly
 in this section.
 
-\section{Symmetric Surfaces: Unbiased Estimation in Ideal Conditions}
+\section{Error Sources: Approach 2 Biases}
+\label{sec:error_sources}
+
+\subsection{Symmetric Surfaces}
 \label{sec:symmetric}
 
 Before examining failure modes, we establish that Approach~2 works perfectly
@@ -406,7 +412,7 @@ conditions that are unrealistic in practice.
     \label{tab:happy_path}
 \end{table}
 
-\section{Asymmetric Surfaces: Intercept and Extrapolation Errors}
+\subsection{Asymmetric Surfaces}
 \label{sec:asymmetric}
 
 We repeat the exact same procedure as before: perfect sampling centers, no
@@ -467,7 +473,7 @@ relative errors in Table~\ref{tab:chinchilla_surface}. Both show how errors
 increase with greater asymmetry and the following section outlines how they
 arise.
 
-\subsection{Underlying Causes}
+\subsubsection{Underlying Causes}
 \label{sec:underlying_causes}
 
 The IsoFLOP loss curve is not a true parabola.
@@ -531,7 +537,7 @@ sampling range increases, 3rd and 4th order terms grow. For symmetric surfaces
 location. For asymmetric surfaces, they do not cancel, shifting the fitted
 vertex away from the true optimum.
 
-\subsection{Error Implications}
+\subsubsection{Error Implications}
 \label{sec:error_implications}
 
 Extrapolation to higher compute budgets requires both exponents and intercepts
@@ -609,7 +615,7 @@ The key observations from Figure~\ref{fig:extrapolation_error} are:
         Chinchilla at each grid width.
 \end{itemize}
 
-\section{Off-Center Sampling: Exponent and Extrapolation Errors}
+\subsection{Off-Center Sampling}
 \label{sec:off_center}
 
 The previous simulation sections assumed perfectly centered sampling. At every compute
@@ -624,7 +630,7 @@ Asymmetry errors arise from the shape of the loss surface
 placed. To isolate this new effect, we use the symmetric surface
 ($\alpha = \beta = 0.31$) again where asymmetry bias is zero by construction.
 
-\subsection{Constant Multiplicative Bias}
+\subsubsection{Constant Multiplicative Bias}
 \label{sec:constant_bias}
 
 The simplest form of off-center sampling is a constant multiplicative offset
@@ -667,7 +673,7 @@ overshoots) and decreases monotonically as the grid widens, reflecting how a
 wider sampling range brings more of the true loss curve's shape into the fit,
 partially compensating for the misplaced center.
 
-\subsection{Drifting Bias}
+\subsubsection{Drifting Bias}
 \label{sec:drifting_bias}
 
 When the offset varies with compute budget, a different failure mode occurs,
@@ -693,7 +699,7 @@ compute-independent (constant bias) and compute-dependent offsets (drift bias).
     \label{fig:drifting_bias}
 \end{figure}
 
-\section{Real IsoFLOP Curves: Evidence from Published Studies}
+\subsection{Real IsoFLOP Curves}
 \label{sec:real_isoflop}
 
 The previous sections used synthetic, noise-free simulations to isolate
@@ -739,7 +745,7 @@ rather than the exception. The ideal conditions of
 Section~\ref{sec:symmetric} (symmetric surface, perfectly centered grids)
 occur rarely, if ever, in practice.
 
-\subsection{Compounding Errors}
+\subsubsection{Compounding Errors}
 \label{sec:compounding}
 
 Given evidence that both surface asymmetry and off-center sampling are present

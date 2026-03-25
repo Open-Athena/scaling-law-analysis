@@ -557,11 +557,40 @@
             <img src="static/isoflop_hero.png" alt="Artistic rendering of IsoFLOP curves">
         </div>
 
+        <!-- Abstract -->
+        <section id="abstract">
+            <h2>Abstract</h2>
+            <p>
+                Chinchilla Approach 2 is among the most widely used methods for fitting neural
+                scaling laws. Its parabolic approximation introduces systematic biases in
+                compute-optimal allocation estimates, even on noise-free synthetic data. Applied
+                to published Llama 3 IsoFLOP data at open frontier compute scales, these biases
+                imply a parameter underallocation corresponding to 6.5% of the
+                3.8&times;10<sup>25</sup> FLOP training budget and $1.4M (90% CI:
+                $412K&ndash;$2.9M) in unnecessary compute at 50% H100 MFU. Simulated multimodal
+                model misallocations show even greater opportunity costs due to higher loss
+                surface asymmetry. Three sources of this error are examined: IsoFLOP sampling
+                grid width (Taylor approximation accuracy), uncentered IsoFLOP sampling, and
+                loss surface asymmetry (&alpha; &ne; &beta;). Chinchilla Approach 3 largely
+                eliminates these biases but is often regarded as less data-efficient, numerically
+                unstable, prone to local minima, and harder to implement. Each concern is shown
+                to be unfounded or addressable, especially when the partially linear structure
+                of the objective is exploited via Variable Projection, enabling unbiased
+                inference on all five loss surface parameters through a two-dimensional
+                optimization that is well-conditioned, analytically differentiable, and amenable
+                to dense, or even exhaustive, grid search. It may serve as a more convenient
+                replacement for Approach 2 or a more scalable alternative for adaptations of
+                Approach 3 to richer scaling law formulations. See
+                <a href="https://github.com/Open-Athena/vpnls">github.com/Open-Athena/vpnls</a> for details and
+                <a href="https://openathena.ai/scaling-law-analysis">openathena.ai/scaling-law-analysis</a> for other results from this study.
+            </p>
+        </section>
+
         <!-- Table of Contents -->
         <nav class="toc">
             <h2>Contents</h2>
             <ol>
-                <li><a href="#motivation">Motivation</a></li>
+                <li><a href="#introduction">Introduction</a></li>
                 <li>
                     <a href="#approaches">Preliminaries: Loss Surface, Notation, and Fitting Methods</a>
                     <ol>
@@ -572,25 +601,30 @@
                 <li>
                     <a href="#error-costs">Error Costs: Misallocation at Scale</a>
                 </li>
-                <li><a href="#symmetric-surfaces">Symmetric Surfaces: Unbiased Estimation in Ideal Conditions</a></li>
                 <li>
-                    <a href="#asymmetric">Asymmetric Surfaces: Intercept and Extrapolation Errors</a>
+                    <a href="#error-sources">Error Sources: Approach 2 Biases</a>
                     <ol>
-                        <li><a href="#underlying-causes">Underlying Causes</a></li>
-                        <li><a href="#error-implications">Error Implications</a></li>
-                    </ol>
-                </li>
-                <li>
-                    <a href="#off-center">Off-Center Sampling: Exponent and Extrapolation Errors</a>
-                    <ol>
-                        <li><a href="#constant-bias">Constant Multiplicative Bias</a></li>
-                        <li><a href="#drifting-bias">Drifting Bias</a></li>
-                    </ol>
-                </li>
-                <li>
-                    <a href="#real-isoflop-curves">Real IsoFLOP Curves: Evidence from Published Studies</a>
-                    <ol>
-                        <li><a href="#putting-it-together">Compounding Errors</a></li>
+                        <li><a href="#symmetric-surfaces">Symmetric Surfaces</a></li>
+                        <li>
+                            <a href="#asymmetric">Asymmetric Surfaces</a>
+                            <ol>
+                                <li><a href="#underlying-causes">Underlying Causes</a></li>
+                                <li><a href="#error-implications">Error Implications</a></li>
+                            </ol>
+                        </li>
+                        <li>
+                            <a href="#off-center">Off-Center Sampling</a>
+                            <ol>
+                                <li><a href="#constant-bias">Constant Multiplicative Bias</a></li>
+                                <li><a href="#drifting-bias">Drifting Bias</a></li>
+                            </ol>
+                        </li>
+                        <li>
+                            <a href="#real-isoflop-curves">Real IsoFLOP Curves</a>
+                            <ol>
+                                <li><a href="#putting-it-together">Compounding Errors</a></li>
+                            </ol>
+                        </li>
                     </ol>
                 </li>
                 <li>
@@ -628,9 +662,9 @@
             </ol>
         </nav>
 
-        <!-- Section: Motivation -->
-        <section id="motivation">
-            <h2>Motivation</h2>
+        <!-- Section: Introduction -->
+        <section id="introduction">
+            <h2>Introduction</h2>
 
             <p>
                 Chinchilla Approach 2 is arguably the most widely adopted method for fitting
@@ -1002,9 +1036,13 @@
 
         </section>
 
-        <!-- Section 3: Symmetric Surfaces -->
+        <!-- Section 3: Error Sources -->
+        <section id="error-sources">
+            <h2>Error Sources: Approach 2 Biases</h2>
+
+        <!-- Section 3.1: Symmetric Surfaces -->
         <section id="symmetric-surfaces">
-            <h2>Symmetric Surfaces: Unbiased Estimation in Ideal Conditions</h2>
+            <h3>Symmetric Surfaces</h3>
 
             <p>
                 Before examining failure modes, we establish that Approach 2 works
@@ -1080,9 +1118,9 @@
             </p>
         </section>
 
-        <!-- Section 4: Asymmetric Surfaces -->
+        <!-- Section 3.2: Asymmetric Surfaces -->
         <section id="asymmetric">
-            <h2>Asymmetric Surfaces: Intercept and Extrapolation Errors</h2>
+            <h3>Asymmetric Surfaces</h3>
 
             <p>
                 We repeat the exact same procedure as before: perfect sampling centers, no noise,
@@ -1172,7 +1210,7 @@
                 following section outlines how they arise.
             </p>
 
-            <h3 id="underlying-causes">Underlying Causes</h3>
+            <h4 id="underlying-causes">Underlying Causes</h4>
 
             <p>
                 The IsoFLOP loss curve is not a true parabola.
@@ -1253,7 +1291,7 @@
                 surfaces, they don't cancel, shifting the fitted vertex away from the true optimum.
             </p>
 
-            <h3 id="error-implications">Error Implications</h3>
+            <h4 id="error-implications">Error Implications</h4>
 
             <p>
                 Extrapolation to higher compute budgets requires both exponents and intercepts to be correct.
@@ -1522,9 +1560,9 @@
 
         </section>
 
-        <!-- Section 5: Off-Center Sampling -->
+        <!-- Section 3.3: Off-Center Sampling -->
         <section id="off-center">
-            <h2>Off-Center Sampling: Exponent and Extrapolation Errors</h2>
+            <h3>Off-Center Sampling</h3>
 
             <p>
                 The previous simulation sections assumed perfectly centered sampling. At every compute budget,
@@ -1541,7 +1579,7 @@
                 zero by construction.
             </p>
 
-            <h3 id="constant-bias">Constant Multiplicative Bias</h3>
+            <h4 id="constant-bias">Constant Multiplicative Bias</h4>
 
             <p>
                 The simplest form of off-center sampling is a constant multiplicative offset
@@ -1591,7 +1629,7 @@
                 compensating for the misplaced center.
             </p>
 
-            <h3 id="drifting-bias">Drifting Bias</h3>
+            <h4 id="drifting-bias">Drifting Bias</h4>
 
             <p>
                 When the offset varies with compute budget, a different failure mode occurs,
@@ -1623,9 +1661,9 @@
 
         </section>
 
-        <!-- Section 6: Real IsoFLOP Curves -->
+        <!-- Section 3.4: Real IsoFLOP Curves -->
         <section id="real-isoflop-curves">
-            <h2>Real IsoFLOP Curves: Evidence from Published Studies</h2>
+            <h3>Real IsoFLOP Curves</h3>
 
             <p>
                 The previous sections used synthetic, noise-free simulations to isolate Approach 2's
@@ -1681,7 +1719,7 @@
                 occur rarely, if ever, in practice.
             </p>
 
-            <h3 id="putting-it-together">Compounding Errors</h3>
+            <h4 id="putting-it-together">Compounding Errors</h4>
 
             <p>
                 Given evidence that both surface asymmetry and off-center sampling are present
@@ -1795,7 +1833,9 @@
 
         </section>
 
-        <!-- Section 7: Robust Fits -->
+        </section>
+
+        <!-- Section 4: Robust Fits -->
         <section id="robust-fits">
             <h2>Robust Fits: Unbiased Estimation with Linear Separation</h2>
 
