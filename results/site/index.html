@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Problems with Chinchilla Approach 2: Systematic Biases in IsoFLOP Parabola Fits</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
 <style>
   body {
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
@@ -34,23 +36,30 @@
     margin-bottom: 2rem;
   }
   .links {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
     margin-bottom: 2.5rem;
-    font-size: 1rem;
   }
   .links a {
-    display: inline-block;
-    margin: 0 12px;
-    padding: 8px 18px;
-    border: 1px solid #333;
-    border-radius: 4px;
-    color: #333;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: #363636;
+    color: #fff;
+    border: none;
+    border-radius: 9999px;
     text-decoration: none;
-    transition: background 0.15s, color 0.15s;
+    font-size: 0.92rem;
+    transition: background 0.15s;
   }
   .links a:hover {
-    background: #333;
-    color: #fff;
+    background: #4a4a4a;
+  }
+  .links a .icon {
+    font-size: 1.05em;
   }
   h2 {
     font-size: 1.15rem;
@@ -61,6 +70,27 @@
     font-size: 0.95rem;
     color: #333;
     text-align: justify;
+  }
+  .tldr {
+    background: #f0f4ff;
+    border-left: 4px solid hsl(204, 86%, 53%);
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin-bottom: 2.5rem;
+    font-size: 0.95rem;
+    color: #333;
+    line-height: 1.6;
+  }
+  .tldr-label {
+    display: inline-block;
+    background: hsl(204, 86%, 53%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
   }
   sup {
     font-size: 0.75em;
@@ -86,10 +116,34 @@
 </div>
 
 <div class="links">
-  <a href="https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf">Paper</a>
-  <a href="article.html">HTML Article</a>
-  <a href="https://github.com/Open-Athena/vpnls">Code</a>
-  <a href="https://docs.google.com/document/d/1EIstsO4CQ1zFuDhwV6D5PuyJxd7JpDkWc2e3UvMPQrQ/edit?usp=sharing">Blog Post</a>
+  <a target="_blank" href="https://github.com/Open-Athena/scaling-law-analysis/blob/main/results/paper/paper.pdf">
+    <span class="icon"><i class="ai ai-arxiv"></i></span>
+    <span>Paper</span>
+  </a>
+  <a href="article.html">
+    <span class="icon"><i class="fas fa-newspaper"></i></span>
+    <span>HTML Article</span>
+  </a>
+  <a target="_blank" href="https://github.com/Open-Athena/vpnls">
+    <span class="icon"><i class="fab fa-github"></i></span>
+    <span>Code</span>
+  </a>
+  <a target="_blank" href="https://docs.google.com/document/d/1EIstsO4CQ1zFuDhwV6D5PuyJxd7JpDkWc2e3UvMPQrQ/edit?usp=sharing">
+    <span class="icon"><i class="fas fa-blog"></i></span>
+    <span>Blog Post</span>
+  </a>
+  <a target="_blank" href="https://claude.ai/public/artifacts/a02d86a8-33f8-4881-9379-b99eb7d2043a">
+    <span class="icon"><i class="fas fa-play-circle"></i></span>
+    <span>Demo</span>
+  </a>
+</div>
+
+<div class="tldr">
+  <span class="tldr-label">TL;DR</span><br>
+  Fitting compute-optimal scaling laws with parabolas (Chinchilla Approach&nbsp;2) is simple but
+  dangerous. Fitting a loss surface directly (Chinchilla Approach&nbsp;3) is more accurate and
+  data-efficient, but complex by comparison and prone to local minima. Variable Projection
+  (VPNLS) implements Approach&nbsp;3 without these issues.
 </div>
 
 <h2>Abstract</h2>
