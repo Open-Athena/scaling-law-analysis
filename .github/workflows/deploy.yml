@@ -15,6 +15,7 @@ jobs:
         run: |
           mkdir -p _site
           cp results/site/index.html _site/index.html
+          cp results/post/post.html _site/post.html
           cp results/article/article_standalone.html _site/article.html
 
       - name: Deploy to gh-pages
