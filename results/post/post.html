@@ -59,7 +59,7 @@ MathJax = {
     font-size: 2.25rem;
     font-weight: 600;
     line-height: 1.2;
-    margin-bottom: 2.5rem;
+    margin-bottom: 0.5rem;
     color: var(--text-primary);
     letter-spacing: -0.02em;
   }
@@ -67,7 +67,7 @@ MathJax = {
   h2 {
     font-size: 1.5rem;
     font-weight: 600;
-    margin: 3rem 0 1.25rem;
+    margin: 2.5rem 0 1.25rem;
     color: var(--text-primary);
     letter-spacing: -0.01em;
   }
@@ -140,17 +140,17 @@ MathJax = {
 
 <h1>Problems with Chinchilla Approach 2</h1>
 
-<p style="color: var(--text-secondary); margin-bottom: 2rem;">Eric Czech · March 24, 2026 (Final venue TBD)</p>
+<p style="color: var(--text-secondary); margin-bottom: 0;">Eric Czech · March 24, 2026 (Final venue TBD)</p>
 
-<h2>Introduction</h2>
+<h2>Motivation</h2>
 
-<p>I'll start off by saying that I have no idea how to define exactly what neural scaling laws are now, which is probably not a great start for a post that is critical of a well-established method for finding them. I can at least say that a good definition likely lies somewhere between where they appear to be going: "economic outputs as a function of economic inputs" and where they started out: "validation cross-entropy loss as a function of parameter count".</p>
+<p>I'll start off by saying that I have no idea how to define exactly what neural scaling laws are now, which is probably not a great start for a post that is critical of a well-established method for finding them. I can at least say that a good definition sits somewhere between where they appear to be going: "economic outputs as a function of economic inputs" and where they started out: "validation loss as a function of dataset size" (i.e. learning curves).</p>
 
-<p>At that first extreme, you can imagine that "economic outputs" (e.g. human labor equivalents) are never going to be so predictable from "economic inputs" (e.g. hero runs at fractional GDP cost) that they warrant being called a "law". At the other extreme, it's much easier to understand how more direct relationships between capability like validation loss, eval performance, task time-horizon, etc. and resources like model size, data volume, FLOPs, etc. might be quantifiable with higher accuracy.</p>
+<p>At that first extreme, you may agree with me that "economic outputs" (e.g. human labor equivalents) are unlikely to be so predictable from "economic inputs" (e.g. hero runs at fractional GDP cost) that the relationship between them would be described well as a "law". At the other extreme, it's much easier to believe that more direct relationships between model performance (e.g. validation loss) and resources (e.g. model size, FLOPs, time, etc.) might be measurable with high accuracy and simple methods.</p>
 
-<p>My point is that the evolution of neural scaling laws is no longer easy to characterize. Their implications have expanded along with the difficulties inherent to quantifying them, and both of these motivate a lot of my personal interest in this space. This is ultimately what brought me to looking carefully at how to approach scaling at Open Athena, where we work on a number of problems in materials science, climate and weather, genomics, proteomics and language (via <a href="https://marin.community/">Marin</a>).</p>
+<p>My point is that the evolution of neural scaling laws is complicated and now includes a lot of statistical modeling challenges that didn't exist 4+ years ago. That's about how long ago the original Kaplan and Hoffman scaling laws extended earlier, more informal observations (mostly in computer vision) to formulations that hold up well at scale. A lot has changed since then &ndash; adaptations now span from low-level training details, e.g. precision, sparsity, depth/width tradeoffs, optimizers, overfitting, epochs, etc., to downstream task performance, agentic systems and more abstract measures of intelligence. The implications of scaling laws have expanded along with difficulties in quantifying them, and both of these motivate a lot of my personal interest in this space.</p>
 
-<p>More specifically, our first attempt at developing scaling laws in this kind of multimodal scientific landscape started with DNA. It was not at all clear what kinds of problems might come up when lifting methods from language modeling to quantify these laws, but we found a couple and they eventually made their way into this project: <a href="https://openathena.ai/scaling-law-analysis/">Problems with Chinchilla Approach 2</a>. The rest of this post tries to give some intuition for what problems we found, what implications they have, and how they can be avoided in the future.</p>
+<p>Doing some of that "quantifying" is where I spend a lot of my time at <a href="https://openathena.ai/">Open Athena</a>. We work in scientific domains like materials science, climate modeling, and genomics/proteomics on top of building competitive open language models (via <a href="https://marin.community/">Marin</a>). Bridging language models with scientific foundation models is one goal we have, as is better understanding how to scale thoughtfully. To that end, DNA provides a good starting point: it is about as similar to text as any high-throughput scientific data modality and at least one scaling law study already exists for it (<a href="https://www.science.org/doi/10.1126/science.ado9336">Evo 1</a>). We hit some problems when trying to do this ourselves though and a few of them made their way into this project: <a href="https://openathena.ai/scaling-law-analysis/">Problems with Chinchilla Approach 2</a>. The rest of this post summarizes the issues, implications and potential alternatives described there.</p>
 
 <h2>Problems</h2>
 
@@ -160,7 +160,7 @@ MathJax = {
 $$L(N,D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
 </div>
 
-<p>The math of Approach 2 works by first assuming parabolic approximations to isocontours of the loss surface defined by equal amounts of compute. Compute isn't a parameter of the loss surface itself, but it is used to constrain the relationship between parameter count ($N$) and token count ($D$) through the approximation $C \approx 6ND$. Again, our initial application of this approach outside of text was in DNA modeling, and the tiny vocabularies in those models end up breaking this assumption &ndash; I'll conveniently ignore that for now and keep going. This constraint then gives the formula for an IsoFLOP curve as a univariate function of $D$ (or $N$) alone:</p>
+<p>The math of Approach 2 works by first assuming parabolic approximations to isocontours of the loss surface defined by equal amounts of compute. Compute isn't a parameter of the loss surface itself, but it is used to constrain the relationship between parameter count ($N$) and token count ($D$) through the approximation $C \approx 6ND$. Like I mentioned above, our initial application of this approach outside of text was in DNA modeling and the tiny vocabularies in those models end up breaking this assumption &ndash; I'll just ignore that for now and keep going. This constraint then gives the formula for an IsoFLOP curve as a univariate function of $D$ (or $N$) alone:</p>
 
 <div class="math-block">
 $$L(D;\,C) = E + A\!\left(\frac{6D}{C}\right)^{\!\alpha} + \frac{B}{D^\beta}$$
@@ -178,7 +178,7 @@ $$L(D;\,C) = E + A\!\left(\frac{6D}{C}\right)^{\!\alpha} + \frac{B}{D^\beta}$$
 
 <p>The paper tries to answer these questions, and shows that it's easy to come up with ways that Approach 2 breaks down in controlled simulations. It does this by moving around the middle of IsoFLOP grids, making those grids wider or skinnier, changing the token/param scaling ratios, and either increasing sampling noise or decreasing that noise to zero. All of these result in some kind of measurable Approach 2 error.</p>
 
-<p>As a very concrete and potentially surprising example of one of these issues, here is an <a href="https://claude.ai/public/artifacts/a02d86a8-33f8-4881-9379-b99eb7d2043a">Interactive Approach 2 Bias Application</a> showing how plugging in the published Chinchilla loss surface parameters and fitting data drawn from it with Approach 2 results in extrapolation errors. Personally, I would have never guessed that coming into this work. The errors in this case result from the Taylor approximation I mentioned, and you can see how that gets worse in the app by increasing the sampling grid width.</p>
+<p>As a very concrete and potentially surprising example of one of these issues, here is an <a href="https://claude.ai/public/artifacts/ead15f94-b2b3-4dd8-b7a2-daf1d113e214">Interactive Approach 2 Bias Application</a> showing how plugging in the published Chinchilla loss surface parameters and fitting data drawn from it with Approach 2 results in extrapolation errors. Personally, I would have never guessed that coming into this work. The errors in this case result from the Taylor approximation I mentioned, and you can see how that gets worse in the app by increasing the sampling grid width.</p>
 
 <p>So even if finding these errors is not hard, do they actually matter? Real experiments include a mixture of them and they don't vary in the convenient, predictable ways that our simulations assume. Most of the rest of the paper is about characterizing and measuring those implications.</p>
 
