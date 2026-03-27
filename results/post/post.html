@@ -171,7 +171,7 @@ $$L(D;\,C) = E + A\!\left(\frac{6D}{C}\right)^{\!\alpha} + \frac{B}{D^\beta}$$
 <ol>
   <li>How close to the true curve minima do I need to sample loss values in my IsoFLOP sweep grid for the Taylor approximation to be accurate?</li>
   <li>How sensitive is this approximation to big disparities between token and model scaling? The underlying IsoFLOP formula isn't symmetric like parabolas are when $\alpha \neq \beta$. So how does approximation accuracy vary as a function of the difference between those two exponents?</li>
-  <li>What happens if the true minimum isn't centered within the token count grid I chose for each FLOP budget? If I train far more models on one side of the minima than another at a given compute budget, or outright miss it entirely, what does that mean for the inferred parabola vertex?</li>
+  <li>What happens if the true minimum isn't centered within the token count grid I chose for each FLOP budget? If I train far more models on one side of the minimum than the other at a given compute budget, or outright miss it entirely, what does that mean for the inferred parabola vertex?</li>
   <li>Does the accuracy of the approximation even matter? The minima implied by the parabola vertices might be wrong, but if they're wrong in a consistent way then are the results from Approach 2 still valid?</li>
   <li>Do these kinds of potential problems come up in real scaling law studies?</li>
 </ol>
@@ -209,7 +209,7 @@ $$L(D;\,C) = E + A\!\left(\frac{6D}{C}\right)^{\!\alpha} + \frac{B}{D^\beta}$$
   <figcaption>Approach 2 Progressive Filtering</figcaption>
 </figure>
 
-<p>In the end, there is no perfect way to estimate scaling laws and using a method like Approach 3 as a ground-truth for comparison is not bulletproof evidence of the extent to which Approach 2 can be wrong. In other words, Approach 3 does not necessarily provide unbiased inference either, but the evidence presented over simulated data, real data, and in residual analysis, strongly suggests that it's much closer to correct in practice.</p>
+<p>In the end, there is no perfect way to estimate scaling laws, and using a method like Approach 3 as a ground-truth for comparison is not bulletproof evidence of the extent to which Approach 2 can be wrong. In other words, Approach 3 does not necessarily provide unbiased inference either, but the evidence presented over simulated data, real data, and in residual analysis, strongly suggests that it's much closer to correct in practice.</p>
 
 <h2>Alternatives</h2>
 

@@ -10,17 +10,17 @@ At that first extreme, you may agree with me that “economic outputs” (e.g. h
 
 My point is that the evolution of neural scaling laws is complicated and now includes a lot of statistical modeling challenges that didn’t exist 4+ years ago. That’s about how long ago the original Kaplan and Hoffmann scaling laws extended earlier, more informal observations (mostly in computer vision) to formulations that hold up well at scale. A lot has changed since then – adaptations now span from low-level training details, e.g. precision, sparsity, depth/width tradeoffs, optimizers, overfitting, epochs, etc., to downstream task performance, agentic systems and more abstract measures of intelligence. The implications of scaling laws have expanded along with difficulties in quantifying them, and both of these motivate a lot of my personal interest in this space.
 
-Doing some of that “quantifying” is where I spend a lot of my time at [Open Athena](https://openathena.ai/). We work in scientific domains like materials science, climate modeling, and genomics/proteomics on top of building competitive open language models (via [Marin](https://marin.community/)). Bridging language models with scientific foundation models is one goal we have, as is better understanding how to scale thoughtfully. To that end, DNA provides a good starting point: it is about as similar to text as any high-throughput scientific data modality and at least one scaling law study already exists for it ([Evo 1](https://www.science.org/doi/10.1126/science.ado9336)). We hit some problems when trying to do this ourselves though, and a few of them made their way into this project: Problems with [Problems with Chinchilla Approach 2](https://openathena.ai/scaling-law-analysis/). The rest of this post summarizes the issues, implications and potential alternatives described there.
+Doing some of that “quantifying” is where I spend a lot of my time at [Open Athena](https://openathena.ai/). We work in scientific domains like materials science, climate modeling, and genomics/proteomics on top of building competitive open language models (via [Marin](https://marin.community/)). Bridging language models with scientific foundation models is one goal we have, as is better understanding how to scale thoughtfully. To that end, DNA provides a good starting point: it is about as similar to text as any high-throughput scientific data modality and at least one scaling law study already exists for it ([Evo 1](https://www.science.org/doi/10.1126/science.ado9336)). We hit some problems when trying to do this ourselves though, and a few of them made their way into this project: [Problems with Chinchilla Approach 2](https://openathena.ai/scaling-law-analysis/). The rest of this post summarizes the issues, implications and potential alternatives described there.
 
 ## Problems
 
-Chinchilla Approach 2 is a commonly applied method for fitting scaling laws from Hoffmann et. al 2022\. The method involves fitting parabolas to IsoFLOP curves, finding the minima along those curves, and then regressing the inferred minima against FLOP counts. This gives a way to indirectly estimate the 2 exponential parameters (\alpha, \beta) of the 5 parameter loss surface proposed in the paper:
+Chinchilla Approach 2 is a commonly applied method for fitting scaling laws from Hoffmann et al. 2022. The method involves fitting parabolas to IsoFLOP curves, finding the minima along those curves, and then regressing the inferred minima against FLOP counts. This gives a way to indirectly estimate the 2 exponential parameters (\alpha, \beta) of the 5 parameter loss surface proposed in the paper:
 
-L(N,D)=E+AN+BD.
+$$L(N,D) = E + \frac{A}{N^\alpha} + \frac{B}{D^\beta}$$
 
 The math of Approach 2 works by first assuming parabolic approximations to isocontours of the loss surface defined by equal amounts of compute. Compute isn’t a parameter of the loss surface itself, but it is used to constrain the relationship between parameter count (N) and token count (D) through the approximation C=6ND. Like I mentioned above, our initial application of this approach outside of text was in DNA modeling and the tiny vocabularies in those models end up breaking this assumption – I’ll just ignore that for now and keep going. This constraint then gives the formula for an IsoFLOP curve as a univariate function of D (or N) alone:
 
-L(D;C)=E+A(D6)C+BD.
+$$L(D;\,C) = E + A\!\left(\frac{6D}{C}\right)^{\!\alpha} + \frac{B}{D^\beta}$$
 
 Aside from some impractical cases like \=2,=−1, this is not a parabola and parabolas are only as accurate at estimating this function near critical points as a 2nd order Taylor approximation. So that immediately raises a number of questions like:
 
@@ -28,7 +28,7 @@ Aside from some impractical cases like \=2,=−1, this is not a parabola and par
 
 2. How sensitive is this approximation to big disparities between token and model scaling? The underlying IsoFLOP formula isn’t symmetric like parabolas are when . So how does approximation accuracy vary as a function of the difference between those two exponents?
 
-3. What happens if the true minimum isn’t centered within the token count grid I chose for each FLOP budget? If I train far more models on one side of the minima than another at a given compute budget, or outright miss it entirely, what does that mean for the inferred parabola vertex?
+3. What happens if the true minimum isn’t centered within the token count grid I chose for each FLOP budget? If I train far more models on one side of the minimum than the other at a given compute budget, or outright miss it entirely, what does that mean for the inferred parabola vertex?
 
 4. Does the accuracy of the approximation even matter? The minima implied by the parabola vertices might be wrong, but if they’re wrong in a consistent way then are the results from Approach 2 still valid?
 
@@ -58,7 +58,7 @@ We further substantiated that claim by coming up with an IsoFLOP data quality co
 
 ![Approach 2 Progressive Filtering][image3]
 
-In the end, there is no perfect way to estimate scaling laws and using a method like Approach 3 as a ground-truth for comparison is not bulletproof evidence of the extent to which Approach 2 can be wrong. In other words, Approach 3 does not necessarily provide unbiased inference either, but the evidence presented over simulated data, real data, and in residual analysis, strongly suggests that it’s much closer to correct in practice.
+In the end, there is no perfect way to estimate scaling laws, and using a method like Approach 3 as a ground-truth for comparison is not bulletproof evidence of the extent to which Approach 2 can be wrong. In other words, Approach 3 does not necessarily provide unbiased inference either, but the evidence presented over simulated data, real data, and in residual analysis, strongly suggests that it’s much closer to correct in practice.
 
 ## Alternatives 
 
