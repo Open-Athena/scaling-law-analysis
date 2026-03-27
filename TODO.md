@@ -22,7 +22,7 @@
   - Cite [Gemstones: A Model Suite for Multi-Faceted Scaling Laws](https://arxiv.org/pdf/2502.06857) on how C=6ND breaks down w/ model shape
   - Cite [Scaling Laws for Native Multimodal Models](https://arxiv.org/pdf/2504.07951) on PlantCAD issue for empirical C ~ D^b method (see C. Scaling Laws)
   - Mention the demo prompt examples for making your own simulator; examples:
-    - [Claude App](https://claude.ai/public/artifacts/a02d86a8-33f8-4881-9379-b99eb7d2043a) ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
+    - [Claude App](https://claude.ai/public/artifacts/ead15f94-b2b3-4dd8-b7a2-daf1d113e214) ([prompt](https://gist.github.com/eric-czech/77cc21e825e19b7ac98b9a538da6ec99))
     - [Gemini App](https://gemini.google.com/share/6b5b3e9b3e0b)
     - [Codex App](https://chatgpt.com/share/69879ab5-957c-800e-a37f-038b10d79f1e)
   - Add note advising against using logloss given bias in simulations and ml-scalefit reproduction

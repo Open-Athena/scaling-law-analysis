@@ -5,7 +5,8 @@ Instructions for uploading `data/isoflops/extract/isoflops.csv` to Hugging Face 
 ## Pre-upload Transformations
 
 1. Drop all rows where `condition == "exp_loss"` (Llama 3 exponentiated loss variant — only raw values from the paper should be published).
-2. Drop the `condition` column entirely (it is empty for all other experiments and `raw_loss` for Llama 3; no longer needed after filtering).
+2. Rename experiment `llama_3__raw_loss` → `llama_3` (the condition suffix is no longer needed after filtering).
+3. Drop the `condition` column entirely.
 
 After these transformations the dataset has **814 rows** and **7 experiments**.
 
@@ -17,7 +18,7 @@ Note: `(experiment, budget, params)` is *almost* unique but has 6 collisions in 
 
 ## Upload Instructions
 
-1. Run the pre-upload transformations (drop `exp_loss` rows, drop `condition` column).
+1. Run the pre-upload transformations (drop `exp_loss` rows, rename `llama_3__raw_loss` → `llama_3`, drop `condition` column).
 2. Save the transformed CSV and README to a temporary directory (e.g. `/tmp/isoflop-experiments/`).
 4. Verify uniqueness: assert that `(experiment, tokens, params, budget)` has no duplicates.
 5. Verify row count: 814.
@@ -69,7 +70,7 @@ Each row is uniquely identified by `(experiment, tokens, params, budget)`.
 |---|---|---|---|---|
 | `ml_scalefit__massivetext__chinchilla` | 124 | 9 | [arxiv:2507.09404](https://arxiv.org/abs/2507.09404) | GitHub CSV |
 | `epochai_chinchilla__massivetext__chinchilla` | 123 | 9 | [arxiv:2404.10102](https://arxiv.org/abs/2404.10102) | SVG digitization |
-| `llama_3__raw_loss` | 133 | 10 | [arxiv:2407.21783](https://arxiv.org/abs/2407.21783) | SVG digitization |
+| `llama_3` | 133 | 10 | [arxiv:2407.21783](https://arxiv.org/abs/2407.21783) | SVG digitization |
 | `marin_202603__comma__llama_2` | 85 | 7 | [W&B report](https://wandb.ai/marin-community/marin/reports/Scaling-Ladders--VmlldzoxNTc0MjM1NQ) | W&B export |
 | `marin_202603__dclm__llama_2` | 85 | 7 | [W&B report](https://wandb.ai/marin-community/marin/reports/Scaling-Ladders--VmlldzoxNTc0MjM1NQ) | W&B export |
 | `marin_202603__nemotron__llama_2` | 88 | 8 | [W&B report](https://wandb.ai/marin-community/marin/reports/Scaling-Ladders--VmlldzoxNTc0MjM1NQ) | W&B export |
