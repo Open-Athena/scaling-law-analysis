@@ -1222,6 +1222,8 @@ Several known limitations qualify the conclusions of this study:
 \bibliography{references}
 
 \appendix
+\section*{Appendix}
+\addcontentsline{toc}{section}{Appendix}
 \renewcommand{\thefigure}{A\arabic{figure}}
 \setcounter{figure}{0}
 \renewcommand{\thetable}{A\arabic{table}}
@@ -1571,5 +1573,9 @@ methods.
     approximation for simulation purposes.}
     \label{fig:appendix_residual_variance}
 \end{figure}
+
+\section{Contents}
+\label{sec:appendix_contents}
+\tableofcontents
 
 \end{document}

@@ -1,0 +1,36 @@
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}%
+\contentsline {section}{\numberline {2}Preliminaries}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Approach 2: IsoFLOP Parabolic Fitting}{3}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Approach 3: Direct Surface Fitting}{3}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Error Costs: Misallocation at Scale}{4}{section.3}%
+\contentsline {section}{\numberline {4}Error Sources: Approach 2 Biases}{6}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Symmetric Surfaces}{6}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Asymmetric Surfaces}{7}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Underlying Causes}{9}{subsubsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2}Error Implications}{10}{subsubsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.3}Off-Center Sampling}{10}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Constant Multiplicative Bias}{11}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Drifting Bias}{12}{subsubsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.4}Real IsoFLOP Curves}{12}{subsection.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.1}Compounding Errors}{14}{subsubsection.4.4.1}%
+\contentsline {section}{\numberline {5}Robust Fits: Unbiased Estimation with Linear Separation}{15}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Problems with Direct Surface Fitting}{15}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Variable Projection (VPNLS)}{16}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Method Comparison (Parameter Recovery)}{17}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}Method Comparison (Exponent Inference)}{18}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}Method Comparison (Data Efficiency)}{20}{subsection.5.5}%
+\contentsline {section}{\numberline {6}Conclusion}{20}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Limitations}{21}{subsection.6.1}%
+\contentsline {section}{Appendix}{25}{section*.19}%
+\contentsline {section}{\numberline {A}VPNLS Implementation Validation}{25}{appendix.A}%
+\contentsline {section}{\numberline {B}IsoFLOP Quality Control Pipeline}{25}{appendix.B}%
+\contentsline {section}{\numberline {C}IsoFLOP Samples with Noise}{27}{appendix.C}%
+\contentsline {section}{\numberline {D}Detailed Method Comparison}{27}{appendix.D}%
+\contentsline {section}{\numberline {E}Combined Extrapolation Error by Compute Budget}{28}{appendix.E}%
+\contentsline {section}{\numberline {F}Exponent Inference Error Breakdown}{30}{appendix.F}%
+\contentsline {section}{\numberline {G}Data Efficiency Error Breakdown}{31}{appendix.G}%
+\contentsline {section}{\numberline {H}Published Scaling Exponents}{31}{appendix.H}%
+\contentsline {section}{\numberline {I}Progressive Filtering for Chinchilla}{33}{appendix.I}%
+\contentsline {section}{\numberline {J}Residual Distributions by Budget}{33}{appendix.J}%
+\contentsline {section}{\numberline {K}Residual Variance Summary}{34}{appendix.K}%
+\contentsline {section}{\numberline {L}Contents}{34}{appendix.L}%
