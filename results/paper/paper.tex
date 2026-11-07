@@ -12,7 +12,7 @@
 \usepackage{float}
 \usepackage{caption}
 \captionsetup{font=small, labelfont=bf}
-\usepackage{natbib}
+\usepackage[square,comma]{natbib}
 \usepackage{xcolor}
 \usepackage[margin=1in]{geometry}
 
@@ -137,7 +137,7 @@ performance~\citep{ai2_task_scaling}, to name a few. These extensions prescribe
 explicit functional forms rather than inferring scaling law structure
 automatically, and they build directly on the Chinchilla model as a foundation.
 Similar
-studies~\citep{redundancy_scaling,data_filtering_scaling,moe_scaling,subgroup_scaling}
+studies~\citep{data_filtering_scaling,moe_scaling,subgroup_scaling}
 extend individual terms in isolation (e.g.\ token scaling terms alone) or
 propose modified Kaplan scaling laws~\citep{kaplan_scaling}, both of which
 would be relevant for comparable Chinchilla formulations as well. A fitting
@@ -874,7 +874,7 @@ well-conditioned two-dimensional subspace.
 \label{sec:vpnls_method}
 
 The Chinchilla loss surface has a partially linear structure that can be
-exploited. For any fixed values of $\alpha$ and $\beta$, the remaining
+exploited~\citep{variable_projection}. For any fixed values of $\alpha$ and $\beta$, the remaining
 parameters $(E, A, B)$ enter the model linearly and can be solved exactly via
 least squares. This is the same computational shortcut that motivates
 Approach~2 (optimizing exponential terms separately from linear terms), but
@@ -888,7 +888,7 @@ the two-dimensional $(\alpha, \beta)$ surface, never the full five-parameter
 space. We term this method Variable Projection with Non-negative Least Squares
 (VPNLS).
 
-In its simplest form, VPNLS uses non-negative least squares (NNLS) for the
+In its simplest form, VPNLS uses non-negative least squares (NNLS)~\citep{nnls} for the
 inner solve and a gradient-free optimizer like Nelder-Mead for the outer
 search:
 

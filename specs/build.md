@@ -7,7 +7,7 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 1. **Run experiments**: `uv run python -m scaling_law_analysis.experiments.run_all` — all figures are saved as both PNG and PDF
 2. **Generate article figures** (outputs to `results/article/`; includes copying appendix figures from experiment results; copies both PNG and PDF):
    `uv run python -m scaling_law_analysis.article.figures`
-3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
+3. **Generate references**: `uv run python -m scaling_law_analysis.references` — renders BibTeX and HTML bibliographies and refreshes article citation numbers from reviewed YAML metadata
 4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))
 5. **Edit article**: `results/article/article.html`
 6. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
@@ -39,6 +39,21 @@ uv run python -m scaling_law_analysis.paper.build
 ```
 
 Output: `results/paper/paper.pdf`.
+
+### Citation validation
+
+After changing bibliography metadata or citation markup:
+
+```bash
+uv run python -m scaling_law_analysis.references
+uv run python -m scaling_law_analysis.article.standalone
+uv run python -m scaling_law_analysis.references --check
+uv run pytest tests/test_references.py -q
+uv run python -m scaling_law_analysis.paper.build
+uv run python -m scaling_law_analysis.paper.submit
+```
+
+The check rejects stale bibliographies, unknown or duplicate keys, numbering errors, missing metadata provenance, and mismatched paper/article citation counts. Tests also check the standalone article. The submission command produces a dated source archive with a fresh `.bbl`; compile the extracted archive independently and preserve historical archives. See `docs/references/audit.md` for the bibliography audit record. Follow the citation-only scope in [paper.md](paper.md#source-of-truth).
 
 ### Deploy to GitHub Pages
 
