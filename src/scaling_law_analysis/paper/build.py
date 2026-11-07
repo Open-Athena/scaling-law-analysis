@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from scaling_law_analysis import config
+from scaling_law_analysis.references import generate_outputs
 
 PAPER_DIR = config.RESULTS_DIR / "paper"
 TEX_FILE = PAPER_DIR / "paper.tex"
@@ -38,6 +39,7 @@ def build_paper() -> Path:
     Returns:
         Path to the generated PDF.
     """
+    generate_outputs(check=True)
     tectonic = check_tectonic()
 
     if not TEX_FILE.exists():

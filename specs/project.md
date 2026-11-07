@@ -29,7 +29,7 @@ This project follows Spec Development (SDD). The `specs/` directory is an opinio
 | `  chinchilla.py` | Loss surface model, IsoFLOP sampling, Approach 2 parabolic fitting, surface fitting via variable projection |
 | `  common.py` | Shared generic utilities |
 | `  config.py` | Project paths (`PROJECT_ROOT`, `RESULTS_DIR`), shared surface configurations |
-| `  references.py` | Renders `docs/references/references.yaml` to HTML |
+| `  references.py` | Renders reviewed YAML metadata to HTML/BibTeX, refreshes citation numbers, and checks cross-format consistency |
 | `  data/` | IsoFLOP data pipeline |
 | `    extract.py` | Fetches published IsoFLOP data from remote sources, standardizes to common schema |
 | `    schema.py` | Pydantic schema definitions, outlier reason and QC stage enums |

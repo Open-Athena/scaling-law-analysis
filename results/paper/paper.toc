@@ -21,16 +21,16 @@
 \contentsline {subsection}{\numberline {5.5}Method Comparison (Data Efficiency)}{20}{subsection.5.5}%
 \contentsline {section}{\numberline {6}Conclusion}{20}{section.6}%
 \contentsline {subsection}{\numberline {6.1}Limitations}{21}{subsection.6.1}%
-\contentsline {section}{Appendix}{25}{section*.19}%
-\contentsline {section}{\numberline {A}VPNLS Implementation Validation}{25}{appendix.A}%
-\contentsline {section}{\numberline {B}IsoFLOP Quality Control Pipeline}{25}{appendix.B}%
-\contentsline {section}{\numberline {C}IsoFLOP Samples with Noise}{27}{appendix.C}%
-\contentsline {section}{\numberline {D}Detailed Method Comparison}{27}{appendix.D}%
-\contentsline {section}{\numberline {E}Combined Extrapolation Error by Compute Budget}{28}{appendix.E}%
-\contentsline {section}{\numberline {F}Exponent Inference Error Breakdown}{30}{appendix.F}%
-\contentsline {section}{\numberline {G}Data Efficiency Error Breakdown}{31}{appendix.G}%
-\contentsline {section}{\numberline {H}Published Scaling Exponents}{31}{appendix.H}%
-\contentsline {section}{\numberline {I}Progressive Filtering for Chinchilla}{33}{appendix.I}%
-\contentsline {section}{\numberline {J}Residual Distributions by Budget}{33}{appendix.J}%
-\contentsline {section}{\numberline {K}Residual Variance Summary}{34}{appendix.K}%
-\contentsline {section}{\numberline {L}Contents}{34}{appendix.L}%
+\contentsline {section}{Appendix}{26}{section*.19}%
+\contentsline {section}{\numberline {A}VPNLS Implementation Validation}{26}{appendix.A}%
+\contentsline {section}{\numberline {B}IsoFLOP Quality Control Pipeline}{26}{appendix.B}%
+\contentsline {section}{\numberline {C}IsoFLOP Samples with Noise}{29}{appendix.C}%
+\contentsline {section}{\numberline {D}Detailed Method Comparison}{29}{appendix.D}%
+\contentsline {section}{\numberline {E}Combined Extrapolation Error by Compute Budget}{30}{appendix.E}%
+\contentsline {section}{\numberline {F}Exponent Inference Error Breakdown}{32}{appendix.F}%
+\contentsline {section}{\numberline {G}Data Efficiency Error Breakdown}{33}{appendix.G}%
+\contentsline {section}{\numberline {H}Published Scaling Exponents}{33}{appendix.H}%
+\contentsline {section}{\numberline {I}Progressive Filtering for Chinchilla}{35}{appendix.I}%
+\contentsline {section}{\numberline {J}Residual Distributions by Budget}{35}{appendix.J}%
+\contentsline {section}{\numberline {K}Residual Variance Summary}{36}{appendix.K}%
+\contentsline {section}{\numberline {L}Contents}{36}{appendix.L}%

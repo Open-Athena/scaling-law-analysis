@@ -20,6 +20,8 @@ Required only for implementation changes that touch topics a spec covers. If the
 
 When one implementation artifact changes, other artifacts that depend on it may need updating.
 
+- **References and citation claims**: reviewed `docs/references/references.yaml` → `references.py` → `results/paper/references.bib`, `results/article/references/references.html`, embedded article bibliography and citation labels → standalone HTML → paper PDF → new arXiv archive with compiled `.bbl`. Update the corresponding prose, captions, tables, and footnotes in both article and LaTeX when a citation's support changes. Keep the audit evidence in `docs/references/audit.md` and its inventories aligned. Preserve historical submission archives.
+
 - **CSV data in article text**: The figure generator exports numerical results alongside each figure. Specific values from these CSVs are hardcoded in `results/article/article.html` in both prose and data tables. After regenerating figures, check whether the CSV data has changed and update the corresponding text and tables in the article to match. The mapping of CSVs to article sections is:
   - `results/article/figures/extrapolation_error/extrapolation_error_data.csv` → "Error Implications" (extrapolation bar chart, collapsible data table)
   - `results/article/figures/off_center_constant_bias/off_center_constant_bias_data.csv` → "Constant Multiplicative Bias" (key result callout numbers)

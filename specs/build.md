@@ -7,7 +7,7 @@ Commands for generating outputs and deploying artifacts. Start with the [Full Wo
 1. **Run experiments**: `uv run python -m scaling_law_analysis.experiments.run_all` — all figures are saved as both PNG and PDF
 2. **Generate article figures** (outputs to `results/article/`; includes copying appendix figures from experiment results; copies both PNG and PDF):
    `uv run python -m scaling_law_analysis.article.figures`
-3. **Generate references HTML**: `uv run python -m scaling_law_analysis.references`
+3. **Generate references**: `uv run python -m scaling_law_analysis.references` — renders BibTeX, the HTML reference fragment, the embedded article bibliography, and citation numbers from reviewed YAML metadata
 4. **Sync CSV data with article text** — skip if figures unchanged (see [sync.md > Implementation → Implementation](sync.md#implementation--implementation))
 5. **Edit article**: `results/article/article.html`
 6. **Build standalone HTML** (see [Standalone HTML](#standalone-html))
@@ -40,9 +40,24 @@ uv run python -m scaling_law_analysis.paper.build
 
 Output: `results/paper/paper.pdf`.
 
+### Reference verification and arXiv package
+
+Review source metadata and the claims attached to each citation before updating the canonical YAML. Builds do not fetch metadata. After changing references or article text:
+
+```bash
+uv run python -m scaling_law_analysis.references
+uv run python -m scaling_law_analysis.article.standalone
+uv run python -m scaling_law_analysis.references --check
+uv run pytest tests/test_references.py -q
+uv run python -m scaling_law_analysis.paper.build
+uv run python -m scaling_law_analysis.paper.submit
+```
+
+The check rejects stale bibliographies, unknown/duplicate keys, numbering errors, missing provenance, and mismatched paper/article citation counts. Tests also validate the standalone article. The submission command creates `results/paper/submissions/YYYYMMDD/arxiv.tar.gz`, containing a fresh compiled `.bbl`; inspect and compile the extracted package before publishing. Preserve prior submission archives. See `docs/references/audit.md` for the 2026-11-07 evidence audit and source-use inventory.
+
 ### Deploy to GitHub Pages
 
-Deploys `article_standalone.html` to the `gh-pages` branch as `index.html`:
+The workflow copies `results/site/index.html`, `results/post/post.html`, and the standalone article to the `gh-pages` branch as `index.html`, `post.html`, and `article.html`:
 
 ```bash
 gh workflow run deploy.yml

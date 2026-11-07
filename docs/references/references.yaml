@@ -1,232 +1,1673 @@
-# Only include key, title, venue, and url; other fields to be auto-populated
-# TOOD: add code for field population
-
+# Reviewed metadata; full ordered authors are retained here.
+# Generated outputs and citation numbers are managed by scaling_law_analysis.references.
 - key: chinchilla
   title: Training Compute-Optimal Large Language Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2203.15556
-
+  authors:
+  - Hoffmann, Jordan
+  - Borgeaud, Sebastian
+  - Mensch, Arthur
+  - Buchatskaya, Elena
+  - Cai, Trevor
+  - Rutherford, Eliza
+  - de Las Casas, Diego
+  - Hendricks, Lisa Anne
+  - Welbl, Johannes
+  - Clark, Aidan
+  - Hennigan, Tom
+  - Noland, Eric
+  - Millican, Katie
+  - van den Driessche, George
+  - Damoc, Bogdan
+  - Guy, Aurelia
+  - Osindero, Simon
+  - Simonyan, Karen
+  - Elsen, Erich
+  - Rae, Jack W.
+  - Vinyals, Oriol
+  - Sifre, Laurent
+  year: 2022
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2203.15556v1
+  entry_type: article
+  eprint: 2203.15556v1
+  doi: 10.48550/arXiv.2203.15556
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2203.15556v1
+  - https://arxiv.org/pdf/2203.15556v1
 - key: llama3
   title: The Llama 3 Herd of Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2407.21783
-
+  authors:
+  - Grattafiori, Aaron
+  - Dubey, Abhimanyu
+  - Jauhri, Abhinav
+  - Pandey, Abhinav
+  - Kadian, Abhishek
+  - Al-Dahle, Ahmad
+  - Letman, Aiesha
+  - Mathur, Akhil
+  - Schelten, Alan
+  - Vaughan, Alex
+  - Yang, Amy
+  - Fan, Angela
+  - Goyal, Anirudh
+  - Hartshorn, Anthony
+  - Yang, Aobo
+  - Mitra, Archi
+  - Sravankumar, Archie
+  - Korenev, Artem
+  - Hinsvark, Arthur
+  - Rao, Arun
+  - Zhang, Aston
+  - Rodriguez, Aurelien
+  - Gregerson, Austen
+  - Spataru, Ava
+  - Roziere, Baptiste
+  - Biron, Bethany
+  - Tang, Binh
+  - Chern, Bobbie
+  - Caucheteux, Charlotte
+  - Nayak, Chaya
+  - Bi, Chloe
+  - Marra, Chris
+  - McConnell, Chris
+  - Keller, Christian
+  - Touret, Christophe
+  - Wu, Chunyang
+  - Wong, Corinne
+  - Ferrer, Cristian Canton
+  - Nikolaidis, Cyrus
+  - Allonsius, Damien
+  - Song, Daniel
+  - Pintz, Danielle
+  - Livshits, Danny
+  - Wyatt, Danny
+  - Esiobu, David
+  - Choudhary, Dhruv
+  - Mahajan, Dhruv
+  - Garcia-Olano, Diego
+  - Perino, Diego
+  - Hupkes, Dieuwke
+  - Lakomkin, Egor
+  - AlBadawy, Ehab
+  - Lobanova, Elina
+  - Dinan, Emily
+  - Smith, Eric Michael
+  - Radenovic, Filip
+  - Guzmán, Francisco
+  - Zhang, Frank
+  - Synnaeve, Gabriel
+  - Lee, Gabrielle
+  - Anderson, Georgia Lewis
+  - Thattai, Govind
+  - Nail, Graeme
+  - Mialon, Gregoire
+  - Pang, Guan
+  - Cucurell, Guillem
+  - Nguyen, Hailey
+  - Korevaar, Hannah
+  - Xu, Hu
+  - Touvron, Hugo
+  - Zarov, Iliyan
+  - Ibarra, Imanol Arrieta
+  - Kloumann, Isabel
+  - Misra, Ishan
+  - Evtimov, Ivan
+  - Zhang, Jack
+  - Copet, Jade
+  - Lee, Jaewon
+  - Geffert, Jan
+  - Vranes, Jana
+  - Park, Jason
+  - Mahadeokar, Jay
+  - Shah, Jeet
+  - van der Linde, Jelmer
+  - Billock, Jennifer
+  - Hong, Jenny
+  - Lee, Jenya
+  - Fu, Jeremy
+  - Chi, Jianfeng
+  - Huang, Jianyu
+  - Liu, Jiawen
+  - Wang, Jie
+  - Yu, Jiecao
+  - Bitton, Joanna
+  - Spisak, Joe
+  - Park, Jongsoo
+  - Rocca, Joseph
+  - Johnstun, Joshua
+  - Saxe, Joshua
+  - Jia, Junteng
+  - Alwala, Kalyan Vasuden
+  - Prasad, Karthik
+  - Upasani, Kartikeya
+  - Plawiak, Kate
+  - Li, Ke
+  - Heafield, Kenneth
+  - Stone, Kevin
+  - El-Arini, Khalid
+  - Iyer, Krithika
+  - Malik, Kshitiz
+  - Chiu, Kuenley
+  - Bhalla, Kunal
+  - Lakhotia, Kushal
+  - Rantala-Yeary, Lauren
+  - van der Maaten, Laurens
+  - Chen, Lawrence
+  - Tan, Liang
+  - Jenkins, Liz
+  - Martin, Louis
+  - Madaan, Lovish
+  - Malo, Lubo
+  - Blecher, Lukas
+  - Landzaat, Lukas
+  - de Oliveira, Luke
+  - Muzzi, Madeline
+  - Pasupuleti, Mahesh
+  - Singh, Mannat
+  - Paluri, Manohar
+  - Kardas, Marcin
+  - Tsimpoukelli, Maria
+  - Oldham, Mathew
+  - Rita, Mathieu
+  - Pavlova, Maya
+  - Kambadur, Melanie
+  - Lewis, Mike
+  - Si, Min
+  - Singh, Mitesh Kumar
+  - Hassan, Mona
+  - Goyal, Naman
+  - Torabi, Narjes
+  - Bashlykov, Nikolay
+  - Bogoychev, Nikolay
+  - Chatterji, Niladri
+  - Zhang, Ning
+  - Duchenne, Olivier
+  - Çelebi, Onur
+  - Alrassy, Patrick
+  - Zhang, Pengchuan
+  - Li, Pengwei
+  - Vasic, Petar
+  - Weng, Peter
+  - Bhargava, Prajjwal
+  - Dubal, Pratik
+  - Krishnan, Praveen
+  - Koura, Punit Singh
+  - Xu, Puxin
+  - He, Qing
+  - Dong, Qingxiao
+  - Srinivasan, Ragavan
+  - Ganapathy, Raj
+  - Calderer, Ramon
+  - Cabral, Ricardo Silveira
+  - Stojnic, Robert
+  - Raileanu, Roberta
+  - Maheswari, Rohan
+  - Girdhar, Rohit
+  - Patel, Rohit
+  - Sauvestre, Romain
+  - Polidoro, Ronnie
+  - Sumbaly, Roshan
+  - Taylor, Ross
+  - Silva, Ruan
+  - Hou, Rui
+  - Wang, Rui
+  - Hosseini, Saghar
+  - Chennabasappa, Sahana
+  - Singh, Sanjay
+  - Bell, Sean
+  - Kim, Seohyun Sonia
+  - Edunov, Sergey
+  - Nie, Shaoliang
+  - Narang, Sharan
+  - Raparthy, Sharath
+  - Shen, Sheng
+  - Wan, Shengye
+  - Bhosale, Shruti
+  - Zhang, Shun
+  - Vandenhende, Simon
+  - Batra, Soumya
+  - Whitman, Spencer
+  - Sootla, Sten
+  - Collot, Stephane
+  - Gururangan, Suchin
+  - Borodinsky, Sydney
+  - Herman, Tamar
+  - Fowler, Tara
+  - Sheasha, Tarek
+  - Georgiou, Thomas
+  - Scialom, Thomas
+  - Speckbacher, Tobias
+  - Mihaylov, Todor
+  - Xiao, Tong
+  - Karn, Ujjwal
+  - Goswami, Vedanuj
+  - Gupta, Vibhor
+  - Ramanathan, Vignesh
+  - Kerkez, Viktor
+  - Gonguet, Vincent
+  - Do, Virginie
+  - Vogeti, Vish
+  - Albiero, Vítor
+  - Petrovic, Vladan
+  - Chu, Weiwei
+  - Xiong, Wenhan
+  - Fu, Wenyin
+  - Meers, Whitney
+  - Martinet, Xavier
+  - Wang, Xiaodong
+  - Wang, Xiaofang
+  - Tan, Xiaoqing Ellen
+  - Xia, Xide
+  - Xie, Xinfeng
+  - Jia, Xuchao
+  - Wang, Xuewei
+  - Goldschlag, Yaelle
+  - Gaur, Yashesh
+  - Babaei, Yasmine
+  - Wen, Yi
+  - Song, Yiwen
+  - Zhang, Yuchen
+  - Li, Yue
+  - Mao, Yuning
+  - Coudert, Zacharie Delpierre
+  - Yan, Zheng
+  - Chen, Zhengxing
+  - Papakipos, Zoe
+  - Singh, Aaditya
+  - Srivastava, Aayushi
+  - Jain, Abha
+  - Kelsey, Adam
+  - Shajnfeld, Adam
+  - Gangidi, Adithya
+  - Victoria, Adolfo
+  - Goldstand, Ahuva
+  - Menon, Ajay
+  - Sharma, Ajay
+  - Boesenberg, Alex
+  - Baevski, Alexei
+  - Feinstein, Allie
+  - Kallet, Amanda
+  - Sangani, Amit
+  - Teo, Amos
+  - Yunus, Anam
+  - Lupu, Andrei
+  - Alvarado, Andres
+  - Caples, Andrew
+  - Gu, Andrew
+  - Ho, Andrew
+  - Poulton, Andrew
+  - Ryan, Andrew
+  - Ramchandani, Ankit
+  - Dong, Annie
+  - Franco, Annie
+  - Goyal, Anuj
+  - Saraf, Aparajita
+  - Chowdhury, Arkabandhu
+  - Gabriel, Ashley
+  - Bharambe, Ashwin
+  - Eisenman, Assaf
+  - Yazdan, Azadeh
+  - James, Beau
+  - Maurer, Ben
+  - Leonhardi, Benjamin
+  - Huang, Bernie
+  - Loyd, Beth
+  - De Paola, Beto
+  - Paranjape, Bhargavi
+  - Liu, Bing
+  - Wu, Bo
+  - Ni, Boyu
+  - Hancock, Braden
+  - Wasti, Bram
+  - Spence, Brandon
+  - Stojkovic, Brani
+  - Gamido, Brian
+  - Montalvo, Britt
+  - Parker, Carl
+  - Burton, Carly
+  - Mejia, Catalina
+  - Liu, Ce
+  - Wang, Changhan
+  - Kim, Changkyu
+  - Zhou, Chao
+  - Hu, Chester
+  - Chu, Ching-Hsiang
+  - Cai, Chris
+  - Tindal, Chris
+  - Feichtenhofer, Christoph
+  - Gao, Cynthia
+  - Civin, Damon
+  - Beaty, Dana
+  - Kreymer, Daniel
+  - Li, Daniel
+  - Adkins, David
+  - Xu, David
+  - Testuggine, Davide
+  - David, Delia
+  - Parikh, Devi
+  - Liskovich, Diana
+  - Foss, Didem
+  - Wang, Dingkang
+  - Le, Duc
+  - Holland, Dustin
+  - Dowling, Edward
+  - Jamil, Eissa
+  - Montgomery, Elaine
+  - Presani, Eleonora
+  - Hahn, Emily
+  - Wood, Emily
+  - Le, Eric-Tuan
+  - Brinkman, Erik
+  - Arcaute, Esteban
+  - Dunbar, Evan
+  - Smothers, Evan
+  - Sun, Fei
+  - Kreuk, Felix
+  - Tian, Feng
+  - Kokkinos, Filippos
+  - Ozgenel, Firat
+  - Caggioni, Francesco
+  - Kanayet, Frank
+  - Seide, Frank
+  - Florez, Gabriela Medina
+  - Schwarz, Gabriella
+  - Badeer, Gada
+  - Swee, Georgia
+  - Halpern, Gil
+  - Herman, Grant
+  - Sizov, Grigory
+  - '{Guangyi}'
+  - '{Zhang}'
+  - Lakshminarayanan, Guna
+  - Inan, Hakan
+  - Shojanazeri, Hamid
+  - Zou, Han
+  - Wang, Hannah
+  - Zha, Hanwen
+  - Habeeb, Haroun
+  - Rudolph, Harrison
+  - Suk, Helen
+  - Aspegren, Henry
+  - Goldman, Hunter
+  - Zhan, Hongyuan
+  - Damlaj, Ibrahim
+  - Molybog, Igor
+  - Tufanov, Igor
+  - Leontiadis, Ilias
+  - Veliche, Irina-Elena
+  - Gat, Itai
+  - Weissman, Jake
+  - Geboski, James
+  - Kohli, James
+  - Lam, Janice
+  - Asher, Japhet
+  - Gaya, Jean-Baptiste
+  - Marcus, Jeff
+  - Tang, Jeff
+  - Chan, Jennifer
+  - Zhen, Jenny
+  - Reizenstein, Jeremy
+  - Teboul, Jeremy
+  - Zhong, Jessica
+  - Jin, Jian
+  - Yang, Jingyi
+  - Cummings, Joe
+  - Carvill, Jon
+  - Shepard, Jon
+  - McPhie, Jonathan
+  - Torres, Jonathan
+  - Ginsburg, Josh
+  - Wang, Junjie
+  - Wu, Kai
+  - U, Kam Hou
+  - Saxena, Karan
+  - Khandelwal, Kartikay
+  - Zand, Katayoun
+  - Matosich, Kathy
+  - Veeraraghavan, Kaushik
+  - Michelena, Kelly
+  - Li, Keqian
+  - Jagadeesh, Kiran
+  - Huang, Kun
+  - Chawla, Kunal
+  - Huang, Kyle
+  - Chen, Lailin
+  - Garg, Lakshya
+  - A, Lavender
+  - Silva, Leandro
+  - Bell, Lee
+  - Zhang, Lei
+  - Guo, Liangpeng
+  - Yu, Licheng
+  - Moshkovich, Liron
+  - Wehrstedt, Luca
+  - Khabsa, Madian
+  - Avalani, Manav
+  - Bhatt, Manish
+  - Mankus, Martynas
+  - Hasson, Matan
+  - Lennie, Matthew
+  - Reso, Matthias
+  - Groshev, Maxim
+  - Naumov, Maxim
+  - Lathi, Maya
+  - Keneally, Meghan
+  - Liu, Miao
+  - Seltzer, Michael L.
+  - Valko, Michal
+  - Restrepo, Michelle
+  - Patel, Mihir
+  - Vyatskov, Mik
+  - Samvelyan, Mikayel
+  - Clark, Mike
+  - Macey, Mike
+  - Wang, Mike
+  - Hermoso, Miquel Jubert
+  - Metanat, Mo
+  - Rastegari, Mohammad
+  - Bansal, Munish
+  - Santhanam, Nandhini
+  - Parks, Natascha
+  - White, Natasha
+  - Bawa, Navyata
+  - Singhal, Nayan
+  - Egebo, Nick
+  - Usunier, Nicolas
+  - Mehta, Nikhil
+  - Laptev, Nikolay Pavlovich
+  - Dong, Ning
+  - Cheng, Norman
+  - Chernoguz, Oleg
+  - Hart, Olivia
+  - Salpekar, Omkar
+  - Kalinli, Ozlem
+  - Kent, Parkin
+  - Parekh, Parth
+  - Saab, Paul
+  - Balaji, Pavan
+  - Rittner, Pedro
+  - Bontrager, Philip
+  - Roux, Pierre
+  - Dollar, Piotr
+  - Zvyagina, Polina
+  - Ratanchandani, Prashant
+  - Yuvraj, Pritish
+  - Liang, Qian
+  - Alao, Rachad
+  - Rodriguez, Rachel
+  - Ayub, Rafi
+  - Murthy, Raghotham
+  - Nayani, Raghu
+  - Mitra, Rahul
+  - Parthasarathy, Rangaprabhu
+  - Li, Raymond
+  - Hogan, Rebekkah
+  - Battey, Robin
+  - Wang, Rocky
+  - Howes, Russ
+  - Rinott, Ruty
+  - Mehta, Sachin
+  - Siby, Sachin
+  - Bondu, Sai Jayesh
+  - Datta, Samyak
+  - Chugh, Sara
+  - Hunt, Sara
+  - Dhillon, Sargun
+  - Sidorov, Sasha
+  - Pan, Satadru
+  - Mahajan, Saurabh
+  - Verma, Saurabh
+  - Yamamoto, Seiji
+  - Ramaswamy, Sharadh
+  - Lindsay, Shaun
+  - Lindsay, Shaun
+  - Feng, Sheng
+  - Lin, Shenghao
+  - Zha, Shengxin Cindy
+  - Patil, Shishir
+  - Shankar, Shiva
+  - Zhang, Shuqiang
+  - Zhang, Shuqiang
+  - Wang, Sinong
+  - Agarwal, Sneha
+  - Sajuyigbe, Soji
+  - Chintala, Soumith
+  - Max, Stephanie
+  - Chen, Stephen
+  - Kehoe, Steve
+  - Satterfield, Steve
+  - Govindaprasad, Sudarshan
+  - Gupta, Sumit
+  - Deng, Summer
+  - Cho, Sungmin
+  - Virk, Sunny
+  - Subramanian, Suraj
+  - Choudhury, Sy
+  - Goldman, Sydney
+  - Remez, Tal
+  - Glaser, Tamar
+  - Best, Tamara
+  - Koehler, Thilo
+  - Robinson, Thomas
+  - Li, Tianhe
+  - Zhang, Tianjun
+  - Matthews, Tim
+  - Chou, Timothy
+  - Shaked, Tzook
+  - Vontimitta, Varun
+  - Ajayi, Victoria
+  - Montanez, Victoria
+  - Mohan, Vijai
+  - Kumar, Vinay Satish
+  - Mangla, Vishal
+  - Ionescu, Vlad
+  - Poenaru, Vlad
+  - Mihailescu, Vlad Tiberiu
+  - Ivanov, Vladimir
+  - Li, Wei
+  - Wang, Wenchen
+  - Jiang, Wenwen
+  - Bouaziz, Wes
+  - Constable, Will
+  - Tang, Xiaocheng
+  - Wu, Xiaojian
+  - Wang, Xiaolan
+  - Wu, Xilun
+  - Gao, Xinbo
+  - Kleinman, Yaniv
+  - Chen, Yanjun
+  - Hu, Ye
+  - Jia, Ye
+  - Qi, Ye
+  - Li, Yenda
+  - Zhang, Yilin
+  - Zhang, Ying
+  - Adi, Yossi
+  - Nam, Youngjin
+  - '{Yu}'
+  - '{Wang}'
+  - Zhao, Yu
+  - Hao, Yuchen
+  - Qian, Yundi
+  - Li, Yunlu
+  - He, Yuzi
+  - Rait, Zach
+  - DeVito, Zachary
+  - Rosnbrick, Zef
+  - Wen, Zhaoduo
+  - Yang, Zhenyu
+  - Zhao, Zhiwei
+  - Ma, Zhiyu
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2407.21783v3
+  entry_type: article
+  eprint: 2407.21783v3
+  doi: 10.48550/arXiv.2407.21783
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2407.21783v3
+  - https://arxiv.org/pdf/2407.21783v3
 - key: deepseek
-  title: "DeepSeek LLM: Scaling Open-Source Language Models with Longtermism"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2401.02954
-
+  title: 'DeepSeek LLM: Scaling Open-Source Language Models with Longtermism'
+  authors:
+  - '{DeepSeek-AI}'
+  - Bi, Xiao
+  - Chen, Deli
+  - Chen, Guanting
+  - Chen, Shanhuang
+  - Dai, Damai
+  - Deng, Chengqi
+  - Ding, Honghui
+  - Dong, Kai
+  - Du, Qiushi
+  - Fu, Zhe
+  - Gao, Huazuo
+  - Gao, Kaige
+  - Gao, Wenjun
+  - Ge, Ruiqi
+  - Guan, Kang
+  - Guo, Daya
+  - Guo, Jianzhong
+  - Hao, Guangbo
+  - Hao, Zhewen
+  - He, Ying
+  - Hu, Wenjie
+  - Huang, Panpan
+  - Li, Erhang
+  - Li, Guowei
+  - Li, Jiashi
+  - Li, Yao
+  - Li, Y. K.
+  - Liang, Wenfeng
+  - Lin, Fangyun
+  - Liu, A. X.
+  - Liu, Bo
+  - Liu, Wen
+  - Liu, Xiaodong
+  - Liu, Xin
+  - Liu, Yiyuan
+  - Lu, Haoyu
+  - Lu, Shanghao
+  - Luo, Fuli
+  - Ma, Shirong
+  - Nie, Xiaotao
+  - Pei, Tian
+  - Piao, Yishi
+  - Qiu, Junjie
+  - Qu, Hui
+  - Ren, Tongzheng
+  - Ren, Zehui
+  - Ruan, Chong
+  - Sha, Zhangli
+  - Shao, Zhihong
+  - Song, Junxiao
+  - Su, Xuecheng
+  - Sun, Jingxiang
+  - Sun, Yaofeng
+  - Tang, Minghui
+  - Wang, Bingxuan
+  - Wang, Peiyi
+  - Wang, Shiyu
+  - Wang, Yaohui
+  - Wang, Yongji
+  - Wu, Tong
+  - Wu, Y.
+  - Xie, Xin
+  - Xie, Zhenda
+  - Xie, Ziwei
+  - Xiong, Yiliang
+  - Xu, Hanwei
+  - Xu, R. X.
+  - Xu, Yanhong
+  - Yang, Dejian
+  - You, Yuxiang
+  - Yu, Shuiping
+  - Yu, Xingkai
+  - Zhang, B.
+  - Zhang, Haowei
+  - Zhang, Lecong
+  - Zhang, Liyue
+  - Zhang, Mingchuan
+  - Zhang, Minghua
+  - Zhang, Wentao
+  - Zhang, Yichao
+  - Zhao, Chenggang
+  - Zhao, Yao
+  - Zhou, Shangyan
+  - Zhou, Shunfeng
+  - Zhu, Qihao
+  - Zou, Yuheng
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2401.02954v1
+  entry_type: article
+  eprint: 2401.02954v1
+  doi: 10.48550/arXiv.2401.02954
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2401.02954v1
+  - https://arxiv.org/pdf/2401.02954v1
 - key: ehr_scaling
   title: Exploring Scaling Laws for EHR Foundation Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2505.22964
-
+  authors:
+  - Zhang, Sheng
+  - Liu, Qin
+  - Usuyama, Naoto
+  - Wong, Cliff
+  - Naumann, Tristan
+  - Poon, Hoifung
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2505.22964v2
+  entry_type: article
+  eprint: 2505.22964v2
+  doi: 10.48550/arXiv.2505.22964
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2505.22964v2
+  - https://arxiv.org/pdf/2505.22964v2
 - key: evo
   title: Sequence modeling and design from molecular to genome scale with Evo
+  authors:
+  - Nguyen, Eric
+  - Poli, Michael
+  - Durrant, Matthew G.
+  - Thomas, Armin W.
+  - Kang, Brian
+  - Sullivan, Jeremy
+  - Ng, Madelena Y.
+  - Lewis, Ashley
+  - Patel, Aman
+  - Lou, Aaron
+  - Ermon, Stefano
+  - Baccus, Stephen A.
+  - Hernandez-Boussard, Tina
+  - Ré, Christopher
+  - Hsu, Patrick D.
+  - Hie, Brian L.
+  year: 2024
   venue: bioRxiv
   url: https://www.biorxiv.org/content/10.1101/2024.02.27.582234v2
-
+  entry_type: article
+  doi: 10.1101/2024.02.27.582234
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://www.biorxiv.org/content/10.1101/2024.02.27.582234v2
+  - https://www.biorxiv.org/content/biorxiv/early/2024/03/06/2024.02.27.582234.full.pdf
 - key: il_scaling
   title: Scaling Laws for Imitation Learning in Single-Agent Games
-  venue: TMLR
-  url: https://arxiv.org/abs/2307.09423
-
+  authors:
+  - Tuyls, Jens
+  - Madeka, Dhruv
+  - Torkkola, Kari
+  - Foster, Dean
+  - Narasimhan, Karthik
+  - Kakade, Sham
+  year: 2024
+  venue: Transactions on Machine Learning Research
+  url: https://arxiv.org/abs/2307.09423v3
+  entry_type: article
+  eprint: 2307.09423v3
+  doi: 10.48550/arXiv.2307.09423
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2307.09423v3
+  - https://arxiv.org/pdf/2307.09423v3
 - key: sovit
-  title: "Getting ViT in Shape: Scaling Laws for Compute-Optimal Model Design"
-  venue: NeurIPS
-  url: https://arxiv.org/abs/2305.13035
-
+  title: 'Getting ViT in Shape: Scaling Laws for Compute-Optimal Model Design'
+  authors:
+  - Alabdulmohsin, Ibrahim M.
+  - Zhai, Xiaohua
+  - Kolesnikov, Alexander
+  - Beyer, Lucas
+  year: 2023
+  venue: Advances in Neural Information Processing Systems
+  url: https://papers.neurips.cc/paper_files/paper/2023/hash/3504a4fa45685d668ce92797fbbf1895-Abstract-Conference.html
+  entry_type: inproceedings
+  eprint: 2305.13035v5
+  doi: 10.52202/075280-0722
+  volume: '36'
+  pages: 16406--16425
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://papers.neurips.cc/paper_files/paper/2023/hash/3504a4fa45685d668ce92797fbbf1895-Abstract-Conference.html
+  - https://arxiv.org/pdf/2305.13035v5
 - key: waymo_scaling
   title: Scaling Laws of Motion Forecasting and Planning -- Technical Report
-  venue: ArXiv
-  url: https://arxiv.org/abs/2506.08228
-
+  authors:
+  - Baniodeh, Mustafa
+  - Goel, Kratarth
+  - Ettinger, Scott
+  - Fuertes, Carlos
+  - Seff, Ari
+  - Shen, Tim
+  - Gulino, Cole
+  - Yang, Chenjie
+  - Jerfel, Ghassen
+  - Choe, Dokook
+  - Wang, Rui
+  - Charrow, Benjamin
+  - Kallem, Vinutha
+  - Casas, Sergio
+  - Al-Rfou, Rami
+  - Sapp, Benjamin
+  - Anguelov, Dragomir
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2506.08228v2
+  entry_type: article
+  eprint: 2506.08228v2
+  doi: 10.48550/arXiv.2506.08228
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2506.08228v2
+  - https://arxiv.org/pdf/2506.08228v2
 - key: optibert
   title: Training compute-optimal transformer encoder models
-  venue: EMNLP
-  url: https://aclanthology.org/2025.emnlp-main.1804.pdf
-
+  authors:
+  - Dervishi, Megi
+  - Allauzen, Alexandre
+  - Synnaeve, Gabriel
+  - LeCun, Yann
+  year: 2025
+  venue: Proceedings of the 2025 Conference on Empirical Methods in Natural Language Processing
+  url: https://aclanthology.org/2025.emnlp-main.1804/
+  entry_type: inproceedings
+  doi: 10.18653/v1/2025.emnlp-main.1804
+  pages: 35614--35629
+  publisher: Association for Computational Linguistics
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://aclanthology.org/2025.emnlp-main.1804/
 - key: dit_scaling
   title: Scaling Laws For Diffusion Transformers
-  venue: ArXiv
-  url: https://arxiv.org/abs/2410.08184
-
+  authors:
+  - Liang, Zhengyang
+  - He, Hao
+  - Yang, Ceyuan
+  - Dai, Bo
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2410.08184v2
+  entry_type: article
+  eprint: 2410.08184v2
+  doi: 10.48550/arXiv.2410.08184
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2410.08184v2
+  - https://arxiv.org/pdf/2410.08184v2
 - key: dlm_scaling
   title: Scaling Behavior of Discrete Diffusion Language Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2512.10858
-
+  authors:
+  - von Rütte, Dimitri
+  - Fluri, Janis
+  - Pooladzandi, Omead
+  - Schölkopf, Bernhard
+  - Hofmann, Thomas
+  - Orvieto, Antonio
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2512.10858v3
+  entry_type: article
+  eprint: 2512.10858v3
+  doi: 10.48550/arXiv.2512.10858
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2512.10858v3
+  - https://arxiv.org/pdf/2512.10858v3
 - key: biosignal_scaling
   title: Scaling Laws for Compute Optimal Biosignal Transformers
-  venue: Other
-  url: https://dspacemainprd01.lib.uwaterloo.ca/server/api/core/bitstreams/b66b1078-b359-4688-8dac-45e78806eb3d/content
-
+  authors:
+  - Fortin, Thomas
+  year: 2024
+  venue: University of Waterloo
+  url: https://hdl.handle.net/10012/20825
+  entry_type: mastersthesis
+  institution: University of Waterloo
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://hdl.handle.net/10012/20825
+  - https://uwspace.uwaterloo.ca/items/1f3c05f8-b017-4c24-a3a0-bf41cfa94338/full
 - key: misfitting
-  title: "(Mis)fitting: A Survey of Scaling Laws"
-  venue: ICLR 2025
-  url: https://arxiv.org/abs/2502.18969
-
+  title: '(Mis)Fitting: A Survey of Scaling Laws'
+  authors:
+  - Li, Margaret
+  - Kudugunta, Sneha
+  - Zettlemoyer, Luke
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2502.18969v1
+  entry_type: article
+  eprint: 2502.18969v1
+  doi: 10.48550/arXiv.2502.18969
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2502.18969v1
+  - https://arxiv.org/pdf/2502.18969v1
 - key: data_filtering_scaling
-  title: "Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic"
-  venue: CVPR 2024
-  url: https://arxiv.org/abs/2404.07177
-
+  title: Scaling Laws for Data Filtering -- Data Curation cannot be Compute Agnostic
+  authors:
+  - Goyal, Sachin
+  - Maini, Pratyush
+  - Lipton, Zachary C.
+  - Raghunathan, Aditi
+  - Kolter, J. Zico
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2404.07177v1
+  entry_type: article
+  eprint: 2404.07177v1
+  doi: 10.48550/arXiv.2404.07177
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2404.07177v1
+  - https://arxiv.org/pdf/2404.07177v1
 - key: chinchilla_robustness
   title: Evaluating the Robustness of Chinchilla Compute-Optimal Scaling
-  venue: ArXiv
-  url: https://arxiv.org/abs/2509.23963
-
+  authors:
+  - Schaeffer, Rylan
+  - Levi, Noam
+  - Kirsch, Andreas
+  - Guenais, Theo
+  - Miranda, Brando
+  - Obbad, Elyas
+  - Koyejo, Sanmi
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2509.23963v1
+  entry_type: article
+  eprint: 2509.23963v1
+  doi: 10.48550/arXiv.2509.23963
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2509.23963v1
+  - https://arxiv.org/pdf/2509.23963v1
 - key: kaplan_scaling
   title: Scaling Laws for Neural Language Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2001.08361
-
+  authors:
+  - Kaplan, Jared
+  - McCandlish, Sam
+  - Henighan, Tom
+  - Brown, Tom B.
+  - Chess, Benjamin
+  - Child, Rewon
+  - Gray, Scott
+  - Radford, Alec
+  - Wu, Jeffrey
+  - Amodei, Dario
+  year: 2020
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2001.08361v1
+  entry_type: article
+  eprint: 2001.08361v1
+  doi: 10.48550/arXiv.2001.08361
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2001.08361v1
+  - https://arxiv.org/pdf/2001.08361v1
 - key: data_constrained
   title: Scaling Data-Constrained Language Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2305.16264
-
+  authors:
+  - Muennighoff, Niklas
+  - Rush, Alexander M.
+  - Barak, Boaz
+  - Le Scao, Teven
+  - Piktus, Aleksandra
+  - Tazi, Nouamane
+  - Pyysalo, Sampo
+  - Wolf, Thomas
+  - Raffel, Colin
+  year: 2023
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2305.16264v5
+  entry_type: article
+  eprint: 2305.16264v5
+  doi: 10.48550/arXiv.2305.16264
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2305.16264v5
+  - https://arxiv.org/pdf/2305.16264v5
 - key: mupt
-  title: "MuPT: A Generative Symbolic Music Pretrained Transformer"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2404.06393
-
+  title: 'MuPT: A Generative Symbolic Music Pretrained Transformer'
+  authors:
+  - Qu, Xingwei
+  - Bai, Yuelin
+  - Ma, Yinghao
+  - Zhou, Ziya
+  - Lo, Ka Man
+  - Liu, Jiaheng
+  - Yuan, Ruibin
+  - Min, Lejun
+  - Liu, Xueling
+  - Zhang, Tianyu
+  - Du, Xinrun
+  - Guo, Shuyue
+  - Liang, Yiming
+  - Li, Yizhi
+  - Wu, Shangda
+  - Zhou, Junting
+  - Zheng, Tianyu
+  - Ma, Ziyang
+  - Han, Fengze
+  - Xue, Wei
+  - Xia, Gus
+  - Benetos, Emmanouil
+  - Yue, Xiang
+  - Lin, Chenghua
+  - Tan, Xu
+  - Huang, Stephen W.
+  - Fu, Jie
+  - Zhang, Ge
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2404.06393v4
+  entry_type: article
+  eprint: 2404.06393v4
+  doi: 10.48550/arXiv.2404.06393
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2404.06393v4
+  - https://arxiv.org/pdf/2404.06393v4
 - key: precision_scaling
   title: Scaling Laws for Precision
-  venue: ArXiv
-  url: https://arxiv.org/abs/2411.04330
-
+  authors:
+  - Kumar, Tanishq
+  - Ankner, Zachary
+  - Spector, Benjamin F.
+  - Bordelon, Blake
+  - Muennighoff, Niklas
+  - Paul, Mansheej
+  - Pehlevan, Cengiz
+  - Ré, Christopher
+  - Raghunathan, Aditi
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2411.04330v2
+  entry_type: article
+  eprint: 2411.04330v2
+  doi: 10.48550/arXiv.2411.04330
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2411.04330v2
+  - https://arxiv.org/pdf/2411.04330v2
 - key: reconciling_scaling
   title: Reconciling Kaplan and Chinchilla Scaling Laws
-  venue: TMLR
-  url: https://arxiv.org/abs/2406.12907
-
+  authors:
+  - Pearce, Tim
+  - Song, Jinyeop
+  year: 2024
+  venue: Transactions on Machine Learning Research
+  url: https://arxiv.org/abs/2406.12907v3
+  entry_type: article
+  eprint: 2406.12907v3
+  doi: 10.48550/arXiv.2406.12907
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2406.12907v3
+  - https://arxiv.org/pdf/2406.12907v3
 - key: quality_scaling
-  title: "Scaling Laws Revisited: Modeling the Role of Data Quality in Language Model Pretraining"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2510.03313
-
+  title: 'Scaling Laws Revisited: Modeling the Role of Data Quality in Language Model Pretraining'
+  authors:
+  - Subramanyam, Anirudh
+  - Chen, Yuxin
+  - Grossman, Robert L.
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2510.03313v2
+  entry_type: article
+  eprint: 2510.03313v2
+  doi: 10.48550/arXiv.2510.03313
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2510.03313v2
+  - https://arxiv.org/pdf/2510.03313v2
 - key: optimal_data_mixtures
   title: Scaling Laws for Optimal Data Mixtures
-  venue: ArXiv
-  url: https://arxiv.org/abs/2507.09404
-
-- key: redundancy_scaling
-  title: Scaling Laws are Redundancy Laws
-  venue: ArXiv
-  url: https://arxiv.org/abs/2509.20721
-
+  authors:
+  - Shukor, Mustafa
+  - Bethune, Louis
+  - Busbridge, Dan
+  - Grangier, David
+  - Fini, Enrico
+  - El-Nouby, Alaaeldin
+  - Ablin, Pierre
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2507.09404v2
+  entry_type: article
+  eprint: 2507.09404v2
+  doi: 10.48550/arXiv.2507.09404
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2507.09404v2
+  - https://arxiv.org/pdf/2507.09404v2
 - key: moe_scaling
-  title: "Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2507.17702
-
+  title: 'Towards Greater Leverage: Scaling Laws for Efficient Mixture-of-Experts Language Models'
+  authors:
+  - Tian, Changxin
+  - Chen, Kunlong
+  - Liu, Jia
+  - Liu, Ziqi
+  - Zhang, Zhiqiang
+  - Zhou, Jun
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2507.17702v4
+  entry_type: article
+  eprint: 2507.17702v4
+  doi: 10.48550/arXiv.2507.17702
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2507.17702v4
+  - https://arxiv.org/pdf/2507.17702v4
 - key: ai2_task_scaling
   title: Establishing Task Scaling Laws via Compute-Efficient Model Ladders
-  venue: ArXiv
-  url: https://arxiv.org/abs/2412.04403
-
+  authors:
+  - Bhagia, Akshita
+  - Liu, Jiacheng
+  - Wettig, Alexander
+  - Heineman, David
+  - Tafjord, Oyvind
+  - Jha, Ananya Harsh
+  - Soldaini, Luca
+  - Smith, Noah A.
+  - Groeneveld, Dirk
+  - Koh, Pang Wei
+  - Dodge, Jesse
+  - Hajishirzi, Hannaneh
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2412.04403v2
+  entry_type: article
+  eprint: 2412.04403v2
+  doi: 10.48550/arXiv.2412.04403
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2412.04403v2
+  - https://arxiv.org/pdf/2412.04403v2
 - key: farseer
-  title: "Predictable Scale: Part II, Farseer: A Refined Scaling Law in Large Language Models"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2506.10972
-
+  title: 'Predictable Scale: Part II, Farseer: A Refined Scaling Law in Large Language Models'
+  authors:
+  - Li, Houyi
+  - Zheng, Wenzhen
+  - Wang, Qiufeng
+  - Ding, Zhenyu
+  - Wang, Haoying
+  - Wang, Zili
+  - Xuyang, Shijie
+  - Ding, Ning
+  - Zhou, Shuigeng
+  - Zhang, Xiangyu
+  - Jiang, Daxin
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2506.10972v3
+  entry_type: article
+  eprint: 2506.10972v3
+  doi: 10.48550/arXiv.2506.10972
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2506.10972v3
+  - https://arxiv.org/pdf/2506.10972v3
 - key: sld_agent
   title: Can Language Models Discover Scaling Laws?
-  venue: ArXiv
-  url: https://arxiv.org/abs/2507.21184
-
+  authors:
+  - Lin, Haowei
+  - Ye, Haotian
+  - Feng, Wenzheng
+  - Huang, Quzhe
+  - Li, Yujun
+  - Lim, Hubert
+  - Li, Zhengrui
+  - Wang, Xiangyu
+  - Ma, Jianzhu
+  - Liang, Yitao
+  - Zou, James
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2507.21184v5
+  entry_type: article
+  eprint: 2507.21184v5
+  doi: 10.48550/arXiv.2507.21184
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2507.21184v5
+  - https://arxiv.org/pdf/2507.21184v5
 - key: hessian_optimization
   title: An Investigation into Neural Net Optimization via Hessian Eigenvalue Density
-  venue: ArXiv
-  url: https://arxiv.org/abs/1901.10159
-
+  authors:
+  - Ghorbani, Behrooz
+  - Krishnan, Shankar
+  - Xiao, Ying
+  year: 2019
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/1901.10159v1
+  entry_type: article
+  eprint: 1901.10159v1
+  doi: 10.48550/arXiv.1901.10159
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/1901.10159v1
+  - https://arxiv.org/pdf/1901.10159v1
 - key: optimizer_scaling
   title: Towards Robust Scaling Laws for Optimizers
-  venue: ArXiv
-  url: https://arxiv.org/abs/2602.07712
-
+  authors:
+  - Volkova, Alexandra
+  - Safaryan, Mher
+  - Lampert, Christoph H.
+  - Alistarh, Dan
+  year: 2026
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2602.07712v2
+  entry_type: article
+  eprint: 2602.07712v2
+  doi: 10.48550/arXiv.2602.07712
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2602.07712v2
+  - https://arxiv.org/pdf/2602.07712v2
 - key: pruning_scaling
-  title: "The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling Laws"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2501.12486
-
+  title: 'The Journey Matters: Average Parameter Count over Pre-training Unifies Sparse and Dense Scaling
+    Laws'
+  authors:
+  - Jin, Tian
+  - Humayun, Ahmed Imtiaz
+  - Evci, Utku
+  - Subramanian, Suvinay
+  - Yazdanbakhsh, Amir
+  - Alistarh, Dan
+  - Dziugaite, Gintare Karolina
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2501.12486v2
+  entry_type: article
+  eprint: 2501.12486v2
+  doi: 10.48550/arXiv.2501.12486
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2501.12486v2
+  - https://arxiv.org/pdf/2501.12486v2
 - key: moe_memory_scaling
-  title: "Joint MoE Scaling Laws: Mixture of Experts Can Be Memory Efficient"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2502.05172
-
+  title: 'Joint MoE Scaling Laws: Mixture of Experts Can Be Memory Efficient'
+  authors:
+  - Ludziejewski, Jan
+  - Pióro, Maciej
+  - Krajewski, Jakub
+  - Stefaniak, Maciej
+  - Krutul, Michał
+  - Małaśnicki, Jan
+  - Cygan, Marek
+  - Sankowski, Piotr
+  - Adamczewski, Kamil
+  - Miłoś, Piotr
+  - Jaszczur, Sebastian
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2502.05172v2
+  entry_type: article
+  eprint: 2502.05172v2
+  doi: 10.48550/arXiv.2502.05172
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2502.05172v2
+  - https://arxiv.org/pdf/2502.05172v2
 - key: atlas_multilingual
-  title: "ATLAS: Adaptive Transfer Scaling Laws for Multilingual Pretraining, Finetuning, and Decoding the Curse of Multilinguality"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2510.22037
-
+  title: 'ATLAS: Adaptive Transfer Scaling Laws for Multilingual Pretraining, Finetuning, and Decoding
+    the Curse of Multilinguality'
+  authors:
+  - Longpre, Shayne
+  - Kudugunta, Sneha
+  - Muennighoff, Niklas
+  - Hsu, I-Hung
+  - Caswell, Isaac
+  - Pentland, Alex
+  - Arik, Sercan
+  - Lee, Chen-Yu
+  - Ebrahimi, Sayna
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2510.22037v2
+  entry_type: article
+  eprint: 2510.22037v2
+  doi: 10.48550/arXiv.2510.22037
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2510.22037v2
+  - https://arxiv.org/pdf/2510.22037v2
 - key: icr_scaling
-  title: "Theory of Scaling Laws for In-Context Regression: Depth, Width, Context and Time"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2510.01098
-
+  title: 'Theory of Scaling Laws for In-Context Regression: Depth, Width, Context and Time'
+  authors:
+  - Bordelon, Blake
+  - Letey, Mary I.
+  - Pehlevan, Cengiz
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2510.01098v1
+  entry_type: article
+  eprint: 2510.01098v1
+  doi: 10.48550/arXiv.2510.01098
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2510.01098v1
+  - https://arxiv.org/pdf/2510.01098v1
 - key: subgroup_scaling
-  title: "Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2103.03399
-
+  title: 'Representation Matters: Assessing the Importance of Subgroup Allocations in Training Data'
+  authors:
+  - Rolf, Esther
+  - Worledge, Theodora
+  - Recht, Benjamin
+  - Jordan, Michael I.
+  year: 2021
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2103.03399v2
+  entry_type: article
+  eprint: 2103.03399v2
+  doi: 10.48550/arXiv.2103.03399
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2103.03399v2
+  - https://arxiv.org/pdf/2103.03399v2
 - key: progen3
   title: Scaling Unlocks Broader Generation and Deeper Functional Understanding of Proteins
+  authors:
+  - Bhatnagar, Aadyot
+  - Jain, Sarthak
+  - Beazer, Joel
+  - Curran, Samuel C.
+  - Hoffnagle, Alexander M.
+  - Ching, Kyle S.
+  - Martyn, Michael
+  - Nayfach, Stephen
+  - Ruffolo, Jeffrey A.
+  - Madani, Ali
+  year: 2025
   venue: bioRxiv
   url: https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2
-
+  entry_type: article
+  doi: 10.1101/2025.04.15.649055
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://www.biorxiv.org/content/10.1101/2025.04.15.649055v2
+  - https://www.biorxiv.org/content/biorxiv/early/2025/10/01/2025.04.15.649055.full.pdf
 - key: audio_scaling
-  title: "Scaling Open Discrete Audio Foundation Models with Interleaved Semantic, Acoustic, and Text Tokens"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2602.16687
-
+  title: Scaling Open Discrete Audio Foundation Models with Interleaved Semantic, Acoustic, and Text Tokens
+  authors:
+  - Manakul, Potsawee
+  - Gan, Woody Haosheng
+  - Bartelds, Martijn
+  - Sun, Guangzhi
+  - Held, William
+  - Yang, Diyi
+  year: 2026
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2602.16687v1
+  entry_type: article
+  eprint: 2602.16687v1
+  doi: 10.48550/arXiv.2602.16687
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2602.16687v1
+  - https://arxiv.org/pdf/2602.16687v1
 - key: dense_retrieval_scaling
   title: Scaling Laws For Dense Retrieval
-  venue: ArXiv
-  url: https://arxiv.org/abs/2403.18684
-
+  authors:
+  - Fang, Yan
+  - Zhan, Jingtao
+  - Ai, Qingyao
+  - Mao, Jiaxin
+  - Su, Weihang
+  - Chen, Jia
+  - Liu, Yiqun
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2403.18684v2
+  entry_type: article
+  eprint: 2403.18684v2
+  doi: 10.48550/arXiv.2403.18684
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2403.18684v2
+  - https://arxiv.org/pdf/2403.18684v2
 - key: protein_plm_scaling
   title: Training Compute-Optimal Protein Language Models
+  authors:
+  - Cheng, Xingyi
+  - Chen, Bo
+  - Li, Pan
+  - Gong, Jing
+  - Tang, Jie
+  - Song, Le
+  year: 2024
   venue: bioRxiv
   url: https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1
-
+  entry_type: article
+  doi: 10.1101/2024.06.06.597716
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://www.biorxiv.org/content/10.1101/2024.06.06.597716v1
+  - https://www.biorxiv.org/content/biorxiv/early/2024/06/09/2024.06.06.597716.full.pdf
 - key: nmm_scaling
   title: Scaling Laws for Native Multimodal Models
-  venue: ArXiv
-  url: https://arxiv.org/abs/2504.07951
-
+  authors:
+  - Shukor, Mustafa
+  - Fini, Enrico
+  - Turrisi da Costa, Victor Guilherme
+  - Cord, Matthieu
+  - Susskind, Joshua
+  - El-Nouby, Alaaeldin
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2504.07951v4
+  entry_type: article
+  eprint: 2504.07951v4
+  doi: 10.48550/arXiv.2504.07951
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2504.07951v4
+  - https://arxiv.org/pdf/2504.07951v4
 - key: xlstm_scaling
-  title: "xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2510.02228
-
+  title: 'xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity'
+  authors:
+  - Beck, Maximilian
+  - Schweighofer, Kajetan
+  - Böck, Sebastian
+  - Lehner, Sebastian
+  - Hochreiter, Sepp
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2510.02228v2
+  entry_type: article
+  eprint: 2510.02228v2
+  doi: 10.48550/arXiv.2510.02228
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2510.02228v2
+  - https://arxiv.org/pdf/2510.02228v2
 - key: olmo_hybrid
-  title: "OLMo Hybrid: From Theory to Practice"
-  venue: Allen Institute for AI
-  url: https://allenai.org/papers/olmo-hybrid
-
+  title: 'Olmo Hybrid: From Theory to Practice and Back'
+  authors:
+  - Merrill, William
+  - Li, Yanhong
+  - Romero, Tyler
+  - Svete, Anej
+  - Costello, Caia
+  - Dasigi, Pradeep
+  - Groeneveld, Dirk
+  - Heineman, David
+  - Kuehl, Bailey
+  - Lambert, Nathan
+  - Li, Chuan
+  - Lo, Kyle
+  - Malik, Saumya
+  - Matusz, DJ
+  - Minixhofer, Benjamin
+  - Morrison, Jacob
+  - Soldaini, Luca
+  - Timbers, Finbarr
+  - Walsh, Pete
+  - Smith, Noah A.
+  - Hajishirzi, Hannaneh
+  - Sabharwal, Ashish
+  year: 2026
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2604.03444v4
+  entry_type: article
+  eprint: 2604.03444v4
+  doi: 10.48550/arXiv.2604.03444
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2604.03444v4
+  - https://arxiv.org/pdf/2604.03444
 - key: epochai_open_model_compute
-  title: Open Models Compute Threshold
+  title: Frontier open models may surpass 1e26 FLOP of training compute before 2026
+  authors:
+  - Emberson, Luke
+  year: 2025
   venue: Epoch AI
   url: https://epoch.ai/data-insights/open-models-threshold
-
+  entry_type: misc
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://epoch.ai/data-insights/open-models-threshold
 - key: epochai_chinchilla_replication
-  title: "Chinchilla Scaling: A replication attempt"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2404.10102
-
+  title: 'Chinchilla Scaling: A replication attempt'
+  authors:
+  - Besiroglu, Tamay
+  - Erdil, Ege
+  - Barnett, Matthew
+  - You, Josh
+  year: 2024
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2404.10102v2
+  entry_type: article
+  eprint: 2404.10102v2
+  doi: 10.48550/arXiv.2404.10102
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2404.10102v2
+  - https://arxiv.org/pdf/2404.10102v2
 - key: beyond_language_modeling
-  title: "Beyond Language Modeling: An Exploration of Multimodal Pretraining"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2603.03276
-
+  title: 'Beyond Language Modeling: An Exploration of Multimodal Pretraining'
+  authors:
+  - Tong, Shengbang
+  - Fan, David
+  - Nguyen, John
+  - Brown, Ellis
+  - Zhou, Gaoyue
+  - Qian, Shengyi
+  - Zheng, Boyang
+  - Vallaeys, Théophane
+  - Han, Junlin
+  - Fergus, Rob
+  - Murray, Naila
+  - Ghazvininejad, Marjan
+  - Lewis, Mike
+  - Ballas, Nicolas
+  - Bar, Amir
+  - Rabbat, Michael
+  - Verbeek, Jakob
+  - Zettlemoyer, Luke
+  - Sinha, Koustuv
+  - LeCun, Yann
+  - Xie, Saining
+  year: 2026
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2603.03276v1
+  entry_type: article
+  eprint: 2603.03276v1
+  doi: 10.48550/arXiv.2603.03276
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2603.03276v1
+  - https://arxiv.org/pdf/2603.03276v1
 - key: beyond_chinchilla
-  title: Beyond Chinchilla-Optimal -- Accounting for Inference in Language Model Scaling Laws
-  venue: ArXiv
-  url: https://arxiv.org/abs/2401.00448
-
+  title: 'Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws'
+  authors:
+  - Sardana, Nikhil
+  - Portes, Jacob
+  - Doubov, Sasha
+  - Frankle, Jonathan
+  year: 2024
+  venue: Proceedings of the 41st International Conference on Machine Learning
+  url: https://proceedings.mlr.press/v235/sardana24a.html
+  entry_type: inproceedings
+  eprint: 2401.00448v3
+  volume: '235'
+  pages: 43445--43460
+  publisher: PMLR
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://proceedings.mlr.press/v235/sardana24a.html
+  - https://arxiv.org/pdf/2401.00448v3
 - key: olmo3
-  title: "OLMo 3: Open Language Models at Scale"
-  venue: ArXiv
-  url: https://arxiv.org/abs/2512.13961
+  title: Olmo 3
+  authors:
+  - '{Team Olmo}'
+  - Ettinger, Allyson
+  - Bertsch, Amanda
+  - Kuehl, Bailey
+  - Graham, David
+  - Heineman, David
+  - Groeneveld, Dirk
+  - Brahman, Faeze
+  - Timbers, Finbarr
+  - Ivison, Hamish
+  - Morrison, Jacob
+  - Poznanski, Jake
+  - Lo, Kyle
+  - Soldaini, Luca
+  - Jordan, Matt
+  - Chen, Mayee
+  - Noukhovitch, Michael
+  - Lambert, Nathan
+  - Walsh, Pete
+  - Dasigi, Pradeep
+  - Berry, Robert
+  - Malik, Saumya
+  - Shah, Saurabh
+  - Geng, Scott
+  - Arora, Shane
+  - Gupta, Shashank
+  - Anderson, Taira
+  - Xiao, Teng
+  - Murray, Tyler
+  - Romero, Tyler
+  - Graf, Victoria
+  - Asai, Akari
+  - Bhagia, Akshita
+  - Wettig, Alexander
+  - Liu, Alisa
+  - Rangapur, Aman
+  - Anastasiades, Chloe
+  - Huang, Costa
+  - Schwenk, Dustin
+  - Trivedi, Harsh
+  - Magnusson, Ian
+  - Lochner, Jaron
+  - Liu, Jiacheng
+  - Miranda, Lester James V.
+  - Sap, Maarten
+  - Morgan, Malia
+  - Schmitz, Michael
+  - Guerquin, Michal
+  - Wilson, Michael
+  - Huff, Regan
+  - Le Bras, Ronan
+  - Xin, Rui
+  - Shao, Rulin
+  - Skjonsberg, Sam
+  - Shen, Shannon Zejiang
+  - Li, Shuyue Stella
+  - Wilde, Tucker
+  - Pyatkin, Valentina
+  - Merrill, Will
+  - Chang, Yapei
+  - Gu, Yuling
+  - Zeng, Zhiyuan
+  - Sabharwal, Ashish
+  - Zettlemoyer, Luke
+  - Koh, Pang Wei
+  - Farhadi, Ali
+  - Smith, Noah A.
+  - Hajishirzi, Hannaneh
+  year: 2025
+  venue: arXiv preprint
+  url: https://arxiv.org/abs/2512.13961v2
+  entry_type: article
+  eprint: 2512.13961v2
+  doi: 10.48550/arXiv.2512.13961
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://arxiv.org/abs/2512.13961v2
+  - https://arxiv.org/pdf/2512.13961v2
+- key: variable_projection
+  title: The Differentiation of Pseudo-Inverses and Nonlinear Least Squares Problems Whose Variables Separate
+  authors:
+  - Golub, G. H.
+  - Pereyra, V.
+  year: 1973
+  venue: SIAM Journal on Numerical Analysis
+  url: https://doi.org/10.1137/0710036
+  entry_type: article
+  doi: 10.1137/0710036
+  volume: '10'
+  pages: 413--432
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://epubs.siam.org/doi/10.1137/0710036
+- key: nnls
+  title: Solving Least Squares Problems
+  authors:
+  - Lawson, Charles L.
+  - Hanson, Richard J.
+  year: 1995
+  venue: Society for Industrial and Applied Mathematics
+  url: https://doi.org/10.1137/1.9781611971217
+  entry_type: book
+  doi: 10.1137/1.9781611971217
+  verified_on: '2026-11-07'
+  evidence_urls:
+  - https://epubs.siam.org/doi/book/10.1137/1.9781611971217
+  - https://epubs.siam.org/doi/pdf/10.1137/1.9781611971217.fm

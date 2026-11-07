@@ -13,7 +13,7 @@
 > - **Syntax (IMPORTANT):** favor direct, integrated sentences. Do not use em dashes or explanatory colons to append elaborations, asides, or restatements onto a clause. Instead, weave the information into the sentence itself, or use a separate sentence. If you find yourself reaching for "—" or "general statement: specific restatement", restructure.
 > - References (see `specs/build.md` for regeneration steps):
 >   - Source of truth: `docs/references/references.yaml`
->   - Inline citation format: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list
+>   - Inline citation format: `<sup><a href="#ref-KEY">[N]</a></sup>` where KEY and N match the generated references list; the reference command refreshes numbers and renders both HTML and BibTeX from reviewed metadata
 >   - In this outline, cite as `[KEY]` (e.g. `[chinchilla]`); these map to keys in the YAML
 
 ---
@@ -30,8 +30,10 @@
 - Used by top AI labs including DeepMind [chinchilla] [sovit], Meta [llama3] [optibert] [beyond_language_modeling], DeepSeek [deepseek], Microsoft [ehr_scaling], Amazon [il_scaling], Waymo [waymo_scaling], and Arc Institute [evo], among others
 - Also a workhorse for academic studies [dit_scaling] [dlm_scaling] [biosignal_scaling] and practitioner tutorials (e.g. Andrej Karpathy)
 - Its appeal lies in stability and data efficiency relative to nonlinear optimization, owing to parabolic (2nd-order Taylor) approximations that estimate only the scaling exponents rather than the full surface
-- Many analytical extensions build on the Chinchilla functional form: data repetition [data_constrained], overfitting [mupt], precision [precision_scaling], optimizers [optimizer_scaling], MoE sparsity [moe_memory_scaling], pruning [pruning_scaling], data quality [quality_scaling], data mixtures [optimal_data_mixtures] [atlas_multilingual], model shape/context length [icr_scaling], non-embedding parameters [reconciling_scaling], downstream task performance [ai2_task_scaling]
-  - Similar studies extend individual terms in isolation [redundancy_scaling] [data_filtering_scaling] [moe_scaling] [subgroup_scaling] or propose modified Kaplan scaling laws [kaplan_scaling]
+- Analytical extensions study data repetition [data_constrained], overfitting [mupt], precision [precision_scaling], optimizers [optimizer_scaling], MoE sparsity [moe_memory_scaling], pruning [pruning_scaling], data quality [quality_scaling], data mixtures [optimal_data_mixtures] [atlas_multilingual], and downstream task performance [ai2_task_scaling]
+  - Distinguish related theoretical in-context regression work on width/depth/context [icr_scaling] and parameter-counting effects on allocation estimates [reconciling_scaling] from direct empirical Chinchilla extensions
+  - Similar studies extend individual terms in isolation [data_filtering_scaling] [moe_scaling] [subgroup_scaling] or propose modified Kaplan scaling laws [kaplan_scaling]
+  - Do not retain the withdrawn redundancy-law preprint as supporting evidence
   - A fitting method that recovers the base surface with higher precision may offer a stronger starting point for these richer settings
 - The sensitivity of the parabolic approximation on asymmetric loss surfaces (where α ≠ β) has not been studied in detail
 - Four modes of investigation: (1) noise-free synthetic simulations, (2) closed-form error expressions, (3) noisy simulations with a validated noise model, (4) empirical fits to Llama 3 IsoFLOP data
@@ -61,7 +63,7 @@
 
 - Overview
   - Compute-optimal scaling laws are most directly relevant to the largest frontier models, which are still frequently trained near compute-optimality
-  - Assess the cost of Approach 2 misallocations at the compute scale of Llama 3 405B (3.8×10²⁵ FLOPs) [llama3], one of the most compute-intensive open models as of early 2026 [epochai_open_model_compute]
+  - Assess the cost of Approach 2 misallocations at the compute scale of Llama 3 405B (3.8×10²⁵ FLOPs) [llama3]; Epoch AI's January 2025 article supplies historical high-compute context [epochai_open_model_compute], not a ranking as of 2026
   - Also examine Chinchilla and two multimodal models with greater asymmetry: SODA [audio_scaling] and Sparse-NMM [nmm_scaling]
   - Measure misallocation as Deadweight Compute Loss (DCL), the FLOPs needed to reach an optimal allocation from one provided by Approach 2
 - Methods
@@ -92,7 +94,7 @@
 ## Asymmetric Surfaces: Intercept and Extrapolation Errors
 
 - Same procedure as the symmetric baseline; only change is α ≠ β
-- Two test surfaces: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and Asymmetric (α=0.465, β=0.155, ratio = 3.0, comparable to DeepSeek's reported allocation exponents [deepseek])
+- Two test surfaces: Chinchilla (α=0.34, β=0.28, ratio ≈ 1.2) and Asymmetric (α=0.465, β=0.155, ratio = 3.0, an illustrative stress case; reported allocation ratios [deepseek] use different compute conventions)
 - Figure (2×2): Approach 2 on both surfaces; rows = IsoFLOP curves, power-law fits; columns = Chinchilla, Asymmetric; visible gap between true and inferred power-law lines
 - Tables: b exponent has negligible error; b₀ intercept has meaningful error, larger for the Asymmetric surface
 - Even under ideal conditions (no noise, centered sampling, standard parameters), Approach 2 produces biased intercepts
@@ -138,7 +140,8 @@
 
 - IsoFLOP curves from Chinchilla [chinchilla], Llama 3 [llama3], and DeepSeek [deepseek]
 - Visibly asymmetric shapes and off-center sampling are common in these high-profile studies
-- The conditions under which Approach 2's biases activate are the norm, not the exception
+- The examples show that bias conditions can occur; selected examples do not establish prevalence or quantify bias in the original studies
+- Published allocation exponents use differing compute conventions; empirical a/b need not identify the loss-surface ratio β/α, and uncertainty can include equal exponents
 - Six published experiments processed through the IsoFLOP quality control pipeline
 
 ### Compounding Errors
@@ -156,8 +159,8 @@
 
 ### Problems with Direct Surface Fitting
 
-- Summary of fitting challenges from [misfitting], a survey of 50+ scaling law papers
-  - Over half do not fully specify their fitting procedure
+- Summary of fitting challenges from [misfitting], a survey of 51 scaling law papers
+  - Report the survey's count of 23 papers without an optimization-process description; distinguish this from other missing fitting details
   - Most common optimizers are BFGS/L-BFGS; SGD-family noted as sometimes ill-suited for curve fitting
   - "Unstable" means: sensitivity to initialization, sensitivity to optimizer hyperparameters, convergence to local minima
   - Common mitigations (grid search over starting points, random init, seeding from published values) do not reliably solve the problem
@@ -166,6 +169,7 @@
 
 ### Variable Projection (VPNLS)
 
+- Attribute established variable projection to [variable_projection] and NNLS to [nnls]; VPNLS applies these numerical methods to the Chinchilla surface
 - For fixed (α, β), the loss is linear in (E, A, B); this is the same shortcut motivating Approach 2 but applied without the parabolic approximation
 - Algorithm: search over (α, β), solve for (E, A, B) via least squares at each candidate; coarse grid seeds a local optimizer; never optimizes the full 5D space
 - Grid search scalability: a 32² grid provides 1,024 candidates with fine 2D resolution vs 4⁵ = 1,024 points spread thinly in 5D; extensions adding linear terms enlarge the inner solve but not the outer grid
@@ -208,13 +212,13 @@
 - **Error costs at frontier scale**: at frontier compute scales, these biases translate to a potential 6.5% decrease in training FLOPs ($1.4M) on Llama 3 data and potentially more on multimodal surfaces with greater asymmetry
 - **Well-configured Approach 3 works well**: grid initialization and LSE reparameterization (as specified in the original Chinchilla paper [chinchilla]) achieve typical accuracy comparable to VPNLS; a recent survey [misfitting] suggests these details may be omitted or not reported in some studies
 - **VPNLS is at least as stable and accurate**: variable projection separates exponential from linear terms, reducing the nonlinear search to the exponential terms only; dense grid search is practical because the exponents occupy tight ranges (typically 0 to 1) unlike linear coefficients which span orders of magnitude
-- **VPNLS scales naturally to extensions**: analytical extensions (epochs, data quality, MoE sparsity, etc.) often add linear terms that could be omitted from direct optimization; a simplified reference implementation is possible in ~70 lines of JavaScript with no dependencies
+- **VPNLS scales naturally to extensions**: analytical extensions (epochs, data quality, MoE sparsity, etc.) often add linear terms that could be omitted from direct optimization; a bounded-grid TypeScript example uses an OLS inner solve without optimization or linear-algebra dependencies
 - **Takeaway for practitioners**: be aware of systematic bias with Approach 2 that grows with asymmetry, sampling offsets, and grid width; ensure grid init and LSE reparameterization when using Approach 3; VPNLS offers equivalent accuracy with simpler optimization that scales to richer formulations
 
 ### Limitations
 
 - **Irreducible loss dominance at large scale**: at sufficiently large compute budgets, extrapolations become irrelevant as the surface approaches E asymptotically; assumes practitioners are in a regime where scaling law extrapolations still inform model quality
-- **Assumed correctness of the Chinchilla loss surface**: evidence supports the model [chinchilla_robustness] but alternatives exist including Kaplan [kaplan_scaling], Farseer [farseer], MuPT [mupt], and agent-discovered forms [sld_agent]
+- **Assumed correctness of the Chinchilla loss surface**: empirical work supports robustness of allocation prescriptions [chinchilla_robustness], rather than establishing universal correctness of the functional form; alternatives include Kaplan [kaplan_scaling], Farseer [farseer], MuPT [mupt], and agent-discovered forms [sld_agent]
 - **Qualitative characterization of published study errors**: likely errors are not quantified; real pathologies don't follow the convenient theoretical model used in simulations
 
 ---

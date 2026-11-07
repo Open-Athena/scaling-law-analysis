@@ -12,7 +12,7 @@
 \usepackage{float}
 \usepackage{caption}
 \captionsetup{font=small, labelfont=bf}
-\usepackage{natbib}
+\usepackage[square,comma]{natbib}
 \usepackage{xcolor}
 \usepackage[margin=1in]{geometry}
 
@@ -131,13 +131,14 @@ optimizers~\citep{optimizer_scaling}, MoE
 sparsity~\citep{moe_memory_scaling},
 pruning~\citep{pruning_scaling}, data quality~\citep{quality_scaling}, data
 mixtures~\citep{optimal_data_mixtures,atlas_multilingual},
-model shape/context length~\citep{icr_scaling},
-non-embedding parameters~\citep{reconciling_scaling}, and downstream task
-performance~\citep{ai2_task_scaling}, to name a few. These extensions prescribe
-explicit functional forms rather than inferring scaling law structure
-automatically, and they build directly on the Chinchilla model as a foundation.
+and downstream task performance~\citep{ai2_task_scaling}, to name a few.
+These studies prescribe explicit functional forms rather than inferring scaling
+law structure automatically. Related work analyzes the effects of width, depth,
+and context length in a theoretical in-context regression model~\citep{icr_scaling},
+and the effect of counting non-embedding parameters on fitted allocation
+exponents~\citep{reconciling_scaling}.
 Similar
-studies~\citep{redundancy_scaling,data_filtering_scaling,moe_scaling,subgroup_scaling}
+studies~\citep{data_filtering_scaling,moe_scaling,subgroup_scaling}
 extend individual terms in isolation (e.g.\ token scaling terms alone) or
 propose modified Kaplan scaling laws~\citep{kaplan_scaling}, both of which
 would be relevant for comparable Chinchilla formulations as well. A fitting
@@ -246,16 +247,15 @@ applicable, and may translate directly into wasted compute.
 
 To quantify this, we assess the cost of Approach~2 misallocations at the
 compute scale of Llama~3 405B ($3.8\times10^{25}$
-FLOPs)~\citep{llama3}, which remains one of the most compute-intensive open
-models trained as of early
-2026~\citep{epochai_open_model_compute}. We also examine three additional loss
+FLOPs)~\citep{llama3}. Epoch AI used this model as a high-compute open-model
+reference point in its January 2025 analysis~\citep{epochai_open_model_compute}. We also examine three additional loss
 surfaces with published Approach~3 fit statistics---the original Chinchilla
 surface~\citep{chinchilla}, and two multimodal models for which scaling is
 substantially more asymmetric,
 SODA~\citep{audio_scaling} (interleaved audio-text) and
 Sparse-NMM~\citep{nmm_scaling} (native multimodal with sparse
 mixture-of-experts). These surfaces span a range of exponent asymmetry ratios
-($\beta/\alpha$) from near-unity to nearly 2:1, providing a view of how misallocation grows as the loss surface departs from
+($\alpha/\beta$) from near-unity to nearly 2:1, providing a view of how misallocation grows as the loss surface departs from
 nearly equal scaling exponents.
 
 We measure misallocation in terms of \textbf{Deadweight Compute Loss} (DCL),
@@ -333,10 +333,10 @@ in allocation estimates.
 
 While the simulated Llama~3 surface produces minimal waste due to its
 nearly symmetric exponents, surfaces with greater asymmetry show substantially
-higher costs. SODA ($\beta/\alpha \approx 1.56$) reaches
-8.0\% DCL (\$1.7M) and Sparse-NMM ($\beta/\alpha \approx 1.91$) reaches
+higher costs. SODA ($\alpha/\beta \approx 1.56$) reaches
+8.0\% DCL (\$1.7M) and Sparse-NMM ($\alpha/\beta \approx 1.91$) reaches
 10.1\% (\$2.1M). For domains with highly asymmetric scaling exponents, which
-are more common in multimodal settings~\citep{beyond_language_modeling}, Approach~2
+can also occur in multimodal settings~\citep{beyond_language_modeling}, Approach~2
 misallocations can waste a non-trivial fraction of a large training budget.
 
 \begin{figure}[ht]
@@ -430,15 +430,13 @@ We test two configurations to see how the effect scales:
     \item \textbf{Asymmetric:} $\alpha = 0.46$, $\beta = 0.15$ (ratio $= 3.0$)
 \end{itemize}
 
-This ratio ($\alpha/\beta = 3$) for the Asymmetric surface is on the upper end
-of previously reported statistics without being unrealistic.
-Table~\ref{tab:published_exponents} reports scaling statistics for many datasets
-and architectures, several of which indicate ratios in the 2--3 range (or even
-higher in one case~\citep{protein_plm_scaling}). In text datasets, the asymmetry
-typically runs in the opposite direction from our hypothetical Asymmetric surface
-($\beta > \alpha$ rather than $\alpha > \beta$), but the opposite is frequently
-true in multimodal datasets~\citep{beyond_language_modeling} and it is the magnitude of the imbalance, not its
-direction, that drives most of the biases studied here.
+The Asymmetric surface is an illustrative stress case with $\alpha/\beta=3$.
+Table~\ref{tab:published_exponents} includes empirical allocation ratios in the
+2--3 range and higher~\citep{protein_plm_scaling}, although these ratios do not
+by themselves identify loss-surface asymmetry. Modality-dependent allocation
+patterns also occur in multimodal work~\citep{beyond_language_modeling}.
+Our simulations isolate the effect of loss-surface imbalance; its magnitude,
+rather than its direction, drives most of the biases studied here.
 
 \begin{figure}[ht]
     \centering
@@ -722,9 +720,10 @@ in Figure~\ref{fig:wild}.
 
 We first consider biases that might arise from asymmetry. Published scaling law
 studies frequently report unequal scaling exponents, as shown in
-Table~\ref{tab:published_exponents}. Some degree of asymmetry is nearly
-universal across modalities, and several reported exponent estimates reach the
-same levels of imbalance as the most extreme configuration in our simulations.
+Table~\ref{tab:published_exponents}. Several reported allocation-exponent point estimates reach the levels of
+imbalance used in our simulations. These empirical allocation ratios need not
+identify loss-surface exponent ratios when compute conventions or fitting
+procedures differ, and uncertainty can include equal exponents.
 
 Beyond surface asymmetry, the IsoFLOP curves in Figure~\ref{fig:wild} also
 show visible signs of off-center sampling and drift:
@@ -740,10 +739,9 @@ show visible signs of off-center sampling and drift:
 To be clear, this is not a criticism of these studies. These are among the most
 careful and influential scaling law analyses yet published. The point is a more
 general one: the conditions under which Approach~2's biases take effect,
-asymmetric surfaces and imperfect sampling centers, appear to be the norm
-rather than the exception. The ideal conditions of
-Section~\ref{sec:symmetric} (symmetric surface, perfectly centered grids)
-occur rarely, if ever, in practice.
+asymmetric surfaces and imperfect sampling centers, can arise in practice.
+These selected examples do not establish their prevalence or quantify the
+bias in the original studies.
 
 \subsubsection{Compounding Errors}
 \label{sec:compounding}
@@ -810,25 +808,25 @@ approximation but introduces other problems.
 \subsection{Problems with Direct Surface Fitting}
 \label{sec:approach3_problems}
 
-A recent survey of over 50 scaling law papers~\citep{misfitting} documents the
+A survey of 51 scaling law papers~\citep{misfitting} documents the
 landscape of fitting practices and their failure modes. The problems described within it apply to scaling laws in general, not just
-Chinchilla forms like Approach~3. Over half of the papers surveyed do not fully specify
-their fitting procedure (optimizer, loss function, or initialization), which
-compounds reproducibility challenges, but the papers that do provide these
-details suggest several common challenges.
+Chinchilla forms like Approach~3. The survey reports 23 papers without a
+description of the optimization process and documents missing optimizer,
+loss-function, and initialization details. These omissions compound
+reproducibility challenges, while reported procedures suggest several common
+challenges.
 
 First, the most frequently used optimizers for scaling law fits are BFGS and L-BFGS. Some
 studies use SGD-family optimizers like Adam and Adagrad, though these are noted
 as sometimes poorly suited for curve fitting due to limited data efficiency.
-This is because methods like BFGS incorporate second-order derivatives (Hessian
-matrices) directly for greater data efficiency at the expense of memory
-utilization and scalability. Pure grid search offers an even more extreme
-tradeoff in this direction, which the survey notes as being employed by at
-least one study~\citep{data_filtering_scaling}.
+BFGS builds an inverse-Hessian approximation from changes in gradients;
+it does not require evaluating second derivatives. L-BFGS stores a limited
+history of updates to reduce memory use.\footnote{\url{https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html}}
+The survey also identifies a study that uses pure grid search to fit its
+scaling-law parameters~\citep{data_filtering_scaling}.
 
-Second, a limitation common to all optimizers is sensitivity to initialization, which
-is primarily a consequence of ``the difficulty of optimizing over this space,
-and the presence of many local minima.'' Mitigations for this include
+Second, the survey reports sensitivity to initialization in nonlinear fits
+(Sections~6 and~7.4). Mitigations for this include
 grid search over hundreds or thousands of starting points (running the
 optimizer from each and keeping the best fit), random sampling of starting
 points, evaluating a coarse grid without optimization and seeding the optimizer
@@ -874,7 +872,7 @@ well-conditioned two-dimensional subspace.
 \label{sec:vpnls_method}
 
 The Chinchilla loss surface has a partially linear structure that can be
-exploited. For any fixed values of $\alpha$ and $\beta$, the remaining
+exploited using the established variable projection method~\citep{variable_projection}. For any fixed values of $\alpha$ and $\beta$, the remaining
 parameters $(E, A, B)$ enter the model linearly and can be solved exactly via
 least squares. This is the same computational shortcut that motivates
 Approach~2 (optimizing exponential terms separately from linear terms), but
@@ -888,7 +886,7 @@ the two-dimensional $(\alpha, \beta)$ surface, never the full five-parameter
 space. We term this method Variable Projection with Non-negative Least Squares
 (VPNLS).
 
-In its simplest form, VPNLS uses non-negative least squares (NNLS) for the
+In its simplest form, VPNLS uses non-negative least squares (NNLS)~\citep{nnls} for the
 inner solve and a gradient-free optimizer like Nelder-Mead for the outer
 search:
 
@@ -1171,9 +1169,10 @@ optimization. This structural simplification may provide a more scalable
 foundation for future work. It also lends well to simple implementations of
 the Chinchilla loss model alone, e.g.\ it is possible to express a simplified
 version of the algorithm\footnote{\url{https://gist.github.com/eric-czech/ebd9a80d58c7b5e9c40ba390ff884617}}
-that guarantees globally optimal solutions at a desired level of scaling
-exponent precision, uses only ${\sim}70$ lines of JavaScript code, and
-requires no dependencies (no optimization or linear algebra libraries).
+that exhaustively evaluates a bounded grid over $\alpha,\beta\in(0,1]$ with
+an OLS inner solve and no optimization or linear-algebra dependencies. This
+selects the lowest evaluated grid objective; it does not certify a global
+optimum over the continuous parameter space.
 
 Lastly, practitioners using Approach~2 should be aware that scaling exponent
 estimates carry a systematic bias that often grows with loss surface asymmetry,
@@ -1202,9 +1201,10 @@ Several known limitations qualify the conclusions of this study:
 
     \item \textbf{Assumed correctness of the Chinchilla loss surface.} We
         assume the Chinchilla loss surface model
-        $L(N, D) = E + A/N^\alpha + B/D^\beta$ is correct in practice. While
-        there is substantial evidence legitimizing this
-        model~\citep{chinchilla_robustness}, alternatives exist, including the
+        $L(N, D) = E + A/N^\alpha + B/D^\beta$ is correct in practice. Empirical
+        work supports the robustness of Chinchilla allocation
+        prescriptions~\citep{chinchilla_robustness}, but this does not establish
+        the correctness of the functional form in every setting. Alternatives include the
         Kaplan loss model~\citep{kaplan_scaling}, refined analytical surfaces
         like Farseer~\citep{farseer} and MuPT~\citep{mupt}, and
         agent-discovered functional forms~\citep{sld_agent}.
@@ -1430,10 +1430,11 @@ methods.
 
 \begin{table}[H]
     \centering
-    \small
+    \footnotesize
+    \setlength{\tabcolsep}{4pt}
     \begin{tabular}{llllccc}
         \toprule
-        Source & Domain & Config & Method & $a$ & $b$ & $\beta/\alpha$ \\
+        Source & Domain & Config & Method & $a$ & $b$ & Ratio \\
         \midrule
         \multirow{5}{*}{DeepSeek~\citep{deepseek}}
             & \multirow{5}{*}{Web text}
@@ -1456,7 +1457,7 @@ methods.
         & & StripedHyena & & 0.483 & 0.539 & 0.90 \\
         \midrule
         \multirow{3}{*}{IL~\citep{il_scaling}}
-            & \multirow{3}{*}{Atari (RL)}
+            & \multirow{3}{*}{Games (IL)}
             & NetHack & \multirow{3}{*}{Appr.~2}
             & 0.61 & 0.39 & 1.56 \\
         & & Battle Zone & & 0.58 & 0.51 & 1.14 \\
@@ -1465,7 +1466,7 @@ methods.
         DiT~\citep{dit_scaling} & Image-text & Diffusion Trans. & Appr.~2
             & 0.568 & 0.432 & 1.32 \\
         \midrule
-        DLM~\citep{dlm_scaling} & Web text & Discrete diffusion & Appr.~2
+        DLM~\citep{dlm_scaling} & Web text & Uniform diffusion & Appr.~2
             & 0.589 & 0.411 & 1.43 \\
         \midrule
         Audio~\citep{audio_scaling} & Audio + text & Transformer & Appr.~2
@@ -1480,7 +1481,7 @@ methods.
         \multirow{2}{*}{Protein PLM~\citep{protein_plm_scaling}}
             & \multirow{2}{*}{Protein seq.}
             & CLM & \multirow{2}{*}{Appr.~2}
-            & 0.578 & 0.422 & 1.37 \\
+            & 0.578 & 0.421 & 1.37 \\
         & & MLM & & 0.776 & 0.230 & 3.37 \\
         \midrule
         \multirow{2}{*}{xLSTM~\citep{xlstm_scaling}}
@@ -1499,9 +1500,9 @@ methods.
         \multirow{3}{*}{OLMo~\citep{olmo_hybrid}}
             & \multirow{3}{*}{Web text}
             & Transformer & \multirow{3}{*}{Appr.~3}
-            & 0.458 & 0.542 & 0.85 \\
-        & & Hybrid & & 0.492 & 0.508 & 0.97 \\
-        & & Pure GDN & & 0.554 & 0.446 & 1.24 \\
+            & 0.46 & 0.54 & 0.85 \\
+        & & Hybrid & & 0.49 & 0.51 & 0.96 \\
+        & & Pure GDN & & 0.55 & 0.45 & 1.22 \\
         \midrule
         ProGen3~\citep{progen3} & Protein seq. & ProGen3 & Kaplan
             & & & 1.48\textsuperscript{*} \\
@@ -1513,9 +1514,9 @@ methods.
     \vspace{4pt}
 
     {\footnotesize
-    \textsuperscript{*} Reported directly. The Kaplan method estimates
-    $\alpha$ and $\beta$ separately, so $\beta/\alpha$ is obtained without
-    assuming the Chinchilla functional form for $a$ and $b$.\\
+    \textsuperscript{*} ProGen3 reports $N_{\mathrm{opt}}(D) \propto D^{1.479}$
+    (Eq.~1); Dense Retrieval gives $\alpha=0.56$, $\beta=1.31$
+    (Eq.~10), yielding $\beta/\alpha \approx 2.34$.\\
     \textsuperscript{\textdagger} Exponents extracted from Figure S5
     data.\footnote{\url{https://github.com/eric-czech/evo-scaling-law-extraction}}\\
     \textsuperscript{\textdaggerdbl} Exponents originally from
@@ -1525,9 +1526,14 @@ methods.
     \caption{Published compute-allocation exponents from scaling law studies
     across domains. Columns $a$ and $b$ are the allocation exponents governing
     optimal model size ($N^* \propto C^a$) and dataset size
-    ($D^* \propto C^b$). The $\beta/\alpha$ column gives the ratio of
-    loss-surface exponents, computed as $a/b$ for Approach~2 and~3 estimates
-    or reported directly for Kaplan estimates.}
+    ($D^* \propto C^b$). Ratio is $a/b$ for Approach~2 and~3 rows;
+    starred Kaplan-style rows use the quantities described above. Empirical
+    $a/b$ equals $\beta/\alpha$ only under the ideal Chinchilla model with
+    $C \propto ND$. DeepSeek and DLM use non-embedding FLOPs per token
+    as their model resource, rather than parameter count. Olmo Hybrid values
+    are rounded free-fit estimates from Table~18; their 95\% confidence
+    intervals overlap, so the point estimates do not establish differences
+    between architectures.}
     \label{tab:published_exponents}
 \end{table}
 
