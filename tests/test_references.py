@@ -68,16 +68,22 @@ def test_metadata_rejects_unreviewable_entries(tmp_path, reference, changes, mes
 
 def test_html_escapes_metadata_and_bibtex_preserves_case_and_names(reference):
     ref = replace(
-        reference, authors=["von Rütte, Dimitri", "Pióro, Maciej", "{Team Olmo}"]
+        reference,
+        authors=["von Rütte, Dimitri", "Pióro, Maciej", "{Team Olmo}"],
+        month=11,
+        note="Accessed: 8 Nov 2026 & verified",
     )
     rendered = render_references_html([ref])
     assert "A &amp; B" in rendered
     assert "Dimitri von Rütte" in rendered
+    assert "Accessed: 8 Nov 2026 &amp; verified" in rendered
     bib = render_references_bibtex([ref])
     assert r"title={{A \& B: Case-Sensitive NNLS}}" in bib
     assert r"von R{\"u}tte, Dimitri" in bib
     assert "{Team Olmo}" in bib
     assert "year={2023}" in bib
+    assert "month={11}" in bib
+    assert r"note={Accessed: 8 Nov 2026 \& verified}" in bib
 
 
 def test_large_author_lists_are_explicitly_abbreviated_only_on_render(reference):
@@ -168,7 +174,10 @@ def test_audited_authorship_and_source_identity_regressions():
     assert refs["reconciling_scaling"].authors == ["Pearce, Tim", "Song, Jinyeop"]
     assert refs["data_constrained"].authors[-1] == "Raffel, Colin"
     assert refs["biosignal_scaling"].entry_type == "mastersthesis"
-    assert refs["epochai_open_model_compute"].year == 2025
+    assert "epochai_open_model_compute" not in refs
+    assert refs["epochai_model_database"].year == 2026
+    assert refs["epochai_model_database"].month == 11
+    assert refs["epochai_model_database"].note == "Accessed: 8 Nov 2026"
     assert refs["olmo_hybrid"].year == 2026
     assert "redundancy_scaling" not in refs
 
@@ -185,7 +194,7 @@ def test_review_inventory_covers_every_current_reference_and_citation():
     article_lines = ARTICLE_PATH.read_text().splitlines()
     paper_lines = paper.splitlines()
     current_sources = [
-        item for item in audit["sources"] if item["status"] != "removed_withdrawn"
+        item for item in audit["sources"] if item["status"] in {"retained", "added"}
     ]
     assert {item["key"] for item in current_sources} == {ref.key for ref in refs}
     original_sources = [item for item in audit["sources"] if item["original_entry"]]
@@ -208,22 +217,27 @@ def test_citation_revision_preserves_recorded_non_citation_sources():
     audit = json.loads(
         (PROJECT_ROOT / "docs/references/citation-audit.json").read_text()
     )
-    paper = PAPER_PATH.read_text()
+    contents = {
+        "results/paper/paper.tex": PAPER_PATH.read_text(),
+        "results/article/article.html": ARTICLE_PATH.read_text(),
+    }
     for change in audit["preservation"].get("approved_non_citation_changes", []):
-        assert change["path"] == "results/paper/paper.tex"
+        assert change["path"] in contents
         for replacement in change["replacements"]:
-            assert paper.count(replacement["after"]) == 1
-            paper = paper.replace(replacement["after"], replacement["before"], 1)
+            assert contents[change["path"]].count(replacement["after"]) == 1
+            contents[change["path"]] = contents[change["path"]].replace(
+                replacement["after"], replacement["before"], 1
+            )
     paper = re.sub(
         r"\\usepackage(?:\[[^]]*\])?\{natbib\}",
         r"\\usepackage{natbib}",
-        paper,
+        contents["results/paper/paper.tex"],
     )
     paper = re.sub(r"~?" + CITE_RE.pattern, "", paper)
     article = re.sub(
         r'<section\s+id="references">.*?</section>',
         "",
-        ARTICLE_PATH.read_text(),
+        contents["results/article/article.html"],
         flags=re.S,
     )
     anchor = r'<a\b[^>]*\bhref=["\x27]#ref-[a-z0-9_]+["\x27][^>]*>.*?</a>'

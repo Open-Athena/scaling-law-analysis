@@ -672,7 +672,7 @@
                 paper<sup><a href="#ref-chinchilla">[1]</a></sup>, it has since been used by leading AI labs including
                 DeepMind<sup><a href="#ref-chinchilla">[1]</a>,<a href="#ref-sovit">[7]</a></sup>
                 (its creators),
-                Meta<sup><a href="#ref-llama3">[2]</a>,<a href="#ref-optibert">[9]</a>,<a href="#ref-beyond_language_modeling">[43]</a></sup>,
+                Meta<sup><a href="#ref-llama3">[2]</a>,<a href="#ref-optibert">[9]</a>,<a href="#ref-beyond_language_modeling">[42]</a></sup>,
                 DeepSeek<sup><a href="#ref-deepseek">[3]</a></sup>,
                 Microsoft<sup><a href="#ref-ehr_scaling">[4]</a></sup>,
                 Amazon<sup><a href="#ref-il_scaling">[6]</a></sup>,
@@ -901,7 +901,7 @@
                 compute scale of Llama&nbsp;3 405B (3.8&times;10<sup>25</sup>
                 FLOPs)<sup><a href="#ref-llama3">[2]</a></sup>, which remains one of the most
                 compute-intensive open models trained as of early
-                2026<sup><a href="#ref-epochai_open_model_compute">[41]</a></sup>. We also
+                2026<sup><a href="#ref-epochai_model_database">[47]</a></sup>. We also
                 examine three additional loss surfaces with published Approach&nbsp;3 fit
                 statistics&mdash;the original Chinchilla
                 surface<sup><a href="#ref-chinchilla">[1]</a></sup>, and two multimodal models
@@ -934,7 +934,7 @@
                 For Llama&nbsp;3, we <a href="https://github.com/eric-czech/llama3_isoflop_extraction">digitize individual IsoFLOP data points</a> from Figure&nbsp;2
                 of the original paper<sup><a href="#ref-llama3">[2]</a></sup> following the
                 SVG-coordinate extraction method of Besiroglu et
-                al.<sup><a href="#ref-epochai_chinchilla_replication">[42]</a></sup>, then fit
+                al.<sup><a href="#ref-epochai_chinchilla_replication">[41]</a></sup>, then fit
                 both Approach&nbsp;2 and two Approach&nbsp;3 implementations (VPNLS and direct
                 L-BFGS-B) to obtain competing allocations at the target budget. For Chinchilla,
                 SODA, and Sparse-NMM we take a simulated approach instead, generating synthetic
@@ -945,8 +945,8 @@
                 of how much of the empirical Llama&nbsp;3 error is attributable to the real
                 IsoFLOP experiment design versus the biases we introduce systematically. Dollar
                 costs are computed assuming 50% model FLOPs
-                utilization<sup><a href="#ref-beyond_chinchilla">[44]</a></sup> and $2 per
-                H100-hour<sup><a href="#ref-olmo3">[45]</a></sup>.
+                utilization<sup><a href="#ref-beyond_chinchilla">[43]</a></sup> and $2 per
+                H100-hour<sup><a href="#ref-olmo3">[44]</a></sup>.
             </p>
 
             <figure id="fig-1">
@@ -1006,7 +1006,7 @@
                 higher costs. SODA (<i>b/a</i>&nbsp;&asymp;&nbsp;1.56) reaches 8.0% DCL ($1.7M)
                 and Sparse-NMM (<i>b/a</i>&nbsp;&asymp;&nbsp;1.91) reaches 10.1% ($2.1M).
                 For domains with highly asymmetric scaling exponents, which are
-                more common in multimodal settings<sup><a href="#ref-beyond_language_modeling">[43]</a></sup>, Approach&nbsp;2
+                more common in multimodal settings<sup><a href="#ref-beyond_language_modeling">[42]</a></sup>, Approach&nbsp;2
                 misallocations can waste a non-trivial fraction of a large
                 training budget.
             </p>
@@ -1150,7 +1150,7 @@
                 (or even higher in one case<sup><a href="#ref-protein_plm_scaling">[37]</a></sup>).
                 In text datasets, the asymmetry typically runs in the opposite direction from our
                 hypothetical Asymmetric surface (\(\beta > \alpha\) rather than \(\alpha > \beta\)),
-                but the opposite is frequently true in multimodal datasets<sup><a href="#ref-beyond_language_modeling">[43]</a></sup> and it is the magnitude
+                but the opposite is frequently true in multimodal datasets<sup><a href="#ref-beyond_language_modeling">[42]</a></sup> and it is the magnitude
                 of the imbalance, not its direction, that drives most of the biases studied here.
             </p>
 
@@ -1924,7 +1924,7 @@
 
             <p>
                 The Chinchilla loss surface has a partially linear structure that can be
-                exploited<sup><a href="#ref-variable_projection">[46]</a></sup>. For any fixed values of \(\alpha\) and \(\beta\), the remaining
+                exploited<sup><a href="#ref-variable_projection">[45]</a></sup>. For any fixed values of \(\alpha\) and \(\beta\), the remaining
                 parameters \((E, A, B)\) enter the model linearly and can be solved exactly
                 via least squares. This is the same computational shortcut that motivates
                 Approach 2 (optimizing exponential terms separately from linear terms), but
@@ -1942,7 +1942,7 @@
             </p>
 
             <p>
-                In its simplest form, VPNLS uses non-negative least squares (NNLS)<sup><a href="#ref-nnls">[47]</a></sup> for the
+                In its simplest form, VPNLS uses non-negative least squares (NNLS)<sup><a href="#ref-nnls">[46]</a></sup> for the
                 inner solve and a gradient-free optimizer like Nelder-Mead for the outer
                 search. This is easy to implement and requires no gradient specification.
             </p>
@@ -2792,7 +2792,7 @@
                         <!-- IL -->
                         <tr>
                             <td class="text-cell" rowspan="3">IL Scaling<sup><a href="#ref-il_scaling">[6]</a></sup></td>
-                            <td class="text-cell" rowspan="3">Atari game states (RL)</td>
+                            <td class="text-cell" rowspan="3">Gaming</td>
                             <td class="text-cell">NetHack</td>
                             <td class="text-cell" rowspan="3">Approach 2</td>
                             <td>0.61</td>
@@ -2843,7 +2843,7 @@
                         </tr>
                         <!-- Beyond Language Modeling -->
                         <tr>
-                            <td class="text-cell" rowspan="2">Beyond Language Modeling<sup><a href="#ref-beyond_language_modeling">[43]</a></sup></td>
+                            <td class="text-cell" rowspan="2">Beyond Language Modeling<sup><a href="#ref-beyond_language_modeling">[42]</a></sup></td>
                             <td class="text-cell" rowspan="2">Text, video, image-text</td>
                             <td class="text-cell">Language</td>
                             <td class="text-cell" rowspan="2">Approach 2</td>
@@ -3063,13 +3063,13 @@
     <li id="ref-nmm_scaling">Mustafa Shukor; Enrico Fini; Victor Guilherme Turrisi da Costa et al. (2025). "Scaling Laws for Native Multimodal Models." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2504.07951v4">https://arxiv.org/abs/2504.07951v4</a></li>
     <li id="ref-xlstm_scaling">Maximilian Beck; Kajetan Schweighofer; Sebastian Böck et al. (2025). "xLSTM Scaling Laws: Competitive Performance with Linear Time-Complexity." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2510.02228v2">https://arxiv.org/abs/2510.02228v2</a></li>
     <li id="ref-olmo_hybrid">William Merrill; Yanhong Li; Tyler Romero et al. (2026). "Olmo Hybrid: From Theory to Practice and Back." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2604.03444v4">https://arxiv.org/abs/2604.03444v4</a></li>
-    <li id="ref-epochai_open_model_compute">Luke Emberson (2025). "Frontier open models may surpass 1e26 FLOP of training compute before 2026." <em>Epoch AI</em>. <a href="https://epoch.ai/data-insights/open-models-threshold">https://epoch.ai/data-insights/open-models-threshold</a></li>
     <li id="ref-epochai_chinchilla_replication">Tamay Besiroglu; Ege Erdil; Matthew Barnett et al. (2024). "Chinchilla Scaling: A replication attempt." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2404.10102v2">https://arxiv.org/abs/2404.10102v2</a></li>
     <li id="ref-beyond_language_modeling">Shengbang Tong; David Fan; John Nguyen et al. (2026). "Beyond Language Modeling: An Exploration of Multimodal Pretraining." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2603.03276v1">https://arxiv.org/abs/2603.03276v1</a></li>
     <li id="ref-beyond_chinchilla">Nikhil Sardana; Jacob Portes; Sasha Doubov et al. (2024). "Beyond Chinchilla-Optimal: Accounting for Inference in Language Model Scaling Laws." <em>Proceedings of the 41st International Conference on Machine Learning</em>. <a href="https://proceedings.mlr.press/v235/sardana24a.html">https://proceedings.mlr.press/v235/sardana24a.html</a></li>
     <li id="ref-olmo3">Team Olmo; Allyson Ettinger; Amanda Bertsch et al. (2025). "Olmo 3." <em>arXiv preprint</em>. <a href="https://arxiv.org/abs/2512.13961v2">https://arxiv.org/abs/2512.13961v2</a></li>
     <li id="ref-variable_projection">G. H. Golub; V. Pereyra (1973). "The Differentiation of Pseudo-Inverses and Nonlinear Least Squares Problems Whose Variables Separate." <em>SIAM Journal on Numerical Analysis</em>. <a href="https://doi.org/10.1137/0710036">https://doi.org/10.1137/0710036</a></li>
     <li id="ref-nnls">Charles L. Lawson; Richard J. Hanson (1995). "Solving Least Squares Problems." <em>Society for Industrial and Applied Mathematics</em>. <a href="https://doi.org/10.1137/1.9781611971217">https://doi.org/10.1137/1.9781611971217</a></li>
+    <li id="ref-epochai_model_database">Epoch AI (2026). "Data on AI models." <em>Epoch AI</em>. Accessed: 8 Nov 2026. <a href="https://epoch.ai/data/ai-models">https://epoch.ai/data/ai-models</a></li>
     </ol>
 </section>
 

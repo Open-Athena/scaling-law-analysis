@@ -61,7 +61,7 @@
 
 - Overview
   - Compute-optimal scaling laws are most directly relevant to the largest frontier models, which are still frequently trained near compute-optimality
-  - Assess the cost of Approach 2 misallocations at the compute scale of Llama 3 405B (3.8×10²⁵ FLOPs) [llama3], one of the most compute-intensive open models as of early 2026 [epochai_open_model_compute]
+  - Assess the cost of Approach 2 misallocations at the compute scale of Llama 3 405B (3.8×10²⁵ FLOPs) [llama3], one of the most compute-intensive open models as of early 2026 [epochai_model_database]
   - Also examine Chinchilla and two multimodal models with greater asymmetry: SODA [audio_scaling] and Sparse-NMM [nmm_scaling]
   - Measure misallocation as Deadweight Compute Loss (DCL), the FLOPs needed to reach an optimal allocation from one provided by Approach 2
 - Methods

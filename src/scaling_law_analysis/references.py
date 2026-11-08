@@ -43,6 +43,8 @@ class Reference:
     volume: str | None = None
     pages: str | None = None
     publisher: str | None = None
+    month: int | None = None
+    note: str | None = None
     verified_on: str = ""
     evidence_urls: list[str] = field(default_factory=list)
 
@@ -135,6 +137,8 @@ def render_references_html(references: list[Reference]) -> str:
         venue = html.escape(ref.venue)
         url = html.escape(ref.url, quote=True)
         entry = f'{authors} ({ref.year}). "{title}" <em>{venue}</em>.'
+        if ref.note:
+            entry += " " + html.escape(ref.note.rstrip(".")) + "."
         entry += f' <a href="{url}">{url}</a>'
         items.append(f'    <li id="ref-{ref.key}">{entry}</li>')
     return (
@@ -195,9 +199,11 @@ def render_references_bibtex(references: list[Reference]) -> str:
             "misc": "howpublished",
         }[ref.entry_type]
         fields[venue_field] = _tex(ref.institution or ref.venue)
-        for key in ("volume", "pages", "publisher"):
+        for key in ("volume", "pages", "publisher", "note"):
             if value := getattr(ref, key):
                 fields[key] = _tex(value)
+        if ref.month is not None:
+            fields["month"] = str(ref.month)
         fields["url"] = ref.url
         if ref.doi:
             fields["doi"] = ref.doi

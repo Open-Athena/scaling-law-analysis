@@ -1480,17 +1480,6 @@
   evidence_urls:
   - https://arxiv.org/abs/2604.03444v4
   - https://arxiv.org/pdf/2604.03444
-- key: epochai_open_model_compute
-  title: Frontier open models may surpass 1e26 FLOP of training compute before 2026
-  authors:
-  - Emberson, Luke
-  year: 2025
-  venue: Epoch AI
-  url: https://epoch.ai/data-insights/open-models-threshold
-  entry_type: misc
-  verified_on: '2026-11-07'
-  evidence_urls:
-  - https://epoch.ai/data-insights/open-models-threshold
 - key: epochai_chinchilla_replication
   title: 'Chinchilla Scaling: A replication attempt'
   authors:
@@ -1671,3 +1660,18 @@
   evidence_urls:
   - https://epubs.siam.org/doi/book/10.1137/1.9781611971217
   - https://epubs.siam.org/doi/pdf/10.1137/1.9781611971217.fm
+- key: epochai_model_database
+  title: Data on AI models
+  authors:
+  - '{Epoch AI}'
+  year: 2026
+  month: 11
+  note: 'Accessed: 8 Nov 2026'
+  venue: Epoch AI
+  url: https://epoch.ai/data/ai-models
+  entry_type: misc
+  verified_on: '2026-11-08'
+  evidence_urls:
+  - https://epoch.ai/data/ai-models
+  - https://epoch.ai/data/ai-models-documentation/records
+  - https://epoch.ai/data/notable_ai_models.csv
