@@ -1,16 +1,33 @@
 {
   "audit_date": "2026-11-07",
   "baseline_commit": "82cf54880ded6b2225c06e64751f15d9d7a57e07",
-  "scope": "Bibliography identities, citation markup and generated citation artifacts only.",
+  "scope": "Bibliography identities, citation markup and generated citation artifacts, plus the two author-approved Error Costs ratio-label corrections.",
   "baseline_reference_count": 46,
   "baseline_citation_targets": 76,
   "current_reference_count": 47,
   "current_citation_targets": 77,
   "preservation": {
-    "normalization": "Remove only formal citation commands/anchors and the HTML bibliography; normalize natbib options for comparison.",
+    "normalization": "Remove formal citation commands/anchors and the HTML bibliography; normalize natbib options and reverse the recorded author-approved ratio-label corrections for comparison.",
     "paper_non_citation_sha256": "06186f341a4b1b1009e293ef97092c021de2163fd1585c1bbf96325bcb186dbd",
     "article_non_citation_sha256": "bf1ae08ca3ad265fe5d1a9dacc6cb2f6b3faff9ca77f24207e5b58cd5b7f6b12",
-    "baseline_matches_current": true
+    "baseline_matches_current": true,
+    "approved_non_citation_changes": [
+      {
+        "path": "results/paper/paper.tex",
+        "approved_on": "2026-11-08",
+        "approval": "Author explicitly approved correcting this one passage in chat.",
+        "replacements": [
+          {
+            "before": "SODA ($\\beta/\\alpha \\approx 1.56$)",
+            "after": "SODA ($\\alpha/\\beta \\approx 1.56$)"
+          },
+          {
+            "before": "Sparse-NMM ($\\beta/\\alpha \\approx 1.91$)",
+            "after": "Sparse-NMM ($\\alpha/\\beta \\approx 1.91$)"
+          }
+        ]
+      }
+    ]
   },
   "sources": [
     {
@@ -1306,7 +1323,7 @@
       "id": "beyond_language_modeling:2",
       "key": "beyond_language_modeling",
       "paper_line": 339,
-      "context": "While the simulated Llama~3 surface produces minimal waste due to its\nnearly symmetric exponents, surfaces with greater asymmetry show substantially\nhigher costs. SODA ($\\beta/\\alpha \\approx 1.56$) reaches\n8.0\\% DCL (\\$1.7M) and Sparse-NMM ($\\beta/\\alpha \\approx 1.91$) reaches\n10.1\\% (\\$2.1M). For domains with highly asymmetric scaling exponents, which\nare more common in multimodal settings~\\citep{beyond_language_modeling}, Approach~2\nmisallocations can waste a non-trivial fraction of a large training budget.",
+      "context": "While the simulated Llama~3 surface produces minimal waste due to its\nnearly symmetric exponents, surfaces with greater asymmetry show substantially\nhigher costs. SODA ($\\alpha/\\beta \\approx 1.56$) reaches\n8.0\\% DCL (\\$1.7M) and Sparse-NMM ($\\alpha/\\beta \\approx 1.91$) reaches\n10.1\\% (\\$2.1M). For domains with highly asymmetric scaling exponents, which\nare more common in multimodal settings~\\citep{beyond_language_modeling}, Approach~2\nmisallocations can waste a non-trivial fraction of a large training budget.",
       "article_line": 1009,
       "source_urls": [
         "https://arxiv.org/abs/2603.03276v1",

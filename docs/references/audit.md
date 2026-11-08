@@ -2,7 +2,7 @@
 
 Baseline: commit `82cf54880ded6b2225c06e64751f15d9d7a57e07`.
 
-This revision changes bibliography metadata, formal citations, citation numbering and formatting, and their validation. All other bytes in the LaTeX and article sources match the baseline after removing citation markup and the HTML bibliography and normalizing the `natbib` options. This includes the original wording, equations, numerical table values, captions, and figure references. Figures, data, the post, editorial outline, PDF, and submission archives are unchanged.
+This revision changes bibliography metadata, formal citations, citation numbering and formatting, and their validation. On 2026-11-08, the author also approved correcting the two Error Costs ratio labels from beta/alpha to alpha/beta for SODA (1.56) and Sparse-NMM (1.91). The HTML article already uses the equivalent b/a labels and is unchanged by this correction. All other bytes in the LaTeX and article sources match the baseline after removing citation markup and the HTML bibliography, normalizing the `natbib` options, and reversing this explicitly recorded exception for comparison. This includes the remaining original wording, equations, numerical table values, captions, and figure references. Figures, data, the post, editorial outline, PDF, and submission archives are unchanged.
 
 ## Coverage
 
@@ -44,4 +44,4 @@ Additional metadata repairs include Colin Raffel's omitted authorship; complete 
 
 Run `uv run python -m scaling_law_analysis.references` to regenerate references and `--check` to reject stale outputs. Validation checks duplicate or unknown keys, citation numbers and targets, metadata provenance, and paper/article occurrence counts. Regression tests cover the corrected identities, generated and standalone HTML, citation formatting, the occurrence inventory, and preservation of the recorded non-citation source content. The build and submission commands check citations before compiling.
 
-Only the text sources and their citation workflow are updated in this PR. The existing PDF and historical submission archives remain unchanged; their bibliography is consequently still the pre-update version. Any substantive observations from the source review are discussed separately in chat and are not proposed as edits here.
+Only the text sources and their citation workflow, plus the explicitly approved ratio-label correction, are updated in this PR. The existing PDF and historical submission archives remain unchanged; their bibliography is consequently still the pre-update version. Other substantive observations from the source review remain in chat and are not proposed as edits here.

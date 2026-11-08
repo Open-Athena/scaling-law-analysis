@@ -208,10 +208,16 @@ def test_citation_revision_preserves_recorded_non_citation_sources():
     audit = json.loads(
         (PROJECT_ROOT / "docs/references/citation-audit.json").read_text()
     )
+    paper = PAPER_PATH.read_text()
+    for change in audit["preservation"].get("approved_non_citation_changes", []):
+        assert change["path"] == "results/paper/paper.tex"
+        for replacement in change["replacements"]:
+            assert paper.count(replacement["after"]) == 1
+            paper = paper.replace(replacement["after"], replacement["before"], 1)
     paper = re.sub(
         r"\\usepackage(?:\[[^]]*\])?\{natbib\}",
         r"\\usepackage{natbib}",
-        PAPER_PATH.read_text(),
+        paper,
     )
     paper = re.sub(r"~?" + CITE_RE.pattern, "", paper)
     article = re.sub(
