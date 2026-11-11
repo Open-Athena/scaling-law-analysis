@@ -35,7 +35,11 @@ The primary source for all prose, math, figures, and tables is `results/article/
 
 ### Source of truth
 
-All references originate from `docs/references/references.yaml`. The rendered reference list in the article HTML (`results/article/article.html`, near the bottom) provides the full formatted entries. Use this to populate `results/paper/references.bib` with proper BibTeX entries (author, title, year, journal/booktitle, url).
+All references originate from reviewed metadata in `docs/references/references.yaml`, including complete ordered authors, title, year, source type, venue, persistent identifiers, source URLs, and verification provenance. Run `uv run python -m scaling_law_analysis.references` to generate `results/paper/references.bib`, both HTML reference lists, and article citation numbers by stable key. Builds use offline metadata; `--check` rejects stale outputs and inconsistent citation targets. Paper and submission builds run this check before compiling.
+
+The canonical author lists are complete. HTML abbreviates after three authors; BibTeX abbreviates after ten with an explicit `and others`. Preserve title capitalization, accents, name particles, and collective authors. Keep `natbib` citation punctuation explicit so the source archive retains the same citation style when its compiled `.bbl` is included directly.
+
+Citation maintenance is limited to citations, bibliography metadata, and their generated artifacts and validation. Changes to authored prose, equations, table values, figures, captions, or conclusions require the author's explicit approval. Discuss proposed substantive corrections in chat before applying them.
 
 ### Inline hyperlinks
 

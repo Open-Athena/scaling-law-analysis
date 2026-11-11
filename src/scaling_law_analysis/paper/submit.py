@@ -17,6 +17,7 @@ from pathlib import Path
 
 from scaling_law_analysis import config
 from scaling_law_analysis.paper.build import check_tectonic
+from scaling_law_analysis.references import generate_outputs
 
 PAPER_DIR = config.RESULTS_DIR / "paper"
 TEX_FILE = PAPER_DIR / "paper.tex"
@@ -92,6 +93,7 @@ def build_submission() -> Path:
     Returns:
         Path to the generated .tar.gz archive.
     """
+    generate_outputs(check=True)
     tectonic = check_tectonic()
 
     if not TEX_FILE.exists():

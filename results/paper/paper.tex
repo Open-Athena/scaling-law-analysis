@@ -12,7 +12,7 @@
 \usepackage{float}
 \usepackage{caption}
 \captionsetup{font=small, labelfont=bf}
-\usepackage{natbib}
+\usepackage[square,comma]{natbib}
 \usepackage{xcolor}
 \usepackage[margin=1in]{geometry}
 
@@ -137,7 +137,7 @@ performance~\citep{ai2_task_scaling}, to name a few. These extensions prescribe
 explicit functional forms rather than inferring scaling law structure
 automatically, and they build directly on the Chinchilla model as a foundation.
 Similar
-studies~\citep{redundancy_scaling,data_filtering_scaling,moe_scaling,subgroup_scaling}
+studies~\citep{data_filtering_scaling,moe_scaling,subgroup_scaling}
 extend individual terms in isolation (e.g.\ token scaling terms alone) or
 propose modified Kaplan scaling laws~\citep{kaplan_scaling}, both of which
 would be relevant for comparable Chinchilla formulations as well. A fitting
@@ -248,7 +248,7 @@ To quantify this, we assess the cost of Approach~2 misallocations at the
 compute scale of Llama~3 405B ($3.8\times10^{25}$
 FLOPs)~\citep{llama3}, which remains one of the most compute-intensive open
 models trained as of early
-2026~\citep{epochai_open_model_compute}. We also examine three additional loss
+2026~\citep{epochai_model_database}. We also examine three additional loss
 surfaces with published Approach~3 fit statistics---the original Chinchilla
 surface~\citep{chinchilla}, and two multimodal models for which scaling is
 substantially more asymmetric,
@@ -333,8 +333,8 @@ in allocation estimates.
 
 While the simulated Llama~3 surface produces minimal waste due to its
 nearly symmetric exponents, surfaces with greater asymmetry show substantially
-higher costs. SODA ($\beta/\alpha \approx 1.56$) reaches
-8.0\% DCL (\$1.7M) and Sparse-NMM ($\beta/\alpha \approx 1.91$) reaches
+higher costs. SODA ($\alpha/\beta \approx 1.56$) reaches
+8.0\% DCL (\$1.7M) and Sparse-NMM ($\alpha/\beta \approx 1.91$) reaches
 10.1\% (\$2.1M). For domains with highly asymmetric scaling exponents, which
 are more common in multimodal settings~\citep{beyond_language_modeling}, Approach~2
 misallocations can waste a non-trivial fraction of a large training budget.
@@ -874,7 +874,7 @@ well-conditioned two-dimensional subspace.
 \label{sec:vpnls_method}
 
 The Chinchilla loss surface has a partially linear structure that can be
-exploited. For any fixed values of $\alpha$ and $\beta$, the remaining
+exploited~\citep{variable_projection}. For any fixed values of $\alpha$ and $\beta$, the remaining
 parameters $(E, A, B)$ enter the model linearly and can be solved exactly via
 least squares. This is the same computational shortcut that motivates
 Approach~2 (optimizing exponential terms separately from linear terms), but
@@ -888,7 +888,7 @@ the two-dimensional $(\alpha, \beta)$ surface, never the full five-parameter
 space. We term this method Variable Projection with Non-negative Least Squares
 (VPNLS).
 
-In its simplest form, VPNLS uses non-negative least squares (NNLS) for the
+In its simplest form, VPNLS uses non-negative least squares (NNLS)~\citep{nnls} for the
 inner solve and a gradient-free optimizer like Nelder-Mead for the outer
 search:
 
@@ -1456,7 +1456,7 @@ methods.
         & & StripedHyena & & 0.483 & 0.539 & 0.90 \\
         \midrule
         \multirow{3}{*}{IL~\citep{il_scaling}}
-            & \multirow{3}{*}{Atari (RL)}
+            & \multirow{3}{*}{Gaming}
             & NetHack & \multirow{3}{*}{Appr.~2}
             & 0.61 & 0.39 & 1.56 \\
         & & Battle Zone & & 0.58 & 0.51 & 1.14 \\
